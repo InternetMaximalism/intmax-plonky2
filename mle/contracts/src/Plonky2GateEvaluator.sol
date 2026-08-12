@@ -19,6 +19,9 @@ import {CosetInterpolationConstants} from "./CosetInterpolationConstants.sol";
 ///     5  PoseidonMdsGate       — MDS-only variant of PoseidonGate
 ///     6  ArithmeticExtensionGate — extension-field arithmetic ops
 ///     7  MulExtensionGate      — extension-field multiplications
+///     8  ExponentiationGate    — square-and-multiply exponentiation ladder
+///                                (used by the recursive FRI verifier via
+///                                 `exp_power_of_2` / `exp_from_bits_const_base`)
 ///     9  BaseSumGate           — base-B limb decomposition checks
 ///    10  ReducingGate          — Horner-style reduction (base field)
 ///    11  ReducingExtensionGate — Horner-style reduction (extension field)
@@ -28,7 +31,6 @@ import {CosetInterpolationConstants} from "./CosetInterpolationConstants.sol";
 ///
 /// UNSUPPORTED GATES (any row with filter ≠ 0 reverts explicitly — never
 /// silently accepted):
-///     8  ExponentiationGate    — not yet ported; recursion circuits may emit it
 ///        LookupGate / LookupTableGate — only used if the inner circuit has
 ///                                       lookup tables (out of scope for the
 ///                                       recursive verifier fixture today)
@@ -193,6 +195,13 @@ library Plonky2GateEvaluator {
                     filter,
                     perIdxAccum
                 );
+            } else if (gi.gateId == GATE_EXPONENTIATION) {
+                _evalExponentiation(
+                    wires,
+                    gi.numOrConsts, // num_power_bits
+                    filter,
+                    perIdxAccum
+                );
             } else if (gi.gateId == GATE_BASE_SUM) {
                 _evalBaseSum(wires, gi.numOrConsts, gi.param2, filter, perIdxAccum);
             } else if (gi.gateId == GATE_REDUCING) {
@@ -219,7 +228,8 @@ library Plonky2GateEvaluator {
                     perIdxAccum
                 );
             } else {
-                // Unsupported gate (ExponentiationGate, LookupGate / LookupTableGate).
+                // Unsupported gate (LookupGate / LookupTableGate). ExponentiationGate (id 8)
+                // is implemented above as of the withdrawal-claim on-chain verification fix.
                 // SECURITY: if filter != 0, we revert to signal a completeness
                 // failure. Never silently accepts.
                 revert("unsupported gate with non-zero filter");
@@ -529,6 +539,139 @@ library Plonky2GateEvaluator {
                 mstore(s1, addmod(mload(s1), mulmod(filter, diff1, p), p))
                 constraintIdx := add(constraintIdx, 2)
             }
+        }
+    }
+
+    /// @dev `ExponentiationGate::eval_unfiltered` port.
+    ///      Rust source of truth:
+    ///      `plonky2/src/gates/exponentiation.rs:94-127` (`eval_unfiltered`),
+    ///      cross-checked against the packed base variant at
+    ///      `plonky2/src/gates/exponentiation.rs:210-243` and the recursive
+    ///      variant at `plonky2/src/gates/exponentiation.rs:141-180`
+    ///      (all three compute the identical constraint set).
+    ///
+    /// Wire layout (`exponentiation.rs:60-78`; `num_constants() == 0`
+    /// (`:194-196`) so the dispatcher's `wires` slice is the gate's full
+    /// `local_wires` with no offset):
+    ///
+    ///   wire_base()               = 0                       (`:60-62`)
+    ///   wire_power_bit(i)         = 1 + i                    (`:65-68`)  i < n
+    ///   wire_output()             = 1 + n                    (`:70-72`)
+    ///   wire_intermediate_value(i)= 2 + n + i                (`:74-77`)  i < n
+    ///
+    /// with `n = num_power_bits`, so `num_wires() = 2·n + 2` (`:190-192`)
+    /// and `num_constraints() = n + 1` (`:202-204`).
+    ///
+    /// Constraint sequence written into `acc` (index i ↦ acc[i]), matching
+    /// the `constraints.push(...)` order of `eval_unfiltered`:
+    ///
+    ///   for i in 0..n:                                        (`:108-122`)
+    ///     prev_i    = (i == 0) ? 1 : intermediate[i-1]²       (`:109-113`)
+    ///     cur_bit   = power_bits[n - i - 1]  // LE wires, BE accumulation
+    ///                                                        (`:116`)
+    ///     computed  = prev_i · (cur_bit·base + (1 − cur_bit)) (`:118-120`)
+    ///     acc[i]   += filter · (computed − intermediate[i])   (`:121`)
+    ///   acc[n]     += filter · (output − intermediate[n-1])   (`:124`)
+    ///
+    /// SECURITY: the ladder is only sound in combination with the caller's
+    /// own bit-decomposition constraints — this gate does NOT constrain
+    /// `power_bits[i] ∈ {0,1}` (matching Rust exactly; plonky2's
+    /// `exp_from_bits` feeds already-boolean `BoolTarget`s, and
+    /// `exp_power_of_2` feeds hard-wired constants). Adding a booleanity
+    /// check here would REJECT honest proofs (completeness break) because
+    /// the Rust prover's quotient polynomial does not contain it. Mirroring
+    /// Rust exactly is the correct and only safe choice.
+    ///
+    /// SECURITY (C2, phase3_c2_threat_model.md §6.2): every prover-supplied
+    /// wire is self-reduced with `mod(_, p)` before it is used in a field
+    /// negation, so a non-canonical `w = v + k·P` cannot inject
+    /// `K = 2^256 mod P` into a constraint value. Matches `_evalConstant`.
+    ///
+    /// SECURITY (fail-closed bounds): Yul `mload`s bypass Solidity's array
+    /// bounds checks, so the wire/acc lengths are validated up front. A
+    /// malformed `GateInfo.numOrConsts` therefore reverts rather than
+    /// reading adjacent memory (which would let a forged descriptor
+    /// fabricate a satisfied constraint set).
+    // INTERNAL visibility (not private) so the Foundry harness in
+    // `contracts/test/ExponentiationGate.t.sol` can invoke it directly and
+    // compare against vectors derived from the Rust gate. The production
+    // caller is always the dispatcher above.
+    function _evalExponentiation(
+        uint256[] memory wires,
+        uint256 numPowerBits,
+        uint256 filter,
+        uint256[] memory acc
+    ) internal pure {
+        // `eval_unfiltered` indexes `intermediate_values[num_power_bits - 1]`
+        // unconditionally (`exponentiation.rs:124`), so `n == 0` is not a
+        // representable gate instance in Rust. Reject it instead of
+        // underflowing.
+        require(numPowerBits >= 1, "Exponentiation: num_power_bits must be >= 1");
+        // num_wires() = wire_intermediate_value(n-1) + 1 = 2·n + 2
+        // (`exponentiation.rs:190-192`).
+        require(
+            wires.length >= 2 * numPowerBits + 2,
+            "Exponentiation: wires too short"
+        );
+        // num_constraints() = n + 1 (`exponentiation.rs:202-204`).
+        require(
+            acc.length >= numPowerBits + 1,
+            "Exponentiation: constraint slots too few"
+        );
+
+        assembly {
+            let p := 0xFFFFFFFF00000001
+            let n := numPowerBits
+            let wPtr := add(wires, 0x20)
+            let aPtr := add(acc, 0x20)
+
+            // base = local_wires[wire_base()] = local_wires[0].
+            let base := mod(mload(wPtr), p)
+
+            // prev_intermediate_value; F::Extension::ONE for i == 0
+            // (`exponentiation.rs:109-113`).
+            let prev := 1
+
+            // First slot of the intermediate-value block: 2 + n.
+            let ivBase := add(wPtr, mul(add(2, n), 0x20))
+
+            for { let i := 0 } lt(i, n) { i := add(i, 1) } {
+                // power_bits is in LE order, but we accumulate in BE order
+                // (`exponentiation.rs:115-116`):
+                //   cur_bit = local_wires[wire_power_bit(n - i - 1)]
+                //           = local_wires[1 + (n - i - 1)]
+                //           = local_wires[n - i]
+                let curBit := mod(mload(add(wPtr, mul(sub(n, i), 0x20))), p)
+
+                // not_cur_bit = ONE - cur_bit (`exponentiation.rs:118`).
+                let notCurBit := addmod(1, sub(p, curBit), p)
+
+                // computed = prev · (cur_bit·base + not_cur_bit)
+                // (`exponentiation.rs:119-120`).
+                let mulBy := addmod(mulmod(curBit, base, p), notCurBit, p)
+                let computed := mulmod(prev, mulBy, p)
+
+                let iv := mod(mload(add(ivBase, mul(i, 0x20))), p)
+
+                // constraints.push(computed - intermediate_values[i])
+                // (`exponentiation.rs:121`).
+                let diff := addmod(computed, sub(p, iv), p)
+                let slot := add(aPtr, mul(i, 0x20))
+                mstore(slot, addmod(mload(slot), mulmod(filter, diff, p), p))
+
+                // Next round's prev = intermediate_values[i].square()
+                // (`exponentiation.rs:112`). Uses the *wire* value, not
+                // `computed`, exactly as Rust does.
+                prev := mulmod(iv, iv, p)
+            }
+
+            // constraints.push(output - intermediate_values[n - 1])
+            // (`exponentiation.rs:124`).
+            let output := mod(mload(add(wPtr, mul(add(1, n), 0x20))), p)
+            let lastIv := mod(mload(add(ivBase, mul(sub(n, 1), 0x20))), p)
+            let outDiff := addmod(output, sub(p, lastIv), p)
+            let outSlot := add(aPtr, mul(n, 0x20))
+            mstore(outSlot, addmod(mload(outSlot), mulmod(filter, outDiff, p), p))
         }
     }
 
