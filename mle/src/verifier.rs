@@ -17,7 +17,7 @@ use plonky2_field::types::Field;
 
 use crate::commitment::whir_pcs::{WhirPCS, WHIR_SESSION_SPLIT};
 use crate::eq_poly;
-use crate::proof::{MleProof, MleVerificationKey};
+use crate::proof::{MleProof, MleVerificationKey, NUM_SPLIT_COMMITMENTS};
 use crate::prover::derive_preprocessed_batch_r;
 use crate::sumcheck::verifier::verify_sumcheck;
 use crate::transcript::Transcript;
@@ -314,7 +314,9 @@ pub fn mle_verify<F: RichField + Extendable<D>, const D: usize>(
         &whir_eval_values,
         WHIR_SESSION_SPLIT,
         &[&r_gl, &r_inv_gl, &r_h_gl, &r_gate_v2_gl],
-        4, // num_vectors: preprocessed + witness + auxiliary + inverse_helpers
+        // num_vectors: preprocessed + witness + auxiliary + inverse_helpers. Shared with the
+        // fixture's exported `whirParams.numCommitments` so the two cannot drift (audit M-10).
+        NUM_SPLIT_COMMITMENTS,
     );
     ensure!(
         whir_result.is_ok(),

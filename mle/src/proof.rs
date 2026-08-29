@@ -14,6 +14,21 @@ use crate::commitment::whir_pcs::WhirEvalProof;
 use crate::permutation::lookup::LookupProof;
 use crate::sumcheck::types::SumcheckProof;
 
+/// Number of separately-committed vectors in the split-commit WHIR proof:
+/// `preprocessed`, `witness`, `auxiliary` and `inverse_helpers` — one Merkle root each
+/// (`MleProof::{preprocessed_root, witness_root, aux_commitment_root, inverse_helpers_root}`).
+///
+/// SECURITY (audit finding M-10, second half): this is the single source of truth for that count.
+/// `verifier::mle_verify` passes it to `verify_split`, and `fixture::extract_whir_params` exports
+/// it as `whirParams.numCommitments`, which `SpongefishWhirVerify` uses to drive round-0 Merkle
+/// verification (`totalVectors = numCommitments * numVectors`). Until 2026-08-30 the fixture
+/// hardcoded `2` — stale since v2 added the auxiliary and inverse-helper commitments — and the
+/// wrong exported value survived only because three in-repo Solidity consumers hand-patched it
+/// back to `4` after parsing. Any submitter that trusted the export deployed a VK describing a
+/// 2-commitment proof and rejected every honest proof. Keep both uses derived from this constant
+/// so they cannot drift apart again.
+pub const NUM_SPLIT_COMMITMENTS: usize = 4;
+
 /// Verification key for the MLE proving system.
 ///
 /// Contains the WHIR commitment root for the preprocessed polynomials

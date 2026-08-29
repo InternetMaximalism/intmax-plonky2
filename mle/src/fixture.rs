@@ -36,7 +36,7 @@ use whir::algebra::fields::{Field64 as ArkGoldilocks, Field64_3};
 use whir::protocols::whir::Config as WhirConfig;
 
 use crate::commitment::whir_pcs::{WhirPCS, WHIR_SESSION_SPLIT};
-use crate::proof::MleProof;
+use crate::proof::{MleProof, NUM_SPLIT_COMMITMENTS};
 use crate::sumcheck::types::SumcheckProof;
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -234,7 +234,8 @@ pub struct WhirParamsFixture {
     pub num_variables: usize,
     pub folding_factor: usize,
     pub num_vectors: usize,
-    /// Number of separate split-commit vectors (2 for preprocessed + witness).
+    /// Number of separate split-commit vectors: preprocessed + witness + auxiliary +
+    /// inverse_helpers. See [`crate::proof::NUM_SPLIT_COMMITMENTS`].
     pub num_commitments: usize,
     pub out_domain_samples: usize,
     pub in_domain_samples: usize,
@@ -349,7 +350,11 @@ fn extract_whir_params(degree_bits: usize) -> (WhirParamsFixture, Vec<u8>, Vec<u
     let num_variables = degree_bits;
     let folding_factor = pcs.params.folding_factor;
     let num_vectors = pcs.params.batch_size; // 1 per commitment
-    let num_commitments = 2; // preprocessed + witness
+                                             // SECURITY (audit M-10): NOT a literal. `preprocessed + witness` was correct before v2 added
+                                             // the auxiliary and inverse-helper commitments; the stale `2` was then corrected by hand in
+                                             // three separate Solidity consumers instead of here, so the exported fixture was simply wrong
+                                             // data. Derived from the same constant `verifier::mle_verify` hands to `verify_split`.
+    let num_commitments = NUM_SPLIT_COMMITMENTS;
     let out_domain_samples = config.initial_committer.out_domain_samples;
     let in_domain_samples = config.initial_committer.in_domain_samples;
     let initial_sumcheck_rounds = config.initial_sumcheck.num_rounds;
