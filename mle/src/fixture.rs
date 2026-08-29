@@ -10,6 +10,21 @@
 ///   JSON num:  18089690094123470848  (off by 686!)
 ///   As string: "18089690094123470162" (exact)
 use ark_ff::{Field as ArkField, PrimeField as ArkPrimeField};
+use plonky2::gates::arithmetic_base::ArithmeticGate;
+use plonky2::gates::arithmetic_extension::ArithmeticExtensionGate;
+use plonky2::gates::base_sum::BaseSumGate;
+use plonky2::gates::constant::ConstantGate;
+use plonky2::gates::coset_interpolation::CosetInterpolationGate;
+use plonky2::gates::exponentiation::ExponentiationGate;
+use plonky2::gates::gate::GateRef;
+use plonky2::gates::multiplication_extension::MulExtensionGate;
+use plonky2::gates::noop::NoopGate;
+use plonky2::gates::poseidon::PoseidonGate;
+use plonky2::gates::poseidon_mds::PoseidonMdsGate;
+use plonky2::gates::public_input::PublicInputGate;
+use plonky2::gates::random_access::RandomAccessGate;
+use plonky2::gates::reducing::ReducingGate;
+use plonky2::gates::reducing_extension::ReducingExtensionGate;
 use plonky2::hash::hash_types::RichField;
 use plonky2::plonk::circuit_data::CommonCircuitData;
 use plonky2_field::extension::Extendable;
@@ -444,77 +459,415 @@ fn extract_whir_params(degree_bits: usize) -> (WhirParamsFixture, Vec<u8>, Vec<u
     (params_fixture, protocol_id, split_session_id)
 }
 
-/// Classify a plonky2 gate by its `gate.id()` string and return the
-/// (gate_id, num_or_consts, param2, param3) tuple consumed by Plonky2GateEvaluator.sol.
-fn classify_gate(id: &str) -> (u8, u16, u16, u16) {
-    fn num_after(id: &str, key: &str) -> u16 {
-        id.split(key)
-            .nth(1)
-            .and_then(|s| {
-                s.trim()
-                    .trim_end_matches('}')
-                    .trim_end_matches(',')
-                    .split(|c: char| !c.is_ascii_digit())
-                    .next()
-            })
-            .and_then(|s| s.parse::<u16>().ok())
-            .unwrap_or(0)
+// ═══════════════════════════════════════════════════════════════════════════
+//  Gate classification (audit finding M-10)
+//
+//  SECURITY: the values below drive `Plonky2GateEvaluator.sol`'s per-gate constraint evaluation.
+//  Until 2026-08-30 they were scraped out of `format!("{:?}")` output with a
+//  `.unwrap_or(0)` fallback and a `.max(2)` "default base", and an unrecognised gate was
+//  mapped to the `255` sentinel. Every one of those three paths produces a WELL-FORMED
+//  fixture, a valid `gatesDigest`, and a PASSING Rust `mle_verify` — with the on-chain
+//  revert (or, worse, an evaluation against the WRONG number of constraints) as the only
+//  signal, and only on a real submission on a real chain. That is exactly how
+//  `ExponentiationGate` (id 8) shipped; see `doc/audit/why-gate8-was-missed.md` §8 (R3).
+//
+//  The classifier is therefore STRUCTURAL: it downcasts the gate through
+//  `AnyGate::as_any` and reads the gate's own typed fields, so the parameters cannot
+//  disagree with the circuit no matter how plonky2's `Debug`/`id()` rendering changes.
+//  Anything it cannot resolve is a hard error naming the gate and the field — never a
+//  guess, never a sentinel.
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// The `(gate_id, num_or_consts, param2, param3)` tuple consumed by `Plonky2GateEvaluator.sol`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct GateParams {
+    pub gate_id: u8,
+    pub num_or_consts: u16,
+    pub param2: u16,
+    pub param3: u16,
+}
+
+/// A gate whose on-chain parameters could not be established with certainty.
+///
+/// SECURITY: this type exists so that "I could not determine this parameter" can never be
+/// rendered as a number. Every construction site names the gate and what specifically failed.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GateClassificationError {
+    /// `gate.id()` of the offending gate (or the raw id string, when parsing one).
+    pub gate_name: String,
+    /// What could not be established, and what to do about it.
+    pub detail: String,
+}
+
+impl core::fmt::Display for GateClassificationError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(
+            f,
+            "gate `{}`: {}\nRefusing to write a fixture with a guessed on-chain gate parameter: \
+             a wrong `numOrConsts` / `param2` / `param3` still hashes into a valid `gatesDigest` \
+             and still passes the Rust verifier, but makes every on-chain verification evaluate \
+             the wrong constraints (or revert).",
+            self.gate_name, self.detail
+        )
+    }
+}
+
+impl std::error::Error for GateClassificationError {}
+
+impl GateClassificationError {
+    fn new(gate_name: impl Into<String>, detail: impl Into<String>) -> Self {
+        Self {
+            gate_name: gate_name.into(),
+            detail: detail.into(),
+        }
+    }
+}
+
+/// Narrow a gate parameter to the fixture's `u16`, hard-erroring instead of wrapping.
+fn narrow_u16(gate_name: &str, field: &str, value: usize) -> Result<u16, GateClassificationError> {
+    u16::try_from(value).map_err(|_| {
+        GateClassificationError::new(
+            gate_name,
+            format!(
+                "`{field}` = {value} does not fit the fixture's u16 (max {}); `as u16` would \
+                 silently wrap it",
+                u16::MAX
+            ),
+        )
+    })
+}
+
+/// Narrow a gate row's index-like field to the fixture's `u8`, hard-erroring instead of wrapping.
+fn narrow_u8(gate_name: &str, field: &str, value: usize) -> Result<u8, GateClassificationError> {
+    u8::try_from(value).map_err(|_| {
+        GateClassificationError::new(
+            gate_name,
+            format!(
+                "`{field}` = {value} does not fit the fixture's u8 (max {}); `as u8` would \
+                 silently wrap it and the fixture would name the WRONG selector column or row",
+                u8::MAX
+            ),
+        )
+    })
+}
+
+/// `BaseSumGate<B>`'s base is a const generic, so it can only be recovered by downcasting
+/// against a concrete `B`. This is the set of bases the classifier can resolve structurally;
+/// any other base is a hard error telling the maintainer to extend the list (NOT a silent
+/// "default 2", which is what the pre-2026-08-30 `.max(2)` did).
+pub const SUPPORTED_BASE_SUM_BASES: &[usize] = &[2, 3, 4, 5, 6, 7, 8, 16, 32, 64, 128, 256];
+
+/// Classify a plonky2 gate STRUCTURALLY — from the gate's own typed data, never from its
+/// `Debug` rendering — into the tuple `Plonky2GateEvaluator.sol` consumes.
+///
+/// SECURITY: returns `Err` rather than a sentinel or a zero for anything it cannot resolve.
+/// See the module comment above and `src/utils/mle_prover.rs`'s export guard, which
+/// re-derives these same values independently and compares them against what was serialized.
+pub fn classify_gate<F: RichField + Extendable<D>, const D: usize>(
+    gate: &GateRef<F, D>,
+) -> Result<GateParams, GateClassificationError> {
+    let name = gate.0.id();
+    let any = gate.0.as_any();
+
+    // NoopGate / PublicInputGate / PoseidonGate / PoseidonMdsGate are parameterless on-chain.
+    if any.is::<NoopGate>() {
+        return Ok(GateParams {
+            gate_id: 0,
+            num_or_consts: 0,
+            param2: 0,
+            param3: 0,
+        });
+    }
+    if any.is::<ConstantGate>() {
+        // `ConstantGate::num_consts` is `pub(crate)` upstream, but `Gate::num_constants()` IS
+        // that field (`plonky2/src/gates/constant.rs:101-103`) and is public trait API, so this
+        // is still a read of the gate's own typed data rather than a parse.
+        let num_consts = gate.0.num_constants();
+        return Ok(GateParams {
+            gate_id: 1,
+            num_or_consts: narrow_u16(&name, "num_consts", num_consts)?,
+            param2: 0,
+            param3: 0,
+        });
+    }
+    if any.is::<PublicInputGate>() {
+        return Ok(GateParams {
+            gate_id: 2,
+            num_or_consts: 0,
+            param2: 0,
+            param3: 0,
+        });
+    }
+    if let Some(g) = any.downcast_ref::<ArithmeticGate>() {
+        return Ok(GateParams {
+            gate_id: 3,
+            num_or_consts: narrow_u16(&name, "num_ops", g.num_ops)?,
+            param2: 0,
+            param3: 0,
+        });
+    }
+    if any.is::<PoseidonGate<F, D>>() {
+        return Ok(GateParams {
+            gate_id: 4,
+            num_or_consts: 0,
+            param2: 0,
+            param3: 0,
+        });
+    }
+    if any.is::<PoseidonMdsGate<F, D>>() {
+        return Ok(GateParams {
+            gate_id: 5,
+            num_or_consts: 0,
+            param2: 0,
+            param3: 0,
+        });
+    }
+    if let Some(g) = any.downcast_ref::<ArithmeticExtensionGate<D>>() {
+        return Ok(GateParams {
+            gate_id: 6,
+            num_or_consts: narrow_u16(&name, "num_ops", g.num_ops)?,
+            param2: 0,
+            param3: 0,
+        });
+    }
+    if let Some(g) = any.downcast_ref::<MulExtensionGate<D>>() {
+        return Ok(GateParams {
+            gate_id: 7,
+            num_or_consts: narrow_u16(&name, "num_ops", g.num_ops)?,
+            param2: 0,
+            param3: 0,
+        });
+    }
+    if let Some(g) = any.downcast_ref::<ExponentiationGate<F, D>>() {
+        return Ok(GateParams {
+            gate_id: 8,
+            num_or_consts: narrow_u16(&name, "num_power_bits", g.num_power_bits)?,
+            param2: 0,
+            param3: 0,
+        });
     }
 
-    if id == "NoopGate" {
-        (0, 0, 0, 0)
-    } else if id.starts_with("ConstantGate") {
-        (1, num_after(id, "num_consts:"), 0, 0)
-    } else if id == "PublicInputGate" {
-        (2, 0, 0, 0)
-    } else if id.starts_with("ArithmeticGate") && !id.starts_with("ArithmeticExtensionGate") {
-        (3, num_after(id, "num_ops:"), 0, 0)
-    } else if id.starts_with("PoseidonGate") {
-        (4, 0, 0, 0)
-    } else if id.starts_with("PoseidonMdsGate") {
-        (5, 0, 0, 0)
-    } else if id.starts_with("ArithmeticExtensionGate") {
-        (6, num_after(id, "num_ops:"), 0, 0)
-    } else if id.starts_with("MulExtensionGate") {
-        (7, num_after(id, "num_ops:"), 0, 0)
-    } else if id.starts_with("ExponentiationGate") {
-        (8, num_after(id, "num_power_bits:"), 0, 0)
-    } else if id.starts_with("BaseSumGate") {
-        // BaseSumGate<B> { num_limbs: N }; `B` is the type param, visible
-        // after "+ Base: B" in the id string.
-        let num_limbs = num_after(id, "num_limbs:");
-        let base = num_after(id, "+ Base:").max(2); // default 2 if not present
-        (9, num_limbs, base, 0)
-    } else if id.starts_with("ReducingExtensionGate") {
-        (11, num_after(id, "num_coeffs:"), 0, 0)
-    } else if id.starts_with("ReducingGate") {
-        (10, num_after(id, "num_coeffs:"), 0, 0)
-    } else if id.starts_with("RandomAccessGate") {
-        let bits = num_after(id, "bits:");
-        let num_copies = num_after(id, "num_copies:");
-        let num_extra = num_after(id, "num_extra_constants:");
-        (12, bits, num_copies, num_extra)
-    } else if id.starts_with("CosetInterpolationGate") {
-        // `subgroup_bits` drives the wire layout (2^k Ext values + 2^k weights).
-        // `degree` is the algebraic degree of the gate's constraints; the
-        // Solidity evaluator uses it to compute
-        //   `num_intermediates = (2^subgroup_bits - 2) / (degree - 1)`,
-        // which determines how many intermediate-eval/prod constraint pairs
-        // are checked. Both come from the Debug-derived `gate.id()` string.
-        (
+    // BaseSumGate<B>: `B` is a const generic, recoverable only by downcasting against a
+    // concrete instantiation. Never defaulted.
+    macro_rules! try_base_sum {
+        ($($b:literal),* $(,)?) => {{
+            let mut found: Option<Result<GateParams, GateClassificationError>> = None;
+            $(
+                if found.is_none() {
+                    if let Some(g) = any.downcast_ref::<BaseSumGate<$b>>() {
+                        found = Some((|| Ok(GateParams {
+                            gate_id: 9,
+                            num_or_consts: narrow_u16(&name, "num_limbs", g.num_limbs)?,
+                            param2: narrow_u16(&name, "B (base)", $b)?,
+                            param3: 0,
+                        }))());
+                    }
+                }
+            )*
+            found
+        }};
+    }
+    if let Some(result) = try_base_sum!(2, 3, 4, 5, 6, 7, 8, 16, 32, 64, 128, 256) {
+        return result;
+    }
+
+    if let Some(g) = any.downcast_ref::<ReducingGate<D>>() {
+        return Ok(GateParams {
+            gate_id: 10,
+            num_or_consts: narrow_u16(&name, "num_coeffs", g.num_coeffs)?,
+            param2: 0,
+            param3: 0,
+        });
+    }
+    if let Some(g) = any.downcast_ref::<ReducingExtensionGate<D>>() {
+        return Ok(GateParams {
+            gate_id: 11,
+            num_or_consts: narrow_u16(&name, "num_coeffs", g.num_coeffs)?,
+            param2: 0,
+            param3: 0,
+        });
+    }
+    if let Some(g) = any.downcast_ref::<RandomAccessGate<F, D>>() {
+        return Ok(GateParams {
+            gate_id: 12,
+            num_or_consts: narrow_u16(&name, "bits", g.bits)?,
+            param2: narrow_u16(&name, "num_copies", g.num_copies)?,
+            param3: narrow_u16(&name, "num_extra_constants", g.num_extra_constants)?,
+        });
+    }
+    if let Some(g) = any.downcast_ref::<CosetInterpolationGate<F, D>>() {
+        return Ok(GateParams {
+            gate_id: 13,
+            num_or_consts: narrow_u16(&name, "subgroup_bits", g.subgroup_bits)?,
+            param2: narrow_u16(&name, "degree", g.degree)?,
+            param3: 0,
+        });
+    }
+
+    // A `BaseSumGate<B>` whose base is outside SUPPORTED_BASE_SUM_BASES lands here; say so
+    // explicitly, because "extend the list" is a different fix from "port the gate".
+    if name.starts_with("BaseSumGate") {
+        return Err(GateClassificationError::new(
+            name,
+            format!(
+                "this is a `BaseSumGate<B>` whose base `B` is not in \
+                 SUPPORTED_BASE_SUM_BASES ({SUPPORTED_BASE_SUM_BASES:?}). The base is a const \
+                 generic and can only be recovered by downcasting against a concrete `B`; add \
+                 this one to the list in mle/src/fixture.rs. It must NOT be defaulted to 2 — \
+                 `Plonky2GateEvaluator._evalBaseSum` would then check a base-2 decomposition of \
+                 a base-B value and accept limbs the circuit forbids"
+            ),
+        ));
+    }
+
+    Err(GateClassificationError::new(
+        name,
+        "is not classified by plonky2_mle. It previously became the `255` sentinel: a \
+         well-formed fixture, a valid `gatesDigest`, a PASSING Rust `mle_verify`, and an \
+         on-chain revert (\"unsupported gate with non-zero filter\") with no signal until a real \
+         submission on a real chain — exactly how gate 8 shipped on 2026-07-31. Port the gate to \
+         Plonky2GateEvaluator.sol AND classify it here, or change the circuit so it is not \
+         emitted. Do NOT relax this error and do NOT relax the on-chain revert",
+    ))
+}
+
+// ─── Independent cross-check: recover the same parameters from `gate.id()` ────────────────
+//
+// SECURITY: this is deliberately NOT used by the exporter. It is the second, independent
+// derivation that `tests/mle_gate_support.rs` runs over every checked-in
+// `contracts/test/data/*_mle.json`, whose gate rows carry `gate.id()` verbatim in `name`. Two
+// derivations from different sources (the live typed gate vs. the recorded name) agreeing is
+// what makes a hand-edited or stale fixture detectable. Unlike the pre-2026-08-30 exporter it
+// is STRICT: every field is required, nothing defaults, and an unknown gate is an error.
+
+/// True when `id` names exactly `gate` (and not, say, `ExponentiationGateV2`).
+fn id_names_gate(id: &str, gate: &str) -> bool {
+    match id.strip_prefix(gate) {
+        None => false,
+        Some("") => true,
+        // `Debug`-derived renderings continue with ` {`, `(`, `{` or `<`.
+        Some(rest) => rest.starts_with([' ', '(', '{', '<']),
+    }
+}
+
+/// Read `field: <digits>` out of a `Debug` struct rendering, requiring the key to sit at a
+/// field boundary (`{ ` or `, `) so that `bits:` cannot match `subgroup_bits:`. Requires
+/// exactly one occurrence and a parseable value — no fallback.
+fn debug_field_u16(id: &str, field: &str) -> Result<u16, GateClassificationError> {
+    let needle = format!("{field}:");
+    let mut found: Option<u16> = None;
+    let bytes = id.as_bytes();
+    for (pos, _) in id.match_indices(&needle) {
+        // The character before the key, skipping spaces, must open the struct or end a field.
+        let mut i = pos;
+        while i > 0 && bytes[i - 1] == b' ' {
+            i -= 1;
+        }
+        if i > 0 && bytes[i - 1] != b'{' && bytes[i - 1] != b',' {
+            continue;
+        }
+        let digits: String = id[pos + needle.len()..]
+            .trim_start()
+            .chars()
+            .take_while(|c| c.is_ascii_digit())
+            .collect();
+        let value = digits.parse::<u16>().map_err(|e| {
+            GateClassificationError::new(
+                id,
+                format!("field `{field}` is present but not a u16 ({e}); refusing to default it"),
+            )
+        })?;
+        if found.is_some_and(|prev| prev != value) {
+            return Err(GateClassificationError::new(
+                id,
+                format!("field `{field}` occurs more than once with different values"),
+            ));
+        }
+        found = Some(value);
+    }
+    found.ok_or_else(|| {
+        GateClassificationError::new(
+            id,
+            format!(
+                "field `{field}` is absent from the gate's `id()` string. The pre-2026-08-30 \
+                 exporter substituted 0 here, which is a silently WRONG on-chain parameter"
+            ),
+        )
+    })
+}
+
+/// Recover [`GateParams`] from a `gate.id()` string, strictly. See the block comment above.
+pub fn parse_gate_params_from_id(id: &str) -> Result<GateParams, GateClassificationError> {
+    let p = |gate_id, num_or_consts, param2, param3| {
+        Ok(GateParams {
+            gate_id,
+            num_or_consts,
+            param2,
+            param3,
+        })
+    };
+    if id_names_gate(id, "NoopGate") {
+        p(0, 0, 0, 0)
+    } else if id_names_gate(id, "ConstantGate") {
+        p(1, debug_field_u16(id, "num_consts")?, 0, 0)
+    } else if id_names_gate(id, "PublicInputGate") {
+        p(2, 0, 0, 0)
+    } else if id_names_gate(id, "ArithmeticGate") {
+        p(3, debug_field_u16(id, "num_ops")?, 0, 0)
+    } else if id_names_gate(id, "PoseidonGate") {
+        p(4, 0, 0, 0)
+    } else if id_names_gate(id, "PoseidonMdsGate") {
+        p(5, 0, 0, 0)
+    } else if id_names_gate(id, "ArithmeticExtensionGate") {
+        p(6, debug_field_u16(id, "num_ops")?, 0, 0)
+    } else if id_names_gate(id, "MulExtensionGate") {
+        p(7, debug_field_u16(id, "num_ops")?, 0, 0)
+    } else if id_names_gate(id, "ExponentiationGate") {
+        p(8, debug_field_u16(id, "num_power_bits")?, 0, 0)
+    } else if id_names_gate(id, "BaseSumGate") {
+        // `BaseSumGate<B>::id()` is `format!("{self:?} + Base: {B}")`.
+        let num_limbs = debug_field_u16(id, "num_limbs")?;
+        let base_str = id.split(" + Base: ").nth(1).ok_or_else(|| {
+            GateClassificationError::new(
+                id,
+                "no ` + Base: <B>` suffix, so the base is unknown. The pre-2026-08-30 exporter \
+                 defaulted it to 2 via `.max(2)`, silently CLAIMING base 2 for a base-B gate",
+            )
+        })?;
+        let base = base_str.trim().parse::<u16>().map_err(|e| {
+            GateClassificationError::new(id, format!("` + Base:` suffix is not a u16 ({e})"))
+        })?;
+        p(9, num_limbs, base, 0)
+    } else if id_names_gate(id, "ReducingExtensionGate") {
+        p(11, debug_field_u16(id, "num_coeffs")?, 0, 0)
+    } else if id_names_gate(id, "ReducingGate") {
+        p(10, debug_field_u16(id, "num_coeffs")?, 0, 0)
+    } else if id_names_gate(id, "RandomAccessGate") {
+        p(
+            12,
+            debug_field_u16(id, "bits")?,
+            debug_field_u16(id, "num_copies")?,
+            debug_field_u16(id, "num_extra_constants")?,
+        )
+    } else if id_names_gate(id, "CosetInterpolationGate") {
+        p(
             13,
-            num_after(id, "subgroup_bits:"),
-            num_after(id, "degree:"),
+            debug_field_u16(id, "subgroup_bits")?,
+            debug_field_u16(id, "degree")?,
             0,
         )
     } else {
-        (255, 0, 0, 0)
+        Err(GateClassificationError::new(
+            id,
+            "is not a gate plonky2_mle classifies (and therefore not one \
+             Plonky2GateEvaluator.sol can evaluate)",
+        ))
     }
 }
 
 fn collect_gate_metadata<F: RichField + Extendable<D>, const D: usize>(
     common_data: &CommonCircuitData<F, D>,
-) -> Vec<GateInfoFixture> {
+) -> Result<Vec<GateInfoFixture>, GateClassificationError> {
     let si = &common_data.selectors_info;
     common_data
         .gates
@@ -522,21 +875,21 @@ fn collect_gate_metadata<F: RichField + Extendable<D>, const D: usize>(
         .enumerate()
         .map(|(row, gate)| {
             let id = gate.0.id();
-            let (gate_id, num_or_consts, param2, param3) = classify_gate(&id);
+            let params = classify_gate::<F, D>(gate)?;
             let sel_idx = si.selector_indices[row];
             let group = &si.groups[sel_idx];
-            GateInfoFixture {
+            Ok(GateInfoFixture {
+                gate_id: params.gate_id,
+                selector_index: narrow_u8(&id, "selector_index", sel_idx)?,
+                group_start: narrow_u8(&id, "group_start", group.start)?,
+                group_end: narrow_u8(&id, "group_end", group.end)?,
+                gate_row_index: narrow_u8(&id, "gate_row_index", row)?,
+                num_constraints: narrow_u16(&id, "num_constraints", gate.0.num_constraints())?,
+                num_or_consts: params.num_or_consts,
+                param2: params.param2,
+                param3: params.param3,
                 name: id,
-                gate_id,
-                selector_index: sel_idx as u8,
-                group_start: group.start as u8,
-                group_end: group.end as u8,
-                gate_row_index: row as u8,
-                num_constraints: gate.0.num_constraints() as u16,
-                num_or_consts,
-                param2,
-                param3,
-            }
+            })
         })
         .collect()
 }
@@ -545,11 +898,25 @@ fn collect_gate_metadata<F: RichField + Extendable<D>, const D: usize>(
 ///
 /// Generates the unified WHIR proof fixture format with single
 /// transcript + hints covering both preprocessed and witness vectors.
+///
+/// SECURITY: panics (rather than emitting a guessed parameter or the `255` sentinel) if any
+/// gate in the circuit cannot be classified — see [`classify_gate`]. Callers that want the
+/// error as a value should use [`try_proof_to_fixture`].
 pub fn proof_to_fixture<F: RichField + Extendable<D> + PrimeField64, const D: usize>(
     proof: &MleProof<F>,
     common_data: &CommonCircuitData<F, D>,
     degree_bits: usize,
 ) -> ProofFixture {
+    try_proof_to_fixture(proof, common_data, degree_bits)
+        .unwrap_or_else(|e| panic!("cannot build an on-chain-usable fixture — {e}"))
+}
+
+/// Fallible form of [`proof_to_fixture`].
+pub fn try_proof_to_fixture<F: RichField + Extendable<D> + PrimeField64, const D: usize>(
+    proof: &MleProof<F>,
+    common_data: &CommonCircuitData<F, D>,
+    degree_bits: usize,
+) -> Result<ProofFixture, GateClassificationError> {
     let (whir_params, protocol_id, split_session_id) = extract_whir_params(degree_bits);
 
     // Commitment roots
@@ -565,7 +932,7 @@ pub fn proof_to_fixture<F: RichField + Extendable<D> + PrimeField64, const D: us
         .map(|b| format!("{:02x}", b))
         .collect();
 
-    ProofFixture {
+    Ok(ProofFixture {
         circuit_digest: field_vec_to_strings(&proof.circuit_digest),
         // Main WHIR PCS
         preprocessed_commitment_root: format!("0x{pre_root_hex}"),
@@ -693,8 +1060,8 @@ pub fn proof_to_fixture<F: RichField + Extendable<D> + PrimeField64, const D: us
         num_selectors: common_data.selectors_info.num_selectors(),
         quotient_degree_factor: common_data.quotient_degree_factor,
         num_gate_constraints: common_data.num_gate_constraints,
-        gates: collect_gate_metadata::<F, D>(common_data),
-    }
+        gates: collect_gate_metadata::<F, D>(common_data)?,
+    })
 }
 
 /// Serialize an MleProof to a JSON string (all field elements as strings).
@@ -705,6 +1072,20 @@ pub fn proof_to_json<F: RichField + Extendable<D> + PrimeField64, const D: usize
 ) -> String {
     let fixture = proof_to_fixture(proof, common_data, degree_bits);
     serde_json::to_string_pretty(&fixture).expect("Failed to serialize proof fixture")
+}
+
+/// Fallible form of [`proof_to_json`]: returns the classification error instead of panicking.
+///
+/// SECURITY: this is the entry point the repo's export guard
+/// (`src/utils/mle_prover.rs::export_mle_json`) uses, so an unclassifiable gate surfaces as a
+/// normal `Err` on the production path instead of a `255` row in a well-formed fixture.
+pub fn try_proof_to_json<F: RichField + Extendable<D> + PrimeField64, const D: usize>(
+    proof: &MleProof<F>,
+    common_data: &CommonCircuitData<F, D>,
+    degree_bits: usize,
+) -> Result<String, GateClassificationError> {
+    let fixture = try_proof_to_fixture(proof, common_data, degree_bits)?;
+    Ok(serde_json::to_string_pretty(&fixture).expect("Failed to serialize proof fixture"))
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
