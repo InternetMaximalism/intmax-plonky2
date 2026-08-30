@@ -5,8 +5,11 @@
 > and the batching scalar is known before the corresponding commitment root.
 > Correlated changes to individual terminal evaluations can therefore preserve
 > both the committed batch evaluation and the terminal equations. This is a
-> soundness break, not merely a missing validation check. `MleVerifier` refuses
-> deployment and execution unless `block.chainid == 31337`.
+> soundness break, not merely a missing validation check. `MleVerifier` pins an
+> immutable execution chain in `constructor(uint256 allowedChainId)` and refuses
+> deployment on a different chain or execution after a chain-id change. Official
+> scripts default that pin to `31337`; setting `MLE_VERIFIER_CHAIN_ID` to a public
+> chain is an explicit unsafe opt-in and does not make this PCS sound.
 >
 > A production redesign must commit every constituent polynomial before the
 > batching challenge is sampled (for example, a genuine multi-vector PCS
@@ -528,7 +531,9 @@ Required production work:
   adding base-field/Ext3 equality checks;
 - add the correlated-nullspace forgery as a mandatory negative test.
 
-Until then, only chain id 31337 may deploy or invoke the Solidity engine.
+Until then, official deployment scripts default to chain id 31337. The
+constructor can explicitly pin another non-zero chain id, but that is only a
+wrong-network/migration guard—not a release approval or a soundness repair.
 
   **LOOKUP TABLE NOT SUPPORTED NOW!!**
 

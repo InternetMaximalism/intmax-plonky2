@@ -14,7 +14,7 @@ contract MleE2ETest is Test {
     MleVerifier verifier;
 
     function setUp() public {
-        verifier = new MleVerifier();
+        verifier = new MleVerifier(block.chainid);
     }
 
     // Historical context: the original "minimal port" (Issue R2-#1) only

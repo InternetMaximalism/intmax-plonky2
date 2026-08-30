@@ -7,7 +7,7 @@ import {SumcheckVerifier} from "../src/SumcheckVerifier.sol";
 import {SpongefishWhirVerify} from "../src/spongefish/SpongefishWhirVerify.sol";
 import {GoldilocksExt3} from "../src/spongefish/GoldilocksExt3.sol";
 import {Plonky2GateEvaluator} from "../src/Plonky2GateEvaluator.sol";
-import {InvalidMleProof, MleProofEngineUnavailable} from "../src/MleProofErrors.sol";
+import {InvalidMleProof, InvalidMleVerifierChainId, MleProofEngineUnavailable} from "../src/MleProofErrors.sol";
 
 /// @title BoundaryCheckTest — negative tests for C1 (gatesDigest) and C2
 /// (canonicalization) boundary checks added under `vulcheck-mle-solidity`.
@@ -20,20 +20,31 @@ contract BoundaryCheckTest is Test {
     uint256 constant P = 0xFFFFFFFF00000001;
 
     function setUp() public {
-        verifier = new MleVerifier();
+        verifier = new MleVerifier(block.chainid);
     }
 
     // ──────────────────────────────────────────────────────────────────
-    //  Release guard — the current RLC-only PCS is development-only
+    //  Immutable deployment-chain pin — not a PCS soundness fix
     // ──────────────────────────────────────────────────────────────────
 
-    function test_releaseGuard_publicChainDeploymentReverts() public {
+    function test_chainPin_zeroConfiguredChainReverts() public {
+        vm.expectRevert(abi.encodeWithSelector(InvalidMleVerifierChainId.selector, uint256(0), block.chainid));
+        new MleVerifier(0);
+    }
+
+    function test_chainPin_deploymentMismatchReverts() public {
         vm.chainId(1);
-        vm.expectRevert(abi.encodeWithSelector(MleProofEngineUnavailable.selector, uint256(1)));
-        new MleVerifier();
+        vm.expectRevert(abi.encodeWithSelector(InvalidMleVerifierChainId.selector, uint256(31337), uint256(1)));
+        new MleVerifier(31337);
     }
 
-    function test_releaseGuard_validProofCannotVerifyOnPublicChain() public {
+    function test_chainPin_matchingConfiguredChainDeploys() public {
+        vm.chainId(11155111);
+        MleVerifier configured = new MleVerifier(11155111);
+        assertEq(configured.allowedChainId(), 11155111);
+    }
+
+    function test_chainPin_validProofCannotVerifyAfterChainIdChange() public {
         (
             MleVerifier.MleProof memory proof,
             MleVerifier.VerifyParams memory vp,
@@ -46,7 +57,7 @@ contract BoundaryCheckTest is Test {
         verifier.verify(proof, vp, whir, gatesDigest);
     }
 
-    function test_releaseGuard_correlatedTerminalForgeryCannotVerifyOnPublicChain() public {
+    function test_chainPin_correlatedTerminalForgeryCannotVerifyAfterChainIdChange() public {
         (
             MleVerifier.MleProof memory proof,
             MleVerifier.VerifyParams memory vp,
@@ -57,7 +68,7 @@ contract BoundaryCheckTest is Test {
         // Concrete batching-kernel forgery found by red team. These three
         // correlated changes preserve the witness batch at r_inv and the
         // Φ_inv terminal expression while leaving the WHIR proof untouched.
-        // The public-chain release guard must run before proof-dependent checks.
+        // The immutable chain pin must run before proof-dependent checks.
         assertEq(proof.witnessIndividualEvalsAtRInv[0], 3051498664030569048);
         assertEq(proof.witnessIndividualEvalsAtRInv[80], 6063719204085150528);
         assertEq(proof.inverseHelpersEvalsAtRInv[1], 7495656216612080666);
@@ -70,7 +81,7 @@ contract BoundaryCheckTest is Test {
         verifier.verify(proof, vp, whir, gatesDigest);
     }
 
-    function test_releaseGuard_localFixtureRemainsUsable() public {
+    function test_chainPin_selectedChainFixtureRemainsUsable() public {
         (
             MleVerifier.MleProof memory proof,
             MleVerifier.VerifyParams memory vp,
@@ -78,11 +89,11 @@ contract BoundaryCheckTest is Test {
             bytes32 gatesDigest
         ) = _loadFixture("test/fixtures/small_mul.json");
 
-        assertEq(block.chainid, 31337, "test must exercise the explicit local exception");
+        assertEq(block.chainid, verifier.allowedChainId(), "fixture must run on the selected chain");
         assertTrue(verifier.verify(proof, vp, whir, gatesDigest));
     }
 
-    function test_releaseGuard_fraudVerdictIsUnevaluableNotInvalid() public {
+    function test_chainPin_fraudVerdictIsUnevaluableAfterChainIdChange() public {
         (MleVerifier.MleProof memory proof,,,) = _loadFixture("test/fixtures/small_mul.json");
 
         vm.chainId(1);
@@ -92,8 +103,22 @@ contract BoundaryCheckTest is Test {
         assertEq(verdict, 2, "unreleased verifier must be UNEVALUABLE");
     }
 
+    function test_chainPin_malformedAndSkippedFraudInputsStayUnevaluableAfterChainIdChange() public {
+        vm.chainId(1);
+        assertEq(
+            verifier.fraudVerdictEncoded(hex"01", bytes32(0), bytes4(0), false),
+            2,
+            "wrong-chain malformed proof must not become INVALID"
+        );
+        assertEq(
+            verifier.fraudVerdictEncoded(hex"01", bytes32(0), bytes4(0), true),
+            2,
+            "skipVerification must not bypass the immutable chain pin"
+        );
+    }
+
     /// @dev Mirrors the rollup's typed verifier trampoline. Empty verifier
-    /// parameters are intentional: on a public chain the release guard must
+    /// parameters are intentional: after a chain-id change the pin must
     /// fire before any proof- or configuration-dependent access.
     function _publicChainVerifyCallback(MleVerifier.MleProof calldata proof, bool) external view returns (bool) {
         MleVerifier.VerifyParams memory vp;

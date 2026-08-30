@@ -13,7 +13,7 @@ contract GasBenchmarkTest {
 
     function setUp() public {
         testContract = new MleVerifierTest();
-        verifier = new MleVerifier();
+        verifier = new MleVerifier(block.chainid);
     }
 
     // ═══════════════════════════════════════════════════════════════════════

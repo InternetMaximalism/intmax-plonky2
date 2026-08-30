@@ -8,7 +8,7 @@ import {EqPolyLib} from "./EqPolyLib.sol";
 import {SpongefishWhirVerify} from "./spongefish/SpongefishWhirVerify.sol";
 import {GoldilocksExt3} from "./spongefish/GoldilocksExt3.sol";
 import {Plonky2GateEvaluator} from "./Plonky2GateEvaluator.sol";
-import {InvalidMleProof, MleProofEngineUnavailable} from "./MleProofErrors.sol";
+import {InvalidMleProof, InvalidMleVerifierChainId, MleProofEngineUnavailable} from "./MleProofErrors.sol";
 
 /// @title MleVerifier — development-only combined-sumcheck/WHIR engine
 /// @notice UNSOUND FOR PUBLIC-CHAIN USE.  The current PCS commits a single
@@ -16,11 +16,19 @@ import {InvalidMleProof, MleProofEngineUnavailable} from "./MleProofErrors.sol";
 /// already known.  A malicious prover can therefore move claimed constituent
 /// evaluations inside the batching kernel while preserving both the committed
 /// batched evaluation and terminal constraints.  `verify` is intentionally
-/// enabled only on the local Foundry chain until each constituent polynomial is
-/// committed before its batching challenge is sampled.
+/// enabled only on the chain explicitly pinned at deployment until each
+/// constituent polynomial is committed before its batching challenge is
+/// sampled. Choosing a public chain does not make the current PCS sound.
 contract MleVerifier {
     using F for uint256;
     uint256 constant P = 0xFFFFFFFF00000001;
+
+    /// @notice The only chain on which this verifier may execute.
+    /// @dev Immutable by design: a setter would let an already-populated
+    ///      verifier deployment become usable after a cross-chain state/code
+    ///      migration. The constructor also requires this value to equal the
+    ///      deployment chain so a wrong-network deployment fails atomically.
+    uint256 public immutable allowedChainId;
 
     // Encoded-proof verdicts consumed by IntmaxRollup.  Keep 0..3 aligned
     // with the rollup's existing typed-verifier tri-state; PI_MISMATCH is a
@@ -34,8 +42,11 @@ contract MleVerifier {
     /// @dev Deployment and execution are both guarded.  The runtime check is
     /// still required because code can be installed by genesis configuration,
     /// state migration, or test cheatcodes without running this initcode.
-    constructor() {
-        if (block.chainid != 31337) revert MleProofEngineUnavailable(block.chainid);
+    constructor(uint256 allowedChainId_) {
+        if (allowedChainId_ == 0 || block.chainid != allowedChainId_) {
+            revert InvalidMleVerifierChainId(allowedChainId_, block.chainid);
+        }
+        allowedChainId = allowedChainId_;
     }
 
     struct MleProof {
@@ -191,18 +202,19 @@ contract MleVerifier {
     //       proof.gates                                     // Plonky2GateEvaluator.GateInfo[]
     //   ))
 
-    /// @notice Development-only entrypoint. Public chains fail closed before
-    /// any proof-dependent check; chain id 31337 retains fixture/test coverage.
-    /// @dev The release guard MUST be the first branch.  In particular, malformed
-    /// proof data on a public chain must not be classified as `InvalidMleProof`
-    /// while the cryptographic engine itself is unreleased.
+    /// @notice Development-only entrypoint, pinned to the constructor-selected
+    /// chain. A public-chain selection is an explicit unsafe deployment choice;
+    /// it does not repair the constituent-evaluation binding vulnerability.
+    /// @dev The chain guard MUST be the first branch. In particular, malformed
+    /// proof data after a chain-id migration must not be classified as
+    /// `InvalidMleProof` while the verifier is unavailable on that chain.
     function verify(
         MleProof calldata proof,
         VerifyParams memory vp,
         SpongefishWhirVerify.WhirParams memory whirParams,
         bytes32 gatesDigest
     ) external view returns (bool) {
-        if (block.chainid != 31337) {
+        if (block.chainid != allowedChainId) {
             revert MleProofEngineUnavailable(block.chainid);
         }
         _requireGatesDigest(proof, gatesDigest);
@@ -237,6 +249,10 @@ contract MleVerifier {
         bytes4 verifierCallback,
         bool skipVerification
     ) external view returns (uint8) {
+        // This MUST precede even canonical decoding. Otherwise malformed bytes
+        // observed after a chain-id migration could return INVALID rather than
+        // making the whole unreleased engine UNEVALUABLE to its caller.
+        if (block.chainid != allowedChainId) return ENCODED_UNEVALUABLE;
         MleProof memory proof;
         bool canonical;
         {
@@ -634,7 +650,7 @@ contract MleVerifier {
     /// polynomials. It does NOT bind individual oracle claims: the batching
     /// scalars are available before their roots and correlated changes can keep
     /// both the RLC and terminal equations unchanged. Consequently this helper
-    /// is reachable only behind `verify`'s chain-31337 development guard.
+    /// is reachable only behind `verify`'s deployment-chain pin.
     function _runBatchAndWhir(
         MleProof calldata proof,
         SpongefishWhirVerify.WhirParams memory whirParams,
