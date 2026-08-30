@@ -84,9 +84,9 @@ contract MleVerifier {
         // but disagree with the proof's other fields. By moving them into MleProof,
         // they become part of the same atomic object the verifier validates. Their
         // WARNING: this does NOT bind the constituent `*IndividualEvals` to the
-        // committed batched polynomial.  The batching scalar is known before the
-        // root, leaving a correlated-forgery kernel.  Public-chain verification is
-        // disabled at the `verify` entry point until the commitment layout is fixed.
+        // committed batched polynomial. The batching scalar is known before the
+        // root, leaving a correlated-forgery kernel. A constructor-selected public
+        // chain remains an explicitly unsafe opt-in until the layout is fixed.
         GoldilocksExt3.Ext3 preprocessedWhirEval;
         GoldilocksExt3.Ext3 witnessWhirEval;
         GoldilocksExt3.Ext3 auxWhirEval;

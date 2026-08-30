@@ -10,7 +10,8 @@
 /// polynomials, while terminal checks consume constituent evaluations that were
 /// not committed before the batching scalars became known. Correlated changes
 /// in the RLC kernel can therefore survive this function. The Solidity entry
-/// point refuses deployment and execution outside chain id 31337.
+/// point has an immutable constructor-selected execution-chain pin; selecting
+/// a public chain is an unsafe opt-in and does not repair this verifier.
 use anyhow::{ensure, Result};
 use plonky2::hash::hash_types::RichField;
 use plonky2::plonk::circuit_data::CommonCircuitData;
