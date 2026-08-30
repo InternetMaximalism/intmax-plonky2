@@ -357,9 +357,11 @@ pub fn mle_prove_from_tables<F: RichField + Extendable<D>, const D: usize>(
     // ═══════════════════════════════════════════════════════════════════
     // Phase 3: Auxiliary commitment (C̃ + h̃ batched)
     //
-    // SECURITY: C̃ and h̃ depend on challenges (alpha, beta, gamma) derived
-    // AFTER the main commitment. A second commitment round makes their
-    // evaluations WHIR-bound, closing the oracle gap.
+    // C̃ and h̃ depend on challenges (alpha, beta, gamma) derived after the
+    // main commitment. This commits their linear combination, not the two
+    // constituents. Because batch_r_aux is known before this root, the current
+    // format remains development-only and does not close the constituent-
+    // evaluation oracle gap.
     // ═══════════════════════════════════════════════════════════════════
     let _t = std::time::Instant::now();
     transcript.domain_separate("aux-commit");

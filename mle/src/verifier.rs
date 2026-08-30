@@ -1,12 +1,16 @@
 /// MLE proof verifier — combined sumcheck architecture.
 ///
-/// Verification chain (all evaluations at single sumcheck output point r):
+/// Experimental verification chain (all evaluations at sumcheck points):
 ///   1. Transcript reconstruction + challenge re-derivation
 ///   2. Auxiliary WHIR verification: P_aux(r) is bound → C̃(r), h̃(r) decomposition
 ///   3. Main WHIR verification: P_pre(r), P_wit(r) → individual wire/const/sigma evals
 ///   4. Combined sumcheck: eq(τ,r)·C̃(r) + μ·eq(τ_perm,r)·h̃(r) = final_eval
 ///
-/// SECURITY: No prover-claimed oracle values are trusted without WHIR binding.
+/// RELEASE STATUS: UNSOUND / DEVELOPMENT ONLY. WHIR binds already-batched
+/// polynomials, while terminal checks consume constituent evaluations that were
+/// not committed before the batching scalars became known. Correlated changes
+/// in the RLC kernel can therefore survive this function. The Solidity entry
+/// point refuses deployment and execution outside chain id 31337.
 use anyhow::{ensure, Result};
 use plonky2::hash::hash_types::RichField;
 use plonky2::plonk::circuit_data::CommonCircuitData;
@@ -324,22 +328,13 @@ pub fn mle_verify<F: RichField + Extendable<D>, const D: usize>(
         whir_result.err().unwrap_or_default()
     );
 
-    // SECURITY NOTE (Ext3 ↔ Goldilocks binding):
-    //
-    // WHIR binds the batched polynomial evaluation in Field64_3 via the
-    // Basefield<Field64_3> embedding. This is a DIFFERENT numeric value
-    // than the plain Goldilocks evaluation (mixed_multilinear_extend uses
-    // extension-field arithmetic). However, WHIR binding + Schwartz-Zippel
-    // on batch_r still provides soundness:
-    //   1. WHIR binds the committed polynomial P (via ext3 eval at r)
-    //   2. The Goldilocks batch consistency check (below) verifies that
-    //      individual_evals reconstruct to eval_value via batch_r
-    //   3. By Schwartz-Zippel, forging individual_evals that batch
-    //      correctly but differ from P's true values has probability
-    //      ≤ (num_polys - 1) / |F| ≈ 2^{-64}
-    //
-    // No explicit c0-match check is needed because the binding comes from
-    // WHIR fixing P and Schwartz-Zippel fixing the decomposition.
+    // UNSOUNDNESS NOTE (PCS ↔ terminal evaluations): WHIR fixes only the
+    // already-batched polynomial P. The checks below establish that claimed
+    // constituents have the same RLC value, but every batching scalar is known
+    // before its root is committed. A malicious prover can select correlated
+    // deltas in the RLC kernel and preserve terminal equations. Schwartz-Zippel
+    // does not bind values that were never committed before the challenge.
+    // Production requires constituent (multi-vector) commitments first.
 
     // 5c: Batch consistency — preprocessed at r
     let batch_r_pre = proof.preprocessed_batch_r;
@@ -409,9 +404,8 @@ pub fn mle_verify<F: RichField + Extendable<D>, const D: usize>(
         expected_inv_at_r_inv += r_pow * eval;
         r_pow *= proof.inverse_helpers_batch_r;
     }
-    // The Goldilocks batch consistency together with the WHIR ext3 binding +
-    // Schwartz-Zippel on inverse_helpers_batch_r ensures the individual evals
-    // are uniquely determined by the committed P_inv polynomial.
+    // This computes only the claimed batch value; it does not uniquely bind the
+    // individual inverse-helper claims to P_inv.
 
     // 5h: Inverse helpers batch consistency at r_h
     ensure!(
@@ -478,9 +472,8 @@ pub fn mle_verify<F: RichField + Extendable<D>, const D: usize>(
     // ═══════════════════════════════════════════════════════════════════
     // Step 6: Final evaluation check
     //
-    // SECURITY: All values are WHIR-bound:
-    //   - C̃(r) via auxiliary WHIR + Schwartz-Zippel decomposition
-    //   - h̃(r) via auxiliary WHIR + Schwartz-Zippel decomposition
+    // DEVELOPMENT-ONLY: C̃(r) and h̃(r) are claimed constituents of a WHIR-
+    // bound batch, but are not individually committed in this proof format.
     //   - eq(τ,r) and eq(τ_perm,r) computed by verifier from Fiat-Shamir challenges
     //   - μ is a Fiat-Shamir challenge
     //
@@ -488,7 +481,7 @@ pub fn mle_verify<F: RichField + Extendable<D>, const D: usize>(
     //   eq(τ,r)·C̃(r) + μ·eq(τ_perm,r)·h̃(r) = final_eval
     //
     // If the prover ran a fake sumcheck, final_eval would be inconsistent
-    // with the WHIR-bound C̃(r) and h̃(r), and this check fails.
+    // with the claimed C̃(r) and h̃(r), and this check fails.
     // ═══════════════════════════════════════════════════════════════════
     // Combined: eq(τ,r)·C̃(r) + μ·h̃(r) = final_eval
     // Note: h term is UNWEIGHTED (no eq_perm) because logUp guarantees Σ h(b) = 0
@@ -512,9 +505,8 @@ pub fn mle_verify<F: RichField + Extendable<D>, const D: usize>(
     // where D_j^id(r_inv) = β + w_j(r_inv) + γ · K_j · g_sub(r_inv)
     //       D_j^σ(r_inv)  = β + w_j(r_inv) + γ · σ_j(r_inv)
     //
-    // SECURITY: This is the v2 fix for Issue R2-#2. All evaluated quantities
-    // (a_j, b_j, w_j, σ_j, g_sub) are multilinear functions of r_inv that are
-    // bound by either WHIR (a, b, w, σ) or VK + verifier reconstruction (g_sub).
+    // This is the v2 terminal equation, but a_j, b_j, w_j and σ_j are only
+    // claimed constituents of committed batches in the current format.
     // No 1/x is evaluated by the verifier; the polynomial identity
     // A_j · D_j − 1 = 0 is enforced row-wise by the zero-check sumcheck.
     // ═══════════════════════════════════════════════════════════════════
@@ -581,7 +573,7 @@ pub fn mle_verify<F: RichField + Extendable<D>, const D: usize>(
     //   )
     //
     // The Plonky2 gate evaluator is invoked at the sumcheck output point
-    // with PCS-bound wire/const evaluations. Because all inputs are
+    // with claimed wire/const evaluations. Because all inputs are
     // multilinear extensions and the gate formula is a polynomial with
     // the same coefficients at Boolean inputs and at arbitrary field
     // points, this check binds the commitment to the ACTUAL gate formula
@@ -592,8 +584,8 @@ pub fn mle_verify<F: RichField + Extendable<D>, const D: usize>(
     // SECURITY:
     //   - α, ext_challenge, τ_gate are Fiat-Shamir challenges squeezed
     //     after all wire/const commitments.
-    //   - Wire/const individual evals at r_gate_v2 are WHIR-bound
-    //     (Ext3 evals at r_gate_v2 + Schwartz-Zippel on batch_r).
+    //   - Wire/const individual evals at r_gate_v2 are not individually
+    //     committed by the current RLC-only format.
     //   - public_inputs_hash is absorbed into the transcript at the very
     //     start and constitutes a bound public value.
     // ═══════════════════════════════════════════════════════════════════

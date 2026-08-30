@@ -6,6 +6,7 @@ import {SpongefishMerkle} from "./SpongefishMerkle.sol";
 import {GoldilocksExt3} from "./GoldilocksExt3.sol";
 import {WhirLinearAlgebra} from "./WhirLinearAlgebra.sol";
 import {Keccak256Chain} from "./Keccak256Chain.sol";
+import {InvalidMleProof} from "../MleProofErrors.sol";
 
 /// @title SpongefishWhirVerify
 /// @notice Full WHIR verification matching WizardOfMenlo/whir verifier.rs
@@ -145,8 +146,8 @@ library SpongefishWhirVerify {
         // Phase 6: FinalClaim verification
         _phaseFinalClaim(params, vs, finalVector);
 
-        if (ts.transcriptPos != transcript.length) revert TranscriptNotConsumed();
-        if (ts.hintPos != hints.length) revert InvalidHints();
+        if (ts.transcriptPos != transcript.length) revert InvalidMleProof();
+        if (ts.hintPos != hints.length) revert InvalidMleProof();
         return true;
     }
 
@@ -489,7 +490,7 @@ library SpongefishWhirVerify {
         GoldilocksExt3.Ext3 memory openedValue
     ) private pure {
         if (!GoldilocksExt3.eq(GoldilocksExt3.reduceWithPowers(finalVector, evaluationPoint), openedValue)) {
-            revert FinalOpeningMismatch();
+            revert InvalidMleProof();
         }
     }
 
@@ -505,7 +506,7 @@ library SpongefishWhirVerify {
         // Use in-place fold: v'[i] = v[2i]*(1-r) + v[2i+1]*r, repeated for each randomness
         uint256 foldStart = vs.foldIdx - params.finalSumcheckRounds;
         GoldilocksExt3.Ext3 memory polyEval = _foldEval(finalVector, vs.allFoldingRandomness, foldStart, params.finalSumcheckRounds);
-        if (GoldilocksExt3.isZero(polyEval)) revert ZeroPolynomialEvaluation();
+        if (GoldilocksExt3.isZero(polyEval)) revert InvalidMleProof();
 
         // linear_form_rlc = theSum / polyEval
         GoldilocksExt3.Ext3 memory linearFormRlc = vs.theSum.mul(GoldilocksExt3.inv(polyEval));
@@ -599,7 +600,7 @@ library SpongefishWhirVerify {
             }
         }
 
-        if (!GoldilocksExt3.eq(linearFormRlc, expectedRlc)) revert FinalClaimMismatch();
+        if (!GoldilocksExt3.eq(linearFormRlc, expectedRlc)) revert InvalidMleProof();
     }
 
     // =====================================================================
@@ -661,7 +662,7 @@ library SpongefishWhirVerify {
                 hashes[write] = hashes[i];
                 write++;
             } else {
-                if (hashes[i] != hashes[i - 1]) revert DuplicateLeafMismatch();
+                if (hashes[i] != hashes[i - 1]) revert InvalidMleProof();
             }
         }
         assembly { mstore(indices, write) mstore(hashes, write) }
@@ -821,8 +822,8 @@ library SpongefishWhirVerify {
         bytes memory hints,
         uint256 expectedElements
     ) private pure {
-        if (ts.hintPos > hints.length || hints.length - ts.hintPos < 8) revert InvalidHints();
-        if (uint256(_readU64LEAt(hints, ts.hintPos)) != expectedElements) revert InvalidHints();
+        if (ts.hintPos > hints.length || hints.length - ts.hintPos < 8) revert InvalidMleProof();
+        if (uint256(_readU64LEAt(hints, ts.hintPos)) != expectedElements) revert InvalidMleProof();
         ts.hintPos += 8;
     }
 
@@ -1231,7 +1232,10 @@ library SpongefishWhirVerify {
                     // Arkworks CanonicalDeserialize rejects raw >= p. The Merkle tree commits
                     // the raw bytes, so reducing a non-canonical encoding here would otherwise
                     // give the same field oracle multiple Fiat-Shamir commitment roots.
-                    if iszero(lt(b0, p)) { revert(0, 0) }
+                    if iszero(lt(b0, p)) {
+                        mstore(0x00, shl(224, 0xf0783a66))
+                        revert(0x00, 0x04)
+                    }
                     // b1, b2 stay 0
 
                     // mulScalar: result = (w0*b0, w1*b0, w2*b0) mod p
@@ -1262,7 +1266,10 @@ library SpongefishWhirVerify {
                     b2 := and(raw2, 0xFFFFFFFFFFFFFFFF)
 
                     // Match Rust's canonical Ext3 hint decoding before field arithmetic.
-                    if iszero(and(and(lt(b0, p), lt(b1, p)), lt(b2, p))) { revert(0, 0) }
+                    if iszero(and(and(lt(b0, p), lt(b1, p)), lt(b2, p))) {
+                        mstore(0x00, shl(224, 0xf0783a66))
+                        revert(0x00, 0x04)
+                    }
 
                     // Ext3 mul: eqW[j] * col
                     // mc0 = w0*b0 + 2*(w1*b2 + w2*b1)

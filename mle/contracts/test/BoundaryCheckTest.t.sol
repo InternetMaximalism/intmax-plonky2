@@ -7,6 +7,7 @@ import {SumcheckVerifier} from "../src/SumcheckVerifier.sol";
 import {SpongefishWhirVerify} from "../src/spongefish/SpongefishWhirVerify.sol";
 import {GoldilocksExt3} from "../src/spongefish/GoldilocksExt3.sol";
 import {Plonky2GateEvaluator} from "../src/Plonky2GateEvaluator.sol";
+import {InvalidMleProof, MleProofEngineUnavailable} from "../src/MleProofErrors.sol";
 
 /// @title BoundaryCheckTest — negative tests for C1 (gatesDigest) and C2
 /// (canonicalization) boundary checks added under `vulcheck-mle-solidity`.
@@ -20,6 +21,84 @@ contract BoundaryCheckTest is Test {
 
     function setUp() public {
         verifier = new MleVerifier();
+    }
+
+    // ──────────────────────────────────────────────────────────────────
+    //  Release guard — the current RLC-only PCS is development-only
+    // ──────────────────────────────────────────────────────────────────
+
+    function test_releaseGuard_publicChainDeploymentReverts() public {
+        vm.chainId(1);
+        vm.expectRevert(abi.encodeWithSelector(MleProofEngineUnavailable.selector, uint256(1)));
+        new MleVerifier();
+    }
+
+    function test_releaseGuard_validProofCannotVerifyOnPublicChain() public {
+        (
+            MleVerifier.MleProof memory proof,
+            MleVerifier.VerifyParams memory vp,
+            SpongefishWhirVerify.WhirParams memory whir,
+            bytes32 gatesDigest
+        ) = _loadFixture("test/fixtures/small_mul.json");
+
+        vm.chainId(1);
+        vm.expectRevert(abi.encodeWithSelector(MleProofEngineUnavailable.selector, uint256(1)));
+        verifier.verify(proof, vp, whir, gatesDigest);
+    }
+
+    function test_releaseGuard_correlatedTerminalForgeryCannotVerifyOnPublicChain() public {
+        (
+            MleVerifier.MleProof memory proof,
+            MleVerifier.VerifyParams memory vp,
+            SpongefishWhirVerify.WhirParams memory whir,
+            bytes32 gatesDigest
+        ) = _loadFixture("test/fixtures/small_mul.json");
+
+        // Concrete batching-kernel forgery found by red team. These three
+        // correlated changes preserve the witness batch at r_inv and the
+        // Φ_inv terminal expression while leaving the WHIR proof untouched.
+        // The public-chain release guard must run before proof-dependent checks.
+        assertEq(proof.witnessIndividualEvalsAtRInv[0], 3051498664030569048);
+        assertEq(proof.witnessIndividualEvalsAtRInv[80], 6063719204085150528);
+        assertEq(proof.inverseHelpersEvalsAtRInv[1], 7495656216612080666);
+        proof.witnessIndividualEvalsAtRInv[0] = 3051498664030569049;
+        proof.witnessIndividualEvalsAtRInv[80] = 2587698932769584699;
+        proof.inverseHelpersEvalsAtRInv[1] = 14584819668673277578;
+
+        vm.chainId(11155111);
+        vm.expectRevert(abi.encodeWithSelector(MleProofEngineUnavailable.selector, uint256(11155111)));
+        verifier.verify(proof, vp, whir, gatesDigest);
+    }
+
+    function test_releaseGuard_localFixtureRemainsUsable() public {
+        (
+            MleVerifier.MleProof memory proof,
+            MleVerifier.VerifyParams memory vp,
+            SpongefishWhirVerify.WhirParams memory whir,
+            bytes32 gatesDigest
+        ) = _loadFixture("test/fixtures/small_mul.json");
+
+        assertEq(block.chainid, 31337, "test must exercise the explicit local exception");
+        assertTrue(verifier.verify(proof, vp, whir, gatesDigest));
+    }
+
+    function test_releaseGuard_fraudVerdictIsUnevaluableNotInvalid() public {
+        (MleVerifier.MleProof memory proof,,,) = _loadFixture("test/fixtures/small_mul.json");
+
+        vm.chainId(1);
+        uint8 verdict = verifier.fraudVerdictEncoded(
+            abi.encode(proof), bytes32(0), this._publicChainVerifyCallback.selector, false
+        );
+        assertEq(verdict, 2, "unreleased verifier must be UNEVALUABLE");
+    }
+
+    /// @dev Mirrors the rollup's typed verifier trampoline. Empty verifier
+    /// parameters are intentional: on a public chain the release guard must
+    /// fire before any proof- or configuration-dependent access.
+    function _publicChainVerifyCallback(MleVerifier.MleProof calldata proof, bool) external view returns (bool) {
+        MleVerifier.VerifyParams memory vp;
+        SpongefishWhirVerify.WhirParams memory whir;
+        return verifier.verify(proof, vp, whir, bytes32(0));
     }
 
     // ──────────────────────────────────────────────────────────────────
@@ -38,7 +117,7 @@ contract BoundaryCheckTest is Test {
         // fire before any sumcheck work happens.
         bytes32 wrongDigest = bytes32(uint256(correctDigest) ^ 1);
 
-        vm.expectRevert(bytes("gatesDigest"));
+        vm.expectRevert(InvalidMleProof.selector);
         verifier.verify(proof, vp, whir, wrongDigest);
     }
 
@@ -55,7 +134,7 @@ contract BoundaryCheckTest is Test {
         // so the mutated proof.gates produces a different computed digest.
         proof.gates[0].selectorIndex = uint8(uint256(proof.gates[0].selectorIndex) ^ 0xff);
 
-        vm.expectRevert(bytes("gatesDigest"));
+        vm.expectRevert(InvalidMleProof.selector);
         verifier.verify(proof, vp, whir, correctDigest);
     }
 
@@ -69,7 +148,7 @@ contract BoundaryCheckTest is Test {
 
         proof.numSelectors = proof.numSelectors + 1;
 
-        vm.expectRevert(bytes("gatesDigest"));
+        vm.expectRevert(InvalidMleProof.selector);
         verifier.verify(proof, vp, whir, correctDigest);
     }
 
@@ -85,7 +164,7 @@ contract BoundaryCheckTest is Test {
 
         proof.quotientDegreeFactor = proof.quotientDegreeFactor + 1;
 
-        vm.expectRevert(bytes("gatesDigest"));
+        vm.expectRevert(InvalidMleProof.selector);
         verifier.verify(proof, vp, whir, correctDigest);
     }
 
@@ -104,7 +183,7 @@ contract BoundaryCheckTest is Test {
         // Shift wire[0] by +P (attack representative from phase2_c2_poc_report.md).
         proof.witnessIndividualEvalsAtRGateV2[0] += P;
 
-        vm.expectRevert(bytes("canonical"));
+        vm.expectRevert(InvalidMleProof.selector);
         verifier.verify(proof, vp, whir, gatesDigest);
     }
 
@@ -118,7 +197,7 @@ contract BoundaryCheckTest is Test {
 
         proof.preprocessedIndividualEvalsAtRGateV2[0] += P;
 
-        vm.expectRevert(bytes("canonical"));
+        vm.expectRevert(InvalidMleProof.selector);
         verifier.verify(proof, vp, whir, gatesDigest);
     }
 
@@ -133,7 +212,7 @@ contract BoundaryCheckTest is Test {
         // publicInputsHash entry >= P
         proof.publicInputsHash[0] = P;
 
-        vm.expectRevert(bytes("canonical pih"));
+        vm.expectRevert(InvalidMleProof.selector);
         verifier.verify(proof, vp, whir, gatesDigest);
     }
 
@@ -147,7 +226,7 @@ contract BoundaryCheckTest is Test {
 
         proof.inverseHelpersEvalsAtRH[0] += P;
 
-        vm.expectRevert(bytes("canonical"));
+        vm.expectRevert(InvalidMleProof.selector);
         verifier.verify(proof, vp, whir, gatesDigest);
     }
 
@@ -163,7 +242,7 @@ contract BoundaryCheckTest is Test {
         // strict `< P`, so P itself must revert.
         proof.witnessIndividualEvalsAtRGateV2[0] = P;
 
-        vm.expectRevert(bytes("canonical"));
+        vm.expectRevert(InvalidMleProof.selector);
         verifier.verify(proof, vp, whir, gatesDigest);
     }
 
@@ -181,17 +260,107 @@ contract BoundaryCheckTest is Test {
 
         proof.witnessIndividualEvalsAtRGateV2[0] = P - 1;
 
-        // Revert will come from downstream batch-eval inconsistency, NOT
-        // from the canonical check. We assert the error string is not
-        // "canonical".
-        bytes memory err;
-        try verifier.verify(proof, vp, whir, gatesDigest) returns (bool) {
-            revert("expected tampering to be caught downstream");
-        } catch Error(string memory reason) {
-            err = bytes(reason);
-        }
-        require(keccak256(err) != keccak256(bytes("canonical")), "C2 misfired on canonical P-1");
-        require(keccak256(err) != keccak256(bytes("canonical pih")), "C2 misfired on canonical P-1");
+        // The canonical check accepts P-1, then a later proof-dependent consistency check rejects
+        // the mutation using the common negative-verdict selector.
+        vm.expectRevert(InvalidMleProof.selector);
+        verifier.verify(proof, vp, whir, gatesDigest);
+    }
+
+    /// @notice The r_gate_v2 preprocessed vector is prover-controlled while
+    /// its exact width comes from the VK.  A short vector used to reach the
+    /// evaluator's Solidity array access and revert with Panic(0x32), making
+    /// the committed invalid proof look merely unevaluable to IntmaxRollup.
+    function test_proof_shape_empty_preprocessed_at_r_gate_v2_is_invalid_proof() public {
+        (
+            MleVerifier.MleProof memory proof,
+            MleVerifier.VerifyParams memory vp,
+            SpongefishWhirVerify.WhirParams memory whir,
+            bytes32 gatesDigest
+        ) = _loadFixture("test/fixtures/small_mul.json");
+
+        require(vp.numConstants + vp.numRoutedWires != 0, "fixture has zero preprocessed width");
+        proof.preprocessedIndividualEvalsAtRGateV2 = new uint256[](0);
+
+        vm.expectRevert(InvalidMleProof.selector);
+        verifier.verify(proof, vp, whir, gatesDigest);
+    }
+
+    function test_proof_shape_empty_whir_transcript_is_invalid_proof() public {
+        (
+            MleVerifier.MleProof memory proof,
+            MleVerifier.VerifyParams memory vp,
+            SpongefishWhirVerify.WhirParams memory whir,
+            bytes32 gatesDigest
+        ) = _loadFixture("test/fixtures/small_mul.json");
+
+        proof.whirTranscript = new bytes(0);
+
+        vm.expectRevert(InvalidMleProof.selector);
+        verifier.verify(proof, vp, whir, gatesDigest);
+    }
+
+    function test_proof_shape_empty_whir_hints_is_invalid_proof() public {
+        (
+            MleVerifier.MleProof memory proof,
+            MleVerifier.VerifyParams memory vp,
+            SpongefishWhirVerify.WhirParams memory whir,
+            bytes32 gatesDigest
+        ) = _loadFixture("test/fixtures/small_mul.json");
+
+        proof.whirHints = new bytes(0);
+
+        vm.expectRevert(InvalidMleProof.selector);
+        verifier.verify(proof, vp, whir, gatesDigest);
+    }
+
+    /// @notice A missing VK subgroup-power table is verifier configuration,
+    /// not proof fraud.  Keep its revert distinct from InvalidMleProof so the
+    /// rollup cannot convict an honest submission under a broken deployment.
+    function test_config_short_subgroup_powers_is_not_invalid_proof() public {
+        (
+            MleVerifier.MleProof memory proof,
+            MleVerifier.VerifyParams memory vp,
+            SpongefishWhirVerify.WhirParams memory whir,
+            bytes32 gatesDigest
+        ) = _loadFixture("test/fixtures/small_mul.json");
+
+        vp.subgroupGenPowers = new uint256[](0);
+
+        vm.expectRevert(bytes("subgroup powers len"));
+        verifier.verify(proof, vp, whir, gatesDigest);
+    }
+
+    // ──────────────────────────────────────────────────────────────────
+    //  Authenticated raw-proof verdict trampoline
+    // ──────────────────────────────────────────────────────────────────
+
+    function test_encoded_verdict_undecodable_raw_is_invalid() public {
+        uint8 verdict = verifier.fraudVerdictEncoded(hex"deadbeef", bytes32(0), bytes4(0), false);
+        assertEq(verdict, 0, "undecodable authenticated bytes verdict");
+    }
+
+    function test_encoded_verdict_noncanonical_abi_is_invalid() public {
+        (MleVerifier.MleProof memory proof,,,) = _loadFixture("test/fixtures/small_mul.json");
+        bytes memory noncanonical = bytes.concat(abi.encode(proof), bytes32(0));
+
+        uint8 verdict = verifier.fraudVerdictEncoded(noncanonical, bytes32(0), bytes4(0), false);
+        assertEq(verdict, 0, "trailing ABI bytes verdict");
+    }
+
+    function test_encoded_verdict_pi_mismatch_is_failed_precondition() public {
+        (MleVerifier.MleProof memory proof,,,) = _loadFixture("test/fixtures/small_mul.json");
+
+        uint8 verdict = verifier.fraudVerdictEncoded(
+            // This unit test calls the satellite directly and therefore has no rollup
+            // verification callback.  Exercise the explicit verifier-disabled branch here;
+            // production tests cover the callback path.  With verification enabled, a zero
+            // callback correctly classifies as UNEVALUABLE rather than trusting the PI mismatch.
+            abi.encode(proof),
+            bytes32(0),
+            bytes4(0),
+            true
+        );
+        assertEq(verdict, 4, "PI mismatch must not be fraud");
     }
 
     // ──────────────────────────────────────────────────────────────────
@@ -284,9 +453,7 @@ contract MleE2ETestShim is Test {
         whir.numCommitments = 4;
     }
 
-    function _parseV2(string memory json, MleVerifier.MleProof memory proof, uint256 degreeBits)
-        internal pure
-    {
+    function _parseV2(string memory json, MleVerifier.MleProof memory proof, uint256 degreeBits) internal pure {
         proof.inverseHelpersCommitmentRoot = vm.parseJsonBytes32(json, ".inverseHelpersCommitmentRoot");
         proof.inverseHelpersBatchR = vm.parseUint(vm.parseJsonString(json, ".inverseHelpersBatchR"));
         proof.invSumcheckProof = _parseSumcheckProof(json, ".invSumcheckProof", degreeBits);
@@ -312,9 +479,7 @@ contract MleE2ETestShim is Test {
         proof.inverseHelpersWhirEvalAtRH = _parseExt3(json, ".inverseHelpersWhirEvalAtRH");
     }
 
-    function _parseGates(string memory json, MleVerifier.MleProof memory proof, uint256 degreeBits)
-        internal pure
-    {
+    function _parseGates(string memory json, MleVerifier.MleProof memory proof, uint256 degreeBits) internal pure {
         proof.extChallenge = vm.parseUint(vm.parseJsonString(json, ".extChallenge"));
         proof.gateSumcheckProof = _parseSumcheckProof(json, ".gateSumcheckProof", degreeBits);
         proof.witnessIndividualEvalsAtRGateV2 = _parseUintArray(json, ".witnessIndividualEvalsAtRGateV2");
@@ -331,8 +496,11 @@ contract MleE2ETestShim is Test {
 
         uint256 nGates = 0;
         for (uint256 i = 0; i < 32; i++) {
-            try vm.parseJsonUint(json, string.concat(".gates[", vm.toString(i), "].gateId"))
-                returns (uint256) { nGates = i + 1; } catch { break; }
+            try vm.parseJsonUint(json, string.concat(".gates[", vm.toString(i), "].gateId")) returns (uint256) {
+                nGates = i + 1;
+            } catch {
+                break;
+            }
         }
         proof.gates = new Plonky2GateEvaluator.GateInfo[](nGates);
         for (uint256 i = 0; i < nGates; i++) {
@@ -358,20 +526,23 @@ contract MleE2ETestShim is Test {
     }
 
     function _parseSumcheckProof(string memory json, string memory path, uint256 n)
-        internal pure returns (SumcheckVerifier.SumcheckProof memory p)
+        internal
+        pure
+        returns (SumcheckVerifier.SumcheckProof memory p)
     {
         p.roundPolys = new SumcheckVerifier.RoundPoly[](n);
         for (uint256 i = 0; i < n; i++) {
-            string[] memory strs = vm.parseJsonStringArray(json, string.concat(path, ".roundPolys[", vm.toString(i), "]"));
+            string[] memory strs =
+                vm.parseJsonStringArray(json, string.concat(path, ".roundPolys[", vm.toString(i), "]"));
             uint256[] memory e = new uint256[](strs.length);
-            for (uint256 j = 0; j < strs.length; j++) e[j] = vm.parseUint(strs[j]);
+            for (uint256 j = 0; j < strs.length; j++) {
+                e[j] = vm.parseUint(strs[j]);
+            }
             p.roundPolys[i].evals = e;
         }
     }
 
-    function _parseExt3(string memory json, string memory path)
-        internal pure returns (GoldilocksExt3.Ext3 memory)
-    {
+    function _parseExt3(string memory json, string memory path) internal pure returns (GoldilocksExt3.Ext3 memory) {
         return GoldilocksExt3.Ext3(
             uint64(vm.parseUint(vm.parseJsonString(json, string.concat(path, ".c0")))),
             uint64(vm.parseUint(vm.parseJsonString(json, string.concat(path, ".c1")))),
@@ -379,17 +550,19 @@ contract MleE2ETestShim is Test {
         );
     }
 
-    function _parseUintArray(string memory json, string memory path)
-        internal pure returns (uint256[] memory)
-    {
+    function _parseUintArray(string memory json, string memory path) internal pure returns (uint256[] memory) {
         string[] memory strs = vm.parseJsonStringArray(json, path);
         uint256[] memory result = new uint256[](strs.length);
-        for (uint256 i = 0; i < strs.length; i++) result[i] = vm.parseUint(strs[i]);
+        for (uint256 i = 0; i < strs.length; i++) {
+            result[i] = vm.parseUint(strs[i]);
+        }
         return result;
     }
 
     function _parseWhir(string memory json, string memory bp)
-        internal pure returns (SpongefishWhirVerify.WhirParams memory w)
+        internal
+        pure
+        returns (SpongefishWhirVerify.WhirParams memory w)
     {
         w.numVariables = vm.parseJsonUint(json, string.concat(bp, ".numVariables"));
         w.foldingFactor = vm.parseJsonUint(json, string.concat(bp, ".foldingFactor"));
@@ -403,7 +576,8 @@ contract MleE2ETestShim is Test {
         w.finalSize = vm.parseJsonUint(json, string.concat(bp, ".finalSize"));
         w.initialCodewordLength = vm.parseJsonUint(json, string.concat(bp, ".initialCodewordLength"));
         w.initialMerkleDepth = vm.parseJsonUint(json, string.concat(bp, ".initialMerkleDepth"));
-        w.initialDomainGenerator = uint64(vm.parseUint(vm.parseJsonString(json, string.concat(bp, ".initialDomainGenerator"))));
+        w.initialDomainGenerator =
+            uint64(vm.parseUint(vm.parseJsonString(json, string.concat(bp, ".initialDomainGenerator"))));
         w.initialInterleavingDepth = vm.parseJsonUint(json, string.concat(bp, ".initialInterleavingDepth"));
         w.initialNumVariables = vm.parseJsonUint(json, string.concat(bp, ".initialNumVariables"));
         w.initialCosetSize = vm.parseJsonUint(json, string.concat(bp, ".initialCosetSize"));
@@ -415,7 +589,8 @@ contract MleE2ETestShim is Test {
             string memory rp = string.concat(bp, ".rounds[", vm.toString(i), "]");
             w.rounds[i].codewordLength = vm.parseJsonUint(json, string.concat(rp, ".codewordLength"));
             w.rounds[i].merkleDepth = vm.parseJsonUint(json, string.concat(rp, ".merkleDepth"));
-            w.rounds[i].domainGenerator = uint64(vm.parseUint(vm.parseJsonString(json, string.concat(rp, ".domainGenerator"))));
+            w.rounds[i].domainGenerator =
+                uint64(vm.parseUint(vm.parseJsonString(json, string.concat(rp, ".domainGenerator"))));
             w.rounds[i].inDomainSamples = vm.parseJsonUint(json, string.concat(rp, ".inDomainSamples"));
             w.rounds[i].outDomainSamples = vm.parseJsonUint(json, string.concat(rp, ".outDomainSamples"));
             w.rounds[i].sumcheckRounds = vm.parseJsonUint(json, string.concat(rp, ".sumcheckRounds"));

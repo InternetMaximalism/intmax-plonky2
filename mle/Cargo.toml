@@ -22,7 +22,7 @@ keccak-hash = "0.8.0"
 # WHIR polynomial commitment scheme (arkworks-based)
 # leohio/whir main: phased split-commit API (commit_single + prove_phased)
 # Keccak256-chain transcript compatible with the spongefish Solidity verifier contracts.
-whir = { git = "https://github.com/leohio/whir", branch = "main", features = ["parallel"] }
+whir = { git = "https://github.com/leohio/whir", branch = "main", default-features = false }
 ark-ff = "0.5"
 ark-std = "0.5"
 ark-serialize = "0.5"
@@ -35,5 +35,6 @@ ciborium = "0.2"
 rand = { workspace = true, features = ["std", "std_rng"] }
 
 [features]
-default = ["std"]
+default = ["std", "parallel"]
 std = ["plonky2/default", "anyhow/std"]
+parallel = ["whir/parallel"]

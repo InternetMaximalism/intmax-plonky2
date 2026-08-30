@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
+import {InvalidMleProof} from "../MleProofErrors.sol";
+
 /// @title SpongefishMerkle
 /// @notice Merkle tree verification matching WizardOfMenlo/whir's layered decommitment format.
 ///
@@ -63,7 +65,7 @@ library SpongefishMerkle {
 
         // Should be left with a single root
         if (curIndices.length != 1 || curIndices[0] != 0 || curHashes[0] != root) {
-            revert MerkleVerificationFailed();
+            revert InvalidMleProof();
         }
     }
 
@@ -105,7 +107,9 @@ library SpongefishMerkle {
                 i += 2;
             } else {
                 // Single index — read sibling from hints
-                require(newHintOff + 32 <= hints.length, "insufficient hints");
+                if (newHintOff > hints.length || 32 > hints.length - newHintOff) {
+                    revert InvalidMleProof();
+                }
                 bytes32 sibling;
                 assembly {
                     sibling := mload(add(add(hints, 0x20), newHintOff))

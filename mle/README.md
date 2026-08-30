@@ -1,5 +1,19 @@
 # plonky2_mle — Multilinear-Native Proof System for Plonky2 Circuits
 
+> **RELEASE STATUS: NO-GO / DEVELOPMENT ONLY.** The current proof format commits
+> only a random-linear combination of each group of constituent oracle columns,
+> and the batching scalar is known before the corresponding commitment root.
+> Correlated changes to individual terminal evaluations can therefore preserve
+> both the committed batch evaluation and the terminal equations. This is a
+> soundness break, not merely a missing validation check. `MleVerifier` refuses
+> deployment and execution unless `block.chainid == 31337`.
+>
+> A production redesign must commit every constituent polynomial before the
+> batching challenge is sampled (for example, a genuine multi-vector PCS
+> commitment), then open those committed vectors at the sumcheck terminal
+> points. Reversing evaluation-point coordinates or comparing the WHIR Ext3
+> value with the Goldilocks batch does not close the correlated-forgery kernel.
+
 A sumcheck + multilinear PCS proof system that reuses Plonky2's circuit format
 (gate definitions, wiring, witness generation) while replacing the FRI-based
 proof engine with a multilinear-native pipeline:
@@ -8,7 +22,9 @@ proof engine with a multilinear-native pipeline:
 - **Combined sumcheck**: single sumcheck merging constraint zero-check and permutation logUp (n rounds instead of 2n)
 - **Log-derivative permutation argument** (replaces univariate grand product)
 - **Log-derivative lookup argument** (replaces Sum/RE/LDC)
-- **Phased 3-vector WHIR PCS**: single proof covering preprocessed, witness, and auxiliary (C̃+h̃) polynomials via phased `commit_single` API. All evaluations at sumcheck output point r with direct WHIR binding
+- **Experimental phased WHIR PCS**: a single proof covers already-batched
+  preprocessed, witness, auxiliary and inverse-helper polynomials. It does not
+  yet bind the constituent column evaluations used by terminal checks.
 - **Keccak256 Fiat-Shamir** (single transcript, no dual-system ambiguity)
 - **Solidity on-chain verifier** with Yul-optimized field arithmetic
 
@@ -486,31 +502,33 @@ Measured from Solidity E2E tests (`MleE2ETest.t.sol`):
 | recursive_verify (inner proof) | 11 | 2048 | **4,889,359** |
 | huge_mul (100K chain muls) | 13 | 8192 | **6,795,194** |
 
-Architecture: combined sumcheck (n rounds instead of 2n) + single WHIR proof
-covering 3 vectors (preprocessed + witness + auxiliary) via phased `commit_single`.
-All evaluations at sumcheck output point r with direct WHIR binding. Auxiliary
-polynomial C̃ + h̃ is committed after challenges, closing the oracle gap.
+Architecture: combined sumcheck (n rounds instead of 2n) + a single WHIR proof
+covering batched vectors via phased `commit_single`. These measurements are for
+local development only; they do not establish production soundness.
 
 ## Security Audit Status
 
-### Phased 3-Vector Architecture (latest)
+### Current phased architecture (unreleased)
 
-The current architecture provides complete soundness:
+WHIR binds each already-batched polynomial, but the terminal checks consume
+prover-supplied constituent evaluations. For a batch
+`P = Σ ρ^i f_i`, `ρ` is available before the root committing `P`. A prover can
+therefore choose a non-zero delta vector with `Σ ρ^i Δ_i = 0` and adjust other
+terminal values so the checked equations remain unchanged. The WHIR proof and
+all batched evaluation claims remain valid. Schwartz-Zippel does not apply when
+the alleged constituents were never committed before `ρ` was known.
 
-- **WHIR at sumcheck output point r**: All polynomial evaluations (wire, const,
-  sigma, C̃, h̃) are WHIR-bound at the actual sumcheck output point, not a
-  canonical point. This directly binds committed polynomials to the evaluation
-  point where the verifier checks constraints.
-- **Auxiliary commitment (C̃ + h̃)**: Committed AFTER challenges (α, β, γ) are
-  derived, using the phased `commit_single` API. WHIR cross-term OOD binding
-  ensures cryptographic binding with preprocessed and witness vectors.
-- **Combined sumcheck**: Constraint zero-check and permutation logUp merged
-  into a single sumcheck (n rounds), producing one output point r.
-- **Oracle values WHIR-bound**: C̃(r) and h̃(r) are extracted from the
-  auxiliary polynomial P_aux(r) = C̃(r) + batch_r_aux · h̃(r) via
-  Schwartz-Zippel decomposition (forgery probability ≤ 1/|F|).
-- **VK binding**: Preprocessed Merkle root checked against VK.
-- **Domain separation**: Session name `"plonky2-mle-whir-split"`.
+Required production work:
+
+- commit every wire, constant/sigma, inverse-helper and auxiliary constituent
+  (preferably through a genuine multi-vector commitment) before sampling its
+  batching coefficient;
+- open those same committed constituents at every terminal point;
+- reconcile the LSB-first dense-MLE coordinate convention with WHIR before
+  adding base-field/Ext3 equality checks;
+- add the correlated-nullspace forgery as a mandatory negative test.
+
+Until then, only chain id 31337 may deploy or invoke the Solidity engine.
 
   **LOOKUP TABLE NOT SUPPORTED NOW!!**
 

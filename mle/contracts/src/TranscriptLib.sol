@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.25;
 
+import {InvalidMleProof} from "./MleProofErrors.sol";
+
 /// @title TranscriptLib
 /// @notice Keccak256-based Fiat-Shamir transcript matching the Rust implementation
 ///         (mle/src/transcript.rs) byte-for-byte.
@@ -67,7 +69,7 @@ library TranscriptLib {
     /// @notice Absorb a single Goldilocks field element (must be < P).
     /// @dev Appends [elem_u64_LE] (8 bytes) to state.
     function absorbField(Transcript memory t, uint256 elem) internal pure {
-        require(elem < P, "Field element >= P");
+        if (elem >= P) revert InvalidMleProof();
         bytes memory oldState = t.state;
         uint256 oldLen = oldState.length;
         bytes memory newState = new bytes(oldLen + 8);
@@ -98,7 +100,7 @@ library TranscriptLib {
         uint256 n = elems.length;
         // Validate all elements < P first
         for (uint256 i = 0; i < n; i++) {
-            require(elems[i] < P, "Field element >= P");
+            if (elems[i] >= P) revert InvalidMleProof();
         }
         // Append (1 + n) * 8 bytes to state in a single allocation
         bytes memory oldState = t.state;

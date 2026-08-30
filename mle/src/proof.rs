@@ -5,8 +5,11 @@
 ///   1. Main split-commit: preprocessed + witness polynomials
 ///   2. Auxiliary single-vector: C̃ + h̃ (constraint + permutation MLEs)
 ///
-/// All evaluations are at the single sumcheck output point r, providing
-/// direct WHIR binding for individual_evals, C̃(r), and h̃(r).
+/// RELEASE STATUS: development only. WHIR binds the already-batched
+/// polynomials, but this proof format does not bind the constituent
+/// `individual_evals` consumed by terminal checks. Batching challenges are
+/// available before the corresponding roots, so correlated changes in the
+/// batching kernel remain possible.
 use plonky2_field::types::Field;
 use whir::algebra::fields::Field64_3;
 
@@ -52,14 +55,9 @@ pub struct MleVerificationKey<F: Field> {
 
 /// A complete MLE proof for a Plonky2 circuit.
 ///
-/// SECURITY: All polynomial evaluations at the sumcheck output point r are
-/// WHIR-bound. The verification chain:
-///   1. Main WHIR binds P_pre(r), P_wit(r) → individual wire/const/sigma evals
-///   2. Auxiliary WHIR binds P_aux(r) → C̃(r) and h̃(r) via batch decomposition
-///   3. Combined sumcheck: eq(τ,r)·C̃(r) + μ·eq(τ_perm,r)·h̃(r) = final_eval
-///   4. Verifier checks final_eval matches sumcheck output
-///
-/// No prover-claimed oracle values are trusted without WHIR binding.
+/// WARNING: the current WHIR statements bind only `P_pre`, `P_wit`, `P_aux`
+/// and `P_inv`, not their alleged constituent columns. A production format
+/// must commit those constituents before its batching challenges are sampled.
 #[derive(Clone, Debug)]
 pub struct MleProof<F: Field> {
     /// Circuit digest (verifying key hash) — 4 Goldilocks field elements.
@@ -88,15 +86,14 @@ pub struct MleProof<F: Field> {
     pub witness_whir_eval_ext3: Field64_3,
 
     // ── Auxiliary polynomial (C̃ + h̃, 3rd vector in same WHIR proof) ───
-    /// SECURITY: The auxiliary polynomial P_aux = C̃ + batch_r_aux · h̃ is the
-    /// 3rd vector in the same WHIR split-commit proof. WHIR cross-term OOD
-    /// binding + Schwartz-Zippel over batch_r_aux ensures C̃(r) and h̃(r) are
-    /// uniquely determined (forgery probability ≤ 1/|F| ≈ 2^{-64}).
+    /// Auxiliary polynomial P_aux = C̃ + batch_r_aux · h̃. WHIR binds P_aux,
+    /// but does not uniquely bind its separately claimed constituents because
+    /// they were not committed before `batch_r_aux` was known.
     pub aux_commitment_root: Vec<u8>,
     pub aux_batch_r: F,
-    /// C̃(r) — constraint MLE evaluation at r, WHIR-bound.
+    /// Claimed C̃(r); not independently PCS-bound in the current format.
     pub aux_constraint_eval: F,
-    /// h̃(r) — permutation numerator MLE evaluation at r, WHIR-bound.
+    /// Claimed h̃(r); not independently PCS-bound in the current format.
     pub aux_perm_eval: F,
     /// Auxiliary batched evaluation at r: P_aux(r) = C̃(r) + batch_r_aux · h̃(r).
     pub aux_eval_value: F,
@@ -146,7 +143,9 @@ pub struct MleProof<F: Field> {
     //   Φ_inv: zero-check on A_j·D_j^id − 1 = 0 and B_j·D_j^σ − 1 = 0  (deg 3)
     //   Φ_h:   linear sumcheck on H = Σ_j λ_h^j (A_j − B_j),  claimed sum = 0
     //
-    // The terminal checks reconstruct predictions from PCS-bound values
+    // The terminal checks reconstruct predictions from claimed constituent values.
+    // Those values are NOT individually PCS-bound in the current format;
+    // Solidity therefore keeps this engine local-development-only.
     // a_j(r_inv), b_j(r_inv), w_j(r_inv), σ_j(r_inv), g_sub(r_inv) for Φ_inv,
     // and a_j(r_h), b_j(r_h) for Φ_h. No 1/x is evaluated by the verifier.
     // ═══════════════════════════════════════════════════════════════════
@@ -190,11 +189,11 @@ pub struct MleProof<F: Field> {
     /// Subgroup MLE g_sub(r_inv) — verifier recomputes this from
     /// `subgroup_gen_powers` and checks consistency.
     pub g_sub_eval_at_r_inv: F,
-    /// Witness batched WHIR evaluation at r_inv (Ext3) — proves the
-    /// `witness_individual_evals_at_r_inv` are PCS-bound.
+    /// Witness batched WHIR evaluation at r_inv (Ext3). It does not prove the
+    /// constituent `witness_individual_evals_at_r_inv` are individually bound.
     pub witness_whir_eval_at_r_inv_ext3: Field64_3,
-    /// Preprocessed batched WHIR evaluation at r_inv (Ext3) — proves
-    /// `sigma_individual_evals_at_r_inv` (and unused const evals) PCS-bound.
+    /// Preprocessed batched WHIR evaluation at r_inv (Ext3). Constituent sigma
+    /// and constant claims remain unbound inside the batching kernel.
     pub preprocessed_whir_eval_at_r_inv_ext3: Field64_3,
     /// Witness batch eval (Goldilocks) at r_inv, for batch consistency.
     pub witness_eval_value_at_r_inv: F,

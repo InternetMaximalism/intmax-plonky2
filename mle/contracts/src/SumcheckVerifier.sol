@@ -3,6 +3,7 @@ pragma solidity ^0.8.25;
 
 import {GoldilocksField as F} from "./GoldilocksField.sol";
 import {TranscriptLib} from "./TranscriptLib.sol";
+import {InvalidMleProof} from "./MleProofErrors.sol";
 
 /// @title SumcheckVerifier
 /// @notice Verifies sumcheck proofs for both zero-check (eq·C) and plain (Σh) protocols.
@@ -36,7 +37,7 @@ library SumcheckVerifier {
         uint256 maxDegree,
         TranscriptLib.Transcript memory transcript
     ) internal pure returns (uint256[] memory challenges, uint256 finalEval) {
-        require(proof.roundPolys.length == numVars, "Wrong number of rounds");
+        if (proof.roundPolys.length != numVars) revert InvalidMleProof();
         require(maxDegree >= 1, "maxDegree must be >= 1");
 
         challenges = new uint256[](numVars);
@@ -45,9 +46,9 @@ library SumcheckVerifier {
 
         for (uint256 i = 0; i < numVars; i++) {
             uint256[] memory evals = proof.roundPolys[i].evals;
-            require(evals.length >= 2, "Round poly too short");
+            if (evals.length < 2) revert InvalidMleProof();
             // SECURITY (Issue #8): enforce upper bound on round-poly degree.
-            require(evals.length <= maxEvals, "Round poly degree too high");
+            if (evals.length > maxEvals) revert InvalidMleProof();
 
             // Check: g_i(0) + g_i(1) == currentClaim
             uint256 sum;
@@ -59,7 +60,7 @@ library SumcheckVerifier {
                 // addmod(e0, e1, P)
                 sum := addmod(e0, e1, 0xFFFFFFFF00000001)
             }
-            require(sum == currentClaim, "Round check failed");
+            if (sum != currentClaim) revert InvalidMleProof();
 
             // Absorb round polynomial into transcript
             TranscriptLib.domainSeparate(transcript, "sumcheck-round");
