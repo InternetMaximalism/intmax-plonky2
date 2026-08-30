@@ -460,6 +460,10 @@ impl WhirPCS {
             )
             .map_err(|e| format!("WHIR split evaluation verification failed: {:?}", e))?;
 
+        verifier_state
+            .check_eof()
+            .map_err(|e| format!("WHIR split proof not fully consumed: {:?}", e))?;
+
         Ok(())
     }
 
@@ -617,6 +621,10 @@ impl WhirPCS {
                     .map(|l| l.as_ref() as &dyn LinearForm<Field64_3>),
             )
             .map_err(|e| format!("WHIR aux evaluation verification failed: {:?}", e))?;
+
+        verifier_state
+            .check_eof()
+            .map_err(|e| format!("WHIR aux proof not fully consumed: {:?}", e))?;
 
         Ok(())
     }
@@ -814,6 +822,10 @@ impl WhirPCS {
                 .map_err(|e| format!("WHIR evaluation verification failed: {:?}", e))?;
         }
 
+        verifier_state
+            .check_eof()
+            .map_err(|e| format!("WHIR proof not fully consumed: {:?}", e))?;
+
         Ok(())
     }
 }
@@ -957,6 +969,40 @@ mod tests {
             2, // num_vectors
         );
         assert!(result.is_ok(), "Split verify failed: {:?}", result.err());
+
+        let mut trailing_hint = eval_proof.clone();
+        trailing_hint.hints.push(0);
+        let err = pcs
+            .verify_split(
+                num_vars,
+                &trailing_hint,
+                &flat_evals,
+                WHIR_SESSION_SPLIT,
+                &[&eval_point],
+                2,
+            )
+            .expect_err("split verifier accepted a trailing hint byte");
+        assert!(
+            err.contains("not fully consumed"),
+            "unexpected trailing-hint error: {err}"
+        );
+
+        let mut trailing_narg = eval_proof.clone();
+        trailing_narg.narg_string.push(0);
+        let err = pcs
+            .verify_split(
+                num_vars,
+                &trailing_narg,
+                &flat_evals,
+                WHIR_SESSION_SPLIT,
+                &[&eval_point],
+                2,
+            )
+            .expect_err("split verifier accepted a trailing transcript byte");
+        assert!(
+            err.contains("not fully consumed"),
+            "unexpected trailing-transcript error: {err}"
+        );
     }
 
     #[test]
