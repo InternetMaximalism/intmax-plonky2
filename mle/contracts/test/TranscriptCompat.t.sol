@@ -15,18 +15,18 @@ contract TranscriptCompatTest {
     //  Rust-generated test vectors (canonical Goldilocks field elements)
     // ═══════════════════════════════════════════════════════════════════════
 
-    uint256 constant V1_EMPTY_SQUEEZE           = 5564066233726241458;
-    uint256 constant V2_ABSORB_42               = 5382117256048105213;
-    uint256 constant V3_ABSORB_VEC_123          = 5153944257736891297;
-    uint256 constant V4_DOMAIN_SEP_99           = 9437712998329239873;
-    uint256 constant V5_ABSORB_BYTES_DEADBEEF   = 6431216113529961845;
-    uint256 constant V6_SQUEEZE1                = 12336020981118610616;
-    uint256 constant V6_SQUEEZE2                = 16787817580992291001;
-    uint256 constant V6_SQUEEZE3                = 1575619615394496293;
-    uint256 constant V7_BATCH_R                 = 13000817457220507840;
-    uint256 constant V7_BETA                    = 7330374892527880894;
-    uint256 constant V7_GAMMA                   = 15545281684134560778;
-    uint256 constant V7_ALPHA                   = 9387608023261396568;
+    uint256 constant V1_EMPTY_SQUEEZE           = 8547315839357121640;
+    uint256 constant V2_ABSORB_42               = 1867589330680734043;
+    uint256 constant V3_ABSORB_VEC_123          = 7995076422575906775;
+    uint256 constant V4_DOMAIN_SEP_99           = 6968686407317250217;
+    uint256 constant V5_ABSORB_BYTES_DEADBEEF   = 3383183451740833625;
+    uint256 constant V6_SQUEEZE1                = 11100275290068350310;
+    uint256 constant V6_SQUEEZE2                = 7713500066272598466;
+    uint256 constant V6_SQUEEZE3                = 3533889966582985606;
+    uint256 constant V7_BATCH_R                 = 5563905884519123049;
+    uint256 constant V7_BETA                    = 12592358362352971247;
+    uint256 constant V7_GAMMA                   = 1902193097499229785;
+    uint256 constant V7_ALPHA                   = 11038169539064956283;
 
     // ═══════════════════════════════════════════════════════════════════════
     //  Test Vector 1: Fresh transcript, squeeze immediately

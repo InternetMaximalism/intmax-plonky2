@@ -700,6 +700,11 @@ pub struct EvaluationTables<F: Field> {
     pub sigma_values: Vec<Vec<F>>,
     /// Public input values.
     pub public_inputs: Vec<F>,
+    /// Canonical routed witness location for every public input, in public-input
+    /// order. The location is the lexicographically first `(row, column)` with
+    /// `column < num_routed_wires` in the target's copy-equivalence class.
+    /// Duplicated public-input targets deliberately produce duplicated entries.
+    pub public_input_wires: Vec<crate::iop::wire::Wire>,
     /// Hash of public inputs (used in Fiat-Shamir).
     pub public_inputs_hash: HashOut<F>,
     /// Number of wires per gate (total, including non-routed).

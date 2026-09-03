@@ -2,6 +2,7 @@
 pragma solidity ^0.8.25;
 
 import {PoseidonConstants} from "./PoseidonConstants.sol";
+import {InvalidMleProof} from "./MleProofErrors.sol";
 
 /// @title PoseidonGate — Plonky2 Poseidon-12 gate constraints (Yul-optimized).
 /// @notice Mirrors `plonky2::gates::poseidon::PoseidonGate::eval_unfiltered` for
@@ -12,9 +13,8 @@ import {PoseidonConstants} from "./PoseidonConstants.sol";
 /// Optimizations vs. the naïve port:
 ///  - State kept in contiguous memory (12 × 32-byte slots) instead of solidity
 ///    uint256[12] with copy-back-and-forth on every layer.
-///  - MDS constants MDS_CIRC[0..12] and MDS_DIAG[0] cached in local variables
-///    at function entry (re-reading from `PoseidonConstants.readU64` ~1200× per
-///    MDS sweep is expensive).
+///  - The fixed circulant MDS is evaluated with Plonky2's exact integer-FFT
+///    factorization; its only diagonal coefficient and sparse M00 are 8 and 25.
 ///  - Round constants for the current round loaded in a single 12-value block
 ///    per round instead of 12 separate library calls.
 ///  - S-box `x^7` inlined as 4 mulmod ops inside tight assembly loops.
@@ -38,6 +38,136 @@ library PoseidonGate {
     uint256 internal constant START_PARTIAL = 65;
     uint256 internal constant START_FULL_1 = 87;
 
+    /// @dev Packed constants shared by every sponge permutation in one `hashNoPad` call. A
+    /// 103-element production statement needs 13 permutations, so these blobs are materialized
+    /// once rather than once per rate chunk.
+    struct HashContext {
+        bytes allRoundConstants;
+        bytes partialFirstConstants;
+        bytes partialRoundConstants;
+        bytes partialRoundVs;
+        bytes partialRoundWHats;
+        bytes partialInitialMatrix;
+    }
+
+    /// @dev Plonky2's Poseidon `hash_no_pad` over the Goldilocks field.
+    /// The sponge rate is eight, the state width is twelve, and the first four
+    /// rate elements are returned.  A final short chunk overwrites only its
+    /// occupied rate slots, exactly matching `PlonkyPermutation::set_from_slice`.
+    function hashNoPad(uint256[] calldata inputs) internal pure returns (uint256[4] memory digest) {
+        uint256[] memory state = new uint256[](SPONGE_WIDTH);
+        uint256[] memory scratch = new uint256[](SPONGE_WIDTH);
+        uint256 statePtr;
+        uint256 scratchPtr;
+        assembly {
+            statePtr := add(state, 0x20)
+            scratchPtr := add(scratch, 0x20)
+        }
+
+        HashContext memory context = _hashContext();
+        uint256 invalidProofSelector = uint32(InvalidMleProof.selector);
+
+        for (uint256 offset = 0; offset < inputs.length; offset += 8) {
+            uint256 remaining = inputs.length - offset;
+            uint256 chunkLength = remaining < 8 ? remaining : 8;
+            assembly ("memory-safe") {
+                let source := add(inputs.offset, mul(offset, 0x20))
+                for { let i := 0 } lt(i, chunkLength) { i := add(i, 1) } {
+                    let value := calldataload(add(source, mul(i, 0x20)))
+                    if iszero(lt(value, P)) {
+                        mstore(0x00, shl(224, invalidProofSelector))
+                        revert(0x00, 0x04)
+                    }
+                    mstore(add(statePtr, mul(i, 0x20)), value)
+                }
+            }
+            _permuteHashState(statePtr, scratchPtr, context);
+        }
+
+        for (uint256 i = 0; i < 4; i++) {
+            digest[i] = state[i];
+        }
+    }
+
+    /// @dev Build the immutable permutation context once per public-input vector. The pointers
+    /// refer to memory owned by this call frame and remain live for the complete hash operation.
+    function _hashContext() private pure returns (HashContext memory context) {
+        context.allRoundConstants = PoseidonConstants.ALL_ROUND_CONSTANTS;
+        context.partialFirstConstants = PoseidonConstants.FAST_PARTIAL_FIRST_ROUND_CONSTANT;
+        context.partialRoundConstants = PoseidonConstants.FAST_PARTIAL_ROUND_CONSTANTS;
+        context.partialRoundVs = PoseidonConstants.FAST_PARTIAL_ROUND_VS;
+        context.partialRoundWHats = PoseidonConstants.FAST_PARTIAL_ROUND_W_HATS;
+        context.partialInitialMatrix = PoseidonConstants.FAST_PARTIAL_ROUND_INITIAL_MATRIX;
+    }
+
+    /// @dev Exact Plonky2 Poseidon permutation using its equivalent fast-partial
+    /// decomposition. This preserves the byte-for-byte hash while replacing each of the 22
+    /// partial rounds' dense 12x12 MDS products with the audited sparse factorization used by
+    /// Plonky2 itself and by `evalConstraints` below.
+    function _permuteHashState(uint256 statePtr, uint256 scratchPtr, HashContext memory context) private pure {
+        for (uint256 round = 0; round < HALF_N_FULL_ROUNDS; ++round) {
+            _addConstantLayer(statePtr, context.allRoundConstants, round);
+            _sboxLayer(statePtr);
+            _mdsLayerInline(statePtr, scratchPtr);
+        }
+
+        _partialFirstConstantLayer(statePtr, context.partialFirstConstants);
+        _mdsPartialLayerInit(statePtr, scratchPtr, context.partialInitialMatrix);
+        _partialRoundsHash(statePtr, context);
+
+        for (
+            uint256 round = HALF_N_FULL_ROUNDS + N_PARTIAL_ROUNDS;
+            round < 2 * HALF_N_FULL_ROUNDS + N_PARTIAL_ROUNDS;
+            ++round
+        ) {
+            _addConstantLayer(statePtr, context.allRoundConstants, round);
+            _sboxLayer(statePtr);
+            _mdsLayerInline(statePtr, scratchPtr);
+        }
+    }
+
+    /// @dev Hash-only fast partial rounds. The gate evaluator needs to stop at
+    /// every round to compare an explicit S-box wire, while hashing does not.
+    /// Keeping all 22 rounds in one assembly loop avoids 22 internal-call
+    /// boundaries per permutation. The sparse matrix update is in-place: its
+    /// row-zero dot product is computed before any of state[1..11] changes.
+    function _partialRoundsHash(uint256 statePtr, HashContext memory context) private pure {
+        assembly ("memory-safe") {
+            let p := P
+            let rcPtr := add(mload(add(context, 0x40)), 0x20)
+            let vsPtr := add(mload(add(context, 0x60)), 0x20)
+            let whPtr := add(mload(add(context, 0x80)), 0x20)
+            let m00 := 25
+
+            for { let round := 0 } lt(round, N_PARTIAL_ROUNDS) { round := add(round, 1) } {
+                let x := mload(statePtr)
+                let x2 := mulmod(x, x, p)
+                let x4 := mulmod(x2, x2, p)
+                let s0 := addmod(mulmod(mulmod(x, x2, p), x4, p), shr(192, mload(rcPtr)), p)
+
+                // d = s0*M00 + sum(state[i]*W_HAT[i]). Each operand is a
+                // canonical u64 and the twelve-product sum is < 2^132.
+                let d := mul(s0, m00)
+                for { let i := 1 } lt(i, 12) { i := add(i, 1) } {
+                    d := add(d, mul(mload(add(statePtr, mul(i, 0x20))), shr(192, mload(add(whPtr, mul(sub(i, 1), 8))))))
+                }
+
+                // Rows 1..11 are independent sparse updates from the same
+                // old state and s0, so they can overwrite their source slots.
+                for { let i := 1 } lt(i, 12) { i := add(i, 1) } {
+                    let slot := add(statePtr, mul(i, 0x20))
+                    let coefficient := shr(192, mload(add(vsPtr, mul(sub(i, 1), 8))))
+                    mstore(slot, mod(add(mul(s0, coefficient), mload(slot)), p))
+                }
+                mstore(statePtr, mod(d, p))
+
+                rcPtr := add(rcPtr, 8)
+                vsPtr := add(vsPtr, 88)
+                whPtr := add(whPtr, 88)
+            }
+        }
+    }
+
     /// @dev 123 constraints total. Layout:
     ///   [0]           swap binary check
     ///   [1..5)        delta consistency (4)
@@ -45,46 +175,17 @@ library PoseidonGate {
     ///   [41..63)      partial-round S-box input consistency (22)
     ///   [63..111)     second-set full-round S-box input consistency (48 = 12×4)
     ///   [111..123)    output consistency (12)
-    function evalConstraints(
-        uint256[] memory w,
-        uint256 filter,
-        uint256[] memory acc
-    ) internal pure {
+    function evalConstraints(uint256[] memory w, uint256 filter, uint256[] memory acc) internal pure {
         // Pull direct memory pointers to the packed big-endian blobs so inner
         // loops can `mload(ptr+offset)` without function-call or bounds-check
         // overhead. Each blob is `bytes memory`: 32-byte length prefix then
         // the payload we want.
         bytes memory allRC = PoseidonConstants.ALL_ROUND_CONSTANTS;
-        bytes memory mdsCirc = PoseidonConstants.MDS_CIRC;
-        bytes memory mdsDiag = PoseidonConstants.MDS_DIAG;
         bytes memory pfrc = PoseidonConstants.FAST_PARTIAL_FIRST_ROUND_CONSTANT;
         bytes memory prc = PoseidonConstants.FAST_PARTIAL_ROUND_CONSTANTS;
         bytes memory prvs = PoseidonConstants.FAST_PARTIAL_ROUND_VS;
         bytes memory prwh = PoseidonConstants.FAST_PARTIAL_ROUND_W_HATS;
         bytes memory pim = PoseidonConstants.FAST_PARTIAL_ROUND_INITIAL_MATRIX;
-
-        // MDS_CIRC[0..12] + MDS_DIAG[0]: store contiguously in a 13-slot
-        // scratch buffer so inner loops can mload via a single pointer
-        // (cheaper than carrying 13 stack locals through nested calls).
-        uint256[] memory mdsBuf = new uint256[](13);
-        uint256 mdsPtr;
-        assembly {
-            mdsPtr := add(mdsBuf, 0x20)
-            let cp := add(mdsCirc, 0x20)
-            mstore(mdsPtr,            shr(192, mload(cp)))
-            mstore(add(mdsPtr, 0x20), shr(192, mload(add(cp, 8))))
-            mstore(add(mdsPtr, 0x40), shr(192, mload(add(cp, 16))))
-            mstore(add(mdsPtr, 0x60), shr(192, mload(add(cp, 24))))
-            mstore(add(mdsPtr, 0x80), shr(192, mload(add(cp, 32))))
-            mstore(add(mdsPtr, 0xa0), shr(192, mload(add(cp, 40))))
-            mstore(add(mdsPtr, 0xc0), shr(192, mload(add(cp, 48))))
-            mstore(add(mdsPtr, 0xe0), shr(192, mload(add(cp, 56))))
-            mstore(add(mdsPtr, 0x100), shr(192, mload(add(cp, 64))))
-            mstore(add(mdsPtr, 0x120), shr(192, mload(add(cp, 72))))
-            mstore(add(mdsPtr, 0x140), shr(192, mload(add(cp, 80))))
-            mstore(add(mdsPtr, 0x160), shr(192, mload(add(cp, 88))))
-            mstore(add(mdsPtr, 0x180), shr(192, mload(add(mdsDiag, 0x20))))
-        }
 
         // Allocate a contiguous 12-slot scratch for the Poseidon state.
         // Layout: state[i] at offset 0x20*i (i ∈ 0..12).
@@ -105,11 +206,11 @@ library PoseidonGate {
         _evalSwapDelta(w, filter, acc, statePtr);
 
         // Phase structure delegated to helpers to keep stack usage bounded.
-        uint256 nextIdx = _firstFullRounds(w, filter, acc, statePtr, scratchPtr, mdsPtr, allRC);
+        uint256 nextIdx = _firstFullRounds(w, filter, acc, statePtr, scratchPtr, allRC);
         _partialFirstConstantLayer(statePtr, pfrc);
         _mdsPartialLayerInit(statePtr, scratchPtr, pim);
-        nextIdx = _partialRounds(w, filter, acc, statePtr, scratchPtr, mdsPtr, prc, prvs, prwh, nextIdx);
-        nextIdx = _secondFullRounds(w, filter, acc, statePtr, scratchPtr, mdsPtr, allRC, nextIdx);
+        nextIdx = _partialRounds(w, filter, acc, statePtr, scratchPtr, prc, prvs, prwh, nextIdx);
+        nextIdx = _secondFullRounds(w, filter, acc, statePtr, scratchPtr, allRC, nextIdx);
         _outputConstraints(w, filter, acc, statePtr, nextIdx);
     }
 
@@ -121,7 +222,6 @@ library PoseidonGate {
         uint256[] memory acc,
         uint256 statePtr,
         uint256 scratchPtr,
-        uint256 mdsPtr,
         bytes memory allRC
     ) private pure returns (uint256 nextIdx) {
         uint256 wPtr;
@@ -139,7 +239,7 @@ library PoseidonGate {
                 nextIdx = _pushConsumeSboxInputs(statePtr, wPtr, startSbox, filter, accPtr, nextIdx);
             }
             _sboxLayer(statePtr);
-            _mdsLayerInline(statePtr, scratchPtr, mdsPtr);
+            _mdsLayerInline(statePtr, scratchPtr);
             roundCtr++;
         }
     }
@@ -151,7 +251,6 @@ library PoseidonGate {
         uint256[] memory acc,
         uint256 statePtr,
         uint256 scratchPtr,
-        uint256 mdsPtr,
         bytes memory prc,
         bytes memory prvs,
         bytes memory prwh,
@@ -161,11 +260,8 @@ library PoseidonGate {
         assembly {
             accPtr := add(acc, 0x20)
         }
-        // m00 = MDS_CIRC[0] + MDS_DIAG[0]
-        uint256 m00;
-        assembly {
-            m00 := addmod(mload(mdsPtr), mload(add(mdsPtr, 0x180)), P)
-        }
+        // MDS_CIRC[0] + MDS_DIAG[0] = 17 + 8.
+        uint256 m00 = 25;
         for (uint256 r = 0; r < N_PARTIAL_ROUNDS - 1; r++) {
             uint256 sboxIn = w[START_PARTIAL + r];
             nextIdx = _pushPartialConstraint(statePtr, sboxIn, filter, accPtr, nextIdx);
@@ -201,7 +297,6 @@ library PoseidonGate {
         uint256[] memory acc,
         uint256 statePtr,
         uint256 scratchPtr,
-        uint256 mdsPtr,
         bytes memory allRC,
         uint256 nextIdx
     ) private pure returns (uint256) {
@@ -217,7 +312,7 @@ library PoseidonGate {
             uint256 startSbox = START_FULL_1 + 12 * r;
             nextIdx = _pushConsumeSboxInputs(statePtr, wPtr, startSbox, filter, accPtr, nextIdx);
             _sboxLayer(statePtr);
-            _mdsLayerInline(statePtr, scratchPtr, mdsPtr);
+            _mdsLayerInline(statePtr, scratchPtr);
             roundCtr++;
         }
         return nextIdx;
@@ -248,12 +343,7 @@ library PoseidonGate {
     }
 
     /// @dev Constraints 0..5 (swap binary + 4 delta) and initial state load.
-    function _evalSwapDelta(
-        uint256[] memory w,
-        uint256 filter,
-        uint256[] memory acc,
-        uint256 statePtr
-    ) private pure {
+    function _evalSwapDelta(uint256[] memory w, uint256 filter, uint256[] memory acc, uint256 statePtr) private pure {
         uint256 swap = w[WIRE_SWAP];
         assembly {
             let p := P
@@ -320,17 +410,17 @@ library PoseidonGate {
                 mstore(stSlot, sboxInR)
             }
         }
-        unchecked { return nextIdx + 12; }
+        unchecked {
+            return nextIdx + 12;
+        }
     }
 
     /// @dev Single partial-round sbox-input constraint: state[0] - sbox_in.
-    function _pushPartialConstraint(
-        uint256 statePtr,
-        uint256 sboxIn,
-        uint256 filter,
-        uint256 accPtr,
-        uint256 nextIdx
-    ) private pure returns (uint256) {
+    function _pushPartialConstraint(uint256 statePtr, uint256 sboxIn, uint256 filter, uint256 accPtr, uint256 nextIdx)
+        private
+        pure
+        returns (uint256)
+    {
         assembly {
             let p := P
             let st0 := mload(statePtr)
@@ -341,7 +431,9 @@ library PoseidonGate {
             let slot := add(accPtr, mul(nextIdx, 0x20))
             mstore(slot, addmod(mload(slot), contribute, p))
         }
-        unchecked { return nextIdx + 1; }
+        unchecked {
+            return nextIdx + 1;
+        }
     }
 
     /// @dev state[i] += ALL_ROUND_CONSTANTS[12*round_ctr + i] for i ∈ 0..12.
@@ -372,37 +464,116 @@ library PoseidonGate {
         }
     }
 
-    /// @dev MDS layer using cached MDS_CIRC + MDS_DIAG[0] from `mdsPtr`.
-    /// result[r] = Σ_i state[(i+r) % 12] * CIRC[i]   (+ s0*DIAG[0] if r==0)
-    /// Loop over r with an inner loop over i (avoids the 24-variable stack
-    /// pressure of a fully-unrolled 12×12 version).
-    function _mdsLayerInline(
-        uint256 statePtr,
-        uint256 scratchPtr,
-        uint256 mdsPtr
-    ) private pure {
+    /// @dev MDS layer using the exact 3x4 integer-FFT factorization from
+    /// `plonky2::hash::poseidon_goldilocks::poseidon12_mds`.
+    ///
+    /// This is algebraically identical to
+    /// `result[r] = Σ_i state[(i+r) % 12] * CIRC[i]`, for the fixed
+    /// `CIRC = [17,15,41,16,2,28,13,13,39,18,34,20]`. The only diagonal
+    /// coefficient is then added to result[0]. Every transform value is kept as
+    /// a canonical Goldilocks representative. Weighted integer sums are below
+    /// 2^70 and are reduced exactly once; subtraction uses an explicit bounded
+    /// multiple of P, avoiding any signed-EVM interpretation.
+    ///
+    /// Keeping this factorization here (rather than a second hash-only MDS)
+    /// means both the gate evaluator and public-input hasher exercise the same
+    /// reviewed linear layer.
+    function _mdsLayerInline(uint256 statePtr, uint256 scratchPtr) internal pure {
         assembly {
             let p := P
-            // Outer loop over row r.
-            for { let r := 0 } lt(r, 12) { r := add(r, 1) } {
-                let acc := 0
-                // Inner dot product.
-                for { let i := 0 } lt(i, 12) { i := add(i, 1) } {
-                    let circ := mload(add(mdsPtr, mul(i, 0x20)))
-                    // state index = (i + r) mod 12
-                    let idx := addmod(i, r, 12) // cheap: all < 24
-                    let s := mload(add(statePtr, mul(idx, 0x20)))
-                    acc := addmod(acc, mulmod(s, circ, p), p)
-                }
-                // Only DIAG[0] is non-zero; add it to row 0 only.
-                if iszero(r) {
-                    acc := addmod(acc, mulmod(mload(statePtr), mload(add(mdsPtr, 0x180)), p), p)
-                }
-                mstore(add(scratchPtr, mul(r, 0x20)), acc)
+
+            // Three independent real 4-FFTs. Each group [a,b,c,d] maps to
+            // [a+b+c+d, (a-c)+i(d-b), a-b+c-d]. Store the twelve scalar
+            // components in scratch as
+            // [u0,u1r,u1i,u2, u4,u5r,u5i,u6, u8,u9r,u9i,u10].
+            for { let g := 0 } lt(g, 3) { g := add(g, 1) } {
+                let a := mload(add(statePtr, mul(g, 0x20)))
+                let b := mload(add(statePtr, mul(add(g, 3), 0x20)))
+                let c := mload(add(statePtr, mul(add(g, 6), 0x20)))
+                let d := mload(add(statePtr, mul(add(g, 9), 0x20)))
+                let base := add(scratchPtr, mul(g, 0x80))
+                mstore(base, addmod(addmod(a, b, p), addmod(c, d, p), p))
+                mstore(add(base, 0x20), addmod(a, sub(p, c), p))
+                mstore(add(base, 0x40), addmod(d, sub(p, b), p))
+                mstore(add(base, 0x60), addmod(addmod(a, sub(p, b), p), addmod(c, sub(p, d), p), p))
             }
-            // Copy scratch back to state in one sweep.
-            for { let i := 0 } lt(i, 12) { i := add(i, 1) } {
-                mstore(add(statePtr, mul(i, 0x20)), mload(add(scratchPtr, mul(i, 0x20))))
+
+            // Frequency block one, with coefficients [16,32,16].
+            {
+                let x0 := mload(scratchPtr)
+                let x1 := mload(add(scratchPtr, 0x80))
+                let x2 := mload(add(scratchPtr, 0x100))
+                mstore(scratchPtr, mod(add(add(shl(4, x0), shl(4, x1)), shl(5, x2)), p))
+                mstore(add(scratchPtr, 0x80), mod(add(add(shl(5, x0), shl(4, x1)), shl(4, x2)), p))
+                mstore(add(scratchPtr, 0x100), mod(add(add(shl(4, x0), shl(5, x1)), shl(4, x2)), p))
+            }
+
+            // Frequency block two. This is the source implementation's
+            // complex Karatsuba block specialized for constants
+            // [(2,-1),(-4,1),(16,1)], simplified symbolically.
+            {
+                let a := mload(add(scratchPtr, 0x20))
+                let b := mload(add(scratchPtr, 0x40))
+                let c := mload(add(scratchPtr, 0xa0))
+                let d := mload(add(scratchPtr, 0xc0))
+                let e := mload(add(scratchPtr, 0x120))
+                let f := mload(add(scratchPtr, 0x140))
+
+                mstore(
+                    add(scratchPtr, 0x20),
+                    mod(add(add(add(add(add(shl(1, a), b), c), shl(4, d)), e), sub(shl(2, p), shl(2, f))), p)
+                )
+                mstore(
+                    add(scratchPtr, 0x40),
+                    mod(sub(add(add(add(shl(1, b), d), shl(2, e)), add(f, mul(17, p))), add(a, shl(4, c))), p)
+                )
+                mstore(
+                    add(scratchPtr, 0xa0),
+                    mod(add(add(add(add(shl(1, c), d), e), shl(4, f)), sub(mul(5, p), add(shl(2, a), b))), p)
+                )
+                mstore(
+                    add(scratchPtr, 0xc0),
+                    mod(sub(add(add(add(a, shl(1, d)), f), mul(21, p)), add(add(shl(2, b), c), shl(4, e))), p)
+                )
+                mstore(
+                    add(scratchPtr, 0x120),
+                    mod(add(add(add(shl(4, a), shl(1, e)), f), sub(mul(6, p), add(add(b, shl(2, c)), d))), p)
+                )
+                mstore(
+                    add(scratchPtr, 0x140),
+                    mod(add(add(add(add(a, shl(4, b)), c), shl(1, f)), sub(mul(5, p), add(shl(2, d), e))), p)
+                )
+            }
+
+            // Frequency block three, with coefficients [-1,-8,2].
+            {
+                let x0 := mload(add(scratchPtr, 0x60))
+                let x1 := mload(add(scratchPtr, 0xe0))
+                let x2 := mload(add(scratchPtr, 0x160))
+                mstore(add(scratchPtr, 0x60), mod(add(shl(3, x2), sub(mul(3, p), add(x0, shl(1, x1)))), p))
+                mstore(add(scratchPtr, 0xe0), mod(sub(mul(11, p), add(add(shl(3, x0), x1), shl(1, x2))), p))
+                mstore(add(scratchPtr, 0x160), mod(add(shl(1, x0), sub(mul(9, p), add(shl(3, x1), x2))), p))
+            }
+
+            // Three real inverse 4-FFTs (without the cancelling /4 factor).
+            // The output is the exact positive circulant product; reduce each
+            // row once, matching Plonky2's Goldilocks result.
+            for { let g := 0 } lt(g, 3) { g := add(g, 1) } {
+                let base := add(scratchPtr, mul(g, 0x80))
+                let v0 := mload(base)
+                let v1r := mload(add(base, 0x20))
+                let v1i := mload(add(base, 0x40))
+                let v2 := mload(add(base, 0x60))
+                let z0 := addmod(v0, v2, p)
+                let z1 := addmod(v0, sub(p, v2), p)
+                let out0 := addmod(z0, v1r, p)
+                if iszero(g) {
+                    out0 := addmod(out0, mulmod(mload(statePtr), 8, p), p)
+                }
+                mstore(add(statePtr, mul(g, 0x20)), out0)
+                mstore(add(statePtr, mul(add(g, 3), 0x20)), addmod(z1, sub(p, v1i), p))
+                mstore(add(statePtr, mul(add(g, 6), 0x20)), addmod(z0, sub(p, v1r), p))
+                mstore(add(statePtr, mul(add(g, 9), 0x20)), addmod(z1, v1i, p))
             }
         }
     }
@@ -438,13 +609,15 @@ library PoseidonGate {
                     for { let c := 1 } lt(c, 12) { c := add(c, 1) } {
                         let t := shr(192, mload(add(rowBase, mul(sub(c, 1), 8))))
                         let sl := add(scratchPtr, mul(c, 0x20))
-                        mstore(sl, addmod(mload(sl), mulmod(stR, t, p), p))
+                        // 11 products of two canonical u64 values sum to < 2^132.
+                        mstore(sl, add(mload(sl), mul(stR, t)))
                     }
                 }
             }
             // Copy scratch back to state.
-            for { let i := 0 } lt(i, 12) { i := add(i, 1) } {
-                mstore(add(statePtr, mul(i, 0x20)), mload(add(scratchPtr, mul(i, 0x20))))
+            mstore(statePtr, mload(scratchPtr))
+            for { let i := 1 } lt(i, 12) { i := add(i, 1) } {
+                mstore(add(statePtr, mul(i, 0x20)), mod(mload(add(scratchPtr, mul(i, 0x20))), p))
             }
         }
     }
@@ -464,19 +637,20 @@ library PoseidonGate {
         assembly {
             let p := P
             let s0 := mload(statePtr)
-            let d := mulmod(s0, m00, p)
+            let d := mul(s0, m00)
             let whBase := add(add(prwh, 0x20), mul(r, 88))
             for { let i := 1 } lt(i, 12) { i := add(i, 1) } {
                 let t := shr(192, mload(add(whBase, mul(sub(i, 1), 8))))
                 let stI := mload(add(statePtr, mul(i, 0x20)))
-                d := addmod(d, mulmod(stI, t, p), p)
+                // Twelve u64*u64 products sum to < 2^132.
+                d := add(d, mul(stI, t))
             }
-            mstore(scratchPtr, d)
+            mstore(scratchPtr, mod(d, p))
             let vsBase := add(add(prvs, 0x20), mul(r, 88))
             for { let i := 1 } lt(i, 12) { i := add(i, 1) } {
                 let t := shr(192, mload(add(vsBase, mul(sub(i, 1), 8))))
                 let stI := mload(add(statePtr, mul(i, 0x20)))
-                mstore(add(scratchPtr, mul(i, 0x20)), addmod(mulmod(s0, t, p), stI, p))
+                mstore(add(scratchPtr, mul(i, 0x20)), mod(add(mul(s0, t), stI), p))
             }
             // Copy scratch back.
             for { let i := 0 } lt(i, 12) { i := add(i, 1) } {

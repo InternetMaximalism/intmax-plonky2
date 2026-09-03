@@ -2,6 +2,7 @@
 pragma solidity ^0.8.25;
 
 import {InvalidMleProof} from "./MleProofErrors.sol";
+import {MLE_TRANSCRIPT_PROTOCOL} from "./generated/MleWhirV1.sol";
 
 /// @title TranscriptLib
 /// @notice Keccak256-based Fiat-Shamir transcript matching the Rust implementation
@@ -26,7 +27,7 @@ library TranscriptLib {
     function init(Transcript memory t) internal pure {
         t.state = "";
         t.squeezeCounter = 0;
-        domainSeparate(t, "plonky2-mle-v0");
+        domainSeparate(t, MLE_TRANSCRIPT_PROTOCOL);
     }
 
     /// @notice Absorb a domain separation label. Resets squeeze counter.
@@ -178,6 +179,18 @@ library TranscriptLib {
         t.squeezeCounter = 0;
     }
 
+    /// @notice Absorb a schema integer using Rust's `absorb_bytes(u64_le)`
+    /// encoding: an 8-byte little-endian length followed by 8 little-endian
+    /// payload bytes.
+    function absorbU64Bytes(Transcript memory t, uint256 value) internal pure {
+        if (value > type(uint64).max) revert InvalidMleProof();
+        bytes memory data = new bytes(8);
+        for (uint256 i = 0; i < 8; i++) {
+            data[i] = bytes1(uint8(value >> (8 * i)));
+        }
+        absorbBytes(t, data);
+    }
+
     /// @notice Squeeze a challenge field element matching the Rust implementation exactly.
     /// @dev Optimized: computes keccak256(state || counter_LE) in-place without
     ///      allocating a new bytes array. Temporarily writes 8 counter bytes after
@@ -185,8 +198,8 @@ library TranscriptLib {
     ///
     ///      Rust algorithm:
     ///        1. hash = keccak256(state || counter_LE_u64)
-    ///        2. limb0 = LE u64 from hash[0..8], limb1 = LE u64 from hash[8..16]
-    ///        3. result = reduce96(limb0, limb1 & 0xFFFFFFFF) mod P
+    ///        2. split all 32 bytes into four little-endian u64 limbs
+    ///        3. reduce with Horner's rule in radix 2^64 mod P
     function squeezeChallenge(Transcript memory t) internal pure returns (uint256 challenge) {
         assembly {
             // t is a pointer to the Transcript struct in memory
@@ -232,10 +245,15 @@ library TranscriptLib {
 
             let limb0 := swap64(shr(192, hashVal))
             let limb1 := swap64(and(shr(128, hashVal), 0xFFFFFFFFFFFFFFFF))
+            let limb2 := swap64(and(shr(64, hashVal), 0xFFFFFFFFFFFFFFFF))
+            let limb3 := swap64(and(hashVal, 0xFFFFFFFFFFFFFFFF))
 
-            // reduce96: lo + (hi & 0xFFFFFFFF) * EPSILON
-            let reduced := add(limb0, mul(and(limb1, 0xFFFFFFFF), 0xFFFFFFFF))
-            challenge := mod(reduced, 0xFFFFFFFF00000001)
+            // For Goldilocks, 2^64 mod P = 2^32 - 1.
+            let p := 0xFFFFFFFF00000001
+            let radix := 0xFFFFFFFF
+            let reduced := addmod(mulmod(limb3, radix, p), limb2, p)
+            reduced := addmod(mulmod(reduced, radix, p), limb1, p)
+            challenge := addmod(mulmod(reduced, radix, p), limb0, p)
         }
     }
 

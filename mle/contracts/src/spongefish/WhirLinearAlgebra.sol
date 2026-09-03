@@ -2,6 +2,7 @@
 pragma solidity ^0.8.25;
 
 import {GoldilocksExt3} from "./GoldilocksExt3.sol";
+import {InvalidMleProof} from "../MleProofErrors.sol";
 
 /// @title WhirLinearAlgebra
 /// @notice Linear algebra utilities for WHIR verification.
@@ -118,7 +119,7 @@ library WhirLinearAlgebra {
         // SECURITY: require length equality — silent truncation allows a prover to supply
         // a shorter evalPoint, making the verifier evaluate over fewer variables and
         // accepting constraints that only hold on a proper subset of the required domain.
-        require(numVariables == evalPoint.length, "WhirLinearAlgebra: length mismatch");
+        if (numVariables != evalPoint.length) revert InvalidMleProof();
         assembly {
             let p := P
             let res0 := 1
@@ -191,7 +192,7 @@ library WhirLinearAlgebra {
         // SECURITY: require length equality — silent truncation allows a prover to supply
         // a shorter array, causing the verifier to evaluate over fewer variables and
         // potentially accepting constraints that only hold on a subset of the domain.
-        require(point.length == evalPoint.length, "WhirLinearAlgebra: length mismatch");
+        if (point.length != evalPoint.length) revert InvalidMleProof();
         assembly {
             let p := P
             let res0 := 1
@@ -279,7 +280,7 @@ library WhirLinearAlgebra {
         // for idx in [0, count), which accesses beyond arr.length when start+count > arr.length.
         // Out-of-bounds reads return garbage from adjacent EVM memory, corrupting eq_weights
         // and thus the polynomial commitment check: dotProduct(eqWeights, evaluations).
-        require(start + count <= arr.length, "WhirLinearAlgebra: eqWeightsFrom out of bounds");
+        if (start > arr.length || count > arr.length - start) revert InvalidMleProof();
         uint256 size = 1 << count;
         weights = new GoldilocksExt3.Ext3[](size);
         // Allocate all Ext3 structs upfront
@@ -398,7 +399,7 @@ library WhirLinearAlgebra {
         // SECURITY: require length equality. Silent truncation to min(len_a, len_b) allows a
         // prover to supply a shorter evaluations array, making the verifier sum fewer terms and
         // treating the missing ones as zero. This breaks the polynomial commitment check.
-        require(a.length == b.length, "WhirLinearAlgebra: dotProduct length mismatch");
+        if (a.length != b.length) revert InvalidMleProof();
         assembly {
             let p := P
             let aLen := mload(a)

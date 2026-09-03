@@ -46,9 +46,9 @@ library SumcheckVerifier {
 
         for (uint256 i = 0; i < numVars; i++) {
             uint256[] memory evals = proof.roundPolys[i].evals;
-            if (evals.length < 2) revert InvalidMleProof();
-            // SECURITY (Issue #8): enforce upper bound on round-poly degree.
-            if (evals.length > maxEvals) revert InvalidMleProof();
+            // Versioned schema: a degree-d round is encoded by exactly d+1
+            // evaluations. Short encodings are not accepted as aliases.
+            if (evals.length != maxEvals) revert InvalidMleProof();
 
             // Check: g_i(0) + g_i(1) == currentClaim
             uint256 sum;

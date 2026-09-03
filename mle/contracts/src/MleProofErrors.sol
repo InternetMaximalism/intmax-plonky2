@@ -13,13 +13,19 @@ error InvalidMleProof();
 ///      deployment/configuration failure, never evidence of an invalid proof.
 error InvalidMleVerifierChainId(uint256 configuredChainId, uint256 actualChainId);
 
-/// @dev The current MLE proof engine commits only random-linear combinations of
-///      constituent oracle columns.  Because those batching scalars are known
-///      before the corresponding commitment roots, correlated terminal-evaluation
-///      forgeries remain possible. The verifier is therefore restricted to its
-///      immutable deployment-chain pin. Configuring that pin to a public chain
-///      is an explicit unsafe choice until commitments bind every constituent
-///      polynomial before batching challenges are sampled.
+/// @dev Stored verifier/VK data is unsupported, malformed, or has drifted
+///      from the deployment-time digest. This is UNEVALUABLE and MUST NOT be
+///      interpreted as evidence that attacker-supplied proof bytes are false.
+error InvalidMleVerifierConfiguration();
+
+/// @dev Packed protocol v1 commits every ordered constituent group before its
+///      dependent challenges and authenticates the terminal-used constituent
+///      evaluations. The complete MLE construction nevertheless still uses
+///      individual Goldilocks challenges in its outer algebraic arguments and
+///      does not have the required 128-bit end-to-end soundness bound. The
+///      verifier therefore remains restricted to its immutable deployment-chain
+///      pin; configuring that pin to a public chain is an explicit unsafe choice
+///      until the complete construction and migration receive independent review.
 ///
 ///      This error MUST remain distinct from `InvalidMleProof`: inability to run
 ///      a verifier unavailable on the current chain is not evidence that an
