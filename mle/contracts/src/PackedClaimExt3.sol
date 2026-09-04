@@ -109,13 +109,15 @@ library PackedClaimExt3 {
         uint256 capacity,
         GoldilocksExt3.Ext3[][] memory indexPoints
     ) private pure returns (GoldilocksExt3.Ext3[] memory evaluations, bytes memory evalMask) {
-
         evaluations = new GoldilocksExt3.Ext3[](NUM_CELLS);
-        evaluations[0] = _foldUnchecked(claims.logPreprocessed, capacity, indexPoints[0]);
-        evaluations[1] = _foldUnchecked(claims.logWitness, capacity, indexPoints[0]);
-        evaluations[2] = _foldUnchecked(claims.logNormInverse, capacity, indexPoints[0]);
-        evaluations[3] = _foldUnchecked(claims.gatePreprocessed, capacity, indexPoints[1]);
-        evaluations[4] = _foldUnchecked(claims.gateWitness, capacity, indexPoints[1]);
+        // One flat limb buffer (three words per slot) shared by all five folds. Every fold
+        // overwrites the prefix it uses, so no per-fold allocation or zeroing is needed.
+        uint256[] memory scratch = new uint256[](3 * capacity);
+        _foldFlat(claims.logPreprocessed, indexPoints[0], scratch, evaluations[0]);
+        _foldFlat(claims.logWitness, indexPoints[0], scratch, evaluations[1]);
+        _foldFlat(claims.logNormInverse, indexPoints[0], scratch, evaluations[2]);
+        _foldFlat(claims.gatePreprocessed, indexPoints[1], scratch, evaluations[3]);
+        _foldFlat(claims.gateWitness, indexPoints[1], scratch, evaluations[4]);
         // evaluations[5] remains the canonical Ext3 zero.
 
         evalMask = new bytes(1);
@@ -209,104 +211,79 @@ library PackedClaimExt3 {
         uint256 capacity,
         GoldilocksExt3.Ext3[] memory indexPoint
     ) private pure returns (GoldilocksExt3.Ext3 memory result) {
-        if (values.length == 0) return GoldilocksExt3.zero();
-        GoldilocksExt3.Ext3[] memory layer = new GoldilocksExt3.Ext3[](capacity);
-        for (uint256 i = 0; i < values.length; ++i) {
-            // Construct a fresh record instead of assigning a memory pointer.
-            // The fold mutates left records in place below and must never alias
-            // proof terminal values that are consumed after PCS verification.
-            GoldilocksExt3.Ext3 memory value = values[i];
-            layer[i] = GoldilocksExt3.Ext3(value.c0, value.c1, value.c2);
-        }
+        uint256[] memory scratch = new uint256[](3 * capacity);
+        _foldFlat(values, indexPoint, scratch, result);
+    }
 
-        // The suffix `[values.length, capacity)` is protocol-defined zero
-        // padding. Once a pair is wholly inside that suffix, every value it
-        // could produce is also zero, so evaluating it cannot affect the MLE.
-        // Track only the non-zero-capable prefix while retaining the exact
-        // `capacity` allocation and all index-point rounds.
-        uint256 active = values.length;
-        for (uint256 bit = 0; bit < indexPoint.length; ++bit) {
-            uint256 next = (active + 1) >> 1;
-            for (uint256 i = 0; i < next; ++i) {
-                GoldilocksExt3.Ext3 memory even = layer[2 * i];
-                if (2 * i + 1 < active) {
-                    _lerpInPlace(even, layer[2 * i + 1], indexPoint[bit]);
-                } else {
-                    _lerpZeroOddInPlace(even, indexPoint[bit]);
-                }
-                layer[i] = even;
+    /// @dev Multilinear fold of `values` (a strict prefix of the zero-padded slot
+    /// table) at `indexPoint`, LSB-first, computed in a flat limb buffer.
+    ///
+    /// Algebraically identical to the reviewed record-based fold: every butterfly is
+    /// `even + r * (odd - even)`, an absent (zero-padded) odd partner contributes
+    /// `even + r * (0 - even)`, and pairs that lie wholly inside the zero suffix are
+    /// never evaluated because they cannot change the result. The buffer holds three
+    /// words per slot; slot `i` of the next layer is written only after pair `i` was
+    /// consumed (slot `0` is read before it is written, every other slot `j` was read
+    /// by pair `j / 2 < j`), so the in-place update never aliases a live input.
+    function _foldFlat(
+        GoldilocksExt3.Ext3[] memory values,
+        GoldilocksExt3.Ext3[] memory indexPoint,
+        uint256[] memory scratch,
+        GoldilocksExt3.Ext3 memory result
+    ) private pure {
+        uint256 count = values.length;
+        if (count == 0) return;
+        if (3 * count > scratch.length) revert InvalidMleProof();
+        assembly ("memory-safe") {
+            let p := 0xFFFFFFFF00000001
+            let buf := add(scratch, 0x20)
+            let table := add(values, 0x20)
+            for { let i := 0 } lt(i, count) { i := add(i, 1) } {
+                let record := mload(add(table, shl(5, i)))
+                let dst := add(buf, mul(i, 0x60))
+                mstore(dst, mload(record))
+                mstore(add(dst, 0x20), mload(add(record, 0x20)))
+                mstore(add(dst, 0x40), mload(add(record, 0x40)))
             }
-            active = next;
-        }
-        result = layer[0];
-    }
-
-    /// @dev `even + r * (0 - even) = even * (1 - r)` for the sole odd
-    /// element of a sparse prefix. This avoids reading a null tail pointer and
-    /// is algebraically identical to `_lerpInPlace(even, zero, r)`.
-    function _lerpZeroOddInPlace(
-        GoldilocksExt3.Ext3 memory even,
-        GoldilocksExt3.Ext3 memory challenge
-    ) private pure {
-        assembly ("memory-safe") {
-            let p := 0xFFFFFFFF00000001
-            let e0 := mload(even)
-            let e1 := mload(add(even, 0x20))
-            let e2 := mload(add(even, 0x40))
-            let r0 := mload(challenge)
-            let r1 := mload(add(challenge, 0x20))
-            let r2 := mload(add(challenge, 0x40))
-
-            let omr0 := addmod(1, sub(p, r0), p)
-            let omr1 := sub(p, r1)
-            let omr2 := sub(p, r2)
-            let t := addmod(mulmod(e1, omr2, p), mulmod(e2, omr1, p), p)
-            mstore(even, addmod(mulmod(e0, omr0, p), mulmod(2, t, p), p))
-            mstore(
-                add(even, 0x20),
-                addmod(
-                    addmod(mulmod(e0, omr1, p), mulmod(e1, omr0, p), p),
-                    mulmod(2, mulmod(e2, omr2, p), p),
-                    p
-                )
-            )
-            mstore(
-                add(even, 0x40),
-                addmod(addmod(mulmod(e0, omr2, p), mulmod(e1, omr1, p), p), mulmod(e2, omr0, p), p)
-            )
-        }
-    }
-
-    /// @dev Replace `even` with `even + challenge * (odd - even)` directly in
-    /// its non-aliased backing record. This is exactly GoldilocksExt3
-    /// sub/mul/add, but avoids allocating three 96-byte temporary structs at
-    /// every one of the 255 butterfly nodes in a width-256 fold.
-    function _lerpInPlace(
-        GoldilocksExt3.Ext3 memory even,
-        GoldilocksExt3.Ext3 memory odd,
-        GoldilocksExt3.Ext3 memory challenge
-    ) private pure {
-        assembly ("memory-safe") {
-            let p := 0xFFFFFFFF00000001
-            let e0 := mload(even)
-            let e1 := mload(add(even, 0x20))
-            let e2 := mload(add(even, 0x40))
-            let d0 := addmod(mload(odd), sub(p, e0), p)
-            let d1 := addmod(mload(add(odd, 0x20)), sub(p, e1), p)
-            let d2 := addmod(mload(add(odd, 0x40)), sub(p, e2), p)
-            let r0 := mload(challenge)
-            let r1 := mload(add(challenge, 0x20))
-            let r2 := mload(add(challenge, 0x40))
-
-            let t0 := addmod(mulmod(r1, d2, p), mulmod(r2, d1, p), p)
-            let product0 := addmod(mulmod(r0, d0, p), mulmod(2, t0, p), p)
-            let t1 := addmod(mulmod(r0, d1, p), mulmod(r1, d0, p), p)
-            let product1 := addmod(t1, mulmod(2, mulmod(r2, d2, p), p), p)
-            let product2 := addmod(addmod(mulmod(r0, d2, p), mulmod(r1, d1, p), p), mulmod(r2, d0, p), p)
-
-            mstore(even, addmod(e0, product0, p))
-            mstore(add(even, 0x20), addmod(e1, product1, p))
-            mstore(add(even, 0x40), addmod(e2, product2, p))
+            let active := count
+            let bits := mload(indexPoint)
+            let points := add(indexPoint, 0x20)
+            for { let bit := 0 } lt(bit, bits) { bit := add(bit, 1) } {
+                let challenge := mload(add(points, shl(5, bit)))
+                let r0 := mload(challenge)
+                let r1 := mload(add(challenge, 0x20))
+                let r2 := mload(add(challenge, 0x40))
+                let next := shr(1, add(active, 1))
+                for { let i := 0 } lt(i, next) { i := add(i, 1) } {
+                    let even := add(buf, mul(shl(1, i), 0x60))
+                    let e0 := mload(even)
+                    let e1 := mload(add(even, 0x20))
+                    let e2 := mload(add(even, 0x40))
+                    // d = odd - even, with odd = 0 for the sole element of an odd prefix.
+                    let d0 := sub(p, e0)
+                    let d1 := sub(p, e1)
+                    let d2 := sub(p, e2)
+                    if lt(add(shl(1, i), 1), active) {
+                        let odd := add(even, 0x60)
+                        d0 := addmod(mload(odd), d0, p)
+                        d1 := addmod(mload(add(odd, 0x20)), d1, p)
+                        d2 := addmod(mload(add(odd, 0x40)), d2, p)
+                    }
+                    let t0 := addmod(mulmod(r1, d2, p), mulmod(r2, d1, p), p)
+                    let product0 := addmod(mulmod(r0, d0, p), mulmod(2, t0, p), p)
+                    let t1 := addmod(mulmod(r0, d1, p), mulmod(r1, d0, p), p)
+                    let product1 := addmod(t1, mulmod(2, mulmod(r2, d2, p), p), p)
+                    let product2 := addmod(addmod(mulmod(r0, d2, p), mulmod(r1, d1, p), p), mulmod(r2, d0, p), p)
+                    let dst := add(buf, mul(i, 0x60))
+                    mstore(dst, addmod(e0, product0, p))
+                    mstore(add(dst, 0x20), addmod(e1, product1, p))
+                    mstore(add(dst, 0x40), addmod(e2, product2, p))
+                }
+                active := next
+            }
+            mstore(result, mload(buf))
+            mstore(add(result, 0x20), mload(add(buf, 0x20)))
+            mstore(add(result, 0x40), mload(add(buf, 0x40)))
         }
     }
 }

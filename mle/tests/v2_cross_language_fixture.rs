@@ -63,13 +63,13 @@ type F = GoldilocksField;
 type C = PoseidonGoldilocksConfig;
 const D: usize = 2;
 const EXPECTED_FIXTURE_KECCAK: &str =
-    "0x8c4de7a4b6cae1663eaec8accf9aa0b4e1ec06778411550859d0a4863f6211b3";
-const EXPECTED_SOLIDITY_ABI_PROOF_BYTES: usize = 118_528;
+    "0xe34bb309e300fcfdde58663d9cc46f95be83bfe560f978dc13324613f0c41eab";
+const EXPECTED_SOLIDITY_ABI_PROOF_BYTES: usize = 103392;
 const EXPECTED_SOLIDITY_ABI_PROOF_KECCAK: &str =
-    "0x388b52d7a548d08e51455df44faeb830a3eb7f59e1cee50830ef8e7812620e23";
-const EXPECTED_SOLIDITY_ABI_CONFIG_BYTES: usize = 5_664;
+    "0xa32bc6bf5c3f90780ce9e0a632a6a155ec4b35c707e39c8661b6db7bcb13f6f0";
+const EXPECTED_SOLIDITY_ABI_CONFIG_BYTES: usize = 5664;
 const EXPECTED_SOLIDITY_ABI_CONFIG_KECCAK: &str =
-    "0x61c7fcecfd5b6839926e2579bde990144cfcdc9b3e2f0f24f0f72b3aa2094c9f";
+    "0xa5ea7da5546f4628cb268bcda9e7c5e550732a12eeadcb14c39fc280d1c724fd";
 type Ext3Record = [String; 3];
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

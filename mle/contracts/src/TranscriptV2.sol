@@ -86,12 +86,24 @@ library TranscriptV2 {
 
     function _absorbFieldVecUnchecked(Transcript memory transcript, uint256[] memory values) private pure {
         uint256 count = values.length;
-        bytes memory payload = new bytes(8 + 8 * count);
-        _writeU64Le(payload, 0, uint64(count));
-        for (uint256 i = 0; i < count; ++i) {
-            _writeU64Le(payload, 8 + 8 * i, uint64(values[i]));
+        (bytes memory frame, uint256 payload) = _openFrame(transcript, TAG_FIELD_VEC_V2, 8 + 8 * count);
+        assembly ("memory-safe") {
+            function bswap64(x) -> y {
+                y := or(shl(32, and(x, 0xFFFFFFFF)), shr(32, and(x, 0xFFFFFFFF00000000)))
+                y := or(shl(16, and(y, 0x0000FFFF0000FFFF)), shr(16, and(y, 0xFFFF0000FFFF0000)))
+                y := or(shl(8, and(y, 0x00FF00FF00FF00FF)), shr(8, and(y, 0xFF00FF00FF00FF00)))
+            }
+            // Each write stores the eight little-endian bytes followed by 24 zero bytes; the next
+            // write overwrites those zeros and the final spill lands in the frame's slack word.
+            mstore(payload, shl(192, bswap64(count)))
+            let src := add(values, 0x20)
+            let dst := add(payload, 8)
+            for { let i := 0 } lt(i, count) { i := add(i, 1) } {
+                mstore(dst, shl(192, bswap64(mload(add(src, shl(5, i))))))
+                dst := add(dst, 8)
+            }
         }
-        _absorbFrame(transcript, TAG_FIELD_VEC_V2, payload);
+        _closeFrame(transcript, frame);
     }
 
     function absorbExt3(Transcript memory transcript, GoldilocksExt3.Ext3 memory value) internal pure {
@@ -125,12 +137,67 @@ library TranscriptV2 {
         GoldilocksExt3.Ext3[] memory values
     ) private pure {
         uint256 count = values.length;
-        bytes memory payload = new bytes(8 + 24 * count);
-        _writeU64Le(payload, 0, uint64(count));
-        for (uint256 i = 0; i < count; ++i) {
-            _writeExt3(payload, 8 + 24 * i, values[i]);
+        (bytes memory frame, uint256 payload) = _openFrame(transcript, TAG_EXT3_VEC_V2, 8 + 24 * count);
+        assembly ("memory-safe") {
+            function bswap64(x) -> y {
+                y := or(shl(32, and(x, 0xFFFFFFFF)), shr(32, and(x, 0xFFFFFFFF00000000)))
+                y := or(shl(16, and(y, 0x0000FFFF0000FFFF)), shr(16, and(y, 0xFFFF0000FFFF0000)))
+                y := or(shl(8, and(y, 0x00FF00FF00FF00FF)), shr(8, and(y, 0xFF00FF00FF00FF00)))
+            }
+            mstore(payload, shl(192, bswap64(count)))
+            let table := add(values, 0x20)
+            let dst := add(payload, 8)
+            for { let i := 0 } lt(i, count) { i := add(i, 1) } {
+                let record := mload(add(table, shl(5, i)))
+                // 24 little-endian payload bytes (c0 || c1 || c2) in one word write; the eight
+                // trailing zero bytes are overwritten by the next element or land in the slack.
+                mstore(
+                    dst,
+                    or(
+                        or(shl(192, bswap64(mload(record))), shl(128, bswap64(mload(add(record, 0x20))))),
+                        shl(64, bswap64(mload(add(record, 0x40))))
+                    )
+                )
+                dst := add(dst, 24)
+            }
         }
-        _absorbFrame(transcript, TAG_EXT3_VEC_V2, payload);
+        _closeFrame(transcript, frame);
+    }
+
+    /// @dev Allocate one buffer holding the complete frame
+    /// `FRAME_PREFIX || state || tag || payload_len_u64_le || payload` plus a 32-byte slack word
+    /// so bulk little-endian writers may spill zeros past the payload end. Returns the buffer and
+    /// the absolute memory address of the payload's first byte. The frame length is exact; the
+    /// slack is never hashed.
+    function _openFrame(Transcript memory transcript, uint8 tag, uint256 payloadLength)
+        private
+        pure
+        returns (bytes memory frame, uint256 payload)
+    {
+        if (payloadLength > type(uint64).max) revert InvalidMleProof();
+        bytes memory prefix = bytes(TRANSCRIPT_FRAME_PREFIX_V2);
+        uint256 headerLength = prefix.length + 32 + 1 + 8;
+        frame = new bytes(headerLength + payloadLength + 32);
+        bytes32 state = transcript.state;
+        bytes8 lengthLe = _u64Le(uint64(payloadLength));
+        assembly ("memory-safe") {
+            let base := add(frame, 0x20)
+            // exact frame length; the trailing slack word stays allocated but unhashed
+            mstore(frame, add(headerLength, payloadLength))
+            let prefixLength := mload(prefix)
+            for { let off := 0 } lt(off, prefixLength) { off := add(off, 0x20) } {
+                mstore(add(base, off), mload(add(add(prefix, 0x20), off)))
+            }
+            mstore(add(base, prefixLength), state)
+            mstore8(add(base, add(prefixLength, 32)), tag)
+            mstore(add(base, add(prefixLength, 33)), lengthLe)
+            payload := add(base, headerLength)
+        }
+    }
+
+    function _closeFrame(Transcript memory transcript, bytes memory frame) private pure {
+        transcript.state = keccak256(frame);
+        transcript.squeezeCounter = 0;
     }
 
     /// @notice Bind canonical-config-derived WHIR identifiers before PCS roots.

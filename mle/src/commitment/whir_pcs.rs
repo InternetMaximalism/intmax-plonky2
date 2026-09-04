@@ -1169,36 +1169,6 @@ impl WhirPCS {
         )
     }
 
-    /// Reconstruct the two exact WHIR security profiles admitted by the
-    /// one-time wire-v3 configuration cutover.
-    ///
-    /// This is crate-private and deliberately separate from
-    /// [`Self::for_constituents`], so no prover or verifier path can select a
-    /// historical security target. It exists only so the artifact writer can
-    /// fully validate a staged target-132 config before replacing it with the
-    /// current target-133 config.
-    pub(crate) fn for_constituents_whir_133_config_cutover(
-        num_vars: usize,
-        group_width: usize,
-        security_level: usize,
-    ) -> Result<Self, &'static str> {
-        if WHIR_SECURITY_LEVEL_V2 != 133 {
-            return Err("WHIR-133 config cutover is only defined while the current target is 133");
-        }
-        if security_level != 132 && security_level != 133 {
-            return Err("WHIR-133 config cutover admits only security targets 132 and 133");
-        }
-        Ok(Self::for_constituents_with_profile(
-            num_vars,
-            group_width,
-            security_level,
-            WHIR_POW_BITS_V2,
-            WHIR_MAX_STARTING_LOG_INV_RATE_V2,
-            WHIR_FOLDING_FACTOR_V2,
-            WHIR_DEDUPLICATE_IN_DOMAIN_V2,
-        ))
-    }
-
     /// Frozen constructor for the already-deployed packed-v1 transcript.
     ///
     /// v1 pre-dates the generated WHIR security constants. Its historical

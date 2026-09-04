@@ -6,10 +6,12 @@
 > witness cell. Every constituent table is committed before its challenges and
 > every terminal value is authenticated by one three-group, two-point WHIR
 > statement. The round-by-round WHIR failure events are unioned explicitly;
-> target 133 gives about 128.356 bits of aggregate generic work. This is not a
+> target 105 at inverse rate `2^-6` gives about 101.535 bits of aggregate
+> generic work, a deliberate approximately-100-bit design point chosen so the
+> parent's cold close transaction fits a 20,000,000-gas envelope. This is not a
 > literal probability for one completed proof: an attacker can abort and grind
 > at intermediate Fiat--Shamir stages. The conservative raw-oracle bound loses
-> `log2(H)` bits and is only about 96.356 bits at `H = 2^32`. Parent recursion
+> `log2(H)` bits and is only about 69.535 bits at `H = 2^32`. Parent recursion
 > separately retains the default
 > Goldilocks Poseidon configuration whose repository estimate is about 95 bits,
 > so the whole application is not a 128-bit system. The current worktree must
@@ -182,8 +184,8 @@ The schema-fixed input caps are:
 
 | Input | Cap |
 |---|---:|
-| WHIR NARG/transcript | 2,032 bytes |
-| WHIR hints | 180,408 bytes |
+| WHIR NARG/transcript | 1,904 bytes |
+| WHIR hints | 112,408 bytes |
 | compact proof | 253,921 bytes |
 
 For the checked-in degree-13 resource fixture (maximum row, wire and gate-
@@ -191,13 +193,13 @@ constraint dimensions; one public input and five configured gate families):
 
 | Measurement | Bytes |
 |---|---:|
-| compact proof, actual | 195,012 |
-| compact proof, grammar-theoretic maximum | 201,636 |
-| Solidity proof ABI, actual | 255,584 |
-| Solidity proof ABI, grammar-theoretic maximum | 262,208 |
-| Solidity verification config ABI | 7,456 |
-| WHIR NARG/transcript, actual | 2,032 |
-| WHIR hints, actual | 173,784 |
+| compact proof, actual | 129,284 |
+| compact proof, grammar-theoretic maximum | 133,508 |
+| Solidity proof ABI, actual | 189,856 |
+| Solidity proof ABI, grammar-theoretic maximum | 194,080 |
+| Solidity verification config ABI | 5,664 |
+| WHIR NARG/transcript, actual | 1,904 |
+| WHIR hints, actual | 108,184 |
 
 The compact grammar maximum is below the strict two-SimpleCoder-blob cap. The
 larger Solidity ABI number is an execution/calldata representation, not the
@@ -208,15 +210,15 @@ upper bounds (measured execution plus intrinsic calldata gas) are:
 
 | Production entry point | Execution | Intrinsic calldata | Upper bound |
 |---|---:|---:|---:|
-| `MleVerifierV2.verify` | 19,403,787 | 3,282,316 | 22,686,103 |
-| `PinnedMleVerifierV2.verifyCompact` | 20,660,531 | 2,998,152 | 23,658,683 |
-| compact public-input return | 20,660,900 | 2,998,152 | 23,659,052 |
-| compact fraud classifier | 20,771,220 | 2,998,280 | 23,769,500 |
+| `MleVerifierV2.verify` | 11,689,441 | 2,299,260 | 13,988,701 |
+| `PinnedMleVerifierV2.verifyCompact` | 12,666,921 | 2,014,964 | 14,681,885 |
+| compact public-input return | 12,667,290 | 2,014,964 | 14,682,254 |
+| compact fraud classifier | 12,724,559 | 2,015,092 | 14,739,651 |
 
 These are reproducible local acceptance measurements, not a prediction of a
 particular public chain's block policy. They are warm-path Forge numbers: the
 adapter's configuration is read once per test process. `PinnedMleVerifierV2`
-keeps its 7,456-byte configuration in an immutable code-resident store (a
+keeps its 5,664-byte configuration in an immutable code-resident store (a
 `STOP`-prefixed data contract created by its constructor) and materializes it
 with one `EXTCODECOPY` plus `abi.decode`. Compared with the earlier
 constructor-written storage copy, that costs about 5,000 gas more on a warm
@@ -231,9 +233,9 @@ of headroom.
 
 | Contract | Runtime bytes | EIP-170 margin |
 |---|---:|---:|
-| `MleVerifierV2` | 20,782 | 3,794 |
+| `MleVerifierV2` | 20,053 | 4,523 |
 | `PinnedMleVerifierV2` | 12,570 | 12,006 |
-| `SpongefishWhirVerify` | 23,771 | 805 |
+| `SpongefishWhirVerify` | 23,656 | 920 |
 
 ## Build and verification
 
@@ -255,7 +257,7 @@ forge test --offline
 forge build --sizes --offline
 ```
 
-The 2026-09-03 local gate ran 347 Forge tests in 27 suites with zero failures
+The 2026-09-04 local gate ran 347 Forge tests in 27 suites with zero failures
 or skips, including the four sampled max-row resource assertions above. Rust includes
 cross-language transcript/WHIR traces, exact schema/codegen drift checks,
 compact decoder mutations, malformed-proof and panic-totality regressions,
@@ -298,29 +300,36 @@ The pinned WHIR `Config::security_level()` is only the minimum displayed
 round-by-round term, not the union of the complete protocol's failure events.
 `outer_soundness_budget.rs` reconstructs and sums every native inverse-work
 term with its multiplicity for each admitted packed dimension 1 through 21. At the maximum
-dimension there are 35 charged events. Twenty-five attain the configured
-133-bit target (four initial folds, four repetitions of one query plus four
-folds, and the final query), while RLC, OOD, and final-fold terms contribute at
-their own higher bit levels. The resulting native aggregate work measure is
+dimension there are 35 charged events. Nine attain the configured 105-bit
+target (the four intermediate-round queries, the four binary folds of the last
+intermediate round, and the final query), while the initial folds, RLC, OOD,
+and final-fold terms contribute at their own higher bit levels. The resulting
+native aggregate work measure is
 
 ```text
-omega_WHIR,work(21) ~= 2^-128.356142910.
+omega_WHIR,work(21) ~= 2^-101.534561723.
 ```
 
-Target 132 is retained as a negative regression: its aggregate is only about
-`2^-127.356143360`. The selected target-133/PoW-22/inverse-rate-4/fold-4
-profile leaves the dimension-21 sample schedule `[58,33,23,18,14]` and all
-proof-size/gas structures unchanged. It increases maximum internal PoW from
-about 21.2535 to 22.2535 bits and modeled total PoW work from about 23.9563 to
-24.9563 bits, approximately doubling that work.
+Target 104 is retained as a negative regression: its aggregate is only about
+`2^-100.674765149`. The selected target-105/PoW-22/inverse-rate-6/fold-4
+profile uses the dimension-21 sample schedule `[29,19,14,12,10]`; the retired
+target-133/inverse-rate-4 profile needed `[58,33,23,18,14]`. Its maximum
+internal PoW is about 21.9855 bits and its modeled total PoW work about
+22.7830 bits. Halving the sample schedule is what moves the maximum-resource
+WHIR hint payload from 173,784 to 108,184 bytes and removes roughly one third
+of the verifier's Merkle and constraint work; the prover pays for the lower
+rate with a four-times larger initial codeword, which is acceptable because
+these proofs are only ever produced server-side.
 
 Under the conventional generic-work-factor convention, the local minimum is
-128 bits because generic Keccak-256 collision work is 128 bits. This convention
-is not a literal fixed failure probability and is not a whole-parent-system
-claim. The direct PI relation removes the former approximately-95-bit Poseidon
+now the WHIR union itself, about 101.5 bits, below the 128-bit generic
+Keccak-256 collision work. That is the intended approximately-100-bit design
+point of this profile, not an accident: the retired target-133 profile cost
+about 4,700,000 more gas on the parent close path. The convention is not a
+literal fixed failure probability and is not a whole-parent-system claim. The direct PI relation removes the former approximately-95-bit Poseidon
 bottleneck from this local statement boundary.
 
-The 128.356-bit WHIR number includes internal PoW difficulties and is therefore
+The 101.535-bit WHIR number includes internal PoW difficulties and is therefore
 a generic-work exponent. It is not the conditional failure probability of one
 valid completed proof: a malicious prover can abandon a candidate after an
 unfavorable intermediate challenge and grind at that stage without ever
@@ -357,11 +366,11 @@ uniform bytes modulo a power-of-two codeword size and are exactly uniform.
 The maximum-dimension counts are 228 outer and 102 WHIR base limbs; the WHIR
 count is cross-checked against the actual pinned native trace and its 120-byte
 `Fp3` codec squeezes. The coarse bound loses about `log2(H)` from the
-128.356-bit union-work figure: at `H = 2^32` it is only about 96.356 bits,
+101.535-bit union-work figure: at `H = 2^32` it is only about 69.535 bits,
 although the Keccak collision term alone is about 193 bits. Counting completed
-proofs instead of raw intermediate candidates is unsound. Therefore target 133
-meets the aggregate generic-work requirement but does not establish a literal
-unqualified `2^-128` advantage bound; that requires a protocol-specific,
+proofs instead of raw intermediate candidates is unsound. Therefore target 105
+meets the approximately-100-bit aggregate generic-work design point but does
+not establish a literal unqualified `2^-100` advantage bound; that requires a protocol-specific,
 externally reviewed Fiat--Shamir/grinding analysis and operational oracle
 budget.
 
@@ -372,8 +381,9 @@ formula above.
 Remaining release gates are:
 
 - **High:** obtain a protocol-specific Fiat--Shamir/grinding theorem and set an
-  operational raw-oracle budget; target 133 establishes aggregate generic work,
-  not a literal `2^-128` advantage for arbitrary intermediate retries;
+  operational raw-oracle budget; target 105 establishes about 101.5 bits of
+  aggregate generic work, not a literal `2^-100` advantage for arbitrary
+  intermediate retries;
 - **High, whole-system:** quantify parent composition. Parent recursion also uses
   the approximately 95-bit default Goldilocks Poseidon configuration, which caps the whole system below the
   local PCS claim even if this submodule is otherwise sound;

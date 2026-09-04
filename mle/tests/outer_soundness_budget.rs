@@ -455,7 +455,7 @@ fn whir_extraction_count_matches_the_actual_pinned_max_dimension_trace() {
 
 #[test]
 fn native_whir_union_work_factor_is_machine_checked_for_every_production_dimension() {
-    assert_eq!(WHIR_SECURITY_LEVEL_V2, 133);
+    assert_eq!(WHIR_SECURITY_LEVEL_V2, 105);
     let max_variables = MAX_ROW_VARIABLES_V2 + MAX_CONSTITUENT_INDEX_BITS_V2;
     assert_eq!(max_variables, 21);
     for rejected_variables in 22..=29 {
@@ -480,8 +480,8 @@ fn native_whir_union_work_factor_is_machine_checked_for_every_production_dimensi
         }
     }
     assert_eq!(minimum_dimension, 21);
-    assert!((minimum_bits - 128.356_142_896).abs() < 1e-6);
-    assert!(minimum_bits > 128.35);
+    assert!((minimum_bits - 101.534_561_723).abs() < 1e-6);
+    assert!(minimum_bits > 101.5);
 
     let maximum_terms = native_whir_failure_terms(max_variables, WHIR_SECURITY_LEVEL_V2);
     let dominant_multiplicity = maximum_terms
@@ -489,7 +489,7 @@ fn native_whir_union_work_factor_is_machine_checked_for_every_production_dimensi
         .filter(|term| (term.bits - WHIR_TARGET_BITS).abs() < 1e-6)
         .map(|term| term.multiplicity)
         .sum::<usize>();
-    assert_eq!(dominant_multiplicity, 25);
+    assert_eq!(dominant_multiplicity, 9);
     assert_eq!(
         maximum_terms
             .iter()
@@ -514,16 +514,18 @@ fn upstream_single_minimum_is_not_misreported_as_the_native_union() {
         WHIR_SECURITY_LEVEL_V2,
     ));
     assert!(displayed_minimum >= WHIR_TARGET_BITS - 1e-9);
-    assert!(displayed_minimum - union_work_bits > 4.64);
-    assert!(displayed_minimum - union_work_bits < 4.65);
+    assert!(displayed_minimum - union_work_bits > 3.46);
+    assert!(displayed_minimum - union_work_bits < 3.47);
 }
 
 #[test]
-fn target_132_fails_the_complete_native_whir_union_work_factor() {
+fn target_104_fails_the_complete_native_whir_union_work_factor() {
+    // The production target is 105 so the complete native union work factor clears the
+    // reviewed 100-bit floor with margin; one target bit less would not.
     let max_variables = MAX_ROW_VARIABLES_V2 + MAX_CONSTITUENT_INDEX_BITS_V2;
-    let aggregate_bits = bits(native_whir_union_work_inverse(max_variables, 132));
-    assert!((aggregate_bits - 127.356_143_360).abs() < 1e-6);
-    assert!(aggregate_bits < 128.0);
+    let aggregate_bits = bits(native_whir_union_work_inverse(max_variables, 104));
+    assert!((aggregate_bits - 100.674_765_149).abs() < 1e-6);
+    assert!(aggregate_bits < 101.0);
 }
 
 #[test]
@@ -536,8 +538,8 @@ fn raw_oracle_trials_not_completed_proofs_control_the_literal_rom_bound() {
         max_variables,
         WHIR_SECURITY_LEVEL_V2,
     ));
-    assert!((one_trial_bits - 128.356_142_896).abs() < 1e-6);
-    assert!(one_trial_bits > 128.35);
+    assert!((one_trial_bits - 101.534_561_723).abs() < 1e-6);
+    assert!(one_trial_bits > 101.5);
 
     // An adversary may abort and grind at an internal stage. Counting only
     // completed proofs as attempts would miss those candidates. The coarse
@@ -546,8 +548,8 @@ fn raw_oracle_trials_not_completed_proofs_control_the_literal_rom_bound() {
         max_variables,
         EXAMPLE_HASH_QUERY_BUDGET,
     ));
-    assert!((literal_bits - 96.356_142_896).abs() < 1e-6);
-    assert!(literal_bits < 128.0);
+    assert!((literal_bits - 69.534_561_723).abs() < 1e-6);
+    assert!(literal_bits < 101.0);
     assert!(
         bits(keccak_random_oracle_collision_bound(
             EXAMPLE_HASH_QUERY_BUDGET
@@ -592,21 +594,30 @@ fn rejected_three_base_repetitions_admit_sequential_round_bridging() {
 
 #[test]
 fn local_pcs_work_factor_and_literal_probability_are_distinct_conventions() {
+    // At target 105 the native WHIR union (about 101.53 bits) is the binding term; the
+    // generic Keccak collision work factor (128) no longer caps the local PCS figure.
+    let max_variables = MAX_ROW_VARIABLES_V2 + MAX_CONSTITUENT_INDEX_BITS_V2;
+    assert!((local_pcs_conventional_work_factor_bits() - 101.534_561_723).abs() < 1e-6);
+    assert!(local_pcs_conventional_work_factor_bits() < KECCAK_COLLISION_WORK_FACTOR_BITS);
     assert_eq!(
         local_pcs_conventional_work_factor_bits(),
-        KECCAK_COLLISION_WORK_FACTOR_BITS
+        bits(native_whir_union_work_inverse(max_variables, WHIR_SECURITY_LEVEL_V2))
     );
 
-    // Treating generic Keccak collision work as a literal fixed 2^-128 term
-    // leaves no room for any positive algebraic/WHIR error.
-    let strict_total = error_at_bits(128.0) + outer_statistical_error();
-    assert!(bits(strict_total) < 128.0);
+    // Treating the work factor as a literal fixed probability term leaves no room for any
+    // positive algebraic/WHIR error.
+    let strict_total = error_at_bits(101.534_561_723) + outer_statistical_error();
+    // The outer term is ~2^-170, below f64 resolution next to 2^-101.5: it cannot raise the bound.
+    assert!(bits(strict_total) <= 101.534_561_723 + 1e-9);
 }
 
 #[test]
 fn complete_statement_uses_direct_pcs_bound_raw_public_inputs() {
-    assert_eq!(local_pcs_conventional_work_factor_bits(), 128.0);
-    assert_eq!(complete_statement_conventional_work_factor_bits(), 128.0);
+    assert!((local_pcs_conventional_work_factor_bits() - 101.534_561_723).abs() < 1e-6);
+    assert_eq!(
+        complete_statement_conventional_work_factor_bits(),
+        local_pcs_conventional_work_factor_bits()
+    );
     let max_variables = MAX_ROW_VARIABLES_V2 + MAX_CONSTITUENT_INDEX_BITS_V2;
     assert_eq!(
         coarse_random_oracle_advantage_bound(max_variables, 1.0),

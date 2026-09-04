@@ -93,26 +93,26 @@ fn checked_in_max_resource_fixture_has_current_schema_and_bounds() {
     let text = include_str!("../contracts/test/fixtures/v2_max_resource.json");
     let fixture = MleVerifierV2Fixture::from_canonical_json(text)
         .expect("checked-in max-resource fixture uses the current strict schema");
-    assert_eq!(fixture.stats.solidity_abi_bytes, 255_584);
-    assert_eq!(fixture.stats.compact_bytes, 195_012);
-    assert_eq!(fixture.stats.whir_transcript_bytes, 2_032);
-    assert_eq!(fixture.stats.whir_hint_bytes, 173_784);
+    assert_eq!(fixture.stats.solidity_abi_bytes, 189856);
+    assert_eq!(fixture.stats.compact_bytes, 129284);
+    assert_eq!(fixture.stats.whir_transcript_bytes, 1904);
+    assert_eq!(fixture.stats.whir_hint_bytes, 108184);
     assert_eq!(
         fixture.stats.solidity_abi_verification_config_bytes,
         fixture.solidity_abi_verification_config.byte_length
     );
     assert_eq!(
         fixture.solidity_abi_proof.keccak256,
-        "0xb63f08551e3b123836f1123097f2589fc4fd6525fda48406088e099d86e8429b"
+        "0x04257d45a9c59460945065dfd876d5945553b6b24b88b3dd92916a39e2af5cef"
     );
     assert_eq!(
         fixture.compact_proof.keccak256,
-        "0xf1094bb2cc33e2c7368d9bd12e3a8c08b81c8b9e8ce0c5b653887862e16ced0f"
+        "0x9bb89a1e4ca4bf9dca4d140eedb8836cbd41982922f2a212cf99861dc9715175"
     );
     assert_eq!(fixture.solidity_abi_verification_config.byte_length, 7_456);
     assert_eq!(
         fixture.solidity_abi_verification_config.keccak256,
-        "0xdaa7db23fdd56ae27f0d67703c23d005340af03e11903a2262845eb7e7856119"
+        "0xfd8ebaae82b66f5630fc3365896ee99dd8720cb964e66260fba3ff9a0777df48"
     );
     assert_eq!(
         fixture.pinned_verifier.verification_config_digest,
@@ -130,11 +130,11 @@ fn checked_in_max_resource_fixture_has_current_schema_and_bounds() {
         .compact_proof
         .decode_and_validate(std::str::from_utf8(&COMPACT_MAGIC_V2).unwrap())
         .expect("integral max-resource compact bytes");
-    assert_eq!(fixture.size_upper_bound.fixed_compact_bytes, 19_196);
-    assert_eq!(fixture.size_upper_bound.max_whir_transcript_bytes, 2_032);
-    assert_eq!(fixture.size_upper_bound.max_whir_hint_bytes, 180_408);
-    assert_eq!(fixture.size_upper_bound.max_compact_bytes, 201_636);
-    assert_eq!(fixture.size_upper_bound.max_solidity_abi_bytes, 262_208);
+    assert_eq!(fixture.size_upper_bound.fixed_compact_bytes, 19196);
+    assert_eq!(fixture.size_upper_bound.max_whir_transcript_bytes, 1904);
+    assert_eq!(fixture.size_upper_bound.max_whir_hint_bytes, 112408);
+    assert_eq!(fixture.size_upper_bound.max_compact_bytes, 133508);
+    assert_eq!(fixture.size_upper_bound.max_solidity_abi_bytes, 194080);
     assert!(fixture.size_upper_bound.fits_whir_blob_caps);
     assert!(fixture.size_upper_bound.fits_compact_cap);
     assert!(fixture.stats.compact_bytes <= fixture.size_upper_bound.max_compact_bytes);

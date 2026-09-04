@@ -9,7 +9,7 @@ import {Keccak256Chain} from "../src/spongefish/Keccak256Chain.sol";
 contract V2WhirNativeTraceTest is Test {
     string internal constant FIXTURE = "test/fixtures/v2_cross_language.json";
     string internal constant CASE = ".cases[0]";
-    uint256 internal constant CHECKPOINTS = 260;
+    uint256 internal constant CHECKPOINTS = 174;
     uint256 internal constant ABSORB = 0;
     uint256 internal constant SQUEEZE = 1;
     uint256 internal constant QUERY_SQUEEZE = 2;
@@ -155,7 +155,7 @@ contract V2WhirNativeTraceTest is Test {
 
         require(kindCounts[ABSORB] == 52, "v2 WHIR absorb count");
         require(kindCounts[SQUEEZE] == 19, "v2 WHIR squeeze count");
-        require(kindCounts[QUERY_SQUEEZE] == 182, "v2 WHIR query squeeze count");
+        require(kindCounts[QUERY_SQUEEZE] == 96, "v2 WHIR query squeeze count");
         require(kindCounts[QUERY_INDICES] == 2, "v2 WHIR query batch count");
         require(kindCounts[HINT] == 4, "v2 WHIR hint count");
         require(kindCounts[EOF_EVENT] == 1, "v2 WHIR EOF count");

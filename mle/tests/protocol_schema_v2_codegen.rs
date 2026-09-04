@@ -238,15 +238,15 @@ fn validate_and_derive(schema: &ProtocolSchemaV2) -> Derived {
     assert_eq!(schema.max_gate_rows, 255);
     assert_eq!(schema.circuit_digest_length, 4);
     assert_eq!(schema.max_public_inputs, 256);
-    assert_eq!(schema.whir_security_level, 133);
+    assert_eq!(schema.whir_security_level, 105);
     assert_eq!(schema.whir_pow_bits, 22);
-    assert_eq!(schema.whir_max_starting_log_inv_rate, 4);
+    assert_eq!(schema.whir_max_starting_log_inv_rate, 6);
     assert_eq!(schema.whir_folding_factor, 4);
     assert_eq!(schema.whir_hash_id, "keccak-256");
     assert!(!schema.whir_unique_decoding);
     assert!(schema.whir_deduplicate_in_domain);
-    assert_eq!(schema.max_whir_narg_bytes, 2_032);
-    assert_eq!(schema.max_whir_hint_bytes, 180_408);
+    assert_eq!(schema.max_whir_narg_bytes, 1904);
+    assert_eq!(schema.max_whir_hint_bytes, 112408);
     // The submitted compact proof must fit the parent's exact two-blob DA payload.
     assert_eq!(schema.max_compact_proof_bytes, 253_921);
     for label in [

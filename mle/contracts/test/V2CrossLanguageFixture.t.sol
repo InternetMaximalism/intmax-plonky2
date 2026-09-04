@@ -87,12 +87,12 @@ contract V2CrossLanguageFixtureTest is Test {
     string internal constant HISTORICAL_WIRE_V2_FIXTURE = "../testdata/historical_wire_v2_compact.json";
     string internal constant CASE = ".cases[0]";
     uint256 internal constant EVENT_COUNT = 78;
-    uint256 internal constant RUST_SOLIDITY_ABI_PROOF_BYTES = 118_528;
+    uint256 internal constant RUST_SOLIDITY_ABI_PROOF_BYTES = 103392;
     bytes32 internal constant RUST_SOLIDITY_ABI_PROOF_KECCAK =
-        0x388b52d7a548d08e51455df44faeb830a3eb7f59e1cee50830ef8e7812620e23;
-    uint256 internal constant RUST_SOLIDITY_ABI_CONFIG_BYTES = 5_664;
+        0xa32bc6bf5c3f90780ce9e0a632a6a155ec4b35c707e39c8661b6db7bcb13f6f0;
+    uint256 internal constant RUST_SOLIDITY_ABI_CONFIG_BYTES = 5664;
     bytes32 internal constant RUST_SOLIDITY_ABI_CONFIG_KECCAK =
-        0x61c7fcecfd5b6839926e2579bde990144cfcdc9b3e2f0f24f0f72b3aa2094c9f;
+        0xa5ea7da5546f4628cb268bcda9e7c5e550732a12eeadcb14c39fc280d1c724fd;
     MleVerifierV2 private encodedVerifier;
 
     struct AtomicFixture {
@@ -145,7 +145,10 @@ contract V2CrossLanguageFixtureTest is Test {
         _writeU64Le(relabeled, 8, MLE_PROTOCOL_VERSION_CURRENT);
         MleVerifierV2.MleProof memory oldBody = decoder.decode(relabeled, current.config.circuit);
         assertEq(oldBody.protocolVersion, MLE_PROTOCOL_VERSION_CURRENT, "relabeled version");
-        assertEq(oldBody.preprocessedRoot, current.preprocessedRoot, "same-circuit preprocessed root");
+        // The preprocessed root is a WHIR commitment and therefore depends on the profile's
+        // starting rate; the historical wire-v2 body was committed under the retired target-133
+        // profile (rate 2^-4), so only the circuit digest is expected to agree.
+        assertTrue(oldBody.preprocessedRoot != bytes32(0), "historical preprocessed root present");
         for (uint256 i = 0; i < 4; ++i) {
             assertEq(oldBody.circuitDigest[i], current.circuitDigest[i], "same-circuit digest");
         }
@@ -1313,7 +1316,7 @@ contract V2CrossLanguageFixtureTest is Test {
         // Keep enough gas for strict compact decoding and the classifier's
         // EIP-150 reserve, but less than an honest end-to-end verification.
         // This is a containment test, not a snapshot of verifier performance.
-        (bool success, bytes memory result) = address(pinned).staticcall{gas: 10_000_000}(callData);
+        (bool success, bytes memory result) = address(pinned).staticcall{gas: 5_000_000}(callData);
         assertTrue(success, "compact low-gas classifier must contain exhaustion");
         assertEq(result.length, 32, "compact low-gas verdict encoding");
         assertEq(uint256(abi.decode(result, (uint8))), 3, "compact low gas must be STARVED");

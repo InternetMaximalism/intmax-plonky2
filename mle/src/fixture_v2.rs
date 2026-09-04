@@ -768,26 +768,6 @@ impl MleVerifierV2ConfigFixture {
         self.validate_self_consistency_at_whir_security(WHIR_SECURITY_LEVEL_V2)
     }
 
-    /// Fully validate a historical wire-v3/PoW-22 configuration produced at
-    /// WHIR target 132 before the one-time target-133 replacement.
-    ///
-    /// This does not weaken [`Self::from_json`] or any proof/verifier path:
-    /// those continue to accept only the generated current target. The parent
-    /// artifact writer calls this method only behind its separate explicit
-    /// cutover environment switch.
-    pub fn validate_retired_whir_132_self_consistency_for_config_cutover(
-        &self,
-    ) -> Result<(), FixtureV2Error> {
-        if WHIR_SECURITY_LEVEL_V2 != 133 {
-            return Err(FixtureV2Error::Invalid(
-                "WHIR-133 config cutover requires current security target 133",
-            ));
-        }
-        self.validate_self_consistency_at_whir_security(
-            RETIRED_WHIR_SECURITY_LEVEL_V2_CONFIG_CUTOVER,
-        )
-    }
-
     fn validate_self_consistency_at_whir_security(
         &self,
         whir_security_level: usize,
@@ -1601,22 +1581,6 @@ pub fn proof_encoding_size_upper_bound_v2(
     proof_encoding_size_upper_bound_at_security_v2(shape, WHIR_SECURITY_LEVEL_V2)
 }
 
-/// Recompute the complete proof-size envelope for the retired target-132
-/// profile during the explicit target-133 configuration cutover.
-pub fn proof_encoding_size_upper_bound_retired_whir_132_v2_for_config_cutover(
-    shape: &CompactV2Shape,
-) -> Result<ProofEncodingSizeUpperBoundV2, FixtureV2Error> {
-    if WHIR_SECURITY_LEVEL_V2 != 133 {
-        return Err(FixtureV2Error::Invalid(
-            "WHIR-133 config cutover requires current security target 133",
-        ));
-    }
-    proof_encoding_size_upper_bound_at_security_v2(
-        shape,
-        RETIRED_WHIR_SECURITY_LEVEL_V2_CONFIG_CUTOVER,
-    )
-}
-
 fn proof_encoding_size_upper_bound_at_security_v2(
     shape: &CompactV2Shape,
     whir_security_level: usize,
@@ -1743,24 +1707,6 @@ pub fn derive_whir_deployment_profile_v2(
     )
 }
 
-/// Reconstruct the exact retired target-132 WHIR deployment profile during
-/// the explicit proof-free target-133 config cutover.
-pub fn derive_retired_whir_132_deployment_profile_v2_for_config_cutover(
-    degree_bits: usize,
-    constituent_width: usize,
-) -> Result<WhirDeploymentProfileV2, FixtureV2Error> {
-    if WHIR_SECURITY_LEVEL_V2 != 133 {
-        return Err(FixtureV2Error::Invalid(
-            "WHIR-133 config cutover requires current security target 133",
-        ));
-    }
-    derive_whir_deployment_profile_at_security_v2(
-        degree_bits,
-        constituent_width,
-        RETIRED_WHIR_SECURITY_LEVEL_V2_CONFIG_CUTOVER,
-    )
-}
-
 fn derive_whir_deployment_profile_at_security_v2(
     degree_bits: usize,
     constituent_width: usize,
@@ -1809,16 +1755,12 @@ fn derive_whir_deployment_profile_for_packed_num_vars_at_security_v2(
                 .map_err(|_| FixtureV2Error::Invalid("WHIR variable count does not fit u32"))?,
         )
         .ok_or(FixtureV2Error::Invalid("WHIR domain size overflow"))?;
-    let pcs = if whir_security_level == WHIR_SECURITY_LEVEL_V2 {
-        WhirPCS::for_constituents(num_variables, NUM_PACKED_VECTORS_PER_GROUP_V2)
-    } else {
-        WhirPCS::for_constituents_whir_133_config_cutover(
-            num_variables,
-            NUM_PACKED_VECTORS_PER_GROUP_V2,
-            whir_security_level,
-        )
-        .map_err(|message| FixtureV2Error::InvalidOwned(message.to_owned()))?
-    };
+    if whir_security_level != WHIR_SECURITY_LEVEL_V2 {
+        return Err(FixtureV2Error::Invalid(
+            "only the generated current WHIR security target is derivable",
+        ));
+    }
+    let pcs = WhirPCS::for_constituents(num_variables, NUM_PACKED_VECTORS_PER_GROUP_V2);
     let expected_folding_factor =
         WHIR_FOLDING_FACTOR_V2.min(num_variables.saturating_sub(1).max(1));
     let expected_starting_log_inv_rate = if num_variables <= pcs.params.initial_folding_factor {

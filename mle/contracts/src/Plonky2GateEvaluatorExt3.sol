@@ -382,57 +382,229 @@ library Plonky2GateEvaluatorExt3 {
         }
     }
 
+    /// @dev Plonky2 `ArithmeticGate`: `w[4i+3] - (c0 * w[4i] * w[4i+1] + c1 * w[4i+2])`.
     function _evalArithmetic(
         GoldilocksExt3.Ext3[] memory wires,
         GoldilocksExt3.Ext3[] memory constants,
         uint256 constantOffset,
         uint256 count
     ) private pure returns (GoldilocksExt3.Ext3[] memory output) {
+        if (wires.length < 4 * count || constants.length < constantOffset + 2) revert InvalidMleProof();
         output = new GoldilocksExt3.Ext3[](count);
-        GoldilocksExt3.Ext3 memory c0 = constants[constantOffset];
-        GoldilocksExt3.Ext3 memory c1 = constants[constantOffset + 1];
-        for (uint256 i = 0; i < count; ++i) {
-            uint256 start = 4 * i;
-            GoldilocksExt3.Ext3 memory computed = GoldilocksExt3.add(
-                GoldilocksExt3.mul(c0, GoldilocksExt3.mul(wires[start], wires[start + 1])),
-                GoldilocksExt3.mul(c1, wires[start + 2])
-            );
-            output[i] = GoldilocksExt3.sub(wires[start + 3], computed);
+        assembly ("memory-safe") {
+            function mul3(a0, a1, a2, b0, b1, b2) -> r0, r1, r2 {
+                let p := 0xFFFFFFFF00000001
+                let t0 := addmod(mulmod(a1, b2, p), mulmod(a2, b1, p), p)
+                r0 := addmod(mulmod(a0, b0, p), mulmod(2, t0, p), p)
+                let t1 := addmod(mulmod(a0, b1, p), mulmod(a1, b0, p), p)
+                r1 := addmod(t1, mulmod(2, mulmod(a2, b2, p), p), p)
+                r2 := addmod(addmod(mulmod(a0, b2, p), mulmod(a1, b1, p), p), mulmod(a2, b0, p), p)
+            }
+            function add3(a0, a1, a2, b0, b1, b2) -> r0, r1, r2 {
+                let p := 0xFFFFFFFF00000001
+                r0 := addmod(a0, b0, p)
+                r1 := addmod(a1, b1, p)
+                r2 := addmod(a2, b2, p)
+            }
+            function sub3(a0, a1, a2, b0, b1, b2) -> r0, r1, r2 {
+                let p := 0xFFFFFFFF00000001
+                r0 := addmod(a0, sub(p, b0), p)
+                r1 := addmod(a1, sub(p, b1), p)
+                r2 := addmod(a2, sub(p, b2), p)
+            }
+            function ld(table, i) -> x0, x1, x2 {
+                let r := mload(add(table, shl(5, i)))
+                x0 := mload(r)
+                x1 := mload(add(r, 0x20))
+                x2 := mload(add(r, 0x40))
+            }
+            function st(table, i, x0, x1, x2) {
+                let r := mload(add(table, shl(5, i)))
+                mstore(r, x0)
+                mstore(add(r, 0x20), x1)
+                mstore(add(r, 0x40), x2)
+            }
+            let w := add(wires, 0x20)
+            let out := add(output, 0x20)
+            let c00, c01, c02 := ld(add(constants, 0x20), constantOffset)
+            let c10, c11, c12 := ld(add(constants, 0x20), add(constantOffset, 1))
+            for { let i := 0 } lt(i, count) { i := add(i, 1) } {
+                let sIdx := shl(2, i)
+                let a0, a1, a2 := ld(w, sIdx)
+                let b0, b1, b2 := ld(w, add(sIdx, 1))
+                let m0, m1, m2 := mul3(a0, a1, a2, b0, b1, b2)
+                let x0, x1, x2 := mul3(c00, c01, c02, m0, m1, m2)
+                let d0, d1, d2 := ld(w, add(sIdx, 2))
+                let y0, y1, y2 := mul3(c10, c11, c12, d0, d1, d2)
+                let e0, e1, e2 := add3(x0, x1, x2, y0, y1, y2)
+                let f0, f1, f2 := ld(w, add(sIdx, 3))
+                let o0, o1, o2 := sub3(f0, f1, f2, e0, e1, e2)
+                st(out, i, o0, o1, o2)
+            }
         }
     }
 
+    /// @dev Plonky2 `ArithmeticExtensionGate` over the quadratic extension (W = 7) whose
+    /// coefficients are Ext3 evaluations: `D - (c0 * (A ⊗ B) + c1 * C)` per operation.
     function _evalArithmeticExtension(
         GoldilocksExt3.Ext3[] memory wires,
         GoldilocksExt3.Ext3[] memory constants,
         uint256 constantOffset,
         uint256 count
     ) private pure returns (GoldilocksExt3.Ext3[] memory output) {
+        if (wires.length < 8 * count || constants.length < constantOffset + 2) revert InvalidMleProof();
         output = new GoldilocksExt3.Ext3[](2 * count);
-        for (uint256 i = 0; i < count; ++i) {
-            uint256 start = 8 * i;
-            Ext2 memory computed = _ext2Add(
-                _ext2ScalarMul(
-                    _ext2Mul(_readExt2(wires, start), _readExt2(wires, start + 2)), constants[constantOffset]
-                ),
-                _ext2ScalarMul(_readExt2(wires, start + 4), constants[constantOffset + 1])
-            );
-            _writeExt2(output, 2 * i, _ext2Sub(_readExt2(wires, start + 6), computed));
+        uint256[24] memory scratch;
+        assembly ("memory-safe") {
+            function rp(table, i) -> r {
+                r := mload(add(table, shl(5, i)))
+            }
+            function mul3p(a, b, o) {
+                let p := 0xFFFFFFFF00000001
+                let a0 := mload(a)
+                let a1 := mload(add(a, 0x20))
+                let a2 := mload(add(a, 0x40))
+                let b0 := mload(b)
+                let b1 := mload(add(b, 0x20))
+                let b2 := mload(add(b, 0x40))
+                let t0 := addmod(mulmod(a1, b2, p), mulmod(a2, b1, p), p)
+                let r0 := addmod(mulmod(a0, b0, p), mulmod(2, t0, p), p)
+                let t1 := addmod(mulmod(a0, b1, p), mulmod(a1, b0, p), p)
+                let r1 := addmod(t1, mulmod(2, mulmod(a2, b2, p), p), p)
+                let r2 := addmod(addmod(mulmod(a0, b2, p), mulmod(a1, b1, p), p), mulmod(a2, b0, p), p)
+                mstore(o, r0)
+                mstore(add(o, 0x20), r1)
+                mstore(add(o, 0x40), r2)
+            }
+            function add3p(a, b, o) {
+                let p := 0xFFFFFFFF00000001
+                mstore(o, addmod(mload(a), mload(b), p))
+                mstore(add(o, 0x20), addmod(mload(add(a, 0x20)), mload(add(b, 0x20)), p))
+                mstore(add(o, 0x40), addmod(mload(add(a, 0x40)), mload(add(b, 0x40)), p))
+            }
+            function sub3p(a, b, o) {
+                let p := 0xFFFFFFFF00000001
+                mstore(o, addmod(mload(a), sub(p, mload(b)), p))
+                mstore(add(o, 0x20), addmod(mload(add(a, 0x20)), sub(p, mload(add(b, 0x20))), p))
+                mstore(add(o, 0x40), addmod(mload(add(a, 0x40)), sub(p, mload(add(b, 0x40))), p))
+            }
+            function mul7p(a, o) {
+                let p := 0xFFFFFFFF00000001
+                mstore(o, mulmod(mload(a), 7, p))
+                mstore(add(o, 0x20), mulmod(mload(add(a, 0x20)), 7, p))
+                mstore(add(o, 0x40), mulmod(mload(add(a, 0x40)), 7, p))
+            }
+            // (a0 + a1 X) * (b0 + b1 X) with X^2 = 7: o0 = a0 b0 + 7 a1 b1, o1 = a0 b1 + a1 b0.
+            // `t` is a scratch pointer with room for three Ext3 records.
+            function q2mul(a0, a1, b0, b1, o0, o1, t) {
+                mul3p(a1, b1, t)
+                mul7p(t, add(t, 0x60))
+                mul3p(a0, b0, t)
+                add3p(t, add(t, 0x60), o0)
+                mul3p(a0, b1, t)
+                mul3p(a1, b0, add(t, 0x60))
+                add3p(t, add(t, 0x60), o1)
+            }
+            let w := add(wires, 0x20)
+            let out := add(output, 0x20)
+            let c0 := rp(add(constants, 0x20), constantOffset)
+            let c1 := rp(add(constants, 0x20), add(constantOffset, 1))
+            let m0 := scratch
+            let m1 := add(scratch, 0x60)
+            let x0 := add(scratch, 0xc0)
+            let x1 := add(scratch, 0x120)
+            let t := add(scratch, 0x180)
+            for { let i := 0 } lt(i, count) { i := add(i, 1) } {
+                let sIdx := shl(3, i)
+                q2mul(rp(w, sIdx), rp(w, add(sIdx, 1)), rp(w, add(sIdx, 2)), rp(w, add(sIdx, 3)), m0, m1, t)
+                mul3p(m0, c0, x0)
+                mul3p(m1, c0, x1)
+                mul3p(rp(w, add(sIdx, 4)), c1, t)
+                add3p(x0, t, x0)
+                mul3p(rp(w, add(sIdx, 5)), c1, t)
+                add3p(x1, t, x1)
+                sub3p(rp(w, add(sIdx, 6)), x0, rp(out, shl(1, i)))
+                sub3p(rp(w, add(sIdx, 7)), x1, rp(out, add(shl(1, i), 1)))
+            }
         }
     }
 
+    /// @dev Plonky2 `MulExtensionGate`: `D - c0 * (A ⊗ B)` per operation (quadratic extension, W = 7).
     function _evalMulExtension(
         GoldilocksExt3.Ext3[] memory wires,
         GoldilocksExt3.Ext3[] memory constants,
         uint256 constantOffset,
         uint256 count
     ) private pure returns (GoldilocksExt3.Ext3[] memory output) {
+        if (wires.length < 6 * count || constants.length < constantOffset + 1) revert InvalidMleProof();
         output = new GoldilocksExt3.Ext3[](2 * count);
-        for (uint256 i = 0; i < count; ++i) {
-            uint256 start = 6 * i;
-            Ext2 memory computed = _ext2ScalarMul(
-                _ext2Mul(_readExt2(wires, start), _readExt2(wires, start + 2)), constants[constantOffset]
-            );
-            _writeExt2(output, 2 * i, _ext2Sub(_readExt2(wires, start + 4), computed));
+        uint256[24] memory scratch;
+        assembly ("memory-safe") {
+            function rp(table, i) -> r {
+                r := mload(add(table, shl(5, i)))
+            }
+            function mul3p(a, b, o) {
+                let p := 0xFFFFFFFF00000001
+                let a0 := mload(a)
+                let a1 := mload(add(a, 0x20))
+                let a2 := mload(add(a, 0x40))
+                let b0 := mload(b)
+                let b1 := mload(add(b, 0x20))
+                let b2 := mload(add(b, 0x40))
+                let t0 := addmod(mulmod(a1, b2, p), mulmod(a2, b1, p), p)
+                let r0 := addmod(mulmod(a0, b0, p), mulmod(2, t0, p), p)
+                let t1 := addmod(mulmod(a0, b1, p), mulmod(a1, b0, p), p)
+                let r1 := addmod(t1, mulmod(2, mulmod(a2, b2, p), p), p)
+                let r2 := addmod(addmod(mulmod(a0, b2, p), mulmod(a1, b1, p), p), mulmod(a2, b0, p), p)
+                mstore(o, r0)
+                mstore(add(o, 0x20), r1)
+                mstore(add(o, 0x40), r2)
+            }
+            function add3p(a, b, o) {
+                let p := 0xFFFFFFFF00000001
+                mstore(o, addmod(mload(a), mload(b), p))
+                mstore(add(o, 0x20), addmod(mload(add(a, 0x20)), mload(add(b, 0x20)), p))
+                mstore(add(o, 0x40), addmod(mload(add(a, 0x40)), mload(add(b, 0x40)), p))
+            }
+            function sub3p(a, b, o) {
+                let p := 0xFFFFFFFF00000001
+                mstore(o, addmod(mload(a), sub(p, mload(b)), p))
+                mstore(add(o, 0x20), addmod(mload(add(a, 0x20)), sub(p, mload(add(b, 0x20))), p))
+                mstore(add(o, 0x40), addmod(mload(add(a, 0x40)), sub(p, mload(add(b, 0x40))), p))
+            }
+            function mul7p(a, o) {
+                let p := 0xFFFFFFFF00000001
+                mstore(o, mulmod(mload(a), 7, p))
+                mstore(add(o, 0x20), mulmod(mload(add(a, 0x20)), 7, p))
+                mstore(add(o, 0x40), mulmod(mload(add(a, 0x40)), 7, p))
+            }
+            // (a0 + a1 X) * (b0 + b1 X) with X^2 = 7: o0 = a0 b0 + 7 a1 b1, o1 = a0 b1 + a1 b0.
+            // `t` is a scratch pointer with room for three Ext3 records.
+            function q2mul(a0, a1, b0, b1, o0, o1, t) {
+                mul3p(a1, b1, t)
+                mul7p(t, add(t, 0x60))
+                mul3p(a0, b0, t)
+                add3p(t, add(t, 0x60), o0)
+                mul3p(a0, b1, t)
+                mul3p(a1, b0, add(t, 0x60))
+                add3p(t, add(t, 0x60), o1)
+            }
+            let w := add(wires, 0x20)
+            let out := add(output, 0x20)
+            let c0 := rp(add(constants, 0x20), constantOffset)
+            let m0 := scratch
+            let m1 := add(scratch, 0x60)
+            let x0 := add(scratch, 0xc0)
+            let x1 := add(scratch, 0x120)
+            let t := add(scratch, 0x180)
+            for { let i := 0 } lt(i, count) { i := add(i, 1) } {
+                let sIdx := mul(6, i)
+                q2mul(rp(w, sIdx), rp(w, add(sIdx, 1)), rp(w, add(sIdx, 2)), rp(w, add(sIdx, 3)), m0, m1, t)
+                mul3p(m0, c0, x0)
+                mul3p(m1, c0, x1)
+                sub3p(rp(w, add(sIdx, 4)), x0, rp(out, shl(1, i)))
+                sub3p(rp(w, add(sIdx, 5)), x1, rp(out, add(shl(1, i), 1)))
+            }
         }
     }
 
@@ -454,47 +626,181 @@ library Plonky2GateEvaluatorExt3 {
         output[bits] = GoldilocksExt3.sub(wires[1 + bits], wires[intermediateStart + bits - 1]);
     }
 
+    /// @dev Plonky2 `BaseSumGate<base>`: `sum_i w[i+1] base^i - w[0]`, then one range product
+    /// `prod_{v<base} (w[i+1] - v)` per limb.
     function _evalBaseSum(GoldilocksExt3.Ext3[] memory wires, uint256 limbs, uint256 base)
         private
         pure
         returns (GoldilocksExt3.Ext3[] memory output)
     {
+        if (wires.length < limbs + 1 || base == 0 || base >= P) revert InvalidMleProof();
         output = new GoldilocksExt3.Ext3[](limbs + 1);
-        GoldilocksExt3.Ext3 memory computed = GoldilocksExt3.zero();
-        for (uint256 i = limbs; i > 0; --i) {
-            computed = GoldilocksExt3.add(GoldilocksExt3.mul(computed, _base(base)), wires[i]);
-        }
-        output[0] = GoldilocksExt3.sub(computed, wires[0]);
-        for (uint256 i = 0; i < limbs; ++i) {
-            GoldilocksExt3.Ext3 memory rangeCheck = GoldilocksExt3.one();
-            for (uint256 value = 0; value < base; ++value) {
-                rangeCheck = GoldilocksExt3.mul(rangeCheck, GoldilocksExt3.sub(wires[i + 1], _base(value)));
+        assembly ("memory-safe") {
+            function mul3(a0, a1, a2, b0, b1, b2) -> r0, r1, r2 {
+                let p := 0xFFFFFFFF00000001
+                let t0 := addmod(mulmod(a1, b2, p), mulmod(a2, b1, p), p)
+                r0 := addmod(mulmod(a0, b0, p), mulmod(2, t0, p), p)
+                let t1 := addmod(mulmod(a0, b1, p), mulmod(a1, b0, p), p)
+                r1 := addmod(t1, mulmod(2, mulmod(a2, b2, p), p), p)
+                r2 := addmod(addmod(mulmod(a0, b2, p), mulmod(a1, b1, p), p), mulmod(a2, b0, p), p)
             }
-            output[i + 1] = rangeCheck;
+            function add3(a0, a1, a2, b0, b1, b2) -> r0, r1, r2 {
+                let p := 0xFFFFFFFF00000001
+                r0 := addmod(a0, b0, p)
+                r1 := addmod(a1, b1, p)
+                r2 := addmod(a2, b2, p)
+            }
+            function sub3(a0, a1, a2, b0, b1, b2) -> r0, r1, r2 {
+                let p := 0xFFFFFFFF00000001
+                r0 := addmod(a0, sub(p, b0), p)
+                r1 := addmod(a1, sub(p, b1), p)
+                r2 := addmod(a2, sub(p, b2), p)
+            }
+            function ld(table, i) -> x0, x1, x2 {
+                let r := mload(add(table, shl(5, i)))
+                x0 := mload(r)
+                x1 := mload(add(r, 0x20))
+                x2 := mload(add(r, 0x40))
+            }
+            function st(table, i, x0, x1, x2) {
+                let r := mload(add(table, shl(5, i)))
+                mstore(r, x0)
+                mstore(add(r, 0x20), x1)
+                mstore(add(r, 0x40), x2)
+            }
+            let p := 0xFFFFFFFF00000001
+            let w := add(wires, 0x20)
+            let out := add(output, 0x20)
+            let s0 := 0
+            let s1 := 0
+            let s2 := 0
+            for { let i := limbs } gt(i, 0) { i := sub(i, 1) } {
+                let l0, l1, l2 := ld(w, i)
+                s0 := addmod(mulmod(s0, base, p), l0, p)
+                s1 := addmod(mulmod(s1, base, p), l1, p)
+                s2 := addmod(mulmod(s2, base, p), l2, p)
+            }
+            let w00, w01, w02 := ld(w, 0)
+            let o0, o1, o2 := sub3(s0, s1, s2, w00, w01, w02)
+            st(out, 0, o0, o1, o2)
+            for { let i := 0 } lt(i, limbs) { i := add(i, 1) } {
+                let l0, l1, l2 := ld(w, add(i, 1))
+                let r0 := 1
+                let r1 := 0
+                let r2 := 0
+                for { let v := 0 } lt(v, base) { v := add(v, 1) } {
+                    // (w - v) subtracts the base scalar from limb 0 only
+                    let d0 := addmod(l0, sub(p, v), p)
+                    r0, r1, r2 := mul3(r0, r1, r2, d0, l1, l2)
+                }
+                st(out, add(i, 1), r0, r1, r2)
+            }
         }
     }
 
+    /// @dev Plonky2 `ReducingGate` / `ReducingExtensionGate`: `acc_{i+1} = acc_i * alpha + c_i` over the
+    /// quadratic extension (W = 7); wires are `[out(2), alpha(2), acc0(2), coeffs, accs(2 per step)]`.
     function _evalReducing(GoldilocksExt3.Ext3[] memory wires, uint256 count, bool extensionCoefficients)
         private
         pure
         returns (GoldilocksExt3.Ext3[] memory output)
     {
-        output = new GoldilocksExt3.Ext3[](2 * count);
-        Ext2 memory alpha = _readExt2(wires, 2);
-        Ext2 memory accumulator = _readExt2(wires, 4);
         uint256 coefficientWidth = extensionCoefficients ? 2 : 1;
-        uint256 coefficientStart = 6;
-        uint256 accumulatorStart = coefficientStart + coefficientWidth * count;
-        for (uint256 i = 0; i < count; ++i) {
-            Ext2 memory coefficient = extensionCoefficients
-                ? _readExt2(wires, coefficientStart + 2 * i)
-                : Ext2({c0: wires[coefficientStart + i], c1: GoldilocksExt3.zero()});
-            Ext2 memory next = i + 1 == count ? _readExt2(wires, 0) : _readExt2(wires, accumulatorStart + 2 * i);
-            _writeExt2(output, 2 * i, _ext2Sub(_ext2Add(_ext2Mul(accumulator, alpha), coefficient), next));
-            accumulator = next;
+        uint256 accumulatorStart = 6 + coefficientWidth * count;
+        // The last accumulator is wire[0..2]; every earlier one is read from `accumulatorStart`.
+        if (count == 0 || wires.length < accumulatorStart + 2 * (count - 1)) revert InvalidMleProof();
+        output = new GoldilocksExt3.Ext3[](2 * count);
+        uint256[24] memory scratch;
+        assembly ("memory-safe") {
+            function rp(table, i) -> r {
+                r := mload(add(table, shl(5, i)))
+            }
+            function mul3p(a, b, o) {
+                let p := 0xFFFFFFFF00000001
+                let a0 := mload(a)
+                let a1 := mload(add(a, 0x20))
+                let a2 := mload(add(a, 0x40))
+                let b0 := mload(b)
+                let b1 := mload(add(b, 0x20))
+                let b2 := mload(add(b, 0x40))
+                let t0 := addmod(mulmod(a1, b2, p), mulmod(a2, b1, p), p)
+                let r0 := addmod(mulmod(a0, b0, p), mulmod(2, t0, p), p)
+                let t1 := addmod(mulmod(a0, b1, p), mulmod(a1, b0, p), p)
+                let r1 := addmod(t1, mulmod(2, mulmod(a2, b2, p), p), p)
+                let r2 := addmod(addmod(mulmod(a0, b2, p), mulmod(a1, b1, p), p), mulmod(a2, b0, p), p)
+                mstore(o, r0)
+                mstore(add(o, 0x20), r1)
+                mstore(add(o, 0x40), r2)
+            }
+            function add3p(a, b, o) {
+                let p := 0xFFFFFFFF00000001
+                mstore(o, addmod(mload(a), mload(b), p))
+                mstore(add(o, 0x20), addmod(mload(add(a, 0x20)), mload(add(b, 0x20)), p))
+                mstore(add(o, 0x40), addmod(mload(add(a, 0x40)), mload(add(b, 0x40)), p))
+            }
+            function sub3p(a, b, o) {
+                let p := 0xFFFFFFFF00000001
+                mstore(o, addmod(mload(a), sub(p, mload(b)), p))
+                mstore(add(o, 0x20), addmod(mload(add(a, 0x20)), sub(p, mload(add(b, 0x20))), p))
+                mstore(add(o, 0x40), addmod(mload(add(a, 0x40)), sub(p, mload(add(b, 0x40))), p))
+            }
+            function mul7p(a, o) {
+                let p := 0xFFFFFFFF00000001
+                mstore(o, mulmod(mload(a), 7, p))
+                mstore(add(o, 0x20), mulmod(mload(add(a, 0x20)), 7, p))
+                mstore(add(o, 0x40), mulmod(mload(add(a, 0x40)), 7, p))
+            }
+            // (a0 + a1 X) * (b0 + b1 X) with X^2 = 7: o0 = a0 b0 + 7 a1 b1, o1 = a0 b1 + a1 b0.
+            // `t` is a scratch pointer with room for three Ext3 records.
+            function q2mul(a0, a1, b0, b1, o0, o1, t) {
+                mul3p(a1, b1, t)
+                mul7p(t, add(t, 0x60))
+                mul3p(a0, b0, t)
+                add3p(t, add(t, 0x60), o0)
+                mul3p(a0, b1, t)
+                mul3p(a1, b0, add(t, 0x60))
+                add3p(t, add(t, 0x60), o1)
+            }
+            let w := add(wires, 0x20)
+            let out := add(output, 0x20)
+            let alpha0 := rp(w, 2)
+            let alpha1 := rp(w, 3)
+            let acc0 := rp(w, 4)
+            let acc1 := rp(w, 5)
+            let m0 := scratch
+            let m1 := add(scratch, 0x60)
+            let zero := add(scratch, 0xc0)
+            let t := add(scratch, 0x120)
+            mstore(zero, 0)
+            mstore(add(zero, 0x20), 0)
+            mstore(add(zero, 0x40), 0)
+            for { let i := 0 } lt(i, count) { i := add(i, 1) } {
+                q2mul(acc0, acc1, alpha0, alpha1, m0, m1, t)
+                // + coefficient
+                switch coefficientWidth
+                case 2 {
+                    add3p(m0, rp(w, add(6, shl(1, i))), m0)
+                    add3p(m1, rp(w, add(7, shl(1, i))), m1)
+                }
+                default { add3p(m0, rp(w, add(6, i)), m0) }
+                // - next accumulator (the final one is the gate output at wire 0..2)
+                let next0 := rp(w, add(accumulatorStart, shl(1, i)))
+                let next1 := rp(w, add(add(accumulatorStart, shl(1, i)), 1))
+                if eq(add(i, 1), count) {
+                    next0 := rp(w, 0)
+                    next1 := rp(w, 1)
+                }
+                sub3p(m0, next0, rp(out, shl(1, i)))
+                sub3p(m1, next1, rp(out, add(shl(1, i), 1)))
+                acc0 := next0
+                acc1 := next1
+            }
         }
     }
 
+    /// @dev Plonky2 `RandomAccessGate`: per copy, `bits` booleanity constraints, the index
+    /// reconstruction `sum_j bit_j 2^j - index`, and the multilinear selection of the claimed element,
+    /// followed by the gate's extra constant constraints.
     function _evalRandomAccess(
         GoldilocksExt3.Ext3[] memory wires,
         GoldilocksExt3.Ext3[] memory constants,
@@ -503,63 +809,116 @@ library Plonky2GateEvaluatorExt3 {
         uint256 copies,
         uint256 extraConstants
     ) private pure returns (GoldilocksExt3.Ext3[] memory output) {
-        RandomAccessLayout memory layout = RandomAccessLayout({
-            bits: bits,
-            vectorSize: uint256(1) << bits,
-            copyWidth: 2 + (uint256(1) << bits),
-            routedWires: (2 + (uint256(1) << bits)) * copies + extraConstants
-        });
+        // The scratch list holds 2^bits Ext3 slots; the gate validator already bounds `bits`.
+        if (bits > 16) revert InvalidMleVerifierConfiguration();
+        if (
+            wires.length < (2 + (uint256(1) << bits)) * copies + extraConstants + copies * bits
+                || constants.length < constantOffset + extraConstants
+        ) revert InvalidMleProof();
         output = new GoldilocksExt3.Ext3[](copies * (bits + 2) + extraConstants);
-        uint256 outputIndex;
-        for (uint256 copy = 0; copy < copies; ++copy) {
-            GoldilocksExt3.Ext3[] memory copyConstraints = _evalRandomAccessCopy(wires, layout, copy);
-            for (uint256 i = 0; i < copyConstraints.length; ++i) {
-                output[outputIndex++] = copyConstraints[i];
+        uint256[] memory scratch = new uint256[](3 * (uint256(1) << bits) + 6);
+        assembly ("memory-safe") {
+            function rp(table, i) -> r {
+                r := mload(add(table, shl(5, i)))
             }
-        }
-        for (uint256 i = 0; i < extraConstants; ++i) {
-            output[outputIndex++] =
-                GoldilocksExt3.sub(constants[constantOffset + i], wires[layout.copyWidth * copies + i]);
+            function mul3p(a, b, o) {
+                let p := 0xFFFFFFFF00000001
+                let a0 := mload(a)
+                let a1 := mload(add(a, 0x20))
+                let a2 := mload(add(a, 0x40))
+                let b0 := mload(b)
+                let b1 := mload(add(b, 0x20))
+                let b2 := mload(add(b, 0x40))
+                let t0 := addmod(mulmod(a1, b2, p), mulmod(a2, b1, p), p)
+                let r0 := addmod(mulmod(a0, b0, p), mulmod(2, t0, p), p)
+                let t1 := addmod(mulmod(a0, b1, p), mulmod(a1, b0, p), p)
+                let r1 := addmod(t1, mulmod(2, mulmod(a2, b2, p), p), p)
+                let r2 := addmod(addmod(mulmod(a0, b2, p), mulmod(a1, b1, p), p), mulmod(a2, b0, p), p)
+                mstore(o, r0)
+                mstore(add(o, 0x20), r1)
+                mstore(add(o, 0x40), r2)
+            }
+            function add3p(a, b, o) {
+                let p := 0xFFFFFFFF00000001
+                mstore(o, addmod(mload(a), mload(b), p))
+                mstore(add(o, 0x20), addmod(mload(add(a, 0x20)), mload(add(b, 0x20)), p))
+                mstore(add(o, 0x40), addmod(mload(add(a, 0x40)), mload(add(b, 0x40)), p))
+            }
+            function sub3p(a, b, o) {
+                let p := 0xFFFFFFFF00000001
+                mstore(o, addmod(mload(a), sub(p, mload(b)), p))
+                mstore(add(o, 0x20), addmod(mload(add(a, 0x20)), sub(p, mload(add(b, 0x20))), p))
+                mstore(add(o, 0x40), addmod(mload(add(a, 0x40)), sub(p, mload(add(b, 0x40))), p))
+            }
+            function mul7p(a, o) {
+                let p := 0xFFFFFFFF00000001
+                mstore(o, mulmod(mload(a), 7, p))
+                mstore(add(o, 0x20), mulmod(mload(add(a, 0x20)), 7, p))
+                mstore(add(o, 0x40), mulmod(mload(add(a, 0x40)), 7, p))
+            }
+            let p := 0xFFFFFFFF00000001
+            let w := add(wires, 0x20)
+            let out := add(output, 0x20)
+            let buf := add(scratch, 0x20)
+            let vectorSize := shl(bits, 1)
+            let copyWidth := add(2, vectorSize)
+            let routedWires := add(mul(copyWidth, copies), extraConstants)
+            // two Ext3 temporaries after the list slots
+            let acc := add(buf, mul(vectorSize, 0x60))
+            let tmp := add(acc, 0x60)
+            let outputIndex := 0
+            for { let copy := 0 } lt(copy, copies) { copy := add(copy, 1) } {
+                let copyStart := mul(copyWidth, copy)
+                let bitStart := add(routedWires, mul(copy, bits))
+                // booleanity: bit * (bit - 1)
+                for { let b := 0 } lt(b, bits) { b := add(b, 1) } {
+                    let x := rp(w, add(bitStart, b))
+                    mstore(tmp, addmod(mload(x), sub(p, 1), p))
+                    mstore(add(tmp, 0x20), mload(add(x, 0x20)))
+                    mstore(add(tmp, 0x40), mload(add(x, 0x40)))
+                    mul3p(x, tmp, rp(out, outputIndex))
+                    outputIndex := add(outputIndex, 1)
+                }
+                // reconstructed index: Horner from the most significant bit
+                mstore(acc, 0)
+                mstore(add(acc, 0x20), 0)
+                mstore(add(acc, 0x40), 0)
+                for { let b := bits } gt(b, 0) { b := sub(b, 1) } {
+                    add3p(acc, acc, acc)
+                    add3p(acc, rp(w, add(bitStart, sub(b, 1))), acc)
+                }
+                sub3p(acc, rp(w, copyStart), rp(out, outputIndex))
+                outputIndex := add(outputIndex, 1)
+                // multilinear selection over the list
+                for { let k := 0 } lt(k, vectorSize) { k := add(k, 1) } {
+                    let x := rp(w, add(add(copyStart, 2), k))
+                    let dst := add(buf, mul(k, 0x60))
+                    mstore(dst, mload(x))
+                    mstore(add(dst, 0x20), mload(add(x, 0x20)))
+                    mstore(add(dst, 0x40), mload(add(x, 0x40)))
+                }
+                let currentLength := vectorSize
+                for { let b := 0 } lt(b, bits) { b := add(b, 1) } {
+                    let bit := rp(w, add(bitStart, b))
+                    let half := shr(1, currentLength)
+                    for { let k := 0 } lt(k, half) { k := add(k, 1) } {
+                        let even := add(buf, mul(shl(1, k), 0x60))
+                        sub3p(add(even, 0x60), even, tmp)
+                        mul3p(bit, tmp, tmp)
+                        add3p(even, tmp, add(buf, mul(k, 0x60)))
+                    }
+                    currentLength := half
+                }
+                sub3p(buf, rp(w, add(copyStart, 1)), rp(out, outputIndex))
+                outputIndex := add(outputIndex, 1)
+            }
+            for { let e := 0 } lt(e, extraConstants) { e := add(e, 1) } {
+                sub3p(rp(add(constants, 0x20), add(constantOffset, e)), rp(w, add(mul(copyWidth, copies), e)), rp(out, outputIndex))
+                outputIndex := add(outputIndex, 1)
+            }
         }
     }
 
-    function _evalRandomAccessCopy(GoldilocksExt3.Ext3[] memory wires, RandomAccessLayout memory layout, uint256 copy)
-        private
-        pure
-        returns (GoldilocksExt3.Ext3[] memory output)
-    {
-        output = new GoldilocksExt3.Ext3[](layout.bits + 2);
-        uint256 copyStart = layout.copyWidth * copy;
-        uint256 bitStart = layout.routedWires + copy * layout.bits;
-        GoldilocksExt3.Ext3 memory one = GoldilocksExt3.one();
-        for (uint256 bitIndex = 0; bitIndex < layout.bits; ++bitIndex) {
-            GoldilocksExt3.Ext3 memory bit = wires[bitStart + bitIndex];
-            output[bitIndex] = GoldilocksExt3.mul(bit, GoldilocksExt3.sub(bit, one));
-        }
-
-        GoldilocksExt3.Ext3 memory reconstructed = GoldilocksExt3.zero();
-        for (uint256 bitIndex = layout.bits; bitIndex > 0; --bitIndex) {
-            reconstructed = GoldilocksExt3.add(GoldilocksExt3.double_(reconstructed), wires[bitStart + bitIndex - 1]);
-        }
-        output[layout.bits] = GoldilocksExt3.sub(reconstructed, wires[copyStart]);
-
-        GoldilocksExt3.Ext3[] memory list = new GoldilocksExt3.Ext3[](layout.vectorSize);
-        for (uint256 i = 0; i < layout.vectorSize; ++i) {
-            list[i] = wires[copyStart + 2 + i];
-        }
-        uint256 currentLength = layout.vectorSize;
-        for (uint256 bitIndex = 0; bitIndex < layout.bits; ++bitIndex) {
-            GoldilocksExt3.Ext3 memory bit = wires[bitStart + bitIndex];
-            uint256 half = currentLength / 2;
-            for (uint256 i = 0; i < half; ++i) {
-                list[i] = GoldilocksExt3.add(
-                    list[2 * i], GoldilocksExt3.mul(bit, GoldilocksExt3.sub(list[2 * i + 1], list[2 * i]))
-                );
-            }
-            currentLength = half;
-        }
-        output[layout.bits + 1] = GoldilocksExt3.sub(list[0], wires[copyStart + 1]);
-    }
 
     function _readExt2(GoldilocksExt3.Ext3[] memory values, uint256 start) private pure returns (Ext2 memory value) {
         value.c0 = values[start];
