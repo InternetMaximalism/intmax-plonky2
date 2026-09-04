@@ -4,6 +4,7 @@ This fork repository was originally for [Plonky2 with FRI](https://github.com/0x
 Periodic auditing and maintenance of this fork repository, including the MLE/WHIR proving system, is conducted by the Intmax team.
 
 **WARNING: STILL EXPERIMENTAL**
+The latest branch: mle-whir-pcs-repair-20260904
 
 ## Documentation
 
