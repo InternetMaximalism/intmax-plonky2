@@ -11,7 +11,6 @@ import {
 } from "./MleProofErrors.sol";
 import {MleVerifierV2} from "./MleVerifierV2.sol";
 import {Plonky2GateEvaluatorExt3} from "./Plonky2GateEvaluatorExt3.sol";
-import {GoldilocksExt3} from "./spongefish/GoldilocksExt3.sol";
 import {SpongefishWhirVerify} from "./spongefish/SpongefishWhirVerify.sol";
 import {MLE_PROTOCOL_VERSION_CURRENT} from "./generated/MleWhirV2.sol";
 
@@ -19,8 +18,13 @@ import {MLE_PROTOCOL_VERSION_CURRENT} from "./generated/MleWhirV2.sol";
 /// @notice Per-circuit adapter that owns the complete dynamic v2 verification configuration.
 /// @dev `MleVerifierV2` pins configuration digests but accepts the corresponding dynamic values on
 /// every call. This adapter removes those values from application calldata: its constructor checks
-/// that one complete configuration matches one already-deployed core, deep-copies it to storage,
-/// and never exposes a mutator. Parent protocols therefore pin only this adapter address per VK.
+/// that one complete configuration matches one already-deployed core, writes its exact ABI encoding
+/// into an immutable code-resident configuration store, and never exposes a mutator. Parent
+/// protocols therefore pin only this adapter address per VK.
+/// @dev The configuration is materialized from contract code (`EXTCODECOPY`) rather than from
+/// storage: the 7.5 KB production profile spans roughly 170 storage slots, and reading them cold on
+/// every verification cost about 360,000 gas of the 30,000,000-gas transaction envelope. Code is as
+/// immutable as constructor-written storage with no mutator, so the trust boundary is unchanged.
 contract PinnedMleVerifierV2 {
     uint8 private constant ENCODED_INVALID = 0;
     uint8 private constant ENCODED_VALID = 1;
@@ -29,6 +33,7 @@ contract PinnedMleVerifierV2 {
     uint8 private constant ENCODED_PI_MISMATCH = 4;
 
     error InvalidPinnedMleVerifierCore(address core);
+    error ConfigurationStoreDeploymentFailed();
 
     event MleVerifierV2Pinned(
         address indexed core, uint256 indexed chainId, bytes32 circuitConfigDigest, bytes32 whirParametersDigest
@@ -37,14 +42,13 @@ contract PinnedMleVerifierV2 {
     MleVerifierV2 public immutable core;
     uint256 public immutable allowedChainId;
 
-    CircuitConfigV2.Parameters private _circuit;
-    /// @dev Packed `row_u16_le || routed_column_u8`, exactly three bytes per PI.
-    /// Solidity's dynamic-bytes storage packs the 103-PI production map into ten slots.
-    bytes private _publicInputWireMap;
-    uint256[] private _kIs;
-    uint256[] private _subgroupGenPowers;
-    Plonky2GateEvaluatorExt3.GateInfoV2[] private _gates;
-    SpongefishWhirVerify.WhirParams private _whir;
+    /// @dev Contract whose runtime code is `0x00 || abi.encode(VerificationConfig)`. The leading
+    /// `STOP` byte makes the data non-executable; the store has no constructor logic, no storage
+    /// and no way to change. It is created once by this constructor and referenced only here.
+    address private immutable _configStore;
+    /// @dev Exact byte length of the ABI-encoded configuration, pinned so a store whose code was
+    /// somehow shortened or extended can never decode as a different configuration.
+    uint256 private immutable _configLength;
 
     constructor(MleVerifierV2 core_, MleVerifierV2.VerificationConfig memory config_) {
         if (address(core_) == address(0) || address(core_).code.length == 0) {
@@ -84,7 +88,9 @@ contract PinnedMleVerifierV2 {
 
         core = core_;
         allowedChainId = pinnedChainId;
-        _storeConfiguration(config_);
+        bytes memory encodedConfig = abi.encode(config_);
+        _configLength = encodedConfig.length;
+        _configStore = _deployConfigurationStore(encodedConfig);
         emit MleVerifierV2Pinned(address(core_), pinnedChainId, computedCircuitDigest, computedWhirDigest);
     }
 
@@ -181,8 +187,7 @@ contract PinnedMleVerifierV2 {
         view
         returns (MleVerifierV2.MleProof memory proof)
     {
-        CircuitConfigV2.Parameters memory circuit = _circuit;
-        proof = CompactMleProofV2.decode(compactProof, circuit);
+        proof = CompactMleProofV2.decode(compactProof, _loadConfiguration().circuit);
     }
 
     /// @notice Classify authenticated canonical ABI bytes through the pinned core/config pair.
@@ -251,79 +256,28 @@ contract PinnedMleVerifierV2 {
         canonical = encoded.length == rawProof.length && keccak256(encoded) == keccak256(rawProof);
     }
 
-    function _storeConfiguration(MleVerifierV2.VerificationConfig memory source) private {
-        _circuit = source.circuit;
-        _publicInputWireMap = source.publicInputWireMap;
-        for (uint256 i = 0; i < source.kIs.length; ++i) {
-            _kIs.push(source.kIs[i]);
+    /// @dev Deploy the immutable configuration store. Init code is the standard eleven-byte
+    /// "return everything after me" prologue (`PUSH1 0x0b CODESIZE DUP2 CODESIZE SUB DUP1 SWAP3
+    /// MSIZE CODECOPY RETURN`) followed by a `STOP` guard byte and the encoded configuration.
+    function _deployConfigurationStore(bytes memory encodedConfig) private returns (address store) {
+        bytes memory initCode = abi.encodePacked(hex"600b5981380380925939f3", hex"00", encodedConfig);
+        assembly ("memory-safe") {
+            store := create(0, add(initCode, 0x20), mload(initCode))
         }
-        for (uint256 i = 0; i < source.subgroupGenPowers.length; ++i) {
-            _subgroupGenPowers.push(source.subgroupGenPowers[i]);
-        }
-        for (uint256 i = 0; i < source.gates.length; ++i) {
-            _gates.push(source.gates[i]);
-        }
-
-        SpongefishWhirVerify.WhirParams memory whir = source.whir;
-        _whir.numVariables = whir.numVariables;
-        _whir.foldingFactor = whir.foldingFactor;
-        _whir.numVectors = whir.numVectors;
-        _whir.numCommitments = whir.numCommitments;
-        _whir.outDomainSamples = whir.outDomainSamples;
-        _whir.inDomainSamples = whir.inDomainSamples;
-        _whir.initialSumcheckRounds = whir.initialSumcheckRounds;
-        _whir.numRounds = whir.numRounds;
-        _whir.finalSumcheckRounds = whir.finalSumcheckRounds;
-        _whir.finalSize = whir.finalSize;
-        _whir.initialCodewordLength = whir.initialCodewordLength;
-        _whir.initialMerkleDepth = whir.initialMerkleDepth;
-        _whir.initialDomainGenerator = whir.initialDomainGenerator;
-        _whir.initialInterleavingDepth = whir.initialInterleavingDepth;
-        _whir.initialNumVariables = whir.initialNumVariables;
-        _whir.initialCosetSize = whir.initialCosetSize;
-        _whir.initialNumCosets = whir.initialNumCosets;
-        _whir.initialSumcheckPowThreshold = whir.initialSumcheckPowThreshold;
-        _whir.finalPowThreshold = whir.finalPowThreshold;
-        _whir.finalSumcheckPowThreshold = whir.finalSumcheckPowThreshold;
-        for (uint256 i = 0; i < whir.rounds.length; ++i) {
-            _whir.rounds.push(whir.rounds[i]);
+        if (store == address(0) || store.code.length != encodedConfig.length + 1) {
+            revert ConfigurationStoreDeploymentFailed();
         }
     }
 
     function _loadConfiguration() private view returns (MleVerifierV2.VerificationConfig memory config) {
-        config.circuit = _circuit;
-        config.publicInputWireMap = _publicInputWireMap;
-        config.kIs = _kIs;
-        config.subgroupGenPowers = _subgroupGenPowers;
-        config.gates = _gates;
-        config.whir = _loadWhir();
-    }
-
-    function _loadWhir() private view returns (SpongefishWhirVerify.WhirParams memory whir) {
-        whir.numVariables = _whir.numVariables;
-        whir.foldingFactor = _whir.foldingFactor;
-        whir.numVectors = _whir.numVectors;
-        whir.numCommitments = _whir.numCommitments;
-        whir.outDomainSamples = _whir.outDomainSamples;
-        whir.inDomainSamples = _whir.inDomainSamples;
-        whir.initialSumcheckRounds = _whir.initialSumcheckRounds;
-        whir.numRounds = _whir.numRounds;
-        whir.finalSumcheckRounds = _whir.finalSumcheckRounds;
-        whir.finalSize = _whir.finalSize;
-        whir.initialCodewordLength = _whir.initialCodewordLength;
-        whir.initialMerkleDepth = _whir.initialMerkleDepth;
-        whir.initialDomainGenerator = _whir.initialDomainGenerator;
-        whir.initialInterleavingDepth = _whir.initialInterleavingDepth;
-        whir.initialNumVariables = _whir.initialNumVariables;
-        whir.initialCosetSize = _whir.initialCosetSize;
-        whir.initialNumCosets = _whir.initialNumCosets;
-        whir.initialSumcheckPowThreshold = _whir.initialSumcheckPowThreshold;
-        whir.finalPowThreshold = _whir.finalPowThreshold;
-        whir.finalSumcheckPowThreshold = _whir.finalSumcheckPowThreshold;
-        whir.evaluationPoint = new GoldilocksExt3.Ext3[](0);
-        whir.evaluationPoint2 = new GoldilocksExt3.Ext3[](0);
-        whir.additionalEvaluationPoints = new GoldilocksExt3.Ext3[][](0);
-        whir.rounds = _whir.rounds;
+        address store = _configStore;
+        uint256 length = _configLength;
+        if (store.code.length != length + 1) revert InvalidMleVerifierConfiguration();
+        bytes memory encodedConfig = new bytes(length);
+        assembly ("memory-safe") {
+            extcodecopy(store, add(encodedConfig, 0x20), 1, length)
+        }
+        config = abi.decode(encodedConfig, (MleVerifierV2.VerificationConfig));
     }
 
     function _publicInputsMatch(uint256[] memory publicInputs, bytes32 piHash) private pure returns (bool) {

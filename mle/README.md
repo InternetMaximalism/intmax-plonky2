@@ -209,13 +209,22 @@ upper bounds (measured execution plus intrinsic calldata gas) are:
 | Production entry point | Execution | Intrinsic calldata | Upper bound |
 |---|---:|---:|---:|
 | `MleVerifierV2.verify` | 19,403,787 | 3,282,316 | 22,686,103 |
-| `PinnedMleVerifierV2.verifyCompact` | 20,655,266 | 2,998,152 | 23,653,418 |
-| compact public-input return | 20,655,613 | 2,998,152 | 23,653,765 |
-| compact fraud classifier | 20,765,903 | 2,998,280 | 23,764,183 |
+| `PinnedMleVerifierV2.verifyCompact` | 20,660,531 | 2,998,152 | 23,658,683 |
+| compact public-input return | 20,660,900 | 2,998,152 | 23,659,052 |
+| compact fraud classifier | 20,771,220 | 2,998,280 | 23,769,500 |
 
 These are reproducible local acceptance measurements, not a prediction of a
-particular public chain's block policy. All four are below the repository's
-30,000,000-gas gate; the largest measured upper bound retains 6,235,817 gas
+particular public chain's block policy. They are warm-path Forge numbers: the
+adapter's configuration is read once per test process. `PinnedMleVerifierV2`
+keeps its 7,456-byte configuration in an immutable code-resident store (a
+`STOP`-prefixed data contract created by its constructor) and materializes it
+with one `EXTCODECOPY` plus `abi.decode`. Compared with the earlier
+constructor-written storage copy, that costs about 5,000 gas more on a warm
+path but about 366,000 gas less on a production-shaped cold transaction, where
+the roughly 170 storage slots were each a 2,100-gas cold `SLOAD`. The parent
+repository's cold 103-public-input Manager close path measured 26,401,683
+execution gas plus 3,002,476 intrinsic calldata gas against that store. All four are below the repository's
+30,000,000-gas gate; the largest measured upper bound retains 6,230,500 gas
 of headroom.
 
 `forge build --sizes --offline` reports the production runtime sizes:
@@ -223,7 +232,7 @@ of headroom.
 | Contract | Runtime bytes | EIP-170 margin |
 |---|---:|---:|
 | `MleVerifierV2` | 20,782 | 3,794 |
-| `PinnedMleVerifierV2` | 12,285 | 12,291 |
+| `PinnedMleVerifierV2` | 12,570 | 12,006 |
 | `SpongefishWhirVerify` | 23,771 | 805 |
 
 ## Build and verification

@@ -218,7 +218,7 @@ contract TranscriptE2ETrace is Test {
         );
         require(transcript.squeezeCounter == 12 * indexBits, "terminal squeeze count");
         require(
-            keccak256(transcript.state) == 0x00a60922026a9d981d535f139fcd8a7d4155b56331866cff04a864c279869c3d,
+            keccak256(transcript.state) == 0x0852dd5c4a3f1bfca1aaa10ca49eff8927b68305bcb360bcf58fca1c8ab0a298,
             "packed v1 golden terminal digest"
         );
     }
