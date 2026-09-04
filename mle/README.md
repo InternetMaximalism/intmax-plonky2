@@ -169,7 +169,7 @@ layout from `CircuitData`. The matching Solidity terminal microbenchmark
 measures 508,524 gas for the direct-PI increment, leaving 163,476 gas inside
 its dedicated 672,000-gas allowance. This is a component margin only; the
 complete close entry point remains subject to its separate real-proof
-30,000,000-gas release gate.
+20,000,000-gas release gate.
 
 ## Canonical decoding and resource limits
 
@@ -224,10 +224,11 @@ with one `EXTCODECOPY` plus `abi.decode`. Compared with the earlier
 constructor-written storage copy, that costs about 5,000 gas more on a warm
 path but about 366,000 gas less on a production-shaped cold transaction, where
 the roughly 170 storage slots were each a 2,100-gas cold `SLOAD`. The parent
-repository's cold 103-public-input Manager close path measured 26,401,683
-execution gas plus 3,002,476 intrinsic calldata gas against that store. All four are below the repository's
-30,000,000-gas gate; the largest measured upper bound retains 6,230,500 gas
-of headroom.
+repository's cold 103-public-input Manager close path measured 16,901,877
+execution gas plus 2,017,528 intrinsic calldata gas against that store
+(18,919,405 in total; 18,919,366 on a real Anvil transaction). All four
+sampled upper bounds and the parent cold path are below the repository's
+20,000,000-gas gate; the parent cold path retains 1,080,595 gas of headroom.
 
 `forge build --sizes --offline` reports the production runtime sizes:
 
