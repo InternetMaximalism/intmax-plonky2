@@ -7,8 +7,6 @@ on:
     branches:
       - "**"
   workflow_dispatch:
-    branches:
-      - "**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -27,8 +25,10 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
 
-      - name: Install nightly toolchain
-        uses: dtolnay/rust-toolchain@nightly
+      - name: Install pinned Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly-2025-03-23
 
       - name: Set up rust cache
         uses: Swatinem/rust-cache@v2
@@ -36,7 +36,7 @@ jobs:
             cache-on-failure: true
 
       - name: Check in plonky2 subdirectory
-        run: cargo check --manifest-path plonky2/Cargo.toml
+        run: cargo check --manifest-path plonky2/Cargo.toml --locked
         env:
           RUSTFLAGS: -Copt-level=3 -Cdebug-assertions -Coverflow-checks=y -Cdebuginfo=0
           RUST_LOG: 1
@@ -44,7 +44,7 @@ jobs:
           RUST_BACKTRACE: 1
 
       - name: Check in starky subdirectory
-        run: cargo check --manifest-path starky/Cargo.toml
+        run: cargo check --manifest-path starky/Cargo.toml --locked
         env:
           RUSTFLAGS: -Copt-level=3 -Cdebug-assertions -Coverflow-checks=y -Cdebuginfo=0
           RUST_LOG: 1
@@ -52,7 +52,7 @@ jobs:
           RUST_BACKTRACE: 1
 
       - name: Run cargo test
-        run: cargo test --workspace
+        run: cargo test --workspace --locked
         env:
           RUSTFLAGS: -Copt-level=3 -Cdebug-assertions -Coverflow-checks=y -Cdebuginfo=0
           RUST_LOG: 1
@@ -68,9 +68,10 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
 
-      - name: Install nightly toolchain
-        uses: dtolnay/rust-toolchain@nightly
+      - name: Install pinned Rust toolchain
+        uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: nightly-2025-03-23
           targets: wasm32-unknown-unknown
 
       - name: Set up rust cache
@@ -79,7 +80,7 @@ jobs:
             cache-on-failure: true
 
       - name: Check in plonky2 subdirectory for wasm targets
-        run: cargo check --manifest-path plonky2/Cargo.toml --target wasm32-unknown-unknown --no-default-features
+        run: cargo check --manifest-path plonky2/Cargo.toml --target wasm32-unknown-unknown --no-default-features --locked
         env:
           RUSTFLAGS: -Copt-level=3 -Cdebug-assertions -Coverflow-checks=y -Cdebuginfo=0
           RUST_LOG: 1
@@ -87,7 +88,7 @@ jobs:
           RUST_BACKTRACE: 1
 
       - name: Check in plonky2 subdirectory with gpu_merkle (WebGPU)
-        run: cargo check --manifest-path plonky2/Cargo.toml --target wasm32-unknown-unknown --no-default-features --features gpu_merkle
+        run: cargo check --manifest-path plonky2/Cargo.toml --target wasm32-unknown-unknown --no-default-features --features gpu_merkle --locked
         env:
           RUSTFLAGS: -Copt-level=3 -Cdebug-assertions -Coverflow-checks=y -Cdebuginfo=0
           RUST_LOG: 1
@@ -95,7 +96,7 @@ jobs:
           RUST_BACKTRACE: 1
 
       - name: Check in starky subdirectory for wasm targets
-        run: cargo check --manifest-path starky/Cargo.toml --target wasm32-unknown-unknown --no-default-features
+        run: cargo check --manifest-path starky/Cargo.toml --target wasm32-unknown-unknown --no-default-features --locked
         env:
           RUSTFLAGS: -Copt-level=3 -Cdebug-assertions -Coverflow-checks=y -Cdebuginfo=0
           RUST_LOG: 1
@@ -111,10 +112,10 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
 
-      - name: Install nightly toolchain
+      - name: Install pinned Rust toolchain
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: nightly-2024-02-01
+          toolchain: nightly-2025-03-23
 
       - name: Set up rust cache
         uses: Swatinem/rust-cache@v2
@@ -122,7 +123,7 @@ jobs:
             cache-on-failure: true
 
       - name: Run cargo test in plonky2 subdirectory (no-std)
-        run: cargo test --manifest-path plonky2/Cargo.toml --no-default-features --lib
+        run: cargo test --manifest-path plonky2/Cargo.toml --no-default-features --lib --locked
         env:
           RUSTFLAGS: -Copt-level=3 -Cdebug-assertions -Coverflow-checks=y -Cdebuginfo=0
           RUST_LOG: 1
@@ -130,7 +131,7 @@ jobs:
           RUST_BACKTRACE: 1
 
       - name: Run cargo test in starky subdirectory (no-std)
-        run: cargo test --manifest-path starky/Cargo.toml --no-default-features --lib
+        run: cargo test --manifest-path starky/Cargo.toml --no-default-features --lib --locked
         env:
           RUSTFLAGS: -Copt-level=3 -Cdebug-assertions -Coverflow-checks=y -Cdebuginfo=0
           RUST_LOG: 1
@@ -146,9 +147,10 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
 
-      - name: Install nightly toolchain
-        uses: dtolnay/rust-toolchain@nightly
+      - name: Install pinned Rust toolchain
+        uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: nightly-2025-03-23
           components: rustfmt, clippy
 
       - name: Set up rust cache
@@ -160,4 +162,60 @@ jobs:
         run: cargo fmt --all --check
 
       - name: Run cargo clippy
-        run: cargo clippy --all-features --all-targets -- -D warnings -A incomplete-features -A clippy::uninlined_format_args
+        run: cargo clippy --all-features --all-targets --locked -- -D warnings -A incomplete-features -A clippy::uninlined_format_args
+
+  mle:
+    name: MLE wire-v3 and historical conformance
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Install pinned Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly-2025-03-23
+
+      - name: Set up rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+
+      - name: Check the default wire-v3 API and fixtures
+        run: |
+          cargo test -p plonky2_mle --all-targets --locked
+          cargo test -p plonky2_mle --doc --locked
+
+      - name: Check explicitly enabled historical conformance
+        run: cargo test -p plonky2_mle --all-targets --features legacy-conformance --locked
+
+      - name: Require checked-in schemas and fixtures to remain unchanged
+        run: git diff --exit-code
+
+  mle_solidity:
+    name: MLE Solidity conformance and deployment sizes
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: mle/contracts
+    steps:
+      - name: Checkout sources and pinned Solidity dependencies
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install pinned Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.5.1
+
+      - name: Run Solidity conformance and resource checks
+        run: forge test
+
+      - name: Enforce production contract size limits
+        run: forge build --sizes
+
+      - name: Require checked-in schemas and fixtures to remain unchanged
+        run: git diff --exit-code

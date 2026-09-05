@@ -222,7 +222,17 @@ fn generate_and_verify_all_fixtures() {
     println!("  FIXTURE GENERATION + RUST VERIFICATION");
     println!("============================================================\n");
 
+    // Optional developer filter for fast schema/parity iteration. Source-tree
+    // fixtures are written only under an explicit opt-in: ordinary
+    // `cargo test --all-targets` must be repeatable and must not replace the
+    // checked-in golden proof with a freshly randomized witness commitment.
+    let only = std::env::var("MLE_FIXTURE").ok();
+    let write_fixtures = std::env::var("MLE_WRITE_FIXTURES").is_ok_and(|value| value == "1");
+
     for (name, build_fn) in &circuits {
+        if only.as_deref().is_some_and(|selected| selected != *name) {
+            continue;
+        }
         let (circuit, pw) = build_fn();
         let degree = circuit.common.degree();
         let degree_bits = circuit.common.degree_bits();
@@ -295,14 +305,25 @@ fn generate_and_verify_all_fixtures() {
             }
         }
 
-        // Write fixture
+        // Explicitly write a new golden fixture. Plonky2 intentionally
+        // randomizes unused public-input wires, so two honest proofs need not
+        // have identical witness roots. Keeping writes opt-in prevents a test
+        // run from invalidating the byte-exact transcript fixture midway.
         let path = fixture_dir.join(format!("{name}.json"));
-        std::fs::write(&path, &json).unwrap();
-        println!(
-            "  fixture_written={} ({} bytes)",
-            path.display(),
-            json.len()
-        );
+        if write_fixtures {
+            std::fs::write(&path, &json).unwrap();
+            println!(
+                "  fixture_written={} ({} bytes)",
+                path.display(),
+                json.len()
+            );
+        } else {
+            println!(
+                "  fixture_verified_in_memory={} ({} bytes; set MLE_WRITE_FIXTURES=1 to replace it)",
+                path.display(),
+                json.len()
+            );
+        }
 
         println!();
     }

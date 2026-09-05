@@ -4,6 +4,7 @@ pragma solidity ^0.8.25;
 import {Keccak256Chain} from "./Keccak256Chain.sol";
 import {GoldilocksExt3} from "./GoldilocksExt3.sol";
 import {SpongefishMerkle} from "./SpongefishMerkle.sol";
+import {InvalidMleProof} from "../MleProofErrors.sol";
 
 /// @title SpongefishWhir
 /// @notice WHIR polynomial commitment verifier for WizardOfMenlo/whir (spongefish transcript).
@@ -58,7 +59,9 @@ library SpongefishWhir {
         bytes memory transcript,
         uint256 numBytes
     ) internal pure returns (bytes memory data) {
-        require(ts.transcriptPos + numBytes <= transcript.length, "transcript underflow");
+        if (ts.transcriptPos > transcript.length || numBytes > transcript.length - ts.transcriptPos) {
+            revert InvalidMleProof();
+        }
         data = _memSlice(transcript, ts.transcriptPos, numBytes);
         ts.transcriptPos += numBytes;
         ts.sponge.absorb(data);
@@ -94,7 +97,10 @@ library SpongefishWhir {
             // GL_P (which encodes as 0 in the field) but uses a different byte pattern
             // can steer challenge derivation, because the transcript hash is over bytes,
             // not over field values. Canonical encoding requires raw < GL_P.
-            if iszero(lt(raw, 0xFFFFFFFF00000001)) { revert(0, 0) }
+            if iszero(lt(raw, 0xFFFFFFFF00000001)) {
+                mstore(0x00, shl(224, 0xf0783a66))
+                revert(0x00, 0x04)
+            }
             val := raw // already canonical; no mod needed
         }
     }
@@ -149,7 +155,7 @@ library SpongefishWhir {
         // The sponge already absorbed the raw bytes via proverMessage above; if any
         // raw >= GL_P, the prover is using a non-canonical byte pattern to steer
         // Fiat-Shamir challenge derivation while still claiming an in-field value.
-        require(raw0 < GL_P && raw1 < GL_P && raw2 < GL_P, "SpongefishWhir: non-canonical field element");
+        if (raw0 >= GL_P || raw1 >= GL_P || raw2 >= GL_P) revert InvalidMleProof();
         c0 = uint64(raw0);
         c1 = uint64(raw1);
         c2 = uint64(raw2);
@@ -173,7 +179,9 @@ library SpongefishWhir {
         bytes memory hints,
         uint256 numBytes
     ) internal pure returns (bytes memory data) {
-        require(ts.hintPos + numBytes <= hints.length, "hints underflow");
+        if (ts.hintPos > hints.length || numBytes > hints.length - ts.hintPos) {
+            revert InvalidMleProof();
+        }
         data = _memSlice(hints, ts.hintPos, numBytes);
         ts.hintPos += numBytes;
     }

@@ -1,18 +1,51 @@
 /// Proof structure for the MLE-native proving system.
 ///
-/// Architecture: Combined sumcheck (constraint + permutation) with single
-/// output point r. Two WHIR proofs:
-///   1. Main split-commit: preprocessed + witness polynomials
-///   2. Auxiliary single-vector: C̃ + h̃ (constraint + permutation MLEs)
-///
-/// All evaluations are at the single sumcheck output point r, providing
-/// direct WHIR binding for individual_evals, C̃(r), and h̃(r).
+/// Architecture: each of the four ordered constituent groups is packed into
+/// one bivariate MLE `F(row, constituent_index)`. The index axis is padded to
+/// the next power of two with zero columns. After all terminal claims are
+/// transcript-bound, an Ext3 index point folds each claimed constituent vector
+/// and WHIR opens the corresponding packed commitment. This keeps the complete
+/// constituent binding while avoiding a Merkle row whose width is the full
+/// circuit schema.
 use plonky2_field::types::Field;
-use whir::algebra::fields::Field64_3;
 
 use crate::commitment::whir_pcs::WhirEvalProof;
 use crate::permutation::lookup::LookupProof;
+pub use crate::protocol_schema::{
+    GROUP_AUXILIARY, GROUP_INVERSE_HELPERS, GROUP_PREPROCESSED, GROUP_WITNESS,
+    MLE_PROTOCOL_VERSION, NUM_PACKED_VECTORS_PER_GROUP, NUM_SPLIT_COMMITMENTS,
+};
 use crate::sumcheck::types::SumcheckProof;
+
+// The generated constants above are driven by `protocol/mle_whir_v1.json`,
+// shared with the Solidity verifier. They fix the four separately committed
+// packed groups and their canonical order: preprocessed, witness, inverse
+// helpers, auxiliary. Keep the public re-exports here for the existing
+// proof/verifier API.
+
+/// Schema-bound number of constituent slots. Shorter groups occupy the prefix
+/// fixed by their group schema and the remaining index-domain slots are zero.
+pub fn constituent_group_width(
+    num_constants: usize,
+    num_routed_wires: usize,
+    num_wires: usize,
+) -> usize {
+    (num_constants + num_routed_wires)
+        .max(num_wires)
+        .max(2 * num_routed_wires)
+        .max(2)
+}
+
+/// Number of binary variables used by the packed constituent-index axis.
+pub fn constituent_index_bits(constituent_width: usize) -> usize {
+    assert!(constituent_width > 0, "constituent width must be non-zero");
+    constituent_width.next_power_of_two().trailing_zeros() as usize
+}
+
+/// Total variable count of a packed `(row, constituent_index)` group MLE.
+pub fn packed_group_num_vars(degree_bits: usize, constituent_width: usize) -> usize {
+    degree_bits + constituent_index_bits(constituent_width)
+}
 
 /// Verification key for the MLE proving system.
 ///
@@ -25,33 +58,40 @@ use crate::sumcheck::types::SumcheckProof;
 /// all constraints.
 #[derive(Clone, Debug)]
 pub struct MleVerificationKey<F: Field> {
+    pub protocol_version: u64,
+    pub constituent_width: usize,
     /// Circuit digest (verifying key hash) — 4 Goldilocks field elements.
     pub circuit_digest: Vec<F>,
-    /// WHIR commitment root for the batched preprocessed polynomial.
+    /// WHIR commitment root for the packed preprocessed constituent group.
     pub preprocessed_commitment_root: Vec<u8>,
     /// Number of constant columns in the circuit.
     pub num_constants: usize,
     /// Number of routed wire columns (sigma permutation columns).
     pub num_routed_wires: usize,
+    /// Coset shifts defining the circuit's identity permutation columns.
+    pub k_is: Vec<F>,
+    /// Powers of the circuit evaluation subgroup generator.
+    pub subgroup_gen_powers: Vec<F>,
 }
 
 /// A complete MLE proof for a Plonky2 circuit.
 ///
-/// SECURITY: All polynomial evaluations at the sumcheck output point r are
-/// WHIR-bound. The verification chain:
-///   1. Main WHIR binds P_pre(r), P_wit(r) → individual wire/const/sigma evals
-///   2. Auxiliary WHIR binds P_aux(r) → C̃(r) and h̃(r) via batch decomposition
-///   3. Combined sumcheck: eq(τ,r)·C̃(r) + μ·eq(τ_perm,r)·h̃(r) = final_eval
-///   4. Verifier checks final_eval matches sumcheck output
-///
-/// No prover-claimed oracle values are trusted without WHIR binding.
+/// Version 1 commits the ordered constituent columns before their corresponding
+/// batching/query challenges and binds every terminal value directly through
+/// the grouped WHIR opening statement.
 #[derive(Clone, Debug)]
 pub struct MleProof<F: Field> {
+    /// ABI/proof schema discriminator. Version 0 encodings are not accepted.
+    pub protocol_version: u64,
+    /// Schema-bound count of constituent slots before power-of-two index
+    /// padding. WHIR itself commits one packed vector per group.
+    pub constituent_width: usize,
     /// Circuit digest (verifying key hash) — 4 Goldilocks field elements.
     pub circuit_digest: Vec<F>,
 
-    // ── Main WHIR PCS (preprocessed + witness) ─────────────────────────
-    /// Single WHIR evaluation proof covering both preprocessed and witness.
+    // ── Grouped packed WHIR PCS ────────────────────────────────────────
+    /// Single grouped WHIR evaluation proof covering all four ordered
+    /// commitments at all four terminal points.
     pub whir_eval_proof: WhirEvalProof,
     /// Preprocessed commitment root (32 bytes, for VK binding check).
     pub preprocessed_root: Vec<u8>,
@@ -63,29 +103,23 @@ pub struct MleProof<F: Field> {
     pub preprocessed_batch_r: F,
     /// Individual evals at r: [const_0..const_C, sigma_0..sigma_R].
     pub preprocessed_individual_evals: Vec<F>,
-    pub preprocessed_whir_eval_ext3: Field64_3,
 
     // ── Witness batch evaluation at r ───────────────────────────────────
     pub witness_eval_value: F,
     pub witness_batch_r: F,
     /// Individual evals at r: [wire_0..wire_W].
     pub witness_individual_evals: Vec<F>,
-    pub witness_whir_eval_ext3: Field64_3,
 
-    // ── Auxiliary polynomial (C̃ + h̃, 3rd vector in same WHIR proof) ───
-    /// SECURITY: The auxiliary polynomial P_aux = C̃ + batch_r_aux · h̃ is the
-    /// 3rd vector in the same WHIR split-commit proof. WHIR cross-term OOD
-    /// binding + Schwartz-Zippel over batch_r_aux ensures C̃(r) and h̃(r) are
-    /// uniquely determined (forgery probability ≤ 1/|F| ≈ 2^{-64}).
+    // ── Auxiliary polynomial (C̃ + h̃, fourth constituent group) ──
+    /// Root of the ordered constituent group `[C̃, h̃, 0, …]`.
     pub aux_commitment_root: Vec<u8>,
     pub aux_batch_r: F,
-    /// C̃(r) — constraint MLE evaluation at r, WHIR-bound.
+    /// Directly PCS-bound C̃(r) opening.
     pub aux_constraint_eval: F,
-    /// h̃(r) — permutation numerator MLE evaluation at r, WHIR-bound.
+    /// Directly PCS-bound h̃(r) opening.
     pub aux_perm_eval: F,
     /// Auxiliary batched evaluation at r: P_aux(r) = C̃(r) + batch_r_aux · h̃(r).
     pub aux_eval_value: F,
-    pub aux_whir_eval_ext3: Field64_3,
 
     // ── Sumcheck output ────────────────────────────────────────────────
     /// Combined sumcheck output point r.
@@ -123,23 +157,24 @@ pub struct MleProof<F: Field> {
     pub subgroup_gen_powers: Vec<F>,
 
     // ═══════════════════════════════════════════════════════════════════
-    // v2 logUp soundness fix — Issue R2-#2 (paper §4.2)
+    // Phased logUp argument — Issue R2-#2 (paper §4.2)
     //
     // Auxiliary inverse helpers A_j(b) = 1/D_j^id(b), B_j(b) = 1/D_j^σ(b)
     // are committed via WHIR (commit_additional, after β,γ are squeezed)
     // and bound via two sumchecks:
     //   Φ_inv: zero-check on A_j·D_j^id − 1 = 0 and B_j·D_j^σ − 1 = 0  (deg 3)
-    //   Φ_h:   linear sumcheck on H = Σ_j λ_h^j (A_j − B_j),  claimed sum = 0
+    //   Φ_h:   linear sumcheck on H = Σ_j (A_j − B_j), claimed sum = 0
     //
-    // The terminal checks reconstruct predictions from PCS-bound values
+    // The terminal checks reconstruct predictions from constituent values that
+    // are individually bound by the grouped WHIR statement.
     // a_j(r_inv), b_j(r_inv), w_j(r_inv), σ_j(r_inv), g_sub(r_inv) for Φ_inv,
     // and a_j(r_h), b_j(r_h) for Φ_h. No 1/x is evaluated by the verifier.
     // ═══════════════════════════════════════════════════════════════════
-    /// Commitment root for the inverse-helper batched MLE
-    /// `P_inv = A_0 + r_inv_batch · A_1 + … + r_inv_batch^{2W_R-1} · B_{W_R-1}`.
-    /// Committed *after* (β, γ) are squeezed.
+    /// Commitment root for the packed inverse-helper constituent group
+    /// `[A_0, …, A_{W_R-1}, B_0, …, B_{W_R-1}]`. Committed after `(β, γ)`
+    /// are squeezed and before its batching/query challenges.
     pub inverse_helpers_root: Vec<u8>,
-    /// Schwartz-Zippel batching scalar for the inverse-helper batched MLE.
+    /// Legacy scalar batch consistency challenge for the inverse-helper claims.
     pub inverse_helpers_batch_r: F,
     /// Φ_inv sumcheck challenge point (length = degree_bits).
     pub inv_sumcheck_challenges: Vec<F>,
@@ -152,17 +187,12 @@ pub struct MleProof<F: Field> {
     /// Fiat-Shamir challenges for the v2 logUp protocol.
     pub lambda_inv: F,
     pub mu_inv: F,
-    pub lambda_h: F,
     pub tau_inv: Vec<F>,
     /// Inverse helper individual evals at r_inv (length = 2 · num_routed_wires,
     /// laid out as `[a_0, a_1, …, a_{W_R-1}, b_0, …, b_{W_R-1}]`).
     pub inverse_helpers_evals_at_r_inv: Vec<F>,
     /// Inverse helper individual evals at r_h (same layout).
     pub inverse_helpers_evals_at_r_h: Vec<F>,
-    /// Inverse helper batched WHIR evaluation at r_inv (Ext3).
-    pub inverse_helpers_whir_eval_at_r_inv_ext3: Field64_3,
-    /// Inverse helper batched WHIR evaluation at r_h (Ext3).
-    pub inverse_helpers_whir_eval_at_r_h_ext3: Field64_3,
     /// Witness individual evals at r_inv (needed for Φ_inv terminal check).
     pub witness_individual_evals_at_r_inv: Vec<F>,
     /// Full preprocessed individual evals at r_inv (needed for batch
@@ -175,43 +205,13 @@ pub struct MleProof<F: Field> {
     /// Subgroup MLE g_sub(r_inv) — verifier recomputes this from
     /// `subgroup_gen_powers` and checks consistency.
     pub g_sub_eval_at_r_inv: F,
-    /// Witness batched WHIR evaluation at r_inv (Ext3) — proves the
-    /// `witness_individual_evals_at_r_inv` are PCS-bound.
-    pub witness_whir_eval_at_r_inv_ext3: Field64_3,
-    /// Preprocessed batched WHIR evaluation at r_inv (Ext3) — proves
-    /// `sigma_individual_evals_at_r_inv` (and unused const evals) PCS-bound.
-    pub preprocessed_whir_eval_at_r_inv_ext3: Field64_3,
     /// Witness batch eval (Goldilocks) at r_inv, for batch consistency.
     pub witness_eval_value_at_r_inv: F,
     /// Preprocessed batch eval (Goldilocks) at r_inv, for batch consistency.
     pub preprocessed_eval_value_at_r_inv: F,
-    /// Inverse-helpers batch eval (Goldilocks) at r_inv, for batch consistency.
-    ///
-    /// SOUNDNESS (Issue R2-#2 follow-up / audit finding D3): without binding
-    /// the individual `inverse_helpers_evals_at_r_inv` to a WHIR-committed
-    /// value the way witness/preprocessed evals are, `a_j`/`b_j` are free and
-    /// the Φ_inv terminal check is satisfiable by dishonest inverses. This
-    /// batched value ties `Σ inv_batch_r^i · eval_i` to the inverse-helper WHIR
-    /// commitment (`inverse_helpers_whir_eval_at_r_inv_ext3`), mirroring
-    /// `witness_eval_value_at_r_inv`.
-    pub inverse_helpers_eval_value_at_r_inv: F,
-    /// Inverse-helpers batch eval (Goldilocks) at r_h, for batch consistency.
-    pub inverse_helpers_eval_value_at_r_h: F,
-    /// Auxiliary batched WHIR evaluation at r_inv (Ext3). Not used by the
-    /// terminal check but produced by the multi-point WHIR proof.
-    pub aux_whir_eval_at_r_inv_ext3: Field64_3,
-    /// Auxiliary, witness, preprocessed WHIR evals at r_h (Ext3). Used to
-    /// satisfy the multi-point WHIR contract; only inverse-helper values are
-    /// consumed by Φ_h terminal check.
-    pub aux_whir_eval_at_r_h_ext3: Field64_3,
-    pub witness_whir_eval_at_r_h_ext3: Field64_3,
-    pub preprocessed_whir_eval_at_r_h_ext3: Field64_3,
-    /// Inverse-helpers WHIR eval at r_gate (Ext3). Not used by terminal checks
-    /// but required to satisfy the multi-point WHIR verification contract.
-    pub inverse_helpers_whir_eval_at_r_gate_ext3: Field64_3,
 
     // ═══════════════════════════════════════════════════════════════════
-    // v2 gate binding fix — Issue R2-#1 (paper §7.3)
+    // Gate-formula binding — Issue R2-#1 (paper §7.3)
     //
     // A standalone Φ_gate zero-check sumcheck closes the gap where the
     // legacy `aux_constraint_eval` oracle is not the polynomially-correct
@@ -250,15 +250,4 @@ pub struct MleProof<F: Field> {
     pub witness_eval_value_at_r_gate_v2: F,
     /// Preprocessed batch eval (Goldilocks) at `r_gate_v2`.
     pub preprocessed_eval_value_at_r_gate_v2: F,
-    /// Witness batched WHIR Ext3 evaluation at `r_gate_v2`.
-    pub witness_whir_eval_at_r_gate_v2_ext3: Field64_3,
-    /// Preprocessed batched WHIR Ext3 evaluation at `r_gate_v2`.
-    pub preprocessed_whir_eval_at_r_gate_v2_ext3: Field64_3,
-    /// Auxiliary batched WHIR Ext3 evaluation at `r_gate_v2`. Not consumed
-    /// by any terminal check but required to satisfy the multi-point WHIR
-    /// verification contract (all committed vectors opened at all points).
-    pub aux_whir_eval_at_r_gate_v2_ext3: Field64_3,
-    /// Inverse-helpers batched WHIR Ext3 evaluation at `r_gate_v2`. Same
-    /// comment as above — not consumed by a terminal check, contract only.
-    pub inverse_helpers_whir_eval_at_r_gate_v2_ext3: Field64_3,
 }

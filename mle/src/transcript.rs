@@ -2,8 +2,12 @@
 ///
 /// Single transcript for all sub-protocols — no dual-system ambiguity.
 /// Domain-separated with protocol and sub-protocol labels.
+use ark_ff::PrimeField as ArkPrimeField;
 use keccak_hash::keccak;
 use plonky2_field::types::PrimeField64;
+use whir::algebra::fields::{Field64 as ArkGoldilocks, Field64_3};
+
+use crate::protocol_schema::MLE_TRANSCRIPT_PROTOCOL;
 
 /// A Fiat-Shamir transcript using Keccak256.
 ///
@@ -24,7 +28,7 @@ impl Transcript {
             state: Vec::new(),
             squeeze_counter: 0,
         };
-        t.domain_separate("plonky2-mle-v0");
+        t.domain_separate(MLE_TRANSCRIPT_PROTOCOL);
         t
     }
 
@@ -57,6 +61,34 @@ impl Transcript {
         self.squeeze_counter = 0;
     }
 
+    /// Absorb one canonical element of the cubic Goldilocks extension.
+    ///
+    /// The wire encoding is exactly three little-endian `u64` limbs in
+    /// coefficient order `(c0, c1, c2)`.  It is deliberately distinct from a
+    /// base-field vector: callers that need a vector must use
+    /// [`Self::absorb_ext3_vec`], which prefixes the number of extension
+    /// elements (not the number of base limbs).
+    pub fn absorb_ext3(&mut self, elem: Field64_3) {
+        for limb in [elem.c0, elem.c1, elem.c2] {
+            self.state
+                .extend_from_slice(&limb.into_bigint().0[0].to_le_bytes());
+        }
+        self.squeeze_counter = 0;
+    }
+
+    /// Absorb a length-prefixed vector of cubic-extension elements.
+    pub fn absorb_ext3_vec(&mut self, elems: &[Field64_3]) {
+        self.state
+            .extend_from_slice(&(elems.len() as u64).to_le_bytes());
+        for &elem in elems {
+            for limb in [elem.c0, elem.c1, elem.c2] {
+                self.state
+                    .extend_from_slice(&limb.into_bigint().0[0].to_le_bytes());
+            }
+        }
+        self.squeeze_counter = 0;
+    }
+
     /// Absorb raw bytes. Resets squeeze counter.
     pub fn absorb_bytes(&mut self, data: &[u8]) {
         self.state
@@ -68,8 +100,9 @@ impl Transcript {
     /// Squeeze a challenge field element from the transcript.
     ///
     /// Computes `Keccak256(state || counter)` and reduces modulo the field order.
-    /// The 256-bit hash is split into 4 × 64-bit limbs; the lowest limb (after
-    /// reduction) is used. Bias is < 2^{-192} for Goldilocks.
+    /// The 256-bit hash is interpreted as a little-endian integer and all four
+    /// 64-bit limbs are reduced with Horner's rule. The reduction bias is
+    /// below 2^-192 for Goldilocks.
     pub fn squeeze_challenge<F: PrimeField64>(&mut self) -> F {
         let mut to_hash = self.state.clone();
         to_hash.extend_from_slice(&self.squeeze_counter.to_le_bytes());
@@ -78,29 +111,50 @@ impl Transcript {
         let hash = keccak(&to_hash);
         let bytes = hash.as_ref();
 
-        // Use the first 8 bytes as a u64 and reduce mod p.
-        // For Goldilocks (p ≈ 2^64), bias is negligible since we hash 256 bits.
-        // We use all 32 bytes via wide reduction for extra safety.
-        let mut acc = 0u128;
+        // Process the little-endian limbs from most to least significant.
+        // `radix` is 2^64 in F, constructed without a Goldilocks-specific
+        // constant so the generic transcript implementation stays coherent.
+        let radix = F::from_noncanonical_u96((0, 1));
+        let mut acc = F::ZERO;
         for chunk in bytes.chunks(8).rev() {
             let limb = u64::from_le_bytes(chunk.try_into().unwrap_or([0u8; 8]));
-            // Horner-like: acc = acc * 2^64 + limb, reduced mod p
-            // For Goldilocks p = 2^64 - 2^32 + 1, we do:
-            //   acc * 2^64 mod p = acc * (p - 1 + 2^32) mod p = acc * (2^32 - 1) mod p
-            // But simpler: just accumulate as u128 and reduce at the end
-            acc = acc.wrapping_shl(64) | (limb as u128);
+            acc = acc * radix + F::from_noncanonical_u64(limb);
         }
-
-        // Final reduction: acc mod p using F::from_noncanonical_u96
-        // For simplicity, just take lower 64 bits and use from_noncanonical
-        let lo = acc as u64;
-        let hi = (acc >> 64) as u32;
-        F::from_noncanonical_u96((lo, hi))
+        acc
     }
 
     /// Squeeze `n` independent challenge field elements.
     pub fn squeeze_challenges<F: PrimeField64>(&mut self, n: usize) -> Vec<F> {
         (0..n).map(|_| self.squeeze_challenge()).collect()
+    }
+
+    /// Squeeze one challenge in `Fp[theta]/(theta^3 - 2)`.
+    ///
+    /// Each coefficient is produced by a separate Keccak/counter squeeze.
+    /// This is not a base-field entropy amplifier: the returned value is one
+    /// element of the cubic extension and must be used by an extension-field
+    /// algebraic check.  The assertion prevents accidental use with a
+    /// different 64-bit prime while retaining the generic Goldilocks-facing
+    /// prover API.
+    pub fn squeeze_ext3<F: PrimeField64>(&mut self) -> Field64_3 {
+        assert_eq!(
+            F::ORDER,
+            0xFFFF_FFFF_0000_0001,
+            "Ext3 transcript is defined only over the Goldilocks prime"
+        );
+        let c0: F = self.squeeze_challenge();
+        let c1: F = self.squeeze_challenge();
+        let c2: F = self.squeeze_challenge();
+        Field64_3::new(
+            ArkGoldilocks::from(c0.to_canonical_u64()),
+            ArkGoldilocks::from(c1.to_canonical_u64()),
+            ArkGoldilocks::from(c2.to_canonical_u64()),
+        )
+    }
+
+    /// Squeeze `n` independent cubic-extension challenges.
+    pub fn squeeze_ext3_challenges<F: PrimeField64>(&mut self, n: usize) -> Vec<Field64_3> {
+        (0..n).map(|_| self.squeeze_ext3::<F>()).collect()
     }
 
     /// Returns the current accumulated state bytes (for debugging/interop testing).

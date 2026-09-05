@@ -1,6 +1,11 @@
 /-
   Audit.lean — ルートモジュール
 
+  Historical archive: the model targets ee80ee6d with the bee025f9 D3 follow-up.
+  PCS binding is assumed and WHIR/transcript behavior is partly abstracted.
+  A successful build does not certify the current wire-v3 implementation.
+  See README.md for scope and ../README.md for current release conditions.
+
   lean-formal-audit 段階1 成果物: mle/paper/plonky2_mle_paper_v2.md の
   抽象プロトコル全体の Lean 4 形式化。SCOPE.md 参照。
 -/

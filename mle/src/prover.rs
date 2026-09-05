@@ -1,12 +1,12 @@
 /// Integrated MLE prover combining all sub-protocols.
 ///
-/// Architecture: Combined sumcheck (constraint + permutation) with single output
-/// point r. Two WHIR proofs:
-///   1. Main split-commit: preprocessed + witness polynomials (committed before challenges)
-///   2. Auxiliary single-vector: C̃ + h̃ batched (committed after challenges, before sumcheck)
-///
-/// All evaluations are at the single combined sumcheck output point r.
+/// Architecture: one staged WHIR session over four ordered packed groups:
+/// preprocessed, witness, inverse helpers, and auxiliary `[C̃, h̃]`.
+/// Each root commits one bivariate `(row, constituent_index)` MLE before the
+/// relevant outer challenges. Terminal constituent claims are folded at a
+/// post-claim Ext3 index point and opened from those packed commitments.
 use anyhow::Result;
+use ark_ff::AdditiveGroup;
 use plonky2::hash::hash_types::RichField;
 use plonky2::iop::witness::PartialWitness;
 use plonky2::plonk::circuit_data::{CommonCircuitData, EvaluationTables, ProverOnlyCircuitData};
@@ -15,12 +15,21 @@ use plonky2::plonk::prover::extract_evaluation_tables;
 use plonky2::util::timing::TimingTree;
 use plonky2_field::extension::Extendable;
 use plonky2_field::types::Field as PlonkyField;
+use whir::algebra::fields::{Field64 as ArkGoldilocks, Field64_3};
 
 use crate::commitment::whir_pcs::{plonky2_vec_to_ark, WhirPCS, WHIR_SESSION_SPLIT};
 use crate::constraint_eval::{compute_combined_constraints, flatten_extension_constraints};
 use crate::dense_mle::{row_major_to_mles, tables_to_mles, DenseMultilinearExtension};
 use crate::eq_poly;
-use crate::proof::{MleProof, MleVerificationKey};
+use crate::proof::{
+    constituent_group_width, constituent_index_bits, packed_group_num_vars, MleProof,
+    MleVerificationKey, MLE_PROTOCOL_VERSION, NUM_PACKED_VECTORS_PER_GROUP,
+};
+use crate::protocol_schema::{
+    EXTENSION_FIELD_LIMBS, NUM_PCS_CLAIMS, NUM_PCS_TERMINAL_POINTS, NUM_SPLIT_COMMITMENTS,
+    PACKED_PCS_SCHEMA_DOMAIN, PACKED_VARIABLE_ORDER_CODE, POINT_COMBINED, POINT_GATE, POINT_H,
+    POINT_INVERSE,
+};
 use crate::sumcheck::prover::{
     prove_sumcheck_combined, prove_sumcheck_gate_zerocheck, prove_sumcheck_inv_zerocheck,
     prove_sumcheck_plain,
@@ -30,25 +39,181 @@ use crate::transcript::Transcript;
 /// Derive the deterministic batching scalar for preprocessed polynomials.
 ///
 /// SECURITY: This must produce the same value during setup and proving for the
-/// same circuit. It is derived solely from the circuit_digest (verifying key hash)
-/// using a dedicated mini-transcript with its own domain separation.
-pub fn derive_preprocessed_batch_r<F: RichField>(circuit_digest: &[F]) -> F {
+/// same circuit and packed preprocessed commitment. The root is absorbed before
+/// the challenge so the batching scalar cannot be selected before the ordered
+/// constituent vectors are committed.
+pub fn derive_preprocessed_batch_r<F: RichField>(
+    circuit_digest: &[F],
+    preprocessed_root: &[u8],
+) -> F {
     let mut t = Transcript::new();
     t.domain_separate("preprocessed-batch-r");
     t.absorb_field_vec(circuit_digest);
+    t.absorb_bytes(preprocessed_root);
     t.squeeze_challenge()
 }
 
-/// Build the batched preprocessed MLE from constants and sigmas.
-fn build_preprocessed_batch<'a, F: RichField>(
+/// Pack ordered constituent columns into one bivariate MLE. Dense-table index
+/// `row + (constituent << degree_bits)` makes the row variables the low
+/// (LSB-first) variables and the constituent-index variables the high ones.
+fn mles_to_packed_ark_group<F: RichField>(
+    mles: &[&DenseMultilinearExtension<F>],
+    constituent_width: usize,
+    num_rows: usize,
+) -> Vec<Vec<whir::algebra::fields::Field64>> {
+    assert!(
+        mles.len() <= constituent_width,
+        "constituent group exceeds schema width"
+    );
+    let index_capacity = constituent_width.next_power_of_two();
+    let mut packed = vec![whir::algebra::fields::Field64::ZERO; num_rows * index_capacity];
+    for (constituent, mle) in mles.iter().enumerate() {
+        assert_eq!(
+            mle.evaluations.len(),
+            num_rows,
+            "constituent row count mismatch"
+        );
+        let start = constituent * num_rows;
+        for (row, value) in mle.evaluations.iter().enumerate() {
+            packed[start + row] = whir::algebra::fields::Field64::from(value.to_canonical_u64());
+        }
+    }
+    vec![packed]
+}
+
+fn tables_to_packed_ark_group<F: RichField>(
+    tables: &[Vec<F>],
+    constituent_width: usize,
+    num_rows: usize,
+) -> Vec<Vec<whir::algebra::fields::Field64>> {
+    assert!(
+        tables.len() <= constituent_width,
+        "constituent group exceeds schema width"
+    );
+    let index_capacity = constituent_width.next_power_of_two();
+    let mut packed = vec![whir::algebra::fields::Field64::ZERO; num_rows * index_capacity];
+    for (constituent, table) in tables.iter().enumerate() {
+        assert!(
+            table.len() <= num_rows,
+            "constituent row count exceeds domain"
+        );
+        let start = constituent * num_rows;
+        for (row, value) in table.iter().enumerate() {
+            packed[start + row] = whir::algebra::fields::Field64::from(value.to_canonical_u64());
+        }
+    }
+    vec![packed]
+}
+
+pub(crate) fn absorb_schema_and_base_roots(
+    transcript: &mut Transcript,
+    num_constants: usize,
+    num_routed_wires: usize,
+    num_wires: usize,
+    constituent_width: usize,
+    preprocessed_root: &[u8],
+    witness_root: &[u8],
+) {
+    transcript.domain_separate(PACKED_PCS_SCHEMA_DOMAIN);
+    for value in [
+        MLE_PROTOCOL_VERSION as usize,
+        NUM_SPLIT_COMMITMENTS,
+        num_constants,
+        num_routed_wires,
+        num_wires,
+        constituent_width,
+        constituent_index_bits(constituent_width),
+        NUM_PACKED_VECTORS_PER_GROUP,
+        EXTENSION_FIELD_LIMBS,
+        PACKED_VARIABLE_ORDER_CODE,
+    ] {
+        transcript.absorb_bytes(&(value as u64).to_le_bytes());
+    }
+    transcript.domain_separate("pcs-group-preprocessed");
+    transcript.absorb_bytes(preprocessed_root);
+    transcript.domain_separate("pcs-group-witness");
+    transcript.absorb_bytes(witness_root);
+}
+
+/// Absorb the exact point-major/group-major constituent claim schema and then
+/// derive one independent Ext3 index point for each terminal point. Every
+/// claim is fixed before any index coordinate is sampled.
+pub(crate) fn absorb_claims_and_sample_index_points<F: RichField>(
+    transcript: &mut Transcript,
+    claims: &[&[F]],
+    index_bits: usize,
+) -> Vec<Vec<Field64_3>> {
+    assert_eq!(
+        claims.len(),
+        NUM_PCS_CLAIMS,
+        "unexpected terminal-point/group claim matrix"
+    );
+    transcript.domain_separate("pcs-constituent-claims-v1");
+    for claim in claims {
+        transcript.absorb_field_vec(claim);
+    }
+    transcript.domain_separate("pcs-constituent-index-v1");
+    (0..NUM_PCS_TERMINAL_POINTS)
+        .map(|_| {
+            (0..index_bits)
+                .map(|_| {
+                    let c0: F = transcript.squeeze_challenge();
+                    let c1: F = transcript.squeeze_challenge();
+                    let c2: F = transcript.squeeze_challenge();
+                    Field64_3::new(
+                        ArkGoldilocks::from(c0.to_canonical_u64()),
+                        ArkGoldilocks::from(c1.to_canonical_u64()),
+                        ArkGoldilocks::from(c2.to_canonical_u64()),
+                    )
+                })
+                .collect()
+        })
+        .collect()
+}
+
+/// Evaluate the constituent-index MLE of a claimed value vector at `index_point`.
+/// Values beyond the exact group count, through `width.next_power_of_two()`,
+/// are the schema-mandated zero padding committed by the prover.
+pub(crate) fn fold_constituent_claim<F: RichField>(
+    values: &[F],
+    width: usize,
+    index_point: &[Field64_3],
+) -> Field64_3 {
+    assert!(values.len() <= width, "claim exceeds constituent width");
+    assert_eq!(
+        index_point.len(),
+        constituent_index_bits(width),
+        "constituent index point width mismatch"
+    );
+    let mut layer = vec![Field64_3::from(0u64); width.next_power_of_two()];
+    for (slot, value) in values.iter().enumerate() {
+        layer[slot] = Field64_3::from(value.to_canonical_u64());
+    }
+    for challenge in index_point {
+        for i in 0..(layer.len() / 2) {
+            let even = layer[2 * i];
+            let odd = layer[2 * i + 1];
+            layer[i] = even + *challenge * (odd - even);
+        }
+        layer.truncate(layer.len() / 2);
+    }
+    layer[0]
+}
+
+fn packed_eval_point<F: RichField>(row_point: &[F], index_point: &[Field64_3]) -> Vec<Field64_3> {
+    row_point
+        .iter()
+        .map(|value| Field64_3::from(value.to_canonical_u64()))
+        .chain(index_point.iter().copied())
+        .collect()
+}
+
+/// Return preprocessed constituents in the schema-bound constants-then-sigmas
+/// order used by the packed commitment and every terminal claim.
+fn collect_preprocessed_mles<'a, F: RichField>(
     const_mles: &'a [DenseMultilinearExtension<F>],
     sigma_mles: &'a [DenseMultilinearExtension<F>],
-    batch_r: F,
-    degree_bits: usize,
-) -> (
-    DenseMultilinearExtension<F>,
-    Vec<&'a DenseMultilinearExtension<F>>,
-) {
+) -> Vec<&'a DenseMultilinearExtension<F>> {
     let mut preprocessed_mles: Vec<&DenseMultilinearExtension<F>> = Vec::new();
     for m in const_mles {
         preprocessed_mles.push(m);
@@ -56,22 +221,7 @@ fn build_preprocessed_batch<'a, F: RichField>(
     for m in sigma_mles {
         preprocessed_mles.push(m);
     }
-
-    let mut batched_evals = vec![F::ZERO; 1 << degree_bits];
-    let mut r_pow = F::ONE;
-    for mle in &preprocessed_mles {
-        for (j, &eval) in mle.evaluations.iter().enumerate() {
-            if j < batched_evals.len() {
-                batched_evals[j] += r_pow * eval;
-            }
-        }
-        r_pow *= batch_r;
-    }
-
-    (
-        DenseMultilinearExtension::new(batched_evals),
-        preprocessed_mles,
-    )
+    preprocessed_mles
 }
 
 /// Compute the MLE verification key for a circuit (setup phase).
@@ -96,30 +246,39 @@ where
     let const_mles = row_major_to_mles(&prover_data.constant_evals, common_data.num_constants);
     let sigma_mles = row_major_to_mles(&prover_data.sigmas, num_routed_wires);
 
-    let batch_r_pre = derive_preprocessed_batch_r(&circuit_digest);
-    let (preprocessed_batched, _) =
-        build_preprocessed_batch(&const_mles, &sigma_mles, batch_r_pre, degree_bits);
-
-    let goldilocks_evals: Vec<plonky2_field::goldilocks_field::GoldilocksField> =
-        preprocessed_batched
-            .evaluations
-            .iter()
-            .map(|&f| {
-                plonky2_field::goldilocks_field::GoldilocksField::from_canonical_u64(
-                    f.to_canonical_u64(),
-                )
-            })
-            .collect();
-    let goldilocks_mle = DenseMultilinearExtension::new(goldilocks_evals);
-
-    let whir_pcs = WhirPCS::for_num_vars(degree_bits);
-    let preprocessed_commitment_root = whir_pcs.commit_root(&goldilocks_mle);
+    let num_wires = common_data.config.num_wires;
+    let constituent_width =
+        constituent_group_width(common_data.num_constants, num_routed_wires, num_wires);
+    let mut preprocessed_refs: Vec<&DenseMultilinearExtension<F>> = const_mles.iter().collect();
+    preprocessed_refs.extend(sigma_mles.iter());
+    let pre_group =
+        mles_to_packed_ark_group(&preprocessed_refs, constituent_width, 1usize << degree_bits);
+    let whir_pcs = WhirPCS::for_constituents_v1(
+        packed_group_num_vars(degree_bits, constituent_width),
+        NUM_PACKED_VECTORS_PER_GROUP,
+    );
+    let commit_data = whir_pcs.commit_grouped(&[pre_group], WHIR_SESSION_SPLIT);
+    let preprocessed_commitment_root = commit_data.roots[0].clone();
+    let subgroup_gen_powers = {
+        let g = prover_data.subgroup.get(1).copied().unwrap_or(F::ONE);
+        let mut powers = Vec::with_capacity(degree_bits);
+        let mut current = g;
+        for _ in 0..degree_bits {
+            powers.push(current);
+            current *= current;
+        }
+        powers
+    };
 
     MleVerificationKey {
+        protocol_version: MLE_PROTOCOL_VERSION,
+        constituent_width,
         circuit_digest,
         preprocessed_commitment_root,
         num_constants: common_data.num_constants,
         num_routed_wires,
+        k_is: common_data.k_is.clone(),
+        subgroup_gen_powers,
     }
 }
 
@@ -173,30 +332,41 @@ pub fn mle_prove_from_tables<F: RichField + Extendable<D>, const D: usize>(
     let sigma_mles = row_major_to_mles(&tables.sigma_values, num_routed_wires);
     eprintln!("[prover] build MLEs: {:?}", _t.elapsed());
 
-    let whir_pcs = WhirPCS::for_num_vars(degree_bits);
+    let constituent_width = constituent_group_width(
+        common_data.num_constants,
+        num_routed_wires,
+        tables.num_wires,
+    );
+    let packed_num_vars = packed_group_num_vars(degree_bits, constituent_width);
+    let whir_pcs = WhirPCS::for_constituents_v1(packed_num_vars, NUM_PACKED_VECTORS_PER_GROUP);
 
-    // Preprocessed batch + commit root
+    // Commit the ordered base constituents before deriving either batching
+    // scalar. In particular, preprocessedBatchR is root-dependent rather than
+    // a circuit-only challenge sampled before the constituent commitment.
     let _t = std::time::Instant::now();
-    let batch_r_pre: F = derive_preprocessed_batch_r(circuit_digest);
-    let (preprocessed_batched, preprocessed_mles) =
-        build_preprocessed_batch(&const_mles, &sigma_mles, batch_r_pre, degree_bits);
+    let preprocessed_mles = collect_preprocessed_mles(&const_mles, &sigma_mles);
 
-    let pre_goldilocks_evals: Vec<plonky2_field::goldilocks_field::GoldilocksField> =
-        preprocessed_batched
-            .evaluations
-            .iter()
-            .map(|&f| {
-                plonky2_field::goldilocks_field::GoldilocksField::from_canonical_u64(
-                    f.to_canonical_u64(),
-                )
-            })
-            .collect();
-    let pre_ark_evals = plonky2_vec_to_ark(&pre_goldilocks_evals);
+    let n_rows = 1usize << degree_bits;
+    let pre_group = mles_to_packed_ark_group(&preprocessed_mles, constituent_width, n_rows);
+    let witness_refs: Vec<&DenseMultilinearExtension<F>> = wire_mles.iter().collect();
+    let witness_group = mles_to_packed_ark_group(&witness_refs, constituent_width, n_rows);
 
-    let pre_goldilocks_mle = DenseMultilinearExtension::new(pre_goldilocks_evals);
-    let pre_root = whir_pcs.commit_root(&pre_goldilocks_mle);
+    // The two base groups are committed, in canonical schema order, before
+    // any batching, permutation, or terminal-point challenge is sampled.
+    let mut commit_data = whir_pcs.commit_grouped(&[pre_group, witness_group], WHIR_SESSION_SPLIT);
+    let pre_root = commit_data.roots[0].clone();
+    let witness_root = commit_data.roots[1].clone();
+    let batch_r_pre: F = derive_preprocessed_batch_r(circuit_digest, &pre_root);
+    absorb_schema_and_base_roots(
+        &mut transcript,
+        common_data.num_constants,
+        num_routed_wires,
+        tables.num_wires,
+        constituent_width,
+        &pre_root,
+        &witness_root,
+    );
 
-    transcript.absorb_bytes(&pre_root);
     transcript.domain_separate("batch-commit-witness");
     let batch_r_wit: F = transcript.squeeze_challenge();
 
@@ -222,12 +392,9 @@ pub fn mle_prove_from_tables<F: RichField + Extendable<D>, const D: usize>(
             .collect();
     let wit_ark_evals = plonky2_vec_to_ark(&wit_goldilocks_evals);
 
-    // Split commit preprocessed + witness (phase 1 — before challenges)
-    let mut commit_data =
-        whir_pcs.commit_split(&[&pre_ark_evals, &wit_ark_evals], WHIR_SESSION_SPLIT);
-    assert_eq!(pre_root, commit_data.roots[0]);
-    let witness_root = commit_data.roots[1].clone();
-    transcript.absorb_bytes(&witness_root);
+    // The legacy Goldilocks batch values remain serialized for migration
+    // diagnostics, but they are no longer the PCS soundness statement.
+    let _ = wit_ark_evals;
     eprintln!("[prover] phase1 commit: {:?}", _t.elapsed());
 
     // ═══════════════════════════════════════════════════════════════════
@@ -265,58 +432,30 @@ pub fn mle_prove_from_tables<F: RichField + Extendable<D>, const D: usize>(
     )
     .map_err(|e| anyhow::anyhow!("v2 logUp inverse build: {e}"))?;
 
+    let inverse_tables: Vec<Vec<F>> = a_tables
+        .iter()
+        .take(num_routed_wires)
+        .cloned()
+        .chain(b_tables.iter().take(num_routed_wires).cloned())
+        .collect();
+    let inverse_group = tables_to_packed_ark_group(&inverse_tables, constituent_width, n_rows);
+    let inverse_helpers_root = whir_pcs.commit_additional_group(&mut commit_data, inverse_group);
+    transcript.domain_separate("pcs-group-inverse-helpers");
+    transcript.absorb_bytes(&inverse_helpers_root);
     transcript.domain_separate("inverse-helpers-batch-r");
     let inv_helpers_batch_r: F = transcript.squeeze_challenge();
-
-    // Batch all 2·W_R inverse-helper MLEs into a single P_inv polynomial
-    // committed via WHIR's split-commit (vector 3, after preprocessed/witness).
-    let n_rows = 1 << degree_bits;
-    let mut p_inv_evals = vec![F::ZERO; n_rows];
-    let mut r_pow = F::ONE;
-    for a_table in a_tables.iter().take(num_routed_wires) {
-        for (row, &v) in a_table.iter().enumerate() {
-            if row < n_rows {
-                p_inv_evals[row] += r_pow * v;
-            }
-        }
-        r_pow *= inv_helpers_batch_r;
-    }
-    for b_table in b_tables.iter().take(num_routed_wires) {
-        for (row, &v) in b_table.iter().enumerate() {
-            if row < n_rows {
-                p_inv_evals[row] += r_pow * v;
-            }
-        }
-        r_pow *= inv_helpers_batch_r;
-    }
-    let p_inv_ark = plonky2_vec_to_ark(
-        &p_inv_evals
-            .iter()
-            .map(|&f| {
-                plonky2_field::goldilocks_field::GoldilocksField::from_canonical_u64(
-                    f.to_canonical_u64(),
-                )
-            })
-            .collect::<Vec<_>>(),
-    );
-    let inverse_helpers_root = whir_pcs.commit_additional(&mut commit_data, &p_inv_ark);
-    transcript.absorb_bytes(&inverse_helpers_root);
     eprintln!(
         "[prover] phase2b inverse-helpers commit: {:?}",
         _t.elapsed()
     );
 
     // ═══════════════════════════════════════════════════════════════════
-    // Phase 2c: Squeeze remaining challenges (α, τ, τ_perm + v2 challenges)
+    // Phase 2c: Squeeze only the challenges required to construct C̃.
+    // Query/sumcheck challenges stay after the auxiliary constituent root.
     // ═══════════════════════════════════════════════════════════════════
     let alpha: F = transcript.squeeze_challenge();
-    let tau: Vec<F> = transcript.squeeze_challenges(degree_bits);
-    let tau_perm: Vec<F> = transcript.squeeze_challenges(degree_bits);
-    transcript.domain_separate("v2-logup-challenges");
-    let lambda_inv: F = transcript.squeeze_challenge();
-    let mu_inv: F = transcript.squeeze_challenge();
-    let lambda_h: F = transcript.squeeze_challenge();
-    let tau_inv: Vec<F> = transcript.squeeze_challenges(degree_bits);
+    transcript.domain_separate("extension-combine");
+    let ext_challenge: F = transcript.squeeze_challenge();
 
     // Compute C̃ (constraint MLE)
     let _t = std::time::Instant::now();
@@ -328,8 +467,6 @@ pub fn mle_prove_from_tables<F: RichField + Extendable<D>, const D: usize>(
         &tables.public_inputs_hash,
         degree,
     );
-    transcript.domain_separate("extension-combine");
-    let ext_challenge: F = transcript.squeeze_challenge();
     let mut padded_constraints =
         flatten_extension_constraints::<F, D>(&combined_ext, ext_challenge);
     padded_constraints.resize(1 << degree_bits, F::ZERO);
@@ -355,45 +492,32 @@ pub fn mle_prove_from_tables<F: RichField + Extendable<D>, const D: usize>(
     eprintln!("[prover] phase2 constraints+perm: {:?}", _t.elapsed());
 
     // ═══════════════════════════════════════════════════════════════════
-    // Phase 3: Auxiliary commitment (C̃ + h̃ batched)
-    //
-    // SECURITY: C̃ and h̃ depend on challenges (alpha, beta, gamma) derived
-    // AFTER the main commitment. A second commitment round makes their
-    // evaluations WHIR-bound, closing the oracle gap.
+    // Phase 3: Commit the two auxiliary constituents C̃ and h̃.
+    // They legitimately depend on earlier challenges, but their ordered group
+    // root precedes rho_aux, mu, all sumcheck messages, and all query points.
     // ═══════════════════════════════════════════════════════════════════
     let _t = std::time::Instant::now();
-    transcript.domain_separate("aux-commit");
-    let batch_r_aux: F = transcript.squeeze_challenge();
-
-    // P_aux(x) = C̃(x) + batch_r_aux · h̃(x)
-    let mut aux_batched_evals = vec![F::ZERO; 1 << degree_bits];
-    for (j, &c_val) in padded_constraints.iter().enumerate() {
-        aux_batched_evals[j] += c_val;
-    }
-    for (j, &h_val) in perm_h_padded.iter().enumerate() {
-        if j < aux_batched_evals.len() {
-            aux_batched_evals[j] += batch_r_aux * h_val;
-        }
-    }
-
-    // Convert auxiliary to arkworks field
-    let aux_ark_evals = plonky2_vec_to_ark(
-        &aux_batched_evals
-            .iter()
-            .map(|&f| {
-                plonky2_field::goldilocks_field::GoldilocksField::from_canonical_u64(
-                    f.to_canonical_u64(),
-                )
-            })
-            .collect::<Vec<_>>(),
+    let aux_group = tables_to_packed_ark_group(
+        &[padded_constraints.clone(), perm_h_padded.clone()],
+        constituent_width,
+        n_rows,
     );
-
-    // Add auxiliary to the SAME WHIR session (phased commit — vector 2)
-    // SECURITY: commit_additional uses the same WHIR ProverState, ensuring
-    // cross-term OOD binding with preprocessed and witness vectors.
-    let aux_root = whir_pcs.commit_additional(&mut commit_data, &aux_ark_evals);
+    let aux_root = whir_pcs.commit_additional_group(&mut commit_data, aux_group);
+    transcript.domain_separate("pcs-group-auxiliary");
     transcript.absorb_bytes(&aux_root);
+    transcript.domain_separate("aux-batch-r");
+    let batch_r_aux: F = transcript.squeeze_challenge();
     eprintln!("[prover] phase3 aux commit (phased): {:?}", _t.elapsed());
+
+    // Every challenge that defines a sumcheck polynomial/query point follows
+    // the auxiliary root. This prevents challenge-dependent C̃/h̃ selection.
+    transcript.domain_separate("post-auxiliary-challenges-v1");
+    let tau: Vec<F> = transcript.squeeze_challenges(degree_bits);
+    let tau_perm: Vec<F> = transcript.squeeze_challenges(degree_bits);
+    transcript.domain_separate("v2-logup-challenges");
+    let lambda_inv: F = transcript.squeeze_challenge();
+    let mu_inv: F = transcript.squeeze_challenge();
+    let tau_inv: Vec<F> = transcript.squeeze_challenges(degree_bits);
 
     // ═══════════════════════════════════════════════════════════════════
     // Phase 4: Derive combination scalar μ + lookups
@@ -487,7 +611,7 @@ pub fn mle_prove_from_tables<F: RichField + Extendable<D>, const D: usize>(
 
     // ═══════════════════════════════════════════════════════════════════
     // Phase 5.7 (v2 logUp): Φ_h linear sumcheck.
-    //   Σ_b H(b) = 0,  H(b) = Σ_j λ_h^j · (A_j(b) − B_j(b))
+    //   Σ_b H(b) = 0, H(b) = Σ_j (A_j(b) − B_j(b))
     // Round-poly degree 1 (linear in each variable).
     // ═══════════════════════════════════════════════════════════════════
     let _t = std::time::Instant::now();
@@ -498,7 +622,7 @@ pub fn mle_prove_from_tables<F: RichField + Extendable<D>, const D: usize>(
     // claimed sum on an honest prover.
     let mut h_combined = vec![F::ZERO; n_rows];
     for jj in 0..num_routed_wires {
-        for row in 0..n_rows {
+        for (row, h_value) in h_combined.iter_mut().enumerate() {
             let a_v = if row < a_tables[jj].len() {
                 a_tables[jj][row]
             } else {
@@ -509,7 +633,7 @@ pub fn mle_prove_from_tables<F: RichField + Extendable<D>, const D: usize>(
             } else {
                 F::ZERO
             };
-            h_combined[row] += a_v - b_v;
+            *h_value += a_v - b_v;
         }
     }
     let mut h_combined_mle = DenseMultilinearExtension::new(h_combined);
@@ -710,76 +834,69 @@ pub fn mle_prove_from_tables<F: RichField + Extendable<D>, const D: usize>(
         preprocessed_eval_value_at_r_inv += r_pow * eval;
         r_pow *= batch_r_pre;
     }
-    // Inverse-helpers batched Goldilocks evals (audit finding D3): bind the
-    // individual a_j/b_j evals to the inverse-helper WHIR commitment via the
-    // same batch-consistency mechanism used for witness/preprocessed.
-    let mut inverse_helpers_eval_value_at_r_inv = F::ZERO;
-    let mut r_pow = F::ONE;
-    for &eval in &inverse_helpers_evals_at_r_inv {
-        inverse_helpers_eval_value_at_r_inv += r_pow * eval;
-        r_pow *= inv_helpers_batch_r;
-    }
-    let mut inverse_helpers_eval_value_at_r_h = F::ZERO;
-    let mut r_pow = F::ONE;
-    for &eval in &inverse_helpers_evals_at_r_h {
-        inverse_helpers_eval_value_at_r_h += r_pow * eval;
-        r_pow *= inv_helpers_batch_r;
-    }
 
     // ═══════════════════════════════════════════════════════════════════
-    // Phase 7: Multi-point WHIR prove — open all 4 vectors at 3 points.
-    // Vectors: [preprocessed, witness, aux, inverse_helpers]
-    // Points : [r_gate, r_inv, r_h]
+    // Phase 7: packed WHIR prove — bind every terminal constituent vector.
+    //
+    // The exact claim arrays (including empty group/point combinations) enter
+    // the outer transcript first. Four Ext3 index points are then sampled and
+    // appended to the corresponding row points. A WHIR opening of the packed
+    // bivariate group at `(row_point, index_point)` authenticates the random
+    // multilinear fold of every constituent claim with ~192-bit field size.
     // ═══════════════════════════════════════════════════════════════════
     let _t = std::time::Instant::now();
-    let to_gl = |fs: &[F]| -> Vec<plonky2_field::goldilocks_field::GoldilocksField> {
-        fs.iter()
-            .map(|&f| {
-                plonky2_field::goldilocks_field::GoldilocksField::from_canonical_u64(
-                    f.to_canonical_u64(),
-                )
-            })
-            .collect()
-    };
-    let r_gate_gl = to_gl(&sumcheck_challenges);
-    let r_inv_gl = to_gl(&inv_sumcheck_challenges);
-    let r_h_gl = to_gl(&h_sumcheck_challenges);
-    let r_gate_v2_gl = to_gl(&gate_sumcheck_challenges);
+    transcript.domain_separate("pcs-eval");
+    let empty: &[F] = &[];
+    let aux_claims = [aux_constraint_eval, aux_perm_eval];
+    let claims: [&[F]; NUM_PCS_CLAIMS] = [
+        &preprocessed_individual_evals,
+        &witness_individual_evals,
+        empty,
+        &aux_claims,
+        &preprocessed_individual_evals_at_r_inv_full,
+        &witness_individual_evals_at_r_inv,
+        &inverse_helpers_evals_at_r_inv,
+        empty,
+        empty,
+        empty,
+        &inverse_helpers_evals_at_r_h,
+        empty,
+        &preprocessed_individual_evals_at_r_gate_v2_full,
+        &witness_individual_evals_at_r_gate_v2,
+        empty,
+        empty,
+    ];
+    let index_points = absorb_claims_and_sample_index_points(
+        &mut transcript,
+        &claims,
+        constituent_index_bits(constituent_width),
+    );
+    let r_gate_packed = packed_eval_point(&sumcheck_challenges, &index_points[POINT_COMBINED]);
+    let r_inv_packed = packed_eval_point(&inv_sumcheck_challenges, &index_points[POINT_INVERSE]);
+    let r_h_packed = packed_eval_point(&h_sumcheck_challenges, &index_points[POINT_H]);
+    let r_gate_v2_packed = packed_eval_point(&gate_sumcheck_challenges, &index_points[POINT_GATE]);
 
-    let (whir_eval_proof, whir_per_point_evals) = whir_pcs.prove_split_with_eval(
+    let (whir_eval_proof, _) = whir_pcs.prove_grouped_with_eval(
         commit_data,
-        &[&r_gate_gl, &r_inv_gl, &r_h_gl, &r_gate_v2_gl],
+        &[
+            &r_gate_packed,
+            &r_inv_packed,
+            &r_h_packed,
+            &r_gate_v2_packed,
+        ],
     );
 
-    // Layout: per_point_evals[point_idx] = [pre, wit, aux, inv]
-    let pre_eval_ext3 = whir_per_point_evals[0][0];
-    let wit_eval_ext3 = whir_per_point_evals[0][1];
-    let aux_whir_eval_ext3 = whir_per_point_evals[0][2];
-    let inverse_helpers_whir_eval_at_r_gate_ext3 = whir_per_point_evals[0][3];
-
-    let preprocessed_whir_eval_at_r_inv_ext3 = whir_per_point_evals[1][0];
-    let witness_whir_eval_at_r_inv_ext3 = whir_per_point_evals[1][1];
-    let aux_whir_eval_at_r_inv_ext3 = whir_per_point_evals[1][2];
-    let inverse_helpers_whir_eval_at_r_inv_ext3 = whir_per_point_evals[1][3];
-
-    let preprocessed_whir_eval_at_r_h_ext3 = whir_per_point_evals[2][0];
-    let witness_whir_eval_at_r_h_ext3 = whir_per_point_evals[2][1];
-    let aux_whir_eval_at_r_h_ext3 = whir_per_point_evals[2][2];
-    let inverse_helpers_whir_eval_at_r_h_ext3 = whir_per_point_evals[2][3];
-
-    let preprocessed_whir_eval_at_r_gate_v2_ext3 = whir_per_point_evals[3][0];
-    let witness_whir_eval_at_r_gate_v2_ext3 = whir_per_point_evals[3][1];
-    let aux_whir_eval_at_r_gate_v2_ext3 = whir_per_point_evals[3][2];
-    let inverse_helpers_whir_eval_at_r_gate_v2_ext3 = whir_per_point_evals[3][3];
-
-    eprintln!("[prover] phase7 WHIR prove (4-point): {:?}", _t.elapsed());
+    eprintln!(
+        "[prover] phase7 WHIR prove ({NUM_PCS_TERMINAL_POINTS}-point): {:?}",
+        _t.elapsed()
+    );
 
     // ═══════════════════════════════════════════════════════════════════
     // Phase 8: Proof assembly
     // ═══════════════════════════════════════════════════════════════════
-    transcript.domain_separate("pcs-eval");
-
     Ok(MleProof {
+        protocol_version: MLE_PROTOCOL_VERSION,
+        constituent_width,
         circuit_digest: circuit_digest.to_vec(),
         // Main WHIR PCS
         whir_eval_proof,
@@ -789,19 +906,16 @@ pub fn mle_prove_from_tables<F: RichField + Extendable<D>, const D: usize>(
         preprocessed_eval_value,
         preprocessed_batch_r: batch_r_pre,
         preprocessed_individual_evals,
-        preprocessed_whir_eval_ext3: pre_eval_ext3,
         // Witness batch at r
         witness_eval_value,
         witness_batch_r: batch_r_wit,
         witness_individual_evals,
-        witness_whir_eval_ext3: wit_eval_ext3,
-        // Auxiliary polynomial (3rd vector in same WHIR proof)
+        // Auxiliary polynomial (fourth constituent group)
         aux_commitment_root: aux_root,
         aux_batch_r: batch_r_aux,
         aux_constraint_eval,
         aux_perm_eval,
         aux_eval_value,
-        aux_whir_eval_ext3,
         // Sumcheck output
         sumcheck_challenges: sumcheck_challenges.clone(),
         // Combined sumcheck
@@ -849,26 +963,14 @@ pub fn mle_prove_from_tables<F: RichField + Extendable<D>, const D: usize>(
         h_sumcheck_proof,
         lambda_inv,
         mu_inv,
-        lambda_h,
         tau_inv,
         inverse_helpers_evals_at_r_inv,
         inverse_helpers_evals_at_r_h,
-        inverse_helpers_whir_eval_at_r_inv_ext3,
-        inverse_helpers_whir_eval_at_r_h_ext3,
         witness_individual_evals_at_r_inv,
         preprocessed_individual_evals_at_r_inv: preprocessed_individual_evals_at_r_inv_full,
         g_sub_eval_at_r_inv,
-        witness_whir_eval_at_r_inv_ext3,
-        preprocessed_whir_eval_at_r_inv_ext3,
         witness_eval_value_at_r_inv,
         preprocessed_eval_value_at_r_inv,
-        inverse_helpers_eval_value_at_r_inv,
-        inverse_helpers_eval_value_at_r_h,
-        aux_whir_eval_at_r_inv_ext3,
-        aux_whir_eval_at_r_h_ext3,
-        witness_whir_eval_at_r_h_ext3,
-        preprocessed_whir_eval_at_r_h_ext3,
-        inverse_helpers_whir_eval_at_r_gate_ext3,
         // ── v2 gate binding fix (Issue R2-#1) ──────────────────────────
         ext_challenge,
         tau_gate,
@@ -878,23 +980,22 @@ pub fn mle_prove_from_tables<F: RichField + Extendable<D>, const D: usize>(
         preprocessed_individual_evals_at_r_gate_v2: preprocessed_individual_evals_at_r_gate_v2_full,
         witness_eval_value_at_r_gate_v2,
         preprocessed_eval_value_at_r_gate_v2,
-        witness_whir_eval_at_r_gate_v2_ext3,
-        preprocessed_whir_eval_at_r_gate_v2_ext3,
-        aux_whir_eval_at_r_gate_v2_ext3,
-        inverse_helpers_whir_eval_at_r_gate_v2_ext3,
     })
 }
 
 #[cfg(test)]
 mod tests {
+    use ark_ff::Field as ArkField;
     use plonky2::iop::witness::WitnessWrite;
     use plonky2::plonk::circuit_builder::CircuitBuilder;
     use plonky2::plonk::circuit_data::CircuitConfig;
     use plonky2::plonk::config::PoseidonGoldilocksConfig;
     use plonky2_field::goldilocks_field::GoldilocksField;
-    use plonky2_field::types::Field;
+    use plonky2_field::types::{Field, PrimeField64};
 
     use super::*;
+    use crate::commitment::whir_pcs::ark_to_plonky2;
+    use crate::proof::{GROUP_AUXILIARY, GROUP_INVERSE_HELPERS, GROUP_PREPROCESSED, GROUP_WITNESS};
 
     type F = GoldilocksField;
     type C = PoseidonGoldilocksConfig;
@@ -922,5 +1023,437 @@ mod tests {
         assert_eq!(proof.public_inputs[0], F::from_canonical_u64(21));
         assert!(!proof.witness_individual_evals.is_empty());
         assert!(!proof.preprocessed_individual_evals.is_empty());
+    }
+
+    fn sample_packed_index_points(
+        prefix: &Transcript,
+        claims: &[Vec<F>],
+        index_bits: usize,
+    ) -> Vec<Vec<Field64_3>> {
+        let claim_refs: Vec<&[F]> = claims.iter().map(Vec::as_slice).collect();
+        let mut transcript = prefix.clone();
+        absorb_claims_and_sample_index_points(&mut transcript, &claim_refs, index_bits)
+    }
+
+    fn packed_expected_evals(
+        claims: &[Vec<F>],
+        index_points: &[Vec<Field64_3>],
+        used_cells: &[(usize, usize)],
+        constituent_width: usize,
+    ) -> Vec<Option<Field64_3>> {
+        let mut expected = vec![None; 4 * NUM_SPLIT_COMMITMENTS];
+        for &(point, group) in used_cells {
+            let cell = point * NUM_SPLIT_COMMITMENTS + group;
+            expected[cell] = Some(fold_constituent_claim(
+                &claims[cell],
+                constituent_width,
+                &index_points[point],
+            ));
+        }
+        expected
+    }
+
+    fn packed_points(
+        row_points: &[Vec<F>],
+        index_points: &[Vec<Field64_3>],
+    ) -> Vec<Vec<Field64_3>> {
+        row_points
+            .iter()
+            .zip(index_points)
+            .map(|(row, index)| packed_eval_point(row, index))
+            .collect()
+    }
+
+    #[test]
+    fn test_post_claim_ext3_projection_rejects_every_used_constituent_delta() {
+        const DEGREE_BITS: usize = 2;
+        const NUM_ROWS: usize = 1 << DEGREE_BITS;
+        const CONSTITUENT_WIDTH: usize = 4;
+
+        // These are precisely the nine point/group cells consumed by the
+        // verifier's terminal equations. The other seven WHIR evaluations are
+        // transcript-bound internally but have no outer expected value.
+        let used_cells = [
+            (0, GROUP_PREPROCESSED),
+            (0, GROUP_WITNESS),
+            (0, GROUP_AUXILIARY),
+            (1, GROUP_PREPROCESSED),
+            (1, GROUP_WITNESS),
+            (1, GROUP_INVERSE_HELPERS),
+            (2, GROUP_INVERSE_HELPERS),
+            (3, GROUP_PREPROCESSED),
+            (3, GROUP_WITNESS),
+        ];
+
+        // Exact production group shapes for C=1, R=2 and W=4:
+        // preprocessed=3, witness=4, inverse=4 and auxiliary=2.
+        let group_lengths = [3usize, 4, 4, 2];
+        let table_groups: Vec<Vec<Vec<F>>> = group_lengths
+            .iter()
+            .enumerate()
+            .map(|(group, &count)| {
+                (0..count)
+                    .map(|constituent| {
+                        (0..NUM_ROWS)
+                            .map(|row| {
+                                F::from_canonical_usize(
+                                    1 + 101 * group + 17 * constituent + 3 * row,
+                                )
+                            })
+                            .collect()
+                    })
+                    .collect()
+            })
+            .collect();
+        let packed_groups: Vec<Vec<Vec<ArkGoldilocks>>> = table_groups
+            .iter()
+            .map(|tables| tables_to_packed_ark_group(tables, CONSTITUENT_WIDTH, NUM_ROWS))
+            .collect();
+
+        let packed_num_vars = packed_group_num_vars(DEGREE_BITS, CONSTITUENT_WIDTH);
+        let pcs = WhirPCS::for_constituents_v1(packed_num_vars, NUM_PACKED_VECTORS_PER_GROUP);
+        let commit_data = pcs.commit_grouped(&packed_groups, WHIR_SESSION_SPLIT);
+        let roots = commit_data.roots.clone();
+        let root_refs: Vec<&[u8]> = roots.iter().map(Vec::as_slice).collect();
+
+        let row_points = vec![
+            vec![F::from_canonical_u64(2), F::from_canonical_u64(3)],
+            vec![F::from_canonical_u64(5), F::from_canonical_u64(7)],
+            vec![F::from_canonical_u64(11), F::from_canonical_u64(13)],
+            vec![F::from_canonical_u64(17), F::from_canonical_u64(19)],
+        ];
+        let mut claims = vec![Vec::new(); 4 * NUM_SPLIT_COMMITMENTS];
+        for &(point, group) in &used_cells {
+            claims[point * NUM_SPLIT_COMMITMENTS + group] = table_groups[group]
+                .iter()
+                .map(|table| {
+                    DenseMultilinearExtension::new(table.clone()).evaluate(&row_points[point])
+                })
+                .collect();
+        }
+
+        // The committed roots precede the complete claim matrix. Only after
+        // all sixteen length-prefixed arrays are fixed may the index points be
+        // sampled. The helper below is the same one used by prove and verify.
+        let mut transcript_prefix = Transcript::new();
+        absorb_schema_and_base_roots(
+            &mut transcript_prefix,
+            1,
+            2,
+            4,
+            CONSTITUENT_WIDTH,
+            &roots[GROUP_PREPROCESSED],
+            &roots[GROUP_WITNESS],
+        );
+        transcript_prefix.domain_separate("pcs-group-inverse-helpers");
+        transcript_prefix.absorb_bytes(&roots[GROUP_INVERSE_HELPERS]);
+        transcript_prefix.domain_separate("pcs-group-auxiliary");
+        transcript_prefix.absorb_bytes(&roots[GROUP_AUXILIARY]);
+        transcript_prefix.domain_separate("pcs-eval");
+
+        let index_bits = constituent_index_bits(CONSTITUENT_WIDTH);
+        let index_points = sample_packed_index_points(&transcript_prefix, &claims, index_bits);
+        let points = packed_points(&row_points, &index_points);
+        let point_refs: Vec<&[Field64_3]> = points.iter().map(Vec::as_slice).collect();
+        let (proof, _) = pcs.prove_grouped_with_eval(commit_data, &point_refs);
+        let expected =
+            packed_expected_evals(&claims, &index_points, &used_cells, CONSTITUENT_WIDTH);
+        pcs.verify_grouped(
+            packed_num_vars,
+            &proof,
+            &expected,
+            WHIR_SESSION_SPLIT,
+            &point_refs,
+            NUM_SPLIT_COMMITMENTS,
+            &root_refs,
+        )
+        .expect("honest post-claim packed projection");
+
+        // The production packed query also binds index-bit order and the full
+        // extension coordinate, not merely each coordinate's c0 limb.
+        let mut swapped_index_points = index_points.clone();
+        swapped_index_points[0].swap(0, 1);
+        assert_ne!(swapped_index_points[0], index_points[0]);
+        let swapped_expected = packed_expected_evals(
+            &claims,
+            &swapped_index_points,
+            &used_cells,
+            CONSTITUENT_WIDTH,
+        );
+        let swapped_points = packed_points(&row_points, &swapped_index_points);
+        let swapped_point_refs: Vec<&[Field64_3]> =
+            swapped_points.iter().map(Vec::as_slice).collect();
+        assert!(
+            pcs.verify_grouped(
+                packed_num_vars,
+                &proof,
+                &swapped_expected,
+                WHIR_SESSION_SPLIT,
+                &swapped_point_refs,
+                NUM_SPLIT_COMMITMENTS,
+                &root_refs,
+            )
+            .is_err(),
+            "accepted an LSB/MSB index-coordinate swap"
+        );
+        for limb in 1..=2 {
+            let mut changed_index_points = index_points.clone();
+            let mut coefficients: Vec<ArkGoldilocks> =
+                ArkField::to_base_prime_field_elements(&changed_index_points[0][0]).collect();
+            coefficients[limb] += ArkGoldilocks::ONE;
+            changed_index_points[0][0] = Field64_3::from_base_prime_field_elems(coefficients)
+                .expect("three coefficients define an Ext3 element");
+            let changed_expected = packed_expected_evals(
+                &claims,
+                &changed_index_points,
+                &used_cells,
+                CONSTITUENT_WIDTH,
+            );
+            let changed_points = packed_points(&row_points, &changed_index_points);
+            let changed_point_refs: Vec<&[Field64_3]> =
+                changed_points.iter().map(Vec::as_slice).collect();
+            assert!(
+                pcs.verify_grouped(
+                    packed_num_vars,
+                    &proof,
+                    &changed_expected,
+                    WHIR_SESSION_SPLIT,
+                    &changed_point_refs,
+                    NUM_SPLIT_COMMITMENTS,
+                    &root_refs,
+                )
+                .is_err(),
+                "accepted an index-point c{limb} mutation"
+            );
+        }
+
+        // Exercise every constituent coordinate of every used cell with a
+        // distinct nonzero delta fixed into the transcript before its index
+        // challenge is sampled.
+        for &(point, group) in &used_cells {
+            let cell = point * NUM_SPLIT_COMMITMENTS + group;
+            for constituent in 0..claims[cell].len() {
+                let delta = F::from_canonical_usize(1 + 101 * point + 17 * group + constituent);
+                assert_ne!(delta, F::ZERO);
+                let mut changed_claims = claims.clone();
+                changed_claims[cell][constituent] += delta;
+                let changed_index_points =
+                    sample_packed_index_points(&transcript_prefix, &changed_claims, index_bits);
+
+                let mut unit = vec![F::ZERO; claims[cell].len()];
+                unit[constituent] = F::ONE;
+                let basis_weight =
+                    fold_constituent_claim(&unit, CONSTITUENT_WIDTH, &changed_index_points[point]);
+                assert_ne!(
+                    basis_weight,
+                    Field64_3::from(0u64),
+                    "zero projection weight at point {point}, group {group}, constituent {constituent}"
+                );
+                let truthful_fold = fold_constituent_claim(
+                    &claims[cell],
+                    CONSTITUENT_WIDTH,
+                    &changed_index_points[point],
+                );
+                let forged_fold = fold_constituent_claim(
+                    &changed_claims[cell],
+                    CONSTITUENT_WIDTH,
+                    &changed_index_points[point],
+                );
+                assert_eq!(
+                    forged_fold - truthful_fold,
+                    basis_weight * Field64_3::from(delta.to_canonical_u64()),
+                    "unexpected projection delta at point {point}, group {group}, constituent {constituent}"
+                );
+
+                let changed_expected = packed_expected_evals(
+                    &changed_claims,
+                    &changed_index_points,
+                    &used_cells,
+                    CONSTITUENT_WIDTH,
+                );
+                let changed_points = packed_points(&row_points, &changed_index_points);
+                let changed_point_refs: Vec<&[Field64_3]> =
+                    changed_points.iter().map(Vec::as_slice).collect();
+                assert!(
+                    pcs.verify_grouped(
+                        packed_num_vars,
+                        &proof,
+                        &changed_expected,
+                        WHIR_SESSION_SPLIT,
+                        &changed_point_refs,
+                        NUM_SPLIT_COMMITMENTS,
+                        &root_refs,
+                    )
+                    .is_err(),
+                    "accepted constituent delta at point {point}, group {group}, constituent {constituent}"
+                );
+            }
+        }
+    }
+
+    /// Return a nonzero base-field vector in the kernel of the supplied Ext3
+    /// weights. Four columns in a three-dimensional base-field space always
+    /// have such a relation; row reduction makes the adversarial construction
+    /// explicit instead of relying on a hard-coded lucky collision.
+    // Preserve explicit row/column indexing in the frozen elimination routine.
+    #[allow(clippy::needless_range_loop)]
+    fn ext3_projection_kernel(weights: &[Field64_3]) -> Vec<F> {
+        let columns = weights.len();
+        assert!(columns > 3);
+        let mut matrix = vec![vec![ArkGoldilocks::ZERO; columns]; 3];
+        for (column, weight) in weights.iter().enumerate() {
+            let coefficients: Vec<ArkGoldilocks> =
+                ArkField::to_base_prime_field_elements(weight).collect();
+            assert_eq!(coefficients.len(), 3);
+            for row in 0..3 {
+                matrix[row][column] = coefficients[row];
+            }
+        }
+
+        let mut pivot_columns = Vec::new();
+        let mut pivot_row = 0usize;
+        for column in 0..columns {
+            let Some(nonzero_row) =
+                (pivot_row..3).find(|&row| matrix[row][column] != ArkGoldilocks::ZERO)
+            else {
+                continue;
+            };
+            matrix.swap(pivot_row, nonzero_row);
+            let inverse = matrix[pivot_row][column]
+                .inverse()
+                .expect("nonzero pivot is invertible");
+            for entry in &mut matrix[pivot_row] {
+                *entry *= inverse;
+            }
+            let pivot = matrix[pivot_row].clone();
+            for row in 0..3 {
+                if row == pivot_row {
+                    continue;
+                }
+                let factor = matrix[row][column];
+                for next_column in column..columns {
+                    matrix[row][next_column] -= factor * pivot[next_column];
+                }
+            }
+            pivot_columns.push(column);
+            pivot_row += 1;
+            if pivot_row == 3 {
+                break;
+            }
+        }
+
+        let free_column = (0..columns)
+            .find(|column| !pivot_columns.contains(column))
+            .expect("four Ext3 weights must have a free base-field column");
+        let mut kernel = vec![ArkGoldilocks::ZERO; columns];
+        kernel[free_column] = ArkGoldilocks::ONE;
+        for (row, &pivot_column) in pivot_columns.iter().enumerate() {
+            kernel[pivot_column] = -matrix[row][free_column];
+        }
+        kernel.into_iter().map(ark_to_plonky2).collect()
+    }
+
+    #[test]
+    fn test_bad_order_ext3_index_challenge_has_a_claim_kernel() {
+        const CONSTITUENT_WIDTH: usize = 4;
+
+        // Deliberately wrong ordering: expose the Ext3 index point while every
+        // claim slot is still empty, then let the prover select claim values.
+        let empty: &[F] = &[];
+        let empty_claims = [empty; 4 * NUM_SPLIT_COMMITMENTS];
+        let mut bad_order_transcript = Transcript::new();
+        bad_order_transcript.domain_separate("deliberate-bad-order-model");
+        let early_index_points = absorb_claims_and_sample_index_points(
+            &mut bad_order_transcript,
+            &empty_claims,
+            constituent_index_bits(CONSTITUENT_WIDTH),
+        );
+        let early_index_point = &early_index_points[0];
+
+        let weights: Vec<Field64_3> = (0..CONSTITUENT_WIDTH)
+            .map(|constituent| {
+                let mut unit = vec![F::ZERO; CONSTITUENT_WIDTH];
+                unit[constituent] = F::ONE;
+                fold_constituent_claim(&unit, CONSTITUENT_WIDTH, early_index_point)
+            })
+            .collect();
+        let kernel = ext3_projection_kernel(&weights);
+        assert!(kernel.iter().any(|&delta| delta != F::ZERO));
+        assert_eq!(
+            fold_constituent_claim(&kernel, CONSTITUENT_WIDTH, early_index_point),
+            Field64_3::from(0u64),
+            "constructed delta is not in the early-challenge projection kernel"
+        );
+
+        let honest = vec![
+            F::from_canonical_u64(3),
+            F::from_canonical_u64(5),
+            F::from_canonical_u64(7),
+            F::from_canonical_u64(11),
+        ];
+        let forged: Vec<F> = honest
+            .iter()
+            .zip(&kernel)
+            .map(|(&value, &delta)| value + delta)
+            .collect();
+        assert_ne!(honest, forged);
+        assert_eq!(
+            fold_constituent_claim(&honest, CONSTITUENT_WIDTH, early_index_point),
+            fold_constituent_claim(&forged, CONSTITUENT_WIDTH, early_index_point),
+            "bad-order model did not preserve the projected claim"
+        );
+    }
+
+    #[test]
+    fn test_constituent_fold_is_lsb_first_and_uses_all_ext3_limbs() {
+        let u0 = Field64_3::new(
+            ArkGoldilocks::from(2u64),
+            ArkGoldilocks::from(3u64),
+            ArkGoldilocks::from(5u64),
+        );
+        let u1 = Field64_3::new(
+            ArkGoldilocks::from(7u64),
+            ArkGoldilocks::from(11u64),
+            ArkGoldilocks::from(13u64),
+        );
+        let values = [
+            F::from_canonical_u64(17),
+            F::from_canonical_u64(19),
+            F::from_canonical_u64(23),
+            F::from_canonical_u64(29),
+        ];
+        let one = Field64_3::from(1u64);
+        let [v0, v1, v2, v3] = values.map(|value| Field64_3::from(value.to_canonical_u64()));
+        let expected_lsb = v0 * (one - u0) * (one - u1)
+            + v1 * u0 * (one - u1)
+            + v2 * (one - u0) * u1
+            + v3 * u0 * u1;
+        assert_eq!(fold_constituent_claim(&values, 4, &[u0, u1]), expected_lsb);
+        assert_ne!(
+            fold_constituent_claim(&values, 4, &[u1, u0]),
+            expected_lsb,
+            "MSB-first coordinate order was indistinguishable"
+        );
+
+        let changed_c1 = Field64_3::new(
+            ArkGoldilocks::from(2u64),
+            ArkGoldilocks::from(4u64),
+            ArkGoldilocks::from(5u64),
+        );
+        let changed_c2 = Field64_3::new(
+            ArkGoldilocks::from(2u64),
+            ArkGoldilocks::from(3u64),
+            ArkGoldilocks::from(6u64),
+        );
+        assert_ne!(
+            fold_constituent_claim(&values, 4, &[changed_c1, u1]),
+            expected_lsb,
+            "c1 limb was ignored"
+        );
+        assert_ne!(
+            fold_constituent_claim(&values, 4, &[changed_c2, u1]),
+            expected_lsb,
+            "c2 limb was ignored"
+        );
     }
 }
