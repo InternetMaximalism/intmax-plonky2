@@ -3,8 +3,27 @@
 This fork repository was originally for [Plonky2 with FRI](https://github.com/0xPolygonZero/plonky2). In its mle/ directory, WHIR verification is available now. 
 Periodic auditing and maintenance of this fork repository, including the MLE/WHIR proving system, is conducted by the Intmax team.
 
-**WARNING: STILL EXPERIMENTAL**
-The latest branch: mle-whir-pcs-repair-20260904
+**WARNING: EXPERIMENTAL — PRODUCTION RELEASE REMAINS NO-GO.**
+
+The current MLE implementation uses PCS wire v3 through the historical `V2`
+Rust APIs and `MleVerifierV2` / `PinnedMleVerifierV2` Solidity contracts. Its
+commitments bind the constituent tables before challenges and authenticate the
+terminal claims and raw public inputs. Integrations must regenerate their
+verification keys, configurations, and proofs together; old wire formats are
+not accepted by the current entry points. The old Rust proving/verifying API
+requires the non-default `legacy-conformance` feature, and the old Solidity
+`MleVerifier` is abstract and retained for test conformance only.
+
+See the [MLE implementation and migration guide](mle/README.md) for the exact
+protocol, build commands, and remaining release gates. External cryptographic
+review, the protocol-specific Fiat--Shamir/grinding analysis, and the complete
+parent-system fixture and acceptance checks remain required. Keep deployment
+containment in place. The [Lean audit archive](mle/audit/README.md) models the
+July 2026 implementation; it does not certify PCS wire v3.
+
+The [main repair integration record](mle/audit/main-pcs-repair-2026-09-05.md)
+maps the reviewed gaps to the repair, records validation, and lists the
+remaining release conditions.
 
 ## Documentation
 
@@ -31,13 +50,17 @@ cargo run --example <example_name>
 
 ## Building
 
-Plonky2 requires a recent nightly toolchain, although we plan to transition to stable in the future.
+The repository pins `nightly-2025-03-23` in `rust-toolchain` and commits
+`Cargo.lock`. Install that toolchain and use the locked dependencies:
 
-To use a nightly toolchain for Plonky2 by default, you can run
+```sh
+rustup toolchain install nightly-2025-03-23 --component rustfmt --component clippy
+cargo build -p plonky2_mle --locked
 ```
-rustup override set nightly
-```
-in the Plonky2 directory.
+
+Run these commands from the workspace root. Do not replace the pinned toolchain
+with mutable `nightly`. The [MLE guide](mle/README.md#build-and-verification)
+also describes offline checks once the pinned dependencies are cached.
 
 
 ## Running

@@ -1,5 +1,14 @@
 # 検証レポート — WHIR ベース多重線形証明システムの Lean 4 形式監査
 
+> **保存版レポート: 対象は `ee80ee6d` と `bee025f9` の D3 追記です。**
+> 本文の「修正済み」や健全性に関する結論は当時の抽象モデルの記録です。
+> PCS binding の仮定と WHIR/transcript の抽象化を含むため、現行 wire v3
+> の実装の安全性や、本番リリース可否を証明するものではありません。
+> 現行の [仕様・NO-GO 条件](../README.md) と
+> [wire-v3 安全性追補](../paper/mle_whir_v1_security.md) を優先してください。
+> 外部暗号監査、Fiat--Shamir/grinding 解析、親システムの移行・受入検証は
+> 未完了の独立したリリース条件です。
+
 日付: 2026-07-06 / 対象コミット: ee80ee6d / ブランチ: claude/gifted-germain-0283dd
 成果物: `mle/audit/`(Lean 4.10.0、Mathlib 非依存、`lake build` 警告0、
 **46 定理・`sorry` 0・明示公理 1**)

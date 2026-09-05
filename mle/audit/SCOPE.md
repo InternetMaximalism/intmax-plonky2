@@ -1,5 +1,13 @@
 # Lean 形式検証スコープ (lean-formal-audit 段階0 成果物)
 
+> **このスコープは歴史資料です。** `ee80ee6d` を対象とした 2026-07-06 の
+> 監査と後続の `bee025f9` の D3 追記を保存しています。現在の wire v3、
+> `*_v2` Rust API、`MleVerifierV2` / `PinnedMleVerifierV2` の実装対応証明は
+> このスコープに含まれません。PCS binding は仮定であり、WHIR/transcript
+> の抽象化を含みます。[現行仕様とリリース条件](../README.md) を参照し、
+> 外部暗号監査、Fiat--Shamir/grinding 解析、親システムの移行・受入検証が
+> 完了するまで NO-GO を維持してください。
+
 日付: 2026-07-06 / 対象コミット: ee80ee6d (branch claude/gifted-germain-0283dd)
 
 ## モード

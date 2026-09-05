@@ -2,6 +2,21 @@
 
 **Draft v2 — April 2026**
 
+> **Historical protocol draft; superseded for implementation and release use.**
+> This paper and its July 2026 D1/D3 annotations describe earlier protocol
+> designs. Its three-sumcheck sketches, scalar batching discussion, theorem
+> bounds, and reported results do not specify or certify the current PCS wire
+> v3 implementation. In particular, a scalar batch equality alone does not
+> establish binding of the individual constituent evaluations. The corrected
+> product formula for `g_sub` in §4.2.2 remains valid.
+> The current requirements are in the
+> [wire-v3 superseding addendum](mle_whir_v1_security.md#2026-09-03-wire-v3-superseding-addendum)
+> and [MLE implementation guide](../README.md). Wire v3 uses committed
+> constituent tables, post-claim index challenges, two Ext3 outer sumchecks,
+> and direct public-input binding. External cryptographic review, the
+> Fiat--Shamir/grinding analysis, and the parent migration and acceptance matrix
+> remain release gates; production status remains NO-GO.
+
 ## Abstract
 
 We present a multilinear-native proving system that reuses Plonky2's circuit
@@ -318,19 +333,27 @@ factors as a product of the per-coordinate affine interpolants
 `Σ_i (r_inv)_i · ω^{2^i}` was incorrect off the hypercube. The reference
 implementation uses the product form.)
 
-**Binding of the inverse-helper openings (critical).** The values
-`a_j(r_inv), b_j(r_inv)` (and `a_j(r_h), b_j(r_h)` in §4.2.3) are "PCS-bound"
-*only if* the verifier explicitly checks batch consistency of the opened
-individual inverse-helper evaluations against the WHIR-committed inverse
-polynomial — exactly as it does for the witness and preprocessed vectors
-(§4.3). Concretely, the verifier MUST check
-`Σ_j r_inv_batch^j · (opened a_j / b_j) = P_inv(r_inv)` where `P_inv` is the
-inverse-helper batched polynomial bound by WHIR. Omitting this check leaves
-`a_j, b_j` unconstrained beyond the single terminal identity above, so a
-prover can supply *dishonest* inverses that still satisfy the terminal check,
-breaking the permutation argument. This binding is not optional book-keeping;
-it is the sole mechanism that ties the terminal-check inputs to the committed
-`A_j, B_j`.
+**Binding correction to the historical D3 annotation.** Every individual value
+used in the inverse terminal equation must be authenticated against its
+committed constituent table. The July D3 change added a scalar consistency
+equation of the form `Σ_j batch_r^j · claimed_eval_j = claimed_batch_eval`.
+That equation alone neither authenticates the right-hand side nor fixes the
+individual constituents of a polynomial that was already batched. It is not
+a sufficient PCS binding argument, even if the scalar fold is checked.
+
+The current wire-v3 construction commits the complete preprocessed and witness
+constituent tables before deriving challenges from them. It constructs the
+challenge-dependent norm-inverse table after the denominator challenges and
+commits that table before the outer relation challenges. After the outer row
+sumchecks, it absorbs the ordered constituent claim vectors before sampling
+independent Ext3 constituent-index points. The verifier folds those claims at
+the derived index points and checks them against WHIR openings of the same
+packed tables at the corresponding row/index points. It also binds the roots
+to the verification key and transcript. This chain, applied to every
+terminal-used constituent vector, replaces the historical scalar-only
+argument. The norm/logUp relation and exact transcript order are specified in
+the [wire-v3 addendum](mle_whir_v1_security.md#2026-09-03-wire-v3-superseding-addendum);
+the inverse-helper equations below are retained only as historical context.
 
 #### 4.2.3 Linear Sumcheck on H = A − B
 
@@ -388,9 +411,15 @@ s_j)`, `witness = (w_j)`, `inverses = (a_j, b_j)`. The prover commits
 them in three transcript rounds, and a single combined WHIR proof covers
 all three at the union of opening points.
 
-The verifier decomposes batched evaluations into individual values using
-the known per-vector batching scalars derived from the transcript. By
-Schwartz-Zippel, no forgery is possible (probability at most `deg(P)/|F|`).
+**Historical batching correction.** One batched scalar cannot be decomposed
+into its individual constituent values. A Schwartz-Zippel argument requires
+the relevant polynomials or claims to be fixed before the challenge; merely
+knowing a batching scalar does not supply that premise. Current wire v3 fixes
+the constituent tables with packed commitments, absorbs the individual claim
+vectors, and only then samples the constituent-index points used to check
+those claims against authenticated WHIR openings. See the
+[wire-v3 addendum](mle_whir_v1_security.md#2026-09-03-wire-v3-superseding-addendum)
+for the complete construction and its explicit soundness accounting.
 
 ### 4.4 PCS Opening Points
 
@@ -499,6 +528,12 @@ Fixed at circuit-compile time:
 
 ### 5.3 Verifier
 
+The following is a historical three-sumcheck sketch, not executable guidance
+for wire v3. Steps 7 and 7b state the binding prerequisite explicitly so that
+the old scalar-only annotation cannot be mistaken for a sufficient repair.
+The current two-sumcheck verifier, groups, and transcript are specified in the
+[wire-v3 addendum](mle_whir_v1_security.md#2026-09-03-wire-v3-superseding-addendum).
+
 **Input:** proof `π`, public inputs `x`, verifying key `vk`.
 
 ```
@@ -516,19 +551,19 @@ Fixed at circuit-compile time:
                 sumcheck; obtain r_open and the batched claim S_n_open.
 7. [PCS verify] WHIR.Verify(preprocessed_root, witness_root, inverse_root,
                              r_open, batched_claim, eval_proof).
-                Decompose batched_claim into individual evaluations
-                w_j(r_open), const_j(r_open), s_j(r_open), a_j(r_open), b_j(r_open).
-                From these, reconstruct evaluations at each of r_inv, r_h, r_gate
-                via the inverse of the multi-point batching reduction (linear
-                interpolation of the eq-coefficients along the batching point).
-7b.[Batch consistency — REQUIRED] For EACH opened vector, check that the
-                claimed individual evaluations fold to the WHIR-bound batched
-                value:  Σ_i batch_r_vec^i · eval_i(r_pt) == P_vec(r_pt).
-                This MUST be performed for the witness, preprocessed AND the
-                **inverse-helper** vectors at r_inv and r_h. The inverse-helper
-                check is the sole binding of a_j(r), b_j(r) to the committed
-                A_j, B_j; skipping it makes step 8's terminal check vacuous
-                (a prover may supply dishonest inverses — see §4.2.2).
+                This authenticates the supplied PCS statement only. It does
+                not decompose one scalar into constituent values or recover
+                independently claimed values at other evaluation points.
+7b.[Constituent authentication — REQUIRED before any terminal check]
+                Fix every constituent table by commitment before its binding
+                challenges. Absorb the individual claim vectors before
+                sampling the independent constituent-index challenges.
+                Check each terminal-used vector's derived fold against an
+                authenticated opening of that same packed table at the
+                derived row/index point, with roots bound to the VK and
+                transcript. A scalar equality by itself is insufficient.
+                Wire v3 realizes this with three packed groups and two points;
+                use its superseding specification, not this historical sketch.
 8. [Inverse terminal] Recompute pred_inv per §4.2.2; check pred_inv == S_n_inv.
 9. [Linear H terminal] Recompute pred_h per §4.2.3; check pred_h == S_n_h.
 10. [Gate terminal]    Recompute pred_gate per §4.1; check pred_gate == S_n_gate.

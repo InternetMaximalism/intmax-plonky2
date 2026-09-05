@@ -3,6 +3,7 @@ pragma solidity ^0.8.25;
 
 import {MleVerifierTest} from "./MleVerifierTest.sol";
 import {MleVerifier} from "../src/MleVerifier.sol";
+import {LegacyMleVerifierHarness} from "./LegacyMleVerifierHarness.sol";
 
 /// @title GasBenchmark
 /// @notice Foundry test contract for gas measurement.
@@ -13,7 +14,7 @@ contract GasBenchmarkTest {
 
     function setUp() public {
         testContract = new MleVerifierTest();
-        verifier = new MleVerifier();
+        verifier = new LegacyMleVerifierHarness(block.chainid);
     }
 
     // ═══════════════════════════════════════════════════════════════════════

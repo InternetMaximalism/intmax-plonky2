@@ -1,5 +1,17 @@
 # mle/audit — Lean 4 形式検証 (lean-formal-audit)
 
+> **歴史資料 — 現行 PCS wire v3 の安全性認証ではありません。**
+> このディレクトリは 2026-07-06 の `ee80ee6d` を対象としたモデルと、
+> `bee025f9` の D3 修正に関する追記を保存しています。以下の「現状」、
+> 「修正済み」、定理名、行番号、テスト結果は当時の実装を指します。
+> PCS binding は仮定であり、WHIR 内部と transcript 再導出の一部は抽象化
+> されています。`lake build` や `rustSoundness` / `solSoundness` の成功は、
+> wire v3 の実装への対応証明や本番承認を意味しません。
+> 現行仕様と NO-GO 条件は [MLE README](../README.md) と
+> [wire-v3 安全性追補](../paper/mle_whir_v1_security.md) を参照してください。
+> 外部暗号監査、Fiat--Shamir/grinding 解析、親システムの移行・受入検証は
+> 別途完了する必要があります。Lean 本体は歴史の保存のため変更していません。
+
 `mle/paper/plonky2_mle_paper_v2.md` の WHIR ベース多重線形証明システムの
 Lean 4 形式化。スコープ・仮定・脅威モデルは [SCOPE.md](SCOPE.md)。
 
