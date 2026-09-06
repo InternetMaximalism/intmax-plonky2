@@ -1,0 +1,2021 @@
+{
+  "schema_version": 1,
+  "audit_base_commit": "becfe98e37c76e62f02f1aa7a417c7b06840db67",
+  "claim": "partial-models-not-full-implementation-proof",
+  "files": [
+    {
+      "path": ".cargo/config.toml",
+      "sha256": "69310c13b42b98506040d0699769be17eaab0c28f4ad60c0f42960cfe2254547",
+      "kind": "tooling"
+    },
+    {
+      "path": ".github/workflows/continuous-integration-workflow.yml",
+      "sha256": "7ebc81deb3c7ee2da6d2bb12a821faf30a3abde22540f8e7391d9c0a1b67e41e",
+      "kind": "tooling"
+    },
+    {
+      "path": ".github/workflows/pr_checking.yml",
+      "sha256": "738f53c8ed58b673fba5613141a0b2226df2920ae0e6df713e357c10b4c4060d",
+      "kind": "tooling"
+    },
+    {
+      "path": ".gitmodules",
+      "sha256": "390a5aefe58a44464a39d5acd96110b8a41513d722c3c797666d5a1060ae0a81",
+      "kind": "tooling"
+    },
+    {
+      "path": "Cargo.lock",
+      "sha256": "13e32df3f24945d8f71d6df19df2c20fe930b8e5d39cce56b1adb6733bf7355e",
+      "kind": "tooling"
+    },
+    {
+      "path": "Cargo.toml",
+      "sha256": "6ec93c2d78b73bf4cc0a286baa08c008fdc4a33c3492296818c94de98d05f1f5",
+      "kind": "tooling"
+    },
+    {
+      "path": "field/Cargo.toml",
+      "sha256": "5e3087fbb8704cb72b295ea6704f73ec4fc077fac4b18892acac0ae0026b1a23",
+      "kind": "tooling"
+    },
+    {
+      "path": "field/src/arch/mod.rs",
+      "sha256": "48e8d3f5ee0c78620fb52d85e561eb6544758df2e9206d7e5f1459f703a60949",
+      "kind": "implementation"
+    },
+    {
+      "path": "field/src/arch/x86_64/avx2_goldilocks_field.rs",
+      "sha256": "9690b9a993d83e7c4e7815dba71f0919c03c895c6a2ea86d5157d73c9ceac53c",
+      "kind": "implementation"
+    },
+    {
+      "path": "field/src/arch/x86_64/avx512_goldilocks_field.rs",
+      "sha256": "a31dd9d61615e28e643c38cc9701ddefd9c4c638ac74beb548c59c2283db2a52",
+      "kind": "implementation"
+    },
+    {
+      "path": "field/src/arch/x86_64/mod.rs",
+      "sha256": "127b136b0ff8f0c152c0d10c7d84a6c0dbe269d62504fd1d0cbdea6cdb00a49d",
+      "kind": "implementation"
+    },
+    {
+      "path": "field/src/batch_util.rs",
+      "sha256": "2ac4ddcf4b615f971aa53be20ced1fc2d4f621d71163e9944d766648c5c189d6",
+      "kind": "implementation"
+    },
+    {
+      "path": "field/src/cosets.rs",
+      "sha256": "88a072b91edebff7ed1628aa92321fa124695fa3adf9accda5d2e04143de0ced",
+      "kind": "implementation"
+    },
+    {
+      "path": "field/src/extension/algebra.rs",
+      "sha256": "8f9dcc28af4bcd5764097314a2ab6aa1d809eee78c314a6023b1e01758a79db5",
+      "kind": "implementation"
+    },
+    {
+      "path": "field/src/extension/mod.rs",
+      "sha256": "316c42c38ea2067b54d4f09cfb59ec9b59ccddc7d9d7ec623103a241c3585454",
+      "kind": "implementation"
+    },
+    {
+      "path": "field/src/extension/quadratic.rs",
+      "sha256": "13c371051bbc838f73b5cc6d1572bc8024c12844d26bcc00871ce9e59678bcb8",
+      "kind": "implementation"
+    },
+    {
+      "path": "field/src/extension/quartic.rs",
+      "sha256": "a1419b2350f4274c0c510de4b13b02e12d5034835017806a66ffde5c6bbc2c01",
+      "kind": "implementation"
+    },
+    {
+      "path": "field/src/extension/quintic.rs",
+      "sha256": "612d19f21e713f02e62a8983e526e8146ea411dd95531ffc1db2baba35e05774",
+      "kind": "implementation"
+    },
+    {
+      "path": "field/src/fft.rs",
+      "sha256": "1184768337fe29eb1231dc1618f9bcc3d6367100f7ec823cb7a9243e9a26c693",
+      "kind": "implementation"
+    },
+    {
+      "path": "field/src/field_testing.rs",
+      "sha256": "63b3a6b6c4ae4c4c001773c6b103ffb78661964cfca8972f11f0ba33a7dbcd3e",
+      "kind": "implementation"
+    },
+    {
+      "path": "field/src/goldilocks_extensions.rs",
+      "sha256": "856c3d155d74346ed6e50c6e24cdfe729866a47eac78c93d1defbebf31211464",
+      "kind": "implementation"
+    },
+    {
+      "path": "field/src/goldilocks_field.rs",
+      "sha256": "75ec4e3e5e716ccc32a408ce373ef58aaa03d233786e3b467ced39c229f116a9",
+      "kind": "implementation"
+    },
+    {
+      "path": "field/src/interpolation.rs",
+      "sha256": "b7feb6fdcdabe031864513b1f980c75ac32d20ea7e285c4a1272e5d20a7528f8",
+      "kind": "implementation"
+    },
+    {
+      "path": "field/src/lib.rs",
+      "sha256": "fd5643c9f776ec106df69a73b55e32450d06b0a2429b72cccb33bd173b3ef711",
+      "kind": "implementation"
+    },
+    {
+      "path": "field/src/ops.rs",
+      "sha256": "9c71cdc3382697a7146b9e3e506f5cc1e6bef9ff71f36a1355b2a37213a0241f",
+      "kind": "implementation"
+    },
+    {
+      "path": "field/src/packable.rs",
+      "sha256": "7fb0e70028ddbcf043ed1a88048e5f02d66b39e4ff2c13c6f64bd085f796e4e4",
+      "kind": "implementation"
+    },
+    {
+      "path": "field/src/packed.rs",
+      "sha256": "6d03a931410c3dc6b8c39cf20ea86abfe20a96028f406766f57c75cb9cf94035",
+      "kind": "implementation"
+    },
+    {
+      "path": "field/src/polynomial/division.rs",
+      "sha256": "b0ca7a1076e056f53d7aad7ee2174b6c2b38a2cbb72dc06d425e498d706a521d",
+      "kind": "implementation"
+    },
+    {
+      "path": "field/src/polynomial/mod.rs",
+      "sha256": "47494e8f92976c483e17368ebe78666a984c7caa7c13fd18d4f41d4c14041190",
+      "kind": "implementation"
+    },
+    {
+      "path": "field/src/prime_field_testing.rs",
+      "sha256": "5e6b846fddf85a120e2c6789c2616427712b6de812e7c2cf6e89dc4462195072",
+      "kind": "implementation"
+    },
+    {
+      "path": "field/src/secp256k1_base.rs",
+      "sha256": "e947a45b9e46a07769b47bbc6371750fb2b5e508c46d0ab3927f63f36c2a3e00",
+      "kind": "implementation"
+    },
+    {
+      "path": "field/src/secp256k1_scalar.rs",
+      "sha256": "40b1f4be4d356370aae1afb5d152590ea36a67f5122ee11cdb1755e247dfb769",
+      "kind": "implementation"
+    },
+    {
+      "path": "field/src/types.rs",
+      "sha256": "a3dfb2e7f9ac62f59d5de25fab8e8f09f53a76b85da6d2b2e1c9a47fa41ffdff",
+      "kind": "implementation"
+    },
+    {
+      "path": "field/src/zero_poly_coset.rs",
+      "sha256": "f40322b7f137221852e5a2811b1946a9db0623f9beed4ee58486fb3bad590694",
+      "kind": "implementation"
+    },
+    {
+      "path": "maybe_rayon/Cargo.toml",
+      "sha256": "24fd9b83651cd599a6ddc6a1fd3fbc3f8e6c754d1edd1724777fdf20245b89c0",
+      "kind": "tooling"
+    },
+    {
+      "path": "maybe_rayon/src/lib.rs",
+      "sha256": "ab97abd634a2ef57912b8e40f4ca6b8bcaeebb1fc21b7adaf520feee5aef1268",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/audit/Audit.lean",
+      "sha256": "bdbf2ab62b3ebd778f4147ac1468ef73537735d552275226925c45d126c977ef",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Algebra.lean",
+      "sha256": "1e8dee0379c6c536a282a1cb40258fdfcaece286ca407e14c1572f9c045b3cbc",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/Audit/Field.lean",
+      "sha256": "2d255858a6c9f596e36114cf6ece34213f1e5fb00051d85b65c90927c3398f9b",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/Audit/Impl/Divergences.lean",
+      "sha256": "55c8c58d99c900ab8d1e2c2712d39ae68eb15d54d87c57c20e31065f97b84f19",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/Audit/Impl/ImplStatements.lean",
+      "sha256": "80a992e04945a3bddce5773c1c4af8e26b92ac9dc9264a25e077141cb9d7d12a",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/Audit/Impl/RustSumcheck.lean",
+      "sha256": "d0569306f35840c4c7865f074b61dc6eb36ae670a06bdd1f607bb67d2434844d",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/Audit/Impl/RustTranscript.lean",
+      "sha256": "efb89cbb0890d20448b87b93d16f2d9cb37e62365502e05df48fcc22ad99ecc6",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/Audit/Impl/RustVerifier.lean",
+      "sha256": "da6b047c1e854d9bad2f8032431dfce4a22db1d9468f465d5923ed66a58f774c",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/Audit/Impl/SolVerifier.lean",
+      "sha256": "4f224f017507f21ee72dfdf6a69b640fa21f019ed28877c510831a10982e25c6",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/Audit/Mle.lean",
+      "sha256": "e8096df7e437298cfa40c2bee80a19e65c9f1a6f9675936bc6a4477a2f77e607",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/Audit/Pcs.lean",
+      "sha256": "25c39564c1b80ce807ef750e04aa25330b0f89cfdf5e2714abf168a1a5940aeb",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/Audit/Poly.lean",
+      "sha256": "12693083dc721f855bc41899c3e969378d723ee9c1c9fd23fbdba06dd2f387d7",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/Audit/Prelude.lean",
+      "sha256": "00802cc36f923f7068d8131245998dac4ce9e6addfa533d008f65d563e0ff3bf",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/Audit/Proofs/D3.lean",
+      "sha256": "61878cc9d1c58009af8263d2276a6934ad888817b7a1400cebe5000b434f1ba4",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/Audit/Proofs/D3Strong.lean",
+      "sha256": "35c9280539567de6d1b65bd125634e303b16b7153e5071fd9cc4f3247b0db379",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/Audit/Proofs/EqPoly.lean",
+      "sha256": "93381b7407cd7985c5ee695d0a88ce6800fb33c1fa44700898e6c057383d3559",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/Audit/Proofs/MleLemmas.lean",
+      "sha256": "b160a1b752bf197febb91a62d4108c31ca8b4dabf774a7053588e57678f3ef74",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/Audit/Proofs/Statements.lean",
+      "sha256": "c08fe9d30f8540e132ab08a6372b11e84cf1280cbf23e267214b4c1c8ba2f612",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/Audit/Proofs/SumcheckCore.lean",
+      "sha256": "be843f17a795744db77fa3bb492dfb1d951d8b6cf6d8621c5136c5fb5c064260",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/Audit/Protocol.lean",
+      "sha256": "1e9f0e5147e5a8f51b557ee38f8dc955d3ab19a6f671e0918faabed6079fdde1",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/Audit/Statements.lean",
+      "sha256": "d3dcb8620f806b61b0ce36f9e029697b97dcd574b4454ea92ff518eeb5a2c44d",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/Audit/Sumcheck.lean",
+      "sha256": "f74bfa32573a0ac6acaf21dffb98b82b8bfc757fea95828b8aff71c00a7c8921",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/Audit/Transcript.lean",
+      "sha256": "d2ae1da63c819a5aba352ae44e0ff1b3e939557b4a058c2b0b0340e9150afa1e",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/Audit/Whir.lean",
+      "sha256": "fa055bc9d2b5f890949bc9a5cc86e74edc18fd30c34772271cf5bfd3eebd34fd",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/Arithmetic.lean",
+      "sha256": "8330549633390967830b3df0acf48ecb8618a45a32b7b5adf5def8756145345f",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/Compact.lean",
+      "sha256": "42ad12ef68d67e5721c8cfad34ae5465c6e48f734bb7c35ea2fd08953da204ef",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/Connections.lean",
+      "sha256": "85d703e3a06b24a7505356cc2f7467e8fe4cff3f4f54ca0545497c2bdae87f87",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/Packed.lean",
+      "sha256": "b45bdd426b21b2a585d632ef838fb6ab4b1f616eedaba85a318d61337e2f52f1",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/Sumcheck.lean",
+      "sha256": "76c0625b554e85bc4b3b9ca8fe51921262b60f94710d2035c87c506704f1ab61",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/Transcript.lean",
+      "sha256": "0bac092c0162e3dad44d73288142d716b9e0ef074c6c928d91c0ef4a630198d3",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/Verifier.lean",
+      "sha256": "7331ce510baa40d6c0e6b596c1423fb4136a18b769a92c703624e2564ea4c0cc",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/WhirTerminal.lean",
+      "sha256": "53b25dcff1d98bedd69fd51882f15038cf433e01315259989faf98bd2ff7760b",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/check-wire3.py",
+      "sha256": "5824720f781b9ef66c693b51c96e2c2e321c1b1f10e0d21cef0d93ff035a0335",
+      "kind": "tooling"
+    },
+    {
+      "path": "mle/audit/HISTORICAL-README.md",
+      "sha256": "dc418b21632bca2c1b9dc6d45803aa84a93eed10facf9b40d5de9e9c666c631c",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/HISTORICAL-REPORT.md",
+      "sha256": "9849ee2fe5685dfff29f8099ec31aa19f8df2812a288698c656ece643eeaa6f2",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/HISTORICAL-SCOPE.md",
+      "sha256": "6d21c14ef500d87a337a9625d331bb496711dfc515e5ffcbf2fbc3644a4c3d69",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/HistoricalAudit.lean",
+      "sha256": "9530fff8ada5c5a0d8d617e81ed68ca3bd1a549f21b26d9ac4a98f0808a7e891",
+      "kind": "historical"
+    },
+    {
+      "path": "mle/audit/lake-manifest.json",
+      "sha256": "0f8ecd3218144c8aff75f77478663e57c4d05bf2931eeb5c9d094feefcf53752",
+      "kind": "tooling"
+    },
+    {
+      "path": "mle/audit/lakefile.lean",
+      "sha256": "dc4514c5f6940ec74d4103566be75738d7da5401278898fe20fb306442b47f18",
+      "kind": "tooling"
+    },
+    {
+      "path": "mle/audit/lean-toolchain",
+      "sha256": "f3ea78fdd417d39483583b721709727c225eeea0c0e9d29283de43f577411095",
+      "kind": "tooling"
+    },
+    {
+      "path": "mle/audit/README.md",
+      "sha256": "2a4dd27d1fa4a2663ddf7da12508a83d23bc53204e4f42714cbc420e8a9a8d77",
+      "kind": "spec"
+    },
+    {
+      "path": "mle/audit/REPORT.md",
+      "sha256": "31c926658c83f1b9907d52b58f2f3ab8e928811d45177a5ef05d4caf3f3c919b",
+      "kind": "spec"
+    },
+    {
+      "path": "mle/audit/SCOPE.md",
+      "sha256": "65567806cad70fef73a63b0f90345a156b97b0277444c916a62a690c36c74e99",
+      "kind": "spec"
+    },
+    {
+      "path": "mle/audit/test-check-wire3.py",
+      "sha256": "b723c2079a4fede4298393c2b7047e93f1e2fb76d81752b8aecd95bbd5d5a5d1",
+      "kind": "tooling"
+    },
+    {
+      "path": "mle/Cargo.toml",
+      "sha256": "5818fdd36402f0775d265506bf777e42ab5e3e1ba68f9a58f9c82a8dd42cc168",
+      "kind": "tooling"
+    },
+    {
+      "path": "mle/contracts/src/CanonicalWhirProfileV2.sol",
+      "sha256": "7d2feb276eceea1effce4b99f8305089f8ac70278011a5724f46cb1b24d214bc",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/CircuitConfigV2.sol",
+      "sha256": "39a19068ea3a4e0624a56d195ca9fc1b1db69db00d11d02433fd724f814a0fa9",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/CompactMleProofV2.sol",
+      "sha256": "a3b7d1050c1896cdac853fac75d89b5591dd3bb6ae1935f9252cbddaba570c38",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/ConstraintEvaluator.sol",
+      "sha256": "0f10a5b351b6e38c86d63de231487cece67c70f105c7fa967c5fd078e8d67b25",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/CosetInterpolationConstants.sol",
+      "sha256": "c332248b89689976768c27bb07e2427560925706329997d00788f4c3c65f14c9",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/CosetInterpolationGateExt3.sol",
+      "sha256": "5e0ded5a73418f69c18eb57c91622ed44a55e915d8e1ffa5b4dae1f1f78d005a",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/EqPolyLib.sol",
+      "sha256": "3c7e03ac405328891922886a0da4b823a9cf9a2c5b6df2513369962e4abdaf31",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/generated/MleWhirV1.sol",
+      "sha256": "44fdc5e9cbe870ebbd88c48ffe3ab3031827a0a7bd033c9b321f67dc61905620",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/generated/MleWhirV2.sol",
+      "sha256": "43b5ade1faad8247d19583eb6b5122b59db30d25173641293cd30823198fe2eb",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/generated/WhirProfilesV2.sol",
+      "sha256": "e55b387d0cef720bbb0e22d7b95bb281e6837d5b3b41fd37c73c02366b2126d1",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/GoldilocksField.sol",
+      "sha256": "1ca69976db4c680aab8b6f171e704b6dc5f3736994c3158808034b7708023e60",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/MleProofErrors.sol",
+      "sha256": "264ba9987e448e8da0098fff3db58c6f24b48c2693e15334ad48dedc0090a14a",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/MleVerifier.sol",
+      "sha256": "1521bf5ec65d0c5cedb8b3f01b1fc7a2a3dceef52c6f026182d84642785a0a10",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/MleVerifierV2.sol",
+      "sha256": "9c2f970e322afc43dd7c52ef44a2f2d7de70e6083e06eeee342d562b1eb85bc4",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/OuterLogupExt3Verifier.sol",
+      "sha256": "99ed1d1190a0e6857c9379eb1037bd9b167e864687310a80962381c9e3292c8d",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/PackedClaimExt3.sol",
+      "sha256": "6cbee8a569648711caf61d4572a79bbf3c32a85d1209cd10ed9db28c658129d2",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/PackedClaimLib.sol",
+      "sha256": "0e1645670ac84ef09b6197fb9562cccbccd2d20732bc3d455225265225a31716",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/PinnedMleVerifierV2.sol",
+      "sha256": "015d4c60abec6a877085cade3ee021e1a395c474f5cb3703015184f88b5a5eb8",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/Plonky2GateEvaluator.sol",
+      "sha256": "a8001c0d8d975085a57ea888e372b0b89240af2fbe4ed90f6a2d2189b97f6e98",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/Plonky2GateEvaluatorExt3.sol",
+      "sha256": "9b7d2cca7d17206f989bb20c7cf2632d72c111592ecb6c8b64ba161b49392239",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/PoseidonConstants.sol",
+      "sha256": "92a77037dc6302436b8f23e10df6781506b91fd79ab5ec9073422f0aabe45716",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/PoseidonGate.sol",
+      "sha256": "c7eb506f023dacc136c0045ce891b81b89140c1d124a2fc76021f836b461b89f",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/PoseidonGateExt3.sol",
+      "sha256": "da490da04ec6bba26ba851483995ca084b1bb908c0b8e237483d5750879f72ec",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/PoseidonPublicInputsHash.sol",
+      "sha256": "10e93075c116150c02e3ab4cb4462e2ea4f82cae0ea9c8aa271ae47e910fc738",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/spongefish/GoldilocksExt3.sol",
+      "sha256": "e1df25e395e5136c3247f591f764187b284c448da2b251b11708715ea4d1f7e6",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/spongefish/Keccak256Chain.sol",
+      "sha256": "e2801b40a84f0b6929f4f5f64e56996f5731c3f7dd4fff99f39228529bb0d785",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/spongefish/SpongefishMerkle.sol",
+      "sha256": "a2c53bb9ed3250fc4182ec3576b8523fe1c3898d38d8d1dea39be837b1b1303f",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/spongefish/SpongefishWhir.sol",
+      "sha256": "331623130139b660cb9c135d1e010442c9605d9ede8c30e5b3a71c3037975347",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/spongefish/SpongefishWhirVerify.sol",
+      "sha256": "e333383e029171ab223e700a57c37399c41c153db9c2fb0b920285b0af9f6380",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/spongefish/WhirLinearAlgebra.sol",
+      "sha256": "f3da8dc815df70b8463ee3d70076d3c05f1b3879341e9c82e71d9af4b0e34424",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/SumcheckVerifier.sol",
+      "sha256": "7029a9341f38e370067d2b59c4a1c5468c7ba897b2543a4f7e71782a9d3eb702",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/TranscriptLib.sol",
+      "sha256": "d8b9b49c3002844ad9f5e4994188075e89e4cee503726aa75d48d03bec0bfe6b",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/TranscriptV2.sol",
+      "sha256": "0278cc068908c27d166a88e018fe3a79c179d79b51b8cd9be4a7ea04d0c0132e",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/BoundaryCheckTest.t.sol",
+      "sha256": "dd568f0a8b0c27c775fca0632536a08f5166f92299821ca5af3f6d8180b69008",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/CanonicalWhirProfileV2.t.sol",
+      "sha256": "38441dd83aa3f6e2eb11c76cd8eec3c9f70cf537a4f6d364994f725d6d7052db",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/CircuitConfigV2.t.sol",
+      "sha256": "f91c1ba907c1e6aeca8272f97a7379d43de0de7a1b759ec0acba64fdeda24755",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/CompactMleProofV2.t.sol",
+      "sha256": "d32afd752297eddae8854a5ec4af8f6bd541af96fdd57bab4dd009126f3492c7",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/CosetInterpolationTest.t.sol",
+      "sha256": "5b2d203b233189bdbbb3a2332e2db96eb653697f825ec1fd28a58ee42f1fea7a",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/CosetInterpolationVectors.sol",
+      "sha256": "5e3801f3ad8f3e66fc668ba54fea03d826eb2b53209bd509dc3e5a8ccfd1c5ad",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/E2EFixtureTest.t.sol",
+      "sha256": "fdf249bfba77483bc0fba3c7c5d26faf2d62379da0f69b395d8f2a396af24fe3",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/ExponentiationGateTest.t.sol",
+      "sha256": "e114b404c3de624be6ad048deaebf4b982d9a0e725d5ee34e4f183ea53f1c6b7",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/ExponentiationGateVectors.sol",
+      "sha256": "7960d1522540423166dade0e40ab4795d90ac0f7fc837a12055960baa4bb16cb",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/GasBenchmark.t.sol",
+      "sha256": "854f73e8c2ef01385560888b54b33a48ec36f972bf30aa98b06c66b969b15140",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/LagrangeTest.t.sol",
+      "sha256": "5b6730a123d977ab8313311e672797fd42be75cbfbbcf596a5ac2eef4dc2dd12",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/MleE2ETest.t.sol",
+      "sha256": "1a362c64a0a0ac663261b66103e731fd7ab67e8c280d8fc4e1322c9218e2ef6c",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/MleVerifierTest.sol",
+      "sha256": "16f0d0b9a79b9bb63741d9bc828c9c7f4b0e0c9e7ff83812b010b134cb81eada",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/OuterLogupExt3Verifier.t.sol",
+      "sha256": "b69214369bb2f0937b8362286bc1ea41eba93e224d8a97b72d9ad2124a7660e6",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/PackedClaimExt3.t.sol",
+      "sha256": "a12f6f4ddad2bd0553e9e0a9531b1a3a75440a30a528c3706c5f2213bca7b03a",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/PackedClaimLib.t.sol",
+      "sha256": "4a2ef04228333fee005e8e36288be544a3a2e0bf3c9509f287f00a2428660cff",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/PinnedMleVerifierV2.t.sol",
+      "sha256": "3cc752f7e83edea71eea50512ba7b49b529148a84278397902f82ec316fc64f0",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/Plonky2GateEvaluatorExt3.t.sol",
+      "sha256": "533f4664ec0d1a720816b6f96a75342a6c413189fb577028a090fd7e0312b0cd",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/PoseidonPublicInputsHash.t.sol",
+      "sha256": "7c3c2a0ed0fe8cab1f69b97fe830d56f4b456d20cab242b31177f3c8cf6d4214",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/ProtocolSchemaLayout.t.sol",
+      "sha256": "84575168faa22642ca083ffd4fa6d0a84660bb92d18bb4364c551a64e57690f8",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/TranscriptCompat.t.sol",
+      "sha256": "56e1ffa2e646a2742fd0830c8639c1984f2673586dc92c73caa437461b5739f5",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/TranscriptE2ETrace.t.sol",
+      "sha256": "91e58159b2d15b70b36ed84bf7fa1a9c9cb25c464e7f22018b7494bf616ab4de",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/TranscriptV2.t.sol",
+      "sha256": "619615b3262efc686895392273a117a0241d48a33bed1acbab7bcd3fec710809",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/V2CrossLanguageFixture.t.sol",
+      "sha256": "fae8d57e0e1cb781d9d677218ec800ac21751675c11f0d13a51cffce687b177c",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/V2ResourceEnvelope.t.sol",
+      "sha256": "04667dfffb390cae09bc2843939213cd4965dbdecbb844e4bebab000422391c8",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/V2WhirNativeTrace.t.sol",
+      "sha256": "acf12ad7d812704baa1367afda0d8f46f724b3a1c8ad5996f89aa6c7fdc7dc9a",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/WhirAssemblyDifferential.t.sol",
+      "sha256": "57edbe8d08f80813498c1d78c27a74220e3d8e4948f5118b8f0d011a791725c8",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/WhirNativeTrace.t.sol",
+      "sha256": "ae98c45f160cabf97961c985b8136688970d8fab374f4e3713971f903bb45b14",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/WhirVerifyTest.t.sol",
+      "sha256": "b5d17612d7d6c5016a2b29c77239f8d782a7dc34a85a5fb0e0703d42766fb13f",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/examples/estimate_unified_outer_whir.rs",
+      "sha256": "79bb8ecc222a9f1cb8115947ae264c3d870b65125bd2eed5c39da8f769882d4a",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/examples/whir_panic_abort_regression.rs",
+      "sha256": "86d56b1dabccdb81a9841096a19f64b70ac0ef85ece42c3a01515f15a8e041a1",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/paper/mle_whir_v1_security.md",
+      "sha256": "be9e50e3cb92314cad1267c46c6b3a42ee0b23e8840cc47feb40803c92e1759b",
+      "kind": "spec"
+    },
+    {
+      "path": "mle/protocol/mle_whir_v2.json",
+      "sha256": "0e965430dc0804fbd89c954d1bb6fbafbac0dc77901863c87cfad85cb6902725",
+      "kind": "spec"
+    },
+    {
+      "path": "mle/README.md",
+      "sha256": "0026328bd82c48c23c2db46e0bbaaf68e93cb76d32e50ea966a3703d583d2419",
+      "kind": "spec"
+    },
+    {
+      "path": "mle/src/commitment/merkle_pcs.rs",
+      "sha256": "35bb8910ac1fbbe793482935f7c0f2072fd4e2be8619f5e3afe6a0d14ffccd5f",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/commitment/mod.rs",
+      "sha256": "4ade1a8cb36434716de6dcca984f8890b6532406b7540b6664608da84e721c7f",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/commitment/traits.rs",
+      "sha256": "806bd8e0e6c7d9da65aaeafb4467e3547e16974865f383aef77bdfe967ab53c0",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/commitment/whir_pcs.rs",
+      "sha256": "aec2d47606dc0754fc0156bf318a2cb2b6983c8afce012e526073373805d8d22",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/compact_v2.rs",
+      "sha256": "6192a217ed603e5458206b22f0852ba23e1c01ee58ecadc60712ff2b0f3db4ab",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/config.rs",
+      "sha256": "65eb3a660c7a31c87abf4f4c25e7cdf7ce39c933e62a58c5a8d844aba7298838",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/constraint_eval.rs",
+      "sha256": "6ad486f19252b0d2252d334114fa385830a0116907a1e1234d0b8bd11241e481",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/dense_mle.rs",
+      "sha256": "c1422c795e395ba14efde57e8b7d27e3cd8d8b9d16237e28ad86cba7d94159ae",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/eq_poly.rs",
+      "sha256": "0400935a7a9d572fea496e36201ef9db3835a5e33e4c0147382619fe6400e11c",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/fixture_v2.rs",
+      "sha256": "30461b43d533fac1604450cbff9907fb7d71ee52029358644ea4f6f0418fdca3",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/fixture.rs",
+      "sha256": "34f272781c692cc6c0e39b6aa2e4724add6a48d5b31458a2d8f3b5b8f2351d93",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/gate_ext3.rs",
+      "sha256": "323a52355d64cd72f1bcd3cc1bfa2ac46e1f2e43ebf74a1e63ee31b53d58d066",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/generated/mle_whir_v1.rs",
+      "sha256": "4698168cee63be971b8a60d8c568c56c0d92222b1a85aeb93f2d7a3e2a7b25cb",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/generated/mle_whir_v2.rs",
+      "sha256": "6fc7431b05b7c18d31ae6bc8c328b99dc8c0ddd97b280a4300b5f077a446f153",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/lib.rs",
+      "sha256": "46afbdc4f8cd3beaf2a1c9a46d50fba15a0f512bcb885330b859949088a9a447",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/permutation/logup.rs",
+      "sha256": "b52af2d4293720e1c90d4fd2ce441c72d394ae9f59d9cead3d906b7f6c9dc24a",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/permutation/lookup.rs",
+      "sha256": "e8cdf964dbfbca67e2add6438fd2b3c657ef6290a8c2cbcc34076168a0e760d3",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/permutation/mod.rs",
+      "sha256": "62eb666f56863c29034456fcce37f5acacf05d105b5eb7e997cb7fd931de2990",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/permutation/norm_logup.rs",
+      "sha256": "74cf6558d5d4061b51913465d2c18180f15702ee7251bf86e5589a1372050826",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/proof_v2.rs",
+      "sha256": "cb6249c58a608342d00c12509bc67ab9e569902453c0e18fd6254569d00ea8cd",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/proof.rs",
+      "sha256": "138b9c518bea9c60f1239780c4ddb6a8ce35843a4cfac8966455785038b2b11b",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/prover_v2.rs",
+      "sha256": "55dcf226e6a693c4a561cf388bb4741da8e7b59972b39c6c5e8f5e7f7f0176d8",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/prover.rs",
+      "sha256": "e816469317597876419625560edaaed30b80c087beb47d20e36eddfef2b2d6ce",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/sumcheck/coefficients.rs",
+      "sha256": "8f57cdd19e95bcb452c495619b03bb727aeffb35dd9fd872f49c29ea4508333a",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/sumcheck/ext3.rs",
+      "sha256": "db2f9b1bb7e884e15813162fade6ea51317d666112fd7861864b234270d90458",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/sumcheck/gate_ext3_v2.rs",
+      "sha256": "b1cc4757f7286a09f6de46123aa312d2a2b0d34ceb1b4b3f674932417287b5e5",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/sumcheck/mod.rs",
+      "sha256": "33e5633c0d970be26bd7e05d375d180288c07b669aef96bde449a617db6a9b28",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/sumcheck/prover.rs",
+      "sha256": "fe97ffa809ec7d2e85a446907e5115448b25d0e740d3cc346f47dfefd170c34b",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/sumcheck/types.rs",
+      "sha256": "c4800070ccd9f3ccc3c8df50a962217d6386e72d9a3d7a834f2611b6eec5550a",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/sumcheck/verifier.rs",
+      "sha256": "370e5d329b57ee8012c918a85bea7e00f4097190f7e14cde83fb4c514f9eed57",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/transcript_v2.rs",
+      "sha256": "0ce3f8bed6b7db90a590770fc9cd67c899fa6feacf8c536ee7cf97cc18cb2764",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/transcript.rs",
+      "sha256": "652d94367b7064815da87cdacb9c25a95f67bd089af96ff8539246865fd75560",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/verifier_v2.rs",
+      "sha256": "340f59dbc6f2761de4e052ebbb80d11aea58e66fd331ab10a9574b0b3ed057d9",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/verifier.rs",
+      "sha256": "aeec9b86b7e2a3425d58c0320bcf16a2759d667c8f60a86043265c5c9fc7a57c",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/vk_v2.rs",
+      "sha256": "f85900c1d59b380433b97278ac0ad765a70fee3545fac52f881f94ee01dc79b9",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/adversarial_schema_matrix.rs",
+      "sha256": "e5cc131d1e187220aa8b4463b17ee6e6ef97d7a181757c196aeccfb39441a1cd",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/benchmarks.rs",
+      "sha256": "46e8b6752bd6f1b0e17184a3947a6cd66de5bf4d00bdb9a4c876d4a4a022feb6",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/compact_v2.rs",
+      "sha256": "004030a1c153b5a23c04a1c71f4060ccb9168ae6496f0905e8c2c040590048ef",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/dump_coset_constants.rs",
+      "sha256": "697cdbc5777d8dca9836e258c82b957d116951e8171def6d9815d3de14cca72c",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/dump_coset_test_vectors.rs",
+      "sha256": "db31469f6b3e8d9f1575b4d4f0183a24282117580593f6d203161118fdf6edb8",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/dump_gate_ext3_vectors.rs",
+      "sha256": "6e2678f3c64b69125784961e7e261643b9db1d43215e286fb99041a1f58bd2ea",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/dump_poseidon_constants.rs",
+      "sha256": "4d8846a56295fc10d1c221e69d94a450364982d952a18632be3dedc79d98e7a7",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/fixture_v2.rs",
+      "sha256": "a40b4591f461e4947047915c31eea833031c04f2361dbacae196382a7916c1f4",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/generate_fixtures.rs",
+      "sha256": "f14dab07c058b5addc99c0e685fe2ed6e27c52f138fbf3d53debabbf427c52af",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/integration_tests.rs",
+      "sha256": "8f4233942fa54c36b33d3ffe750ff38f094bbd9254eda38939368ad2cb0bda81",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/outer_soundness_budget.rs",
+      "sha256": "9a2263bcdb8fd63cf4930a496b280832c737b7c4b2b34f856b6454910fe0526d",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/packed_claim_ext3_vector.rs",
+      "sha256": "6be2abca546d91ce54f9ff031de44c2cc66ca6cbdcd35ff98223e3692713f971",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/poseidon_public_inputs_hash.rs",
+      "sha256": "6c85f0eba6c47f494330505e2eef72c620e8de4fed818ffe5a4bcf5e4ad54350",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/protocol_schema_codegen.rs",
+      "sha256": "f9c9c601e9ebf31d230168846734ce35b42b7f45fd1ab4e355783314d2607ddc",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/protocol_schema_v2_codegen.rs",
+      "sha256": "acda0df09dcd180273a4a3dfabe3b9859b774ba6ff29acb58ea8ce71f261a06c",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/public_input_wire_map_v3.rs",
+      "sha256": "e39d0463acc201f96d00e77cbb16b94029e99727807d44fed8af17bf1f47df72",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/transcript_compat.rs",
+      "sha256": "7f4d6df0a0bc78b369f4328620ddd7cef281597a076c4e951c1a32206d2c2cf4",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/transcript_e2e_trace.rs",
+      "sha256": "9a0eebf9f3483baaa01bbdbe179ca01d2c67767afb4176d9c592f36d2672b2ff",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/v2_adversarial.rs",
+      "sha256": "84e58e3ff1ec90ec0ce08c4d7aff20d7e73d979dd8135724c493670d44d632ce",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/v2_cross_language_fixture.rs",
+      "sha256": "49512939d5b45941cd32deee9ed8ae8219c868bf209fc135a69b3e4fb692e940",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/v2_resource_envelope.rs",
+      "sha256": "5f0b09b363bc80317f07b6f58cb499f407c0664440c9676da7eb7c558c4fbf31",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/whir_parameter_diagnostics.rs",
+      "sha256": "bd9f1db56d5917dfbf035a23c7f51175f315c1236a08fa31e432a38c8ae1e7a3",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/whir_profile_v2_codegen.rs",
+      "sha256": "f2ca1a00dc90deac11d0461a7c91c8f8f4655881914f69c6ec6ee5e8e62fa0ba",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/benches/allocator/mod.rs",
+      "sha256": "201a283c3def9adfe6f1996c01856c660ebdefc47878c8f1d59fbabeb8323ad0",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/benches/ffts.rs",
+      "sha256": "c0f0338260187b2159cbc6b82ba46f9007be951755ae8914de803d83a142ad01",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/benches/field_arithmetic.rs",
+      "sha256": "ca8f022d73393c7e8254b58ba1fbec9fa99e44b60ad858b50cc876d69bed671a",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/benches/hashing.rs",
+      "sha256": "1e6fffb8e5c6549e882d22f6d917372b4d6c29660ae046a0bf4822702985f6f4",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/benches/merkle.rs",
+      "sha256": "0f1cd9df1219e2d0b9dca69d05c03dac436f6d7e4a5c206d90dd1bd9ee2bbd66",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/benches/reverse_index_bits.rs",
+      "sha256": "7ef4f4c43ae1036a3fc12e8b0e7fa60b4390d5de2311dfbcaec9f97ee4da7edb",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/benches/transpose.rs",
+      "sha256": "877a3055d21ce19f84026ce75a908eb130235b5ead18e7cb5b2edf11bbecf980",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/Cargo.toml",
+      "sha256": "d19e0c9a581bfe6b788407057df28c341cd1877070690e4dc1829816f6f154e2",
+      "kind": "tooling"
+    },
+    {
+      "path": "plonky2/examples/bench_recursion.rs",
+      "sha256": "256a2ddc1a460ba34eab51b2089ef1ffadd9d186692ac274ce8e8921a836a4f7",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/examples/factorial.rs",
+      "sha256": "0ec6c7dc4e191b92c81948b5f014d3eba4b655cf9e9f9d56977def7e8f5d3782",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/examples/fibonacci_serialization.rs",
+      "sha256": "fef3077e3b01ff3df276a1ad38036d3c0f4afaccba7dc369e37695b5110eaaa3",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/examples/fibonacci.rs",
+      "sha256": "3041258959b902b98a2703cd3707682202c79cb87be8851e7bc2a0bbd7279f3e",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/examples/range_check.rs",
+      "sha256": "308a47ab72e1b646e392482891ea6c811bf047e7f7a318f1716a370ce8608d77",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/examples/square_root.rs",
+      "sha256": "7d86416e7fc624634d46cd13adc528a96719ed19697652ed30bf142eaf9e685a",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/batch_fri/mod.rs",
+      "sha256": "c4573a70fed8917c4a2355ea43fa09510d14e34ab6acd9a99acfaad1c9833b93",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/batch_fri/oracle.rs",
+      "sha256": "036027fb1192bcde27198ed74ac4e48f3b499c947cb40bc4c2c5238ab3995b6c",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/batch_fri/prover.rs",
+      "sha256": "945f6b416c57c69727a8ae549d8580871121f3152a871031aff99a931e4133b6",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/batch_fri/recursive_verifier.rs",
+      "sha256": "ba9295cb49f08097e73bcdd408412093e08df96b6ed627bb573ea5cd94c11f98",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/batch_fri/verifier.rs",
+      "sha256": "31a2f8bcdeb254691d97f10c55562c68330153ababf9ceae249e3df0bc24d53e",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/bin/generate_constants.rs",
+      "sha256": "af3e6c8eebd427c44485ff33d3590e0a2810999df26a1f9f5efd108a2eb7e9a7",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/fri/challenges.rs",
+      "sha256": "826aed29bdefd9d3f9e5f305958fa2281da8985b07216bd266ce3b07f69b009b",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/fri/mod.rs",
+      "sha256": "1fb81bb59e51204dfafcec0c93b8d23eb2f2ae166079e0a26fb1435a60675170",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/fri/oracle.rs",
+      "sha256": "f1c98cbb7ceef5d83af11385122071edc536a033141c25db71deaef21b1bfce0",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/fri/proof.rs",
+      "sha256": "1fef8c29c62e69589591db52938bd1d3b882e1e4daa265b85fe9caca2806ba0b",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/fri/prover.rs",
+      "sha256": "71d4441fe795583f961e3b0098a8f60f8985b76bbe430c7ed324d49ac2cbee43",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/fri/recursive_verifier.rs",
+      "sha256": "8d09b4fa2a3bda0b5d3e3179de568c6d77c9fe424a2fbae94fda7d99225629cb",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/fri/reduction_strategies.rs",
+      "sha256": "08da4d44e879a296dcbf6b1c57fddcfe67d7a75f5c2a0643d8801295d5a98c8d",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/fri/structure.rs",
+      "sha256": "5d1d1a90936c5c998366df88254a83f793a22d8c465f13f10220e68ba7de2b69",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/fri/validate_shape.rs",
+      "sha256": "dc0193fc452aec3156baf14164887dcd685cbbaeb7f900ad2d0ed01c483f1048",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/fri/verifier.rs",
+      "sha256": "4e9a6d2274f375614ab214d1376632cc7720ae8550742fd39c75c99df852124b",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/fri/witness_util.rs",
+      "sha256": "1deb1a13af07551f81eadcc817dc65556cac832596b386956a73660cd004f075",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gadgets/arithmetic_extension.rs",
+      "sha256": "6673ad309410723e14c8feccf14cf07683323c932875bad5daf1e7752ef66bf5",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gadgets/arithmetic.rs",
+      "sha256": "3f99cf368577baa99ec78614fbd023cc22350c59874effad29420277c21b6d80",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gadgets/hash.rs",
+      "sha256": "66998d66d8756014544c6a5c2a24183c7dcb23c16e22856576f15fc09c0dedd5",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gadgets/interpolation.rs",
+      "sha256": "e1f45ddb7c9032575753aad9666fd1e3cc839ce06b58df91c25b0fb78f9b8057",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gadgets/lookup.rs",
+      "sha256": "8d4a41741f3cd474a771dc88d8a956157371e9ec4a6cdd1b77c42839100c3c4b",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gadgets/mod.rs",
+      "sha256": "971f3d548c8a32c1eb492243ed7a88c72616b02a04a83d1393ee201372cbeb39",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gadgets/polynomial.rs",
+      "sha256": "0522fe157c41960628d8dd24e1e2b87c1acc2b805b1b2acb0104a5f1ec452afe",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gadgets/random_access.rs",
+      "sha256": "e587359efc731f064bef00e9b649e84a326d175538a078a0561a9614876ffb6e",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gadgets/range_check.rs",
+      "sha256": "8327a0cb13fc54534242e030b78f0509c2a36a67a06724a0358c4e41bfff113a",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gadgets/select.rs",
+      "sha256": "079e8a1b6a0a38840a6e945c724cca446859a7759fec47d3c77fbb1ec1329dc3",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gadgets/split_base.rs",
+      "sha256": "45946fce3f8f97ec9c18e10c444e74262d1827fbe89246f37a46f7144e043636",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gadgets/split_join.rs",
+      "sha256": "d5f90eac1e2f80bd315976c4ad5c8e96ccdefa26865dd0d3f823ffa43f90b206",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gates/arithmetic_base.rs",
+      "sha256": "8208a51d8b5d0031ff167995139f68c02a38494a46269421b75d56c251d91fb1",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gates/arithmetic_extension.rs",
+      "sha256": "f11ffd33db125c2fd9e83dce38e3dc31e2d43f6d295c388a235ba3a848752645",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gates/base_sum.rs",
+      "sha256": "6c5966f37473c7bc8e7b25aa90192d13941ebf8c2ab30afd7bbe06d78d5dae28",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gates/constant.rs",
+      "sha256": "68f10780f6e168f667bdeb7f11bbd49070f4fd6c1767938166227253bf5cdf49",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gates/coset_interpolation.rs",
+      "sha256": "e38cecabf69c47a5345e3471d0de3a405182b822002a0c5e97176bc8fa52d64d",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gates/exponentiation.rs",
+      "sha256": "c3fa0ad8bb5532ff66760210943e62400b0ae48ca4da5d3dde1ac652fea0ab1c",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gates/gate_testing.rs",
+      "sha256": "f844d4b15a165d01ed95ac27a6eaace2f40d788663693a68c54f7d89fc0f78ed",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gates/gate.rs",
+      "sha256": "9dc79c3209f16cff8d234e071d430641a94d853fdff033e989f4e19e645fef61",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gates/lookup_table.rs",
+      "sha256": "ce0f92bd8d56b1b5b7cc33f9eff879baf8bb9a9ebab0c8621c843a02b9d9aaaf",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gates/lookup.rs",
+      "sha256": "bec04139495d71b9d70b50d0d22faf79097aae86fb56e7f4e70409bb014feb41",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gates/mod.rs",
+      "sha256": "bf87f373e51db77410d481bccebca7bb4d2e244d9110f03da58f498f539868d7",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gates/multiplication_extension.rs",
+      "sha256": "58b2989d7c52949a043770b791e2d3305be0986587fc3653b2880be8ebe761df",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gates/noop.rs",
+      "sha256": "3fe8d8b88b704f4634ab64baf4a25cf81fd6b944bfadf3f28cc5cf841d925b16",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gates/packed_util.rs",
+      "sha256": "ea5ad1c21a9e7efe18b25d35c15655a267b2f451afa7769e67c487a6507b0837",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gates/poseidon_mds.rs",
+      "sha256": "b26c3a1f752f0b364d2158099fbf484fd53d3e87e5f998437f5ec5e73b3364bf",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gates/poseidon.rs",
+      "sha256": "960d7fa257ae2b2ae1b854d6dde4c247143dc109118da4eabe8e4d9ab6ba7a87",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gates/public_input.rs",
+      "sha256": "8589b037ddea317cb7694ca5eee5c34a17fd8c5288578e925a3911ee4b8cdca5",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gates/random_access.rs",
+      "sha256": "c19e282dacbecd785ff1822c9d6e427732217c34900ba44add59462d9db7ba7f",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gates/reducing_extension.rs",
+      "sha256": "43e38d9d29881f5a1753c0167f3769cf004930c368cbf49c7876aa11a866cbe8",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gates/reducing.rs",
+      "sha256": "34f4693ae2479e1ae3d5ca8d812d8d350ae3248def486c93e48f24358697f4f8",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gates/selectors.rs",
+      "sha256": "2885aae720586fa116fecbf7d0c9307edce48cad479f921dc7c07ebc6a9207ba",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gates/util.rs",
+      "sha256": "d15f2fdce45d137cfbd7cdf46cee128f87143ab25c9a9ba31c373b56789c95bb",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/hash/arch/aarch64/mod.rs",
+      "sha256": "c7fed995169df79cd32ff81f56197d1066b8f9e991ae0a9295f85296f36c94ea",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/hash/arch/aarch64/poseidon_goldilocks_neon.rs",
+      "sha256": "42784fc209cd502a8ca133746bd7ad6c13e086c823424aedf30dc6da022e3083",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/hash/arch/mod.rs",
+      "sha256": "9c84c6b6be3af0b02e59a8955e83bd74b76cfb08ce5164a89ded5a3783f22abc",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/hash/arch/x86_64/mod.rs",
+      "sha256": "546e7e57fffa1afb5d3fb1d009215e9d6864482b4643af6227844011e638da2d",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/hash/arch/x86_64/poseidon_goldilocks_avx2_bmi2.rs",
+      "sha256": "7da0448f22ef9d868bdbdf5e4e86a9aeb480e8e2919d0f6f19a64be4003c799f",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/hash/batch_merkle_tree.rs",
+      "sha256": "3e36f57290f69c58adcfcdded0f68767356d9a6322259deffacdeb149faeeeee",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/hash/hash_types.rs",
+      "sha256": "f24ef3460062c96b9c253aa0fe940e1e42dac8ba019eada411e72f6e8050af7e",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/hash/hashing.rs",
+      "sha256": "83b6d64a310ec718a7d072f6e43191cf671131c4314cc8bacad264929788ba1b",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/hash/keccak.rs",
+      "sha256": "d7e6274e2f4984bd4ef0fc6f5ce24c0e1a7c8cba4297d02e2962fd7cbf75e624",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/hash/merkle_proofs.rs",
+      "sha256": "0e5cede152e0a40545d6f447a15a11022ec50d62f5c4c6240d95ff4ae8334f1d",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/hash/merkle_tree_gpu.rs",
+      "sha256": "9eb12e7becf69e780ea1c0b172ba4788218b539afc5c7df65562d04a8ca53637",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/hash/merkle_tree.rs",
+      "sha256": "4671d3fabeee9fe7a0d9c836323113646ef6808f02e9df9ea8accb3410ded2b8",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/hash/mod.rs",
+      "sha256": "8b1fc5d40f2197f58732f8852ecaf6c0e3b63e8bef43920e4177107d60974a5c",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/hash/path_compression.rs",
+      "sha256": "ddd64dcb154560b6cf1f6ca928828ec6edd23880a2c75a7305da4f5fca995d4a",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/hash/poseidon_crandall.rs",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/hash/poseidon_goldilocks.rs",
+      "sha256": "e4543257d4e615c8c99218ab07aaf3d22151a6437584d435acc5c2c1d95c7895",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/hash/poseidon.rs",
+      "sha256": "f90ec69dcc376382730b41d60e0364f940ddaff1476e27dc393b3f44c37975ca",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/iop/challenger.rs",
+      "sha256": "bb3b1d88a81886b94a099f3c72b0561c2da2d10522c5494e35d6ce41a5383059",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/iop/ext_target.rs",
+      "sha256": "139c412e31edf4dfeaa5f8cb522b532f165bbeb260aee7e8c7f1209e09df540f",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/iop/generator.rs",
+      "sha256": "c2ae76039e207a4c0ec10a0ab39c698875c9c606f197e4dd39450797dca48f4a",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/iop/mod.rs",
+      "sha256": "70b05e8eb9e1cc0574822e65c9766294b22ea2ae2d12b97d7ce546550d68ebba",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/iop/target.rs",
+      "sha256": "55c84a399818d17ff041ee2d36397ba1c28f787f8c8b21b81cd1c69835146778",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/iop/wire.rs",
+      "sha256": "a487f153aa1b48d3a4f86568868b9706353ff07117b2e10649686acd1999a7a5",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/iop/witness.rs",
+      "sha256": "2c887f265dc0536e97f92cce09ca86127b34cdf582dc354efb385281aba9ed67",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/lib.rs",
+      "sha256": "717a6ae2e56c3783eb1479644092718a96d883ff512fae683febea2339d59525",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/lookup_test.rs",
+      "sha256": "64cbbd8a45b6850c1179ef225c3e289ddc970c1680b096eef7dfc4e6c9b90584",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/plonk/circuit_builder.rs",
+      "sha256": "bd8e38c73d6ec8a3dd4220a0e3365f5a618cf8f38fc186fad3a48a2826cbc24d",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/plonk/circuit_data.rs",
+      "sha256": "df9f1cc94fbcb02110379abc62430a976f0539339feabf05b206e7225bedf35c",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/plonk/config.rs",
+      "sha256": "bcedf12f67be280ac45aaa68aab69d0e80ae9b4f42decc40ae0d624565c13fb3",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/plonk/copy_constraint.rs",
+      "sha256": "3a976d720362ae748bb9ae7a81039e568217f8fc4a50e90365e2ec1e6fee00cf",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/plonk/get_challenges.rs",
+      "sha256": "7f3488e37b444e4e11ea46f0c558569b3a6f095dbaa618f6ac752693ad065d6c",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/plonk/mod.rs",
+      "sha256": "c427ee37623307c09cc749bd502b043cc805394cbdb0cbd3aa7f89b0b20e9a9b",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/plonk/permutation_argument.rs",
+      "sha256": "bbb82dff28b77f1aa9e85aae193c8c29ee3c97061accd74f00a6c0d76de7b210",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/plonk/plonk_common.rs",
+      "sha256": "913ad11de8921cbaa813a37ccc10c07d1b2bff4d710941ac5d75096d08f8ac7d",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/plonk/proof.rs",
+      "sha256": "47f4b2e051f639dc98550405a7f9d35800eaa45ee90cdda7fabfb8d2e3fce452",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/plonk/prover.rs",
+      "sha256": "a9da90fe25525fac373a6ca542c69978479bb302060d379c3d0c0c8f269ad196",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/plonk/validate_shape.rs",
+      "sha256": "d21c39674a80267116ade0e67bf64d4077d75e39c545da789e9e074ed4896d2e",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/plonk/vanishing_poly.rs",
+      "sha256": "618a465830bb0a30d778b71cc5dc52d0a5ae8263cb7253f0152b5c46e4874fa8",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/plonk/vars.rs",
+      "sha256": "bc725cc73b8800b6650c512a472faea97cd7a6d7aec19cbaf7f6dbefc1769671",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/plonk/verifier.rs",
+      "sha256": "7bfa47aa6f8cfc0279dbb4c987af81b065fc33d2caeb3ea34c75986c1befaa6b",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/recursion/conditional_recursive_verifier.rs",
+      "sha256": "0f8f94e1048e16f8afca9103d6c45e4723bd91526c4ea351e4133c34655bfe9b",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/recursion/cyclic_recursion.rs",
+      "sha256": "cc9b817aea3c8320884cbf6c0c411b3d6157c45bd0aa9334665ced511f3ab782",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/recursion/dummy_circuit.rs",
+      "sha256": "2271a9717d92343938e9cfe5cc6cfbf55fb8b05fa0654281a71e954d10a86613",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/recursion/mod.rs",
+      "sha256": "95ebef50151d0d7111da13a2e2f03403fd3b17bad7202a4a7cfa10458c1d1e2b",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/recursion/recursive_verifier.rs",
+      "sha256": "fffba2fc07f861f11e2dfe4b06c1cec48b48300e9312b9b6338b91f9afd64190",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/util/builder_hook.rs",
+      "sha256": "970720eb4d93c872af5bd8ca37bfcfac8f057902be5c5e196b45059a95c04f0b",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/util/context_tree.rs",
+      "sha256": "c6d862713f95afb5bfc0157471eca049dc44e532d36182126740ebeafc104ac1",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/util/mod.rs",
+      "sha256": "1040ebb36779c4a7fac2ab0a8e23ecfecd89e3a37a4d1cf98eb517679a930cb1",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/util/partial_products.rs",
+      "sha256": "1e4ba8eddfddc2c7469d72ab51a6601da67219eeace3feca8005d02f9c1abf8d",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/util/profiling.rs",
+      "sha256": "9687d6a71f45a7c03a19c88f384de0c801e52373b20838c93b6ec10ba4a8e593",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/util/reducing.rs",
+      "sha256": "02b6a33df5ffc688876cdb3b57fbc769c240b677afec3a01633a028dc497533f",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/util/serialization/gate_serialization.rs",
+      "sha256": "43b672b4836e896d6671dd6292b696c4ca8bb580dc24f294ce6e31f5a2a1b836",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/util/serialization/generator_serialization.rs",
+      "sha256": "0eb44f58988c27f5447ac65153e91575d23e64fae970f2a295a30b0780ecd79a",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/util/serialization/mod.rs",
+      "sha256": "8a62f22f23d8cbaf4440b0c9e13b50885c5e83c8713d63d41046e79e1ce893b8",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/util/strided_view.rs",
+      "sha256": "d4e5758bf984d879297a0081ef1547b49a8702810e76c8eff77ebf6015a9bd98",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/util/timing.rs",
+      "sha256": "7068869dde10b8a9beeeefbbdc7ce3123e0b14444b2bafb688748820b54912a1",
+      "kind": "implementation"
+    },
+    {
+      "path": "rust-toolchain",
+      "sha256": "481a2c96b840deea9c64dfff50f2c8c24536ac829726aa7d97884e5b6715b77c",
+      "kind": "tooling"
+    },
+    {
+      "path": "starky/Cargo.toml",
+      "sha256": "0e5796e2af565f04ebb47ad16490c10cf3f0f0dcdcec74e9b1163ccdedc92f70",
+      "kind": "tooling"
+    },
+    {
+      "path": "starky/src/config.rs",
+      "sha256": "fc929a7c0a04435f38beb4308c0cf4107d518a38e35119aae1ffb5128bb8ea43",
+      "kind": "implementation"
+    },
+    {
+      "path": "starky/src/constraint_consumer.rs",
+      "sha256": "57a5480949cd003de048f9e37cf61bc371fe226ae0a04c4e7ed1425525c9d7b8",
+      "kind": "implementation"
+    },
+    {
+      "path": "starky/src/cross_table_lookup.rs",
+      "sha256": "a092dcd3df27f7923f69f1b7dcf84efa06545cf12c87501df2a0e8b5bc7b28ab",
+      "kind": "implementation"
+    },
+    {
+      "path": "starky/src/evaluation_frame.rs",
+      "sha256": "324ebe314c4e7ee9054c0fbf37d7837d198c41e361c278069e449d8ec48a19c3",
+      "kind": "implementation"
+    },
+    {
+      "path": "starky/src/fibonacci_stark.rs",
+      "sha256": "428b5c46dedcf64f31c28be8ac791b8278c5a72611e5482c2a461f7bc0400da5",
+      "kind": "implementation"
+    },
+    {
+      "path": "starky/src/get_challenges.rs",
+      "sha256": "5beae473e31187bb4263aaecc5474fdb3e6caf8fdc32c68b2b31b0f7aa1cb805",
+      "kind": "implementation"
+    },
+    {
+      "path": "starky/src/lib.rs",
+      "sha256": "182921f4c2dd5c2be9196b0b12ae037c10e297faee8f30c8ab49af68c495bb4e",
+      "kind": "implementation"
+    },
+    {
+      "path": "starky/src/lookup.rs",
+      "sha256": "7b77ec714f5d899b1530765178d6ec4a8be70aa000b09ca007f31a49e0c66334",
+      "kind": "implementation"
+    },
+    {
+      "path": "starky/src/permutation_stark.rs",
+      "sha256": "281c0dfd5e0351fd5984130087492c2d6e6853ec50bc3cb90bd6705fab73c6b7",
+      "kind": "implementation"
+    },
+    {
+      "path": "starky/src/proof.rs",
+      "sha256": "d71c00fb331452578833a808d804f0cefde94f93b415c9d3754deca1ffbe4cd9",
+      "kind": "implementation"
+    },
+    {
+      "path": "starky/src/prover.rs",
+      "sha256": "8ad0ebc1f2b63b6ba71aa6365f94032f5388e638b0e47cea75252fbea386db1e",
+      "kind": "implementation"
+    },
+    {
+      "path": "starky/src/recursive_verifier.rs",
+      "sha256": "c3de017b71b8047b23dbe1f21d6944f24dd77540601b20fce7c895fe794442a4",
+      "kind": "implementation"
+    },
+    {
+      "path": "starky/src/stark_testing.rs",
+      "sha256": "b88da1120dbe9482c7973d2efe5c9f25dd586a8727368ce5c03d7f9feacd57d2",
+      "kind": "implementation"
+    },
+    {
+      "path": "starky/src/stark.rs",
+      "sha256": "244e067e40689936a64a3c2ce1010b141eb9e8198a2aefb4e24b97f6d60fd9fd",
+      "kind": "implementation"
+    },
+    {
+      "path": "starky/src/unconstrained_stark.rs",
+      "sha256": "773e40138f47d7e081e1b7be8473576faf81c3d745d7d55e0afed5765d7aed07",
+      "kind": "implementation"
+    },
+    {
+      "path": "starky/src/util.rs",
+      "sha256": "1506fe0c06df6007e56c90242606f013853d1c00eaae7051a8ddf35424608db3",
+      "kind": "implementation"
+    },
+    {
+      "path": "starky/src/vanishing_poly.rs",
+      "sha256": "30dd7755d66ad7fac8588c9ac63e820abf180e38bdb24203340b288f972dfe06",
+      "kind": "implementation"
+    },
+    {
+      "path": "starky/src/verifier.rs",
+      "sha256": "e1008c4816e95e213d72ceef8dcc0665af4f73126ba84dce2c2b4db13bdb4fac",
+      "kind": "implementation"
+    },
+    {
+      "path": "util/Cargo.toml",
+      "sha256": "5e6a68b3f51fd9a4a339d26e683a433472eb8096614ff8a6d5f7cf63d7819544",
+      "kind": "tooling"
+    },
+    {
+      "path": "util/src/lib.rs",
+      "sha256": "5db27c0fd63fb35ae3af963a5d507b6f426bd5e4f464417201cb7555fe68bbd4",
+      "kind": "implementation"
+    },
+    {
+      "path": "util/src/transpose_util.rs",
+      "sha256": "934476bffb6f918d14565fdc3f742e6f7cb8e260ae59663c4b183f09fe870caa",
+      "kind": "implementation"
+    }
+  ],
+  "models": [
+    {
+      "module": "Audit.Wire3.Arithmetic",
+      "theorems": [
+        "Audit.Wire3.Arithmetic.modulus_positive",
+        "Audit.Wire3.Arithmetic.modulus_below_u64",
+        "Audit.Wire3.Arithmetic.reduce_canonical",
+        "Audit.Wire3.Arithmetic.reduce_fixed",
+        "Audit.Wire3.Arithmetic.reduce_idempotent",
+        "Audit.Wire3.Arithmetic.add_canonical",
+        "Audit.Wire3.Arithmetic.sub_canonical",
+        "Audit.Wire3.Arithmetic.mul_canonical",
+        "Audit.Wire3.Arithmetic.neg_canonical",
+        "Audit.Wire3.Arithmetic.sub_negation_operand_does_not_underflow",
+        "Audit.Wire3.Arithmetic.add_zero",
+        "Audit.Wire3.Arithmetic.mul_zero",
+        "Audit.Wire3.Arithmetic.zero_mul",
+        "Audit.Wire3.Arithmetic.zero_canonical",
+        "Audit.Wire3.Arithmetic.normalize_canonical",
+        "Audit.Wire3.Arithmetic.normalize_fixed",
+        "Audit.Wire3.Arithmetic.normalize_idempotent",
+        "Audit.Wire3.Arithmetic.normalized_equality_iff",
+        "Audit.Wire3.Arithmetic.canonical_equality_iff",
+        "Audit.Wire3.Arithmetic.canonical_zero_iff",
+        "Audit.Wire3.Arithmetic.checked_base_rejects_noncanonical",
+        "Audit.Wire3.Arithmetic.checked_base_success",
+        "Audit.Wire3.Arithmetic.fromBase_canonical",
+        "Audit.Wire3.Arithmetic.eadd_canonical",
+        "Audit.Wire3.Arithmetic.esub_canonical",
+        "Audit.Wire3.Arithmetic.eneg_canonical",
+        "Audit.Wire3.Arithmetic.emul_canonical",
+        "Audit.Wire3.Arithmetic.scalar_canonical",
+        "Audit.Wire3.Arithmetic.double_canonical",
+        "Audit.Wire3.Arithmetic.eadd_zero",
+        "Audit.Wire3.Arithmetic.emul_zero",
+        "Audit.Wire3.Arithmetic.zero_emul",
+        "Audit.Wire3.Arithmetic.esub_zero_zero",
+        "Audit.Wire3.Arithmetic.butterfly_canonical",
+        "Audit.Wire3.Arithmetic.butterfly_zero_pair",
+        "Audit.Wire3.Arithmetic.butterfly_zero_challenge"
+      ],
+      "sources": [
+        "mle/contracts/src/GoldilocksField.sol",
+        "mle/contracts/src/spongefish/GoldilocksExt3.sol"
+      ],
+      "scope": "Concrete Nat-mod Goldilocks/Ext3 arithmetic canonicality; not field primality/inverse correctness or machine arithmetic refinement."
+    },
+    {
+      "module": "Audit.Wire3.Packed",
+      "theorems": [
+        "Audit.Wire3.Packed.layer_length",
+        "Audit.Wire3.Packed.layer_canonical",
+        "Audit.Wire3.Packed.layers_canonical",
+        "Audit.Wire3.Packed.lookup_canonical",
+        "Audit.Wire3.Packed.fold_canonical",
+        "Audit.Wire3.Packed.nonempty_point_fold_canonical",
+        "Audit.Wire3.Packed.layer_lookup",
+        "Audit.Wire3.Packed.layers_lookup",
+        "Audit.Wire3.Packed.replicate_zero_lookup",
+        "Audit.Wire3.Packed.zero_padding_lookup",
+        "Audit.Wire3.Packed.sparse_fold_equals_zero_padded_fold",
+        "Audit.Wire3.Packed.padded_capacity_exact",
+        "Audit.Wire3.Packed.padded_capacity_fold",
+        "Audit.Wire3.Packed.layer_even_shape",
+        "Audit.Wire3.Packed.full_table_final_shape",
+        "Audit.Wire3.Packed.empty_fold",
+        "Audit.Wire3.Packed.one_bit_exact",
+        "Audit.Wire3.Packed.two_bits_exact_lsb_first",
+        "Audit.Wire3.Packed.odd_prefix_exact",
+        "Audit.Wire3.Packed.tableFold_prefix_local",
+        "Audit.Wire3.Packed.fold_depends_on_exact_input_prefix",
+        "Audit.Wire3.Packed.packed_point_length",
+        "Audit.Wire3.Packed.whir_point_exact_order",
+        "Audit.Wire3.Packed.whir_point_roundtrip",
+        "Audit.Wire3.Packed.whir_point_length"
+      ],
+      "sources": [
+        "mle/contracts/src/PackedClaimExt3.sol",
+        "mle/src/prover_v2.rs",
+        "mle/src/verifier_v2.rs",
+        "mle/src/commitment/whir_pcs.rs"
+      ],
+      "scope": "Functional sparse/zero-padded fold and coordinate-order equivalence; not Yul/Rust in-place memory refinement or PCS binding."
+    },
+    {
+      "module": "Audit.Wire3.Transcript",
+      "theorems": [
+        "Audit.Wire3.Transcript.le_length",
+        "Audit.Wire3.Transcript.fromLe_le_roundtrip",
+        "Audit.Wire3.Transcript.le_injective_bounded",
+        "Audit.Wire3.Transcript.field_encoding_roundtrip",
+        "Audit.Wire3.Transcript.field_encoding_injective",
+        "Audit.Wire3.Transcript.field_bytes_length",
+        "Audit.Wire3.Transcript.ext3_bytes_length",
+        "Audit.Wire3.Transcript.field_vector_length",
+        "Audit.Wire3.Transcript.ext3_vector_length",
+        "Audit.Wire3.Transcript.frame_length",
+        "Audit.Wire3.Transcript.frame_tag_and_payload_are_unambiguous",
+        "Audit.Wire3.Transcript.absorb_resets_counter",
+        "Audit.Wire3.Transcript.checked_absorb_bounds",
+        "Audit.Wire3.Transcript.squeeze_success",
+        "Audit.Wire3.Transcript.squeeze_many_success",
+        "Audit.Wire3.Transcript.six_squeezes_use_consecutive_inputs",
+        "Audit.Wire3.Transcript.challenge_inputs_distinguish_bounded_counters",
+        "Audit.Wire3.Transcript.commit_round_resets_counter",
+        "Audit.Wire3.Transcript.coupled_round_all_messages_before_sampling",
+        "Audit.Wire3.Transcript.constituent_indices_after_all_cells"
+      ],
+      "sources": [
+        "mle/src/transcript_v2.rs",
+        "mle/contracts/src/TranscriptV2.sol",
+        "mle/src/prover_v2.rs",
+        "mle/src/verifier_v2.rs"
+      ],
+      "scope": "Concrete LE framing and successful transcript state transitions with uninterpreted deterministic hash; not full initial preamble, random oracle, or FS security."
+    },
+    {
+      "module": "Audit.Wire3.Compact",
+      "theorems": [
+        "Audit.Wire3.Compact.take_success",
+        "Audit.Wire3.Compact.take_rejects_truncation",
+        "Audit.Wire3.Compact.read_uint_success",
+        "Audit.Wire3.Compact.read_field_success",
+        "Audit.Wire3.Compact.read_fields_success",
+        "Audit.Wire3.Compact.read_blob_success",
+        "Audit.Wire3.Compact.command_strict_fields_canonical",
+        "Audit.Wire3.Compact.commands_strict_fields_canonical",
+        "Audit.Wire3.Compact.header_success",
+        "Audit.Wire3.Compact.finish_iff_exact_exhaustion",
+        "Audit.Wire3.Compact.validation_requires_exact_exhaustion",
+        "Audit.Wire3.Compact.trailing_bytes_rejected_at_finish",
+        "Audit.Wire3.Compact.current_header_required_for_validation",
+        "Audit.Wire3.Compact.strict_validation_all_fields_canonical",
+        "Audit.Wire3.Compact.wrong_version_rejected",
+        "Audit.Wire3.Compact.current_header_positive",
+        "Audit.Wire3.Compact.canonical_limb_positive",
+        "Audit.Wire3.Compact.noncanonical_limb_rejected",
+        "Audit.Wire3.Compact.core_bound_limb_deferral_is_not_canonical_validation"
+      ],
+      "sources": [
+        "mle/src/compact_v2.rs",
+        "mle/contracts/src/CompactMleProofV2.sol"
+      ],
+      "scope": "Byte grammar/framing validator with trusted shape and strict/deferred canonical modes; not full typed Proof construction or WHIR internal decoder."
+    },
+    {
+      "module": "Audit.Wire3.Sumcheck",
+      "theorems": [
+        "Audit.Wire3.Sumcheck.empty_chain",
+        "Audit.Wire3.Sumcheck.successful_cons",
+        "Audit.Wire3.Sumcheck.mismatch_requires_evaluation_collision",
+        "Audit.Wire3.Sumcheck.no_collision_forces_initial_agreement",
+        "Audit.Wire3.Sumcheck.positive_honest_round"
+      ],
+      "sources": [
+        "mle/src/sumcheck/coefficients.rs",
+        "mle/contracts/src/OuterLogupExt3Verifier.sol"
+      ],
+      "scope": "Generic semantic-round deterministic collision reduction; actual coefficient/polynomial connection, root counts and probabilities are not proved."
+    },
+    {
+      "module": "Audit.Wire3.Verifier",
+      "theorems": [
+        "Audit.Wire3.Verifier.arithmetic_subtype_is_canonical",
+        "Audit.Wire3.Verifier.arithmetic_subtype_multiplication",
+        "Audit.Wire3.Verifier.runRounds_has_chain",
+        "Audit.Wire3.Verifier.chain_unique_result",
+        "Audit.Wire3.Verifier.runRounds_append",
+        "Audit.Wire3.Verifier.runRounds_lengths",
+        "Audit.Wire3.Verifier.roundStep_uses_both_messages",
+        "Audit.Wire3.Verifier.context_three_roots_two_points_six_claims",
+        "Audit.Wire3.Verifier.context_bound_mask_exact",
+        "Audit.Wire3.Verifier.context_unused_gate_norm_is_unbound",
+        "Audit.Wire3.Verifier.context_native_coordinate_order",
+        "Audit.Wire3.Verifier.rootsAndClaimsMatch_binds_both_root_copies",
+        "Audit.Wire3.Verifier.claimsMatch_preserves_length",
+        "Audit.Wire3.Verifier.claimsMatch_bound_head",
+        "Audit.Wire3.Verifier.whir_acceptance_requires_bound_statement",
+        "Audit.Wire3.Verifier.checked_boundary_agrees_with_call",
+        "Audit.Wire3.Verifier.call_acceptance_yields_checked_acceptance",
+        "Audit.Wire3.Verifier.verify_success_checks",
+        "Audit.Wire3.Verifier.acceptance_protocol_and_pinned_root",
+        "Audit.Wire3.Verifier.acceptance_has_no_zero_round_bypass",
+        "Audit.Wire3.Verifier.acceptance_exact_round_shapes",
+        "Audit.Wire3.Verifier.acceptance_coupled_point_lengths",
+        "Audit.Wire3.Verifier.acceptance_has_complete_coupled_history",
+        "Audit.Wire3.Verifier.acceptance_packed_points_have_configured_dimension",
+        "Audit.Wire3.Verifier.acceptance_exact_whir_and_terminal_binding",
+        "Audit.Wire3.Verifier.unavailable_precedes_proof_checks",
+        "Audit.Wire3.Verifier.mismatched_configuration_never_accepts",
+        "Audit.Wire3.Verifier.returned_public_inputs_require_full_verification",
+        "Audit.Wire3.Verifier.positive_model_verification",
+        "Audit.Wire3.Verifier.positive_model_compact_public_inputs"
+      ],
+      "sources": [
+        "mle/src/verifier_v2.rs",
+        "mle/contracts/src/MleVerifierV2.sol",
+        "mle/contracts/src/OuterLogupExt3Verifier.sol",
+        "mle/contracts/src/PinnedMleVerifierV2.sol",
+        "mle/src/commitment/whir_pcs.rs",
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol"
+      ],
+      "scope": "Combined deployment/call success-boundary model with explicit evaluator/hash/WHIR observations; call equivalence conditional on deployment invariant, not full-language refinement or witness soundness."
+    },
+    {
+      "module": "Audit.Wire3.Connections",
+      "theorems": [
+        "Audit.Wire3.Connections.verifier_transcript_roundtrip",
+        "Audit.Wire3.Connections.transcript_verifier_roundtrip",
+        "Audit.Wire3.Connections.toTranscript_injective",
+        "Audit.Wire3.Connections.fromTranscript_injective",
+        "Audit.Wire3.Connections.converted_arithmetic_is_canonical",
+        "Audit.Wire3.Connections.encoding_exact_limb_order",
+        "Audit.Wire3.Connections.encoding_length",
+        "Audit.Wire3.Connections.encoding_agrees_after_conversion",
+        "Audit.Wire3.Connections.each_encoded_limb_roundtrips",
+        "Audit.Wire3.Connections.mapped_values_canonical",
+        "Audit.Wire3.Connections.packedFold_exact",
+        "Audit.Wire3.Connections.packedFold_width_only_controls_padding",
+        "Audit.Wire3.Connections.packedFold_padding_invariant",
+        "Audit.Wire3.Connections.engine_uses_concrete_packed_fold",
+        "Audit.Wire3.Connections.concrete_engine_retains_exact_claim_mask"
+      ],
+      "sources": [
+        "mle/src/transcript_v2.rs",
+        "mle/contracts/src/TranscriptV2.sol",
+        "mle/src/prover_v2.rs",
+        "mle/contracts/src/PackedClaimExt3.sol"
+      ],
+      "scope": "Lossless canonical subtype/Fin3 conversion and actual Packed.fold instantiation between Lean models; not full Engine implementation."
+    },
+    {
+      "module": "Audit.Wire3.WhirTerminal",
+      "theorems": [
+        "Audit.Wire3.WhirTerminal.eq_weights_empty",
+        "Audit.Wire3.WhirTerminal.eq_weights_one_round",
+        "Audit.Wire3.WhirTerminal.tensor_weights_length",
+        "Audit.Wire3.WhirTerminal.rows_well_formed_exact_count_and_columns",
+        "Audit.Wire3.WhirTerminal.verified_groups_exact_count",
+        "Audit.Wire3.WhirTerminal.verified_groups_authenticate_each_pair",
+        "Audit.Wire3.WhirTerminal.final_rows_success",
+        "Audit.Wire3.WhirTerminal.closed_fold_canonical",
+        "Audit.Wire3.WhirTerminal.polynomial_result_canonical",
+        "Audit.Wire3.WhirTerminal.opened_value_canonical",
+        "Audit.Wire3.WhirTerminal.successful_final_size_exact",
+        "Audit.Wire3.WhirTerminal.successful_final_vector_nonempty",
+        "Audit.Wire3.WhirTerminal.successful_each_query_matches",
+        "Audit.Wire3.WhirTerminal.successful_each_query_exact_equality",
+        "Audit.Wire3.WhirTerminal.any_query_mismatch_rejected",
+        "Audit.Wire3.WhirTerminal.authentication_failure_rejects",
+        "Audit.Wire3.WhirTerminal.empty_queries_have_no_equality_checks",
+        "Audit.Wire3.WhirTerminal.zero_final_rounds_require_singleton",
+        "Audit.Wire3.WhirTerminal.polynomial_zero_vector",
+        "Audit.Wire3.WhirTerminal.positive_row_phase_is_not_complete_whir"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol",
+        "mle/contracts/src/spongefish/WhirLinearAlgebra.sol",
+        "mle/contracts/src/spongefish/GoldilocksExt3.sol",
+        "mle/src/commitment/whir_pcs.rs"
+      ],
+      "scope": "Final-row query equality slice with explicit authentication and validated plan observations; not all WHIR rounds, finalClaim, Merkle/FS/PoW/OOD security or split distributivity refinement."
+    }
+  ]
+}

@@ -1,176 +1,118 @@
-# 検証レポート — WHIR ベース多重線形証明システムの Lean 4 形式監査
+# 現行wire-v3 Lean監査更新レポート
 
-> Historical report: this is not a wire-v3 audit or production approval.
-> Current implementation scope and release limitations: [mle/README.md](../README.md).
-
-日付: 2026-07-06 / 対象コミット: ee80ee6d / ブランチ: claude/gifted-germain-0283dd
-成果物: `mle/audit/`(Lean 4.10.0、Mathlib 非依存、`lake build` 警告0、
-**46 定理・`sorry` 0・明示公理 1**)
-
-## 対象とバージョン / モード
-
-**監査モード**。対象は `mle/` の WHIR ベース多重線形(MLE)証明システム:
-
-- 仕様: `mle/paper/plonky2_mle_paper_v2.md`(理論、層0)
-- Rust 実装: `mle/src/`(特に `verifier.rs`)
-- Solidity 実装: `mle/contracts/src/`(特に `MleVerifier.sol`)
-
-## スコープ(段階0インタビュー結果、詳細 [SCOPE.md](SCOPE.md))
-
-- WHIR はブラックボックス PCS + 内部も抽象不変量として形式化(内部の proximity
-  soundness 再証明は範囲外)。
-- 検証性質: Soundness(Theorem 1)、Completeness、Fiat-Shamir バインディング、
-  binding-gap 不在。
-- Rust / Solidity 両実装との整合まで確認。
-- 範囲外: prover 効率、ZK、再帰検証コスト、WHIR 論文自体の再証明。
-
-## 手法(4段階 + 段階3前クリーンアップ)
-
-1. **段階1**: 仕様の抽象構成を Lean 化([Audit/*.lean](Audit/))。
-2. **段階2**: Rust/Solidity を逐行対照([Audit/Impl/*.lean](Audit/Impl/))、
-   三者の乖離を D1–D11 として命題化。
-3. **クリーンアップ**: 空命題(vacuous `True`/`∃ BadEvent,True`)を実体化、
-   デッドコード除去。
-4. **段階3**: 主要性質を証明([Audit/Proofs/*.lean](Audit/Proofs/))。
-
-## 重要発見: 仕様書は4層構造
-
-当初 paper v2 を唯一の仕様としたが、実装により近い定義文書が4層ある。乖離判定は
-この階層に照らす:
-
-| 層 | 文書 | 位置づけ |
-|---|---|---|
-| 層0 理論 | `paper/plonky2_mle_paper_v2.md` | batching sumcheck(§4.4)含む理想。一部**未実装** |
-| 層1 v1設計 | `README.md` L191-424 | aux commit + combined sumcheck を正式文書化 |
-| 層2 v2設計 | `soundnessgame/MleVerifier.vol.md` | Φ_inv/Φ_h/Φ_gate + inverse helpers の定義文書(R2-#1〜#8)|
-| 層3 脅威分析 | `tasks/todo.md` ほか | C1/C2 CRITICAL + PoC + 修正、Phase6 に現存 HIGH |
-
-実装は「層0 の理論」ではなく「層1+層2 の積層」であり、**統合された健全性定理は
-どの層にも存在しない**。本監査の Lean 化がその統合の第一歩。
-
-## 仮定一覧(axiom / 理想化 / UNDERSPECIFIED)
-
-| 種別 | 内容 | 場所 |
-|---|---|---|
-| 公理 | 次数 ≤ d の非零多項式の相異なる根は ≤ d 個(標準事実、Mathlib 非使用のため) | `Poly.roots_le_degree` |
-| 理想化 | PCS binding(ε_PCS): コミットメントが一意の多項式を定め verify 成功が評価一致を含意 | `Pcs.lean` / `ProtocolPCS.verify_sound` |
-| 理想化 | Merkle 衝突耐性、Keccak = ランダムオラクル | `Whir.lean` / `Transcript.lean` |
-| 信頼仮定 | VK(circuit_digest, preprocessed_root, kIs, subgroupGenPowers)は正しく生成済み | D8 |
-| 抽象化(4) | transcript 再導出順、lookup 空検査、WHIR 内部(両モデル)| `*VerifyAccepts` の残 `True` |
-| UNDERSPEC | §5.3 step7 の逆再構成、§4.3 の列結合スカラー(→ 実装は WHIR 多点で代替、D7) | `Statements.lean` メモ |
-
-## ファイル別・所見別(乖離 D1–D11)
-
-| ID | 深刻度 | 内容 | 状態 |
-|---|---|---|---|
-| **D1** | Spec-bug | 論文 §4.2.2 の g_sub 閉形式が Σ 形式で誤り。Rust/Sol とも正しい Π 形式 | 実装は正、仕様書要訂正 |
-| **D2** | Medium | combined sumcheck の次数境界検査が **Rust に無い**(Sol は R2-#8 で修正済) | Rust 側残余 |
-| **D3** | **CRITICAL(確定)** | inverse helpers a_j,b_j が PCS 束縛されず、Φ_inv の単一線形関係しか課されない。検証者は不正な逆元を受理する | **強い版を形式的に証明**(`d3_strong`、下記) |
-| **D4** | Info | Φ_h の非重み付き Σ は層2 vol.md の設計に忠実(層0 §4.2.3 との乖離のみ)。λ_h 死にチャレンジ | 実装は自設計に忠実 |
-| **D5** | Info | transcript の 96bit 縮約。コメント「256bit/2^-192」は誤記、実装は Rust/Sol 一貫 | 相互運用 OK |
-| **D6** | Info | ドメイン分離ラベルが層0 と実装で不一致、実装同士は一致 | 相互運用 OK |
-| **D7** | 構造 | 層0 §4.4 batching は未実装、WHIR 多点で代替。実装は層1+層2 積層 | 設計理解 |
-| **D8** | 信頼仮定 | Sol の kIs/subgroupGenPowers が transcript 非束縛(caller 責任) | 運用ラッパ前提 |
-| **D9** | Low | τ_perm が squeeze されるが未使用(層1 名残) | 無害 |
-| **D10** | **High, 未解決** | publicInputsHash が publicInputs に非束縛(層3 Phase6 Finding1、Sol Poseidon 未実装) | **現存・未修正** |
-| **D11** | Info/follow-up | WHIR/Sumcheck ライブラリ内部に同種の非 canonical sub(p,X) サイト | out-of-scope |
-
-## 証明した性質(段階3)
-
-Mathlib 非依存で体クラスの代数を公理から構築([Audit/Algebra.lean](Audit/Algebra.lean))。
-
-| 性質 | 定理 | 内容 |
-|---|---|---|
-| **Soundness コア** | `sumcheck_telescope` | telescoping: 受理 + 最終値一致 + 初期主張相違 ⇒ 実チャレンジのどこかで差多項式(非零・次数≤d)の根に命中。Theorem 1 の決定論部 |
-| **実装 Soundness** | `rustSoundness` / `solSoundness` | 受理 ⇒ 4 本の sumcheck それぞれで固定版健全性(格納/再導出チャレンジに固定) |
-| **FS バインディング** | `domainSeparation` / `fsOrdering` | ラベル埋め込みの単射性、challenge-after-commit の決定性 |
-| **binding-gap 不在(§4.5)** | `linearCommutes` | 終端の線形結合について MLE 可換 |
-| **binding-gap 実在(§3)** | `bindingGapExists` | **|F|>2(非冪等元)の下で** MLE(W²)(r) ≠ (MLE(W)(r))²。標数2では成立しない(Goldilocks は充足) |
-| **MLE 基本性質** | `eq_diag` / `eq_sum` / `mleEval_bit1` / `hsum_vprod_factor` | eq(b,b)=1、Σeq=1、テンソル和 |
-| **D3 弱い版** | `d3_substitutable` | inverse helper 評価値のみ異なり witness batch consistency は一致する 2 proof の存在 |
-| **D3 強い版(CRITICAL 確定)** | `d3_strong` | **検証者(`RustVerifyAccepts` 全フィールド)を完全に満たす 2 proof で、片方は正直な逆元 (1,1)、片方は不正な逆元 (0,2) を主張し witness は同一** — 検証者が両方を受理 ⇒ ソウンドネス破れ |
-
-補助として `polySub_eval`、`isZero_eval`、`accepts_length`、`hsum_add`、
-`hsum_mul_left` 等も証明。
-
-## 発見事項(深刻度別サマリ)
-
-- **CRITICAL(確定)**:
-  - **D3**(inverse helpers 束縛鎖の切れ): 論文 §4.5 の「全終端値は PCS 束縛」を
-    実装が破っている。`d3_strong` で**形式的に確定**した: 検証者を完全に満たす
-    (`RustVerifyAccepts` 全フィールド)2 つの proof が存在し、witness は同一なのに
-    片方は正直な逆元 (a₀,b₀)=(1,1)、片方は不正な逆元 (0,2) を主張する。両方が
-    受理される ⇒ inverse helpers は PCS で束縛されておらず、置換引数(コピー制約)の
-    健全性が破れる。原因は inverse helpers に witness/preprocessed のような
-    batch consistency 検査が無く、Φ_inv 終端の単一線形関係 a₀+b₀=2 しか
-    課されないこと(2 解 (1,1)/(0,2) が両方通る)。
-    **推奨修正**: inverse helper 個別評価値にも WHIR/batch consistency 束縛を追加。
-- **High**:
-  - **D10**(publicInputsHash 非束縛): 層3 Phase6 が現存 HIGH と認定、Solidity
-    Poseidon 未実装のため**未修正**。
-- **Medium**: D2(Rust combined sumcheck の次数境界欠如)。
-- **Spec-bug**: D1(§4.2.2 g_sub の Σ 誤記、実装は正)。
-- **Info/Low**: D4, D5, D6, D9, D11。
-- **構造/仮定**: D7(積層プロトコル、統合定理不在)、D8(perm context 非束縛)。
-
-## sorry・未証明箇所の一覧と解釈
-
-`sorry` は **0 件**。公理は `Poly.roots_le_degree` の 1 件のみ(標準数学事実)。
-以下は「未証明の Prop 定義」として残る(段階3の残):
-
-- `SoundnessProp`(paper 版)本体 — 存在量化を telescope に接続する証明。
-  実装版 `rustSoundness`/`solSoundness` は証明済みなので、健全性の実質は担保。
-- `mle_agrees_on_hypercube_prop` / `mle_is_multilinear_prop` / `mle_unique_prop`
-  — MLE の一意性系(eq_diag/eq_sum は証明済み)。
-- Completeness の end-to-end — prover 形式化を要し SCOPE 範囲外。
-- D3 の**強い版**。
+2026-09-06 / source base `becfe98e37c76e62f02f1aa7a417c7b06840db67`。
 
 ## 結論
 
-1. **健全性の決定論的中核は形式的に確立**した(`sumcheck_telescope` とその実装系
-   `rustSoundness`/`solSoundness`)。実装が受理する限り、偽ステートメントは
-   4 本の sumcheck のいずれかでの root-hit に帰着し、その確率は
-   `Poly.roots_le_degree` により per-round ≤ deg/|F| で抑えられる。
+**現行の重要部分に対する実行可能モデルと決定論的証明を追加した。
+「今の実装全部をLeanに直して安全性を証明する」という全体目標は未完了。**
 
-2. **最重要の発見は D3(CRITICAL 確定)**: `d3_strong` により、検証者を完全に
-   満たす 2 proof(witness 同一・inverse helper のみ相違、片方は不正な逆元 (0,2))が
-   存在することを**形式的に証明**した。検証者は不正な逆元を受理する = 置換引数の
-   健全性破れ。論文 §4.5「全終端値は PCS 束縛」が実装で成立していない。修正は
-   inverse helper 個別評価値への batch/WHIR 束縛の追加。
+全ソースを列挙したmanifestにより、未形式化のファイルを隠さず管理する。
+ソースhash、型の整合性、既存テストの成功は、実装refinementや暗号健全性の代用にしない。
 
-3. **D10(publicInputsHash 非束縛)は現存 HIGH** で、オンチェーン検証固有。
-   Solidity Poseidon 実装が正しい修正。
+## この更新で得た実用的な結果
 
-4. 仕様書 §4.2.2(D1、g_sub の Σ 誤記)は**文書の訂正**を推奨(実装は正しい)。
+- canonical field演算、strict byte読取り、24byteのExt3符号化と表現変換を接続。
+- Rustのzero-padded constituent foldとSolidityのsparse-prefix foldが、
+  関数的loopモデルで任意のpadding/challengeについて同じ結果を返すことを証明。
+- 同一の旧digestの下でtyped transcript frameのtag/payloadはhash前に曖昧でなく、
+  両lane/全claimを吸収後に指定counterでchallengeを生成する関数の順序を証明。
+- 外側compact grammarの切詰め・非canonical limb・誤header・余剰bytesに関する
+  実byte上の検査条件を証明。opaque WHIR内部とは明確に分離。
+- coupled roundsを実際の遷移列として定義し、長さと結果の一意性を帰納証明。
+- 原子的verifyの受理には、同じderived contextに対するroots/claims照合、
+  WHIR tail観測、norm/gate双方のterminal一致が必要であることを証明。
+- WHIR終端行の限定モデルでは、認証に渡した同じ行のfold値と、導出したdomain点での
+  最終多項式の評価が全queryで一致することを、成功条件から導出。
+  認証関数は観測のままで、後続のfinal sumcheck/最終claimまで含む全WHIRの証明ではない。
+- 同じ終端値に到達する候補/真のsumcheck chainで初期値が異なるなら、
+  実challengeで異なるround関数の評価が一致することを証明。
+  その事象の確率やcircuit witnessの存在までは導いていない。
 
-5. 実装は論文の単一プロトコルではなく**層1+層2 の積層**であり、統合された健全性
-   定理が文献に存在しない。本監査の Lean 定式化がその統合の基盤となる。
+正の通常例も含めて実行可能な受理経路を確認しているが、観測関数付き例は
+実際に生成した暗号proofの代わりではない。
 
-### 修正状況(2026-07-06)
+## 独立レビューで修正したモデル対応差
 
-- **D3(CRITICAL)修正済み**: inverse helper 個別評価値への batch consistency
-  束縛を追加。
-  - Rust: `proof.rs` に `inverse_helpers_eval_value_at_r_{inv,h}` フィールド追加、
-    `prover.rs` で batched 値を出力、`verifier.rs` 5g/5h の破棄フォールドを
-    `ensure!` に変更(witness の 5e/5f と対称)。回帰テスト 2 本追加。
-    **Rust lib 59 テスト全通過**(honest roundtrip 維持 + D3 改竄が reject)。
-  - Solidity: `MleVerifier.sol` に対応フィールド + `require` 追加。
-    **forge 79 テスト全通過**(E2E 7 + boundary 10 含む)。
-  - 仕様: `plonky2_mle_paper_v2.md` §4.2.2 に inverse-helper 束縛の必須性を明記、
-    §5.3 に verifier step 7b(batch consistency)を追加。
-  - Lean: `d3_fix_distinguishes`(非退化 batch チャレンジ `r≠1` の下で
-    正直な逆元 [1,1] と不正な逆元 [0,2] は異なる batched 値を与え、単一の
-    WHIR 束縛値に両立不可 ⇒ 新 `ensure!` が片方を必ず弾く)を証明。
-- **D1(Spec-bug)修正済み**: `plonky2_mle_paper_v2.md` §4.2.2 の g_sub を
-  Σ 形式から正しい Π 形式に訂正(実装は元から正しい)。
+1. **設定検査のタイミング**:
+   Solidityのconstructor-only検査をcall-timeガードのように扱わないよう、
+   複合境界とcall境界を分け、deployment invariantを明示した。
+2. **WHIRの変数順序**:
+   論理MLE順 `row ++ index` とnative WHIR順を分離し、
+   実際に `Packed.whirPoint` を呼んで全体反転するモデルへ修正した。
 
-### 残りの作業(優先度順)
+これらはモデルの対応精度の問題であり、今回新しい実装脆弱性を実証したという報告ではない。
 
-1. D10 の Solidity Poseidon による修正
-2. D2 の Rust 側次数境界追加
-3. `SoundnessProp` paper 版本体 + MLE 一意性系の証明完了
+## 主要定理の入口
 
-注: coset E2E fixture は現行コードで WHIR duplicate-index 問題
-(SpongefishWhirVerify 所見#1)に触れる(D3 とは無関係、transcript が
-D3 変更有無で byte 一致することを確認済み)。当該 fixture は既存の
-通過する WHIR proof を保持しつつ D3 の新フィールドのみ注入して緑を維持。
+| テーマ | 定理 |
+|---|---|
+| canonical arithmetic | `Arithmetic.emul_canonical`, `Arithmetic.canonical_equality_iff` |
+| zero padding | `Packed.sparse_fold_equals_zero_padded_fold`, `Packed.full_table_final_shape` |
+| bytes / framing | `Transcript.fromLe_le_roundtrip`, `Transcript.frame_tag_and_payload_are_unambiguous` |
+| exact outer parsing | `Compact.validation_requires_exact_exhaustion`, `Compact.strict_validation_all_fields_canonical` |
+| sumcheck reduction | `Sumcheck.mismatch_requires_evaluation_collision` |
+| verification boundary | `Verifier.acceptance_exact_whir_and_terminal_binding`, `Verifier.call_acceptance_yields_checked_acceptance` |
+| concrete model connection | `Connections.verifier_transcript_roundtrip`, `Connections.packedFold_padding_invariant` |
+| WHIR terminal row slice | `WhirTerminal.successful_each_query_exact_equality`, `WhirTerminal.verified_groups_authenticate_each_pair` |
+
+上表の名前は共通prefix `Audit.Wire3.` を省略。
+全名付き定理は[manifest](wire3-manifest.json)で管理し、検査は抜粋ではなく全件に対して行う。
+
+## 全ソースの対応状況
+
+| このcheckout内のRust/Solidityファイル | 合計 | 部分的なモデル対応あり | モデル対応なし |
+|---|---:|---:|---:|
+| MLE Rust (`mle/src/`、旧実装を含む) | 35 | 6 | 29 |
+| MLE Solidity (`mle/contracts/src/`、旧実装を含む) | 33 | 10 | 23 |
+| その他（テスト・example・別crateを含む） | 222 | 0 | 222 |
+| 合計 | 290 | 16 | 274 |
+
+「部分的なモデル対応あり」はファイル全体の翻訳・証明を意味しない。
+行数ベースのcoverageや安全性の達成率でもない。
+外部WHIR依存はrevisionを固定した依存情報を追跡するが、その全ソースをこの表で
+列挙・形式化したわけではない。全実装を形式的に証明済みのファイルは認定していない。
+
+## 旧監査の扱い
+
+7月のrootは `HistoricalAudit.lean` に保存し、旧README/REPORT/SCOPEは
+`HISTORICAL-*.md` に保存。旧モデルの数学・所見・公理は歴史資料として保持するが、
+current rootからはimportしない。`Poly.roots_le_degree` を含む旧公理を
+current proofの根拠として流用しない。
+
+## 検査と再現
+
+```sh
+python3 -B mle/audit/test-check-wire3.py
+python3 -B mle/audit/check-wire3.py
+git diff --check
+```
+
+Lean 4.10.0の `lake` がPATHに必要。guardはbuild前後のhash、全source inventory、
+全current root到達性、全名付き定理の型と推移的公理を検査する。
+許容するglobal axiomsはLean標準3件だけ。
+**Engineや定理引数の明示的仮定はこれとは別に残る。**
+
+2026-09-06にこの作業checkoutで以下を実行した。
+
+| 検査 | 結果 |
+|---|---|
+| 現行Lean rootのbuild | PASS — 8モデルとrootの計9ファイル |
+| 全名付き定理の解決・推移的公理検査 | PASS — 170件、独自公理・未証明穴なし |
+| source inventoryとbuild前後のhash検査 | PASS — 290ソースを含む350ファイル |
+| guardの単体テスト | PASS — 21件 |
+| CI workflowのYAML構文 | PASS |
+| 差分の空白エラー検査 | PASS |
+| 対象baseからのRust/Solidity・依存設定の差分 | なし |
+
+350ファイルにはモデル・文書・検査器・歴史資料も含む。
+今回追加したCI jobは現行rootとguardを検査するが、リモートCIはこの作業では未実行。
+実装を変更していないため、全Rust/Solidity試験も今回は再実行していない。
+これらのLean検査を、全体暗号監査の完了とはしない。
+
+## 次工程
+
+[SCOPE.md](SCOPE.md)の未完了一覧を順に進める。
+特に全WHIRとnorm/gate多項式を `Engine` 観測から具体的実装へ置き換え、
+実行意味論・field laws・確率的健全性を接続することが必要。
+この更新のみを根拠に本番利用や「criticalな健全性問題なし」を宣言しない。

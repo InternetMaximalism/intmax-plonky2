@@ -161,3 +161,25 @@ jobs:
 
       - name: Run cargo clippy
         run: cargo clippy --all-features --all-targets -- -D warnings -A incomplete-features -A clippy::uninlined_format_args
+
+  lean_current_audit:
+    name: Current wire-v3 Lean models (partial scope)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install elan for the pinned Lean toolchain
+        run: |
+          curl -sSfL https://github.com/leanprover/elan/releases/latest/download/elan-x86_64-unknown-linux-gnu.tar.gz | tar xz
+          ./elan-init -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: Test fail-closed audit guard
+        run: python3 -B mle/audit/test-check-wire3.py
+      - name: Verify current Lean models, all theorem dependencies, and source inventory
+        # Model proofs plus source drift detection, NOT implementation refinement
+        # or full cryptographic/Fiat-Shamir/WHIR soundness certification.
+        run: python3 -B mle/audit/check-wire3.py
+      - name: Assert verification did not modify tracked sources
+        run: git diff --exit-code
