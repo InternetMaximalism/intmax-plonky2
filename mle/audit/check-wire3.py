@@ -26,7 +26,10 @@ KERNEL_AXIOMS = frozenset({"propext", "Classical.choice", "Quot.sound"})
 REQUIRED_MODULES = {"Audit.Wire3." + name for name in (
     "Arithmetic", "Packed", "Transcript", "Compact", "Sumcheck", "Verifier",
     "Connections", "WhirTerminal", "WhirFinal", "Merkle", "Norm", "Gates",
-    "Algebra", "Integrated",
+    "Algebra", "Integrated", "GatesAdditionalCoset", "GatesAdditional",
+    "PoseidonConstants", "Poseidon", "GatesComplete", "NormIdentity",
+    "ModularPower", "Spongefish", "WhirInitial", "WhirFinalSpongefish", "WhirPrefix",
+    "PiSharedBits", "PiCache", "GoldilocksCertificate",
 )}
 REQUIRED = {
     PROJECT + "/check-wire3.py", PROJECT + "/test-check-wire3.py",
@@ -299,10 +302,127 @@ def unique_json_object(pairs):
     return result
 
 
+def literal_array(source, declaration):
+    """Read only literal nested integer arrays, never evaluate source code."""
+    matches = list(re.finditer(declaration, source))
+    require(len(matches) == 1, "constant declaration missing/duplicated")
+    start = matches[0].end() - 1
+    require(source[start] == "[", "constant array must start with bracket")
+    depth = 0
+    for end in range(start, len(source)):
+        if source[end] == "[":
+            depth += 1
+        elif source[end] == "]":
+            depth -= 1
+            if depth == 0:
+                body = source[start:end + 1]
+                numbers = re.findall(r"0[xX][0-9a-fA-F_]+|[0-9][0-9_]*", body)
+                remainder = re.sub(r"0[xX][0-9a-fA-F_]+|[0-9][0-9_]*", "", body)
+                require(re.fullmatch(r"[\s,\[\]]*", remainder) is not None,
+                        "constant array contains nonliteral expression")
+                return [int(n.replace("_", ""), 16 if n.lower().startswith("0x") else 10)
+                        for n in numbers]
+    raise GuardFailure("unterminated constant array")
+
+
+def without_c_style_comments(source):
+    """Preserve double-quoted literals; support nested Rust block comments.
+
+    This is conservative literal extraction, not a Rust/Solidity parser.
+    """
+    output, index, depth, quoted = [], 0, 0, False
+    while index < len(source):
+        pair = source[index:index + 2]
+        char = source[index]
+        if depth:
+            if pair == "/*":
+                depth += 1
+                index += 2
+                continue
+            if pair == "*/":
+                depth -= 1
+                output.append(" ")
+                index += 2
+                continue
+            output.append("\n" if char == "\n" else " ")
+        elif quoted:
+            output.append(char)
+            if char == "\\":
+                require(index + 1 < len(source), "unterminated source string escape")
+                output.append(source[index + 1])
+                index += 2
+                continue
+            if char == '"':
+                quoted = False
+        elif pair == "/*":
+            depth = 1
+            output.append(" ")
+            index += 2
+            continue
+        elif pair == "//":
+            end = source.find("\n", index)
+            index = len(source) if end < 0 else end
+            output.append(" ")
+            continue
+        else:
+            quoted = char == '"'
+            output.append(char)
+        index += 1
+    require(depth == 0 and not quoted, "unterminated source comment/string")
+    return "".join(output)
+
+
+def solidity_blob_tables(source):
+    tables = {}
+    source = without_c_style_comments(source)
+    for name, raw in re.findall(r'bytes internal constant (\w+)\s*=\s*hex"([0-9a-fA-F]*)";', source):
+        require(name not in tables, "duplicate constant blob")
+        require(len(raw) % 16 == 0, "constant blob is not a whole number of u64 words")
+        tables[name] = [int(raw[i:i + 16], 16) for i in range(0, len(raw), 16)]
+    return tables
+
+
+def check_constant_tables(root):
+    """Word-for-word extraction check, NOT a formal source refinement proof."""
+    poseidon = {
+        "ALL_ROUND_CONSTANTS": ("allRoundConstants", 360),
+        "MDS_CIRC": ("mdsCirc", 12),
+        "MDS_DIAG": ("mdsDiag", 12),
+        "FAST_PARTIAL_FIRST_ROUND_CONSTANT": ("partialFirstConstants", 12),
+        "FAST_PARTIAL_ROUND_CONSTANTS": ("partialRoundConstants", 22),
+        "FAST_PARTIAL_ROUND_VS": ("partialVs", 242),
+        "FAST_PARTIAL_ROUND_W_HATS": ("partialWHats", 242),
+        "FAST_PARTIAL_ROUND_INITIAL_MATRIX": ("partialInitialMatrix", 121),
+    }
+    coset = {f"{kind}_{bits}": (f"{kind.lower()}{bits}", 2 ** bits)
+             for bits in range(1, 6) for kind in ("SUBGROUP", "WEIGHTS")}
+    total = 0
+    for filename, model, expected in (
+            ("PoseidonConstants.sol", "PoseidonConstants.lean", poseidon),
+            ("CosetInterpolationConstants.sol", "GatesAdditionalCoset.lean", coset)):
+        solidity = solidity_blob_tables(checked_path(root, "mle/contracts/src/" + filename).read_text())
+        require(set(solidity) == set(expected), f"constant table inventory changed: {filename}")
+        lean = without_comments_and_strings(checked_path(root, MODEL_PREFIX + model).read_text())
+        for name, (lean_name, count) in expected.items():
+            values = literal_array(lean, rf"\bdef {lean_name}\s*:\s*List Nat\s*:=\s*\[")
+            require(len(values) == count and values == solidity[name], f"Lean/Solidity constants differ: {name}")
+            total += count
+            if filename == "PoseidonConstants.sol":
+                rustfile = "poseidon.rs" if name == "ALL_ROUND_CONSTANTS" else "poseidon_goldilocks.rs"
+                rust = checked_path(root, "plonky2/src/hash/" + rustfile).read_text()
+                rust = without_c_style_comments(rust)
+                rust_name = {"MDS_CIRC": "MDS_MATRIX_CIRC", "MDS_DIAG": "MDS_MATRIX_DIAG"}.get(name, name)
+                rust_values = literal_array(rust, rf"\bconst {rust_name}\s*:[^=]+?=\s*\[")
+                require(values == rust_values, f"Lean/Rust constants differ: {name}")
+    require(total == 1147, "constant word count changed")
+    print("[wire3-audit] constant literals PASS: 18 tables, 1147 words; Poseidon also matches Rust")
+
+
 def main():
     require(len(sys.argv) == 1, "no skip/refresh options")
     manifest = json.loads(checked_path(ROOT, MANIFEST).read_text(), object_pairs_hook=unique_json_object)
     records = validate_manifest(ROOT, manifest)
+    check_constant_tables(ROOT)
     audit_theorems(ROOT, records)
     validate_manifest(ROOT, manifest)
     print("[wire3-audit] PASS: current model build, complete inventory, reviewed hashes, all named theorem dependencies")

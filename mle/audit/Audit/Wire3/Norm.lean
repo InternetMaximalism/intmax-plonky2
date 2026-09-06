@@ -10,8 +10,9 @@ permutation/norm_logup.rs::evaluate_joint_norm_logup_terminal_with_public_inputs
 
 The PI part uses the ordered direct Rust loop, retaining duplicate map entries
 and increasing eta powers. Solidity's row-cache/shared-bit implementation is an
-algebraic optimization; its distributivity/reassociation and memory refinement
-are NOT established here. Eq/subgroup use the optimized Solidity formulas.
+algebraic optimization; PiSharedBits/PiCache prove its complete functional
+equality with this direct loop using concrete algebra. Memory refinement is
+NOT established. Eq/subgroup use the optimized Solidity formulas.
 The downstream Algebra module proves equality with Rust's alternate formulas
 inside these Lean models (not source execution refinement). square uses the
 specialized Solidity formula; Algebra also proves its equality with the concrete

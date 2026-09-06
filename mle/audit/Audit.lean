@@ -19,3 +19,17 @@ import Audit.Wire3.Norm
 import Audit.Wire3.Gates
 import Audit.Wire3.Algebra
 import Audit.Wire3.Integrated
+import Audit.Wire3.GatesAdditionalCoset
+import Audit.Wire3.GatesAdditional
+import Audit.Wire3.PoseidonConstants
+import Audit.Wire3.Poseidon
+import Audit.Wire3.GatesComplete
+import Audit.Wire3.NormIdentity
+import Audit.Wire3.ModularPower
+import Audit.Wire3.Spongefish
+import Audit.Wire3.WhirInitial
+import Audit.Wire3.WhirFinalSpongefish
+import Audit.Wire3.WhirPrefix
+import Audit.Wire3.PiSharedBits
+import Audit.Wire3.PiCache
+import Audit.Wire3.GoldilocksCertificate

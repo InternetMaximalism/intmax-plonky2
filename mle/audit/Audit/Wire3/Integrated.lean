@@ -1,18 +1,18 @@
 import Audit.Wire3.Connections
 import Audit.Wire3.Norm
-import Audit.Wire3.Gates
+import Audit.Wire3.GatesComplete
 
 /-!
 Concrete outer-verifier connections (runtime snapshot becfe98e).
 
 This model substitutes concrete packed folding, norm/logUp including direct PI
-binding, equality evaluation, and the supported gate evaluator for four Engine
+binding, equality evaluation, and all fourteen gate evaluators for four Engine
 observations. Gate metadata is decoded ONLY from the fixed configuration bytes;
 its ABI decoder remains an observation, not prover-supplied metadata.
 
 The wrapper checks the norm adapter's shape/seven-challenge layout and requires
-the partial gate evaluator to produce a result before calling Verifier.verify.
-Thus an active unimplemented gate cannot become acceptance through a default
+the complete dispatcher to produce a result before calling Verifier.verify.
+Thus malformed configuration/decoding cannot become acceptance through a default
 zero. `modelEngine` alone is NOT the checked entry point: its zero fallback is
 only totalization for the old non-Option Engine interface. Use `verify` below.
 These extra checks are MODEL INTERFACE/PREFLIGHT obligations, not a claim that
@@ -23,8 +23,8 @@ Gates.rustAdmission's separate lookup guard is not installed by this wrapper.
 
 Initial transcript, configuration/hash/deployment, public-input hash, metadata
 decoding, and WHIR parsing/tail remain observations. WhirFinal and Merkle are not
-silently installed as a complete whirTail. Full source refinement, eight active
-gate families, probabilistic aggregation, and cryptographic soundness are open.
+silently installed as a complete whirTail. Full source refinement, gate semantic/
+degree proofs, probabilistic aggregation, and cryptographic soundness are open.
 -/
 namespace Audit.Wire3.Integrated
 open Verifier
@@ -38,7 +38,7 @@ def evaluateGate (decode : DecodeGates) (c : Config) (wires constants : List Ext
     (publicHash : List Base) (alpha : Ext3) : Option Ext3 := do
   let gates ← decode c.gatesEncoding
   if gates.length ≠ c.gateRows ∨ publicHash.length ≠ 4 then none else
-    Gates.evalCombined (gateConfig c) gates wires constants (fun i => publicHash.getD i (base 0)) alpha
+    GatesComplete.evalCombined (gateConfig c) gates wires constants (fun i => publicHash.getD i (base 0)) alpha
 
 def modelEngine (e : Engine) (decode : DecodeGates) : Engine :=
   { e with
@@ -79,7 +79,7 @@ theorem gate_evaluation_uses_fixed_config_bytes (decode : DecodeGates) (c : Conf
     (h : evaluateGate decode c wires constants publicHash alpha = some result) :
     ∃ gates, decode c.gatesEncoding = some gates ∧ gates.length = c.gateRows ∧
       publicHash.length = 4 ∧
-      Gates.evalCombined (gateConfig c) gates wires constants
+      GatesComplete.evalCombined (gateConfig c) gates wires constants
         (fun i => publicHash.getD i (base 0)) alpha = some result := by
   unfold evaluateGate at h
   cases hd : decode c.gatesEncoding with
@@ -90,6 +90,29 @@ theorem gate_evaluation_uses_fixed_config_bytes (decode : DecodeGates) (c : Conf
       · contradiction
       · rename_i hs
         exact ⟨gates, rfl, by omega, by omega, h⟩
+
+theorem valid_decoded_gate_configuration_evaluates (decode : DecodeGates) (c : Config)
+    (gates : List Gates.GateInfo) (wires constants : List Ext3) (publicHash : List Base) (alpha : Ext3)
+    (hd : decode c.gatesEncoding = some gates) (hr : gates.length = c.gateRows)
+    (hp : publicHash.length = 4) (hw : wires.length = c.numWires)
+    (hc : constants.length = c.numConstants)
+    (hv : Gates.validateConfiguration (gateConfig c) gates = some ()) :
+    ∃ result, evaluateGate decode c wires constants publicHash alpha = some result := by
+  obtain ⟨result, he⟩ := GatesComplete.valid_configuration_always_evaluates (gateConfig c)
+    gates wires constants (fun i => publicHash.getD i (base 0)) alpha hv hw hc
+  exact ⟨result, by simpa [evaluateGate, hd, hr, hp] using he⟩
+
+theorem successful_gate_evaluation_checks_all_metadata (decode : DecodeGates) (c : Config)
+    (wires constants : List Ext3) (publicHash : List Base) (alpha result : Ext3)
+    (h : evaluateGate decode c wires constants publicHash alpha = some result) :
+    ∃ gates, decode c.gatesEncoding = some gates ∧ gates.length = c.gateRows ∧
+      publicHash.length = 4 ∧ wires.length = c.numWires ∧ constants.length = c.numConstants ∧
+      Gates.validateConfiguration (gateConfig c) gates = some () := by
+  obtain ⟨gates, hd, hr, hp, he⟩ := gate_evaluation_uses_fixed_config_bytes decode c
+    wires constants publicHash alpha result h
+  have hv := GatesComplete.combined_success_requires_all_configuration (gateConfig c)
+    gates wires constants (fun i => publicHash.getD i (base 0)) alpha result he
+  exact ⟨gates, hd, hr, hp, hv⟩
 
 theorem accepted_preflights_and_original_verifier (e : Engine) (decode : DecodeGates)
     (pin : Pinned) (chain : Nat) (c : Config) (p : Proof)

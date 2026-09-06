@@ -195,7 +195,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "a4dad9975a17b5edda45c297796a51ca226d7316d9943a19c4846433484d8137",
+      "sha256": "a695eac98e34b5e44735b004732f7c8bc131a9e07dabcdeb1e02d80e74af6a5f",
       "kind": "current-model"
     },
     {
@@ -339,8 +339,28 @@
       "kind": "current-model"
     },
     {
+      "path": "mle/audit/Audit/Wire3/GatesAdditional.lean",
+      "sha256": "cf0b7a33389b12d53c67e1945d635ea17e5d56e47d10ba5429ab5a92ac5daf0b",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/GatesAdditionalCoset.lean",
+      "sha256": "ebbe696a70b17587d6f1e46fd741a77575f0f0e0485824d546f6fdeb40c20610",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/GatesComplete.lean",
+      "sha256": "d8743ba09431142c5031650ae867033eefdae52a571f3ac97a09bd80b25c95f5",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/GoldilocksCertificate.lean",
+      "sha256": "d2375a31b2a1354dd5a77038b32e563c06cbd2c6774a1aeb362ebfc6de34c95d",
+      "kind": "current-model"
+    },
+    {
       "path": "mle/audit/Audit/Wire3/Integrated.lean",
-      "sha256": "f1d2a28701119c61d6b0d8e32c3ba5f1f08719a35f3b23f9b4e340341ebabffc",
+      "sha256": "f2c9ac47d47e7ad1c7fe2560d03bb3b952e218e858c1801b3d71567175b95105",
       "kind": "current-model"
     },
     {
@@ -349,13 +369,48 @@
       "kind": "current-model"
     },
     {
+      "path": "mle/audit/Audit/Wire3/ModularPower.lean",
+      "sha256": "691c08f3aaa4c049dfce07deb1f8673540dfecb9903adb1e5e555f588066daef",
+      "kind": "current-model"
+    },
+    {
       "path": "mle/audit/Audit/Wire3/Norm.lean",
-      "sha256": "f5ebb62f8acf1bdc82c6ad7b02e981154b0cd468e11b4d3b7b59ec9c506f76de",
+      "sha256": "e51c189ab1b2013c5078fa699b1c22b2362b4c7c62c693fdc9dc6953980933e2",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/NormIdentity.lean",
+      "sha256": "b971e1d9e7d7079a991d5b25c9cfb63aa7ef84cbecb2aefeb1b0b4afc51b681a",
       "kind": "current-model"
     },
     {
       "path": "mle/audit/Audit/Wire3/Packed.lean",
       "sha256": "b45bdd426b21b2a585d632ef838fb6ab4b1f616eedaba85a318d61337e2f52f1",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/PiCache.lean",
+      "sha256": "628ee13e1fd9abbaa381728b04298a7132ab7064e50302d798b2b09fad4cef30",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/PiSharedBits.lean",
+      "sha256": "0070c8ba91c23b5d129a6f586bd3aa21c00e5efa54537e45e36bfac78de73911",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/Poseidon.lean",
+      "sha256": "5a6da6ebd3a36eb4859055f0f0c14049ca4238b5de6ad21c750a3476f4bd3189",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/PoseidonConstants.lean",
+      "sha256": "74326f8458c63ba84a3270a5f589fdbc2c53c6593363fab609302e7450487de7",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/Spongefish.lean",
+      "sha256": "387458d5e1bdc4ec345086600629e8674990c24c0943c5073c426f2db71f0dee",
       "kind": "current-model"
     },
     {
@@ -375,7 +430,22 @@
     },
     {
       "path": "mle/audit/Audit/Wire3/WhirFinal.lean",
-      "sha256": "6bf55121920cee2d0b85e112d49105386430a76105377074821c3114782ea1c3",
+      "sha256": "24e495d7ab4138d2c20828904dcb02d1f2c11cc64a7f570dd79aab86ebe21b61",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/WhirFinalSpongefish.lean",
+      "sha256": "b269143a97c58642b16c6fdd95a59adad5e16d9caef573310631c0d0d7aea14e",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/WhirInitial.lean",
+      "sha256": "b42cb790755c0f8e1d94f6e2dfbaf69d19843b09ea4e86d7012a78b8c05a3e89",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/WhirPrefix.lean",
+      "sha256": "02c0f07feb20dc9a8cf32b061a1bb650f4ea7e15ab058121fb527690832f2930",
       "kind": "current-model"
     },
     {
@@ -405,22 +475,22 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "3a516f5eebc60d12167b17ef694e92edf9571fd44a2ac20551a9dc13ab3a1f8d",
+      "sha256": "4c68259d7831b2d807facd2ff7c101140499764e4bdfd7c1bc649bad50ef172b",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "8a6a413edbda3a4290e13ca8a343ed3e97d1adab4b1fa2dd04a014df0578e34b",
+      "sha256": "134ea408d706743f1c151e88212b3b44e8b2dd3a91cd3ff7a6bf7132c3338170",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "6efcf741d4c37d15afd1450e00cc0e4d837fb5a592b63cb5977b0536a28fb472",
+      "sha256": "5b6fba9cf928f8ea2f11f8a081d39e0f436ceddb5fff1c76c3d30347f82a6bcc",
       "kind": "spec"
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "205c0f566d28294615391d51c7df78dc7aba85fc973dc8d65f15bb4d770d3261",
+      "sha256": "af2a05c0c36957022ed14961b5f43b86b7e71b18c6b91dadb03759dc00d88775",
       "kind": "tooling"
     },
     {
@@ -440,7 +510,7 @@
     },
     {
       "path": "mle/audit/test-check-wire3.py",
-      "sha256": "b723c2079a4fede4298393c2b7047e93f1e2fb76d81752b8aecd95bbd5d5a5d1",
+      "sha256": "66aacc3996a432342aff343f6f60c83f24fd244dd967c3911250ca07f2b899f7",
       "kind": "tooling"
     },
     {
@@ -2084,7 +2154,7 @@
         "mle/contracts/src/spongefish/GoldilocksExt3.sol",
         "mle/src/commitment/whir_pcs.rs"
       ],
-      "scope": "Concrete final quadratic recurrence, reverse final-vector fold, norm/adjugate inverse computation, all round constraints and linear forms, and cursor EOF; uses the SAME WhirTerminal final vector. Post-row Context, decoder/PoW/challenges/authentication remain observations. No full WHIR, inverse identity, source refinement or cryptographic soundness."
+      "scope": "Concrete final quadratic recurrence, reverse SAME-vector fold, norm/adjugate inverse computation, all constraints/linear forms and cursor EOF. Engine observations are instantiated separately by WhirFinalSpongefish; earlier Context/Plan/authentication remain caller obligations. Algebra/NormIdentity/ModularPower prove additional identities, not full field/WHIR/source/crypto soundness."
     },
     {
       "module": "Audit.Wire3.Merkle",
@@ -2160,7 +2230,7 @@
         "mle/src/permutation/norm_logup.rs",
         "mle/src/verifier_v2.rs"
       ],
-      "scope": "Concrete formal-coordinate denominator/adjugate/norm, helper/logUp loop, fixed Config kIs/subgroup/public-input map, ordered direct Rust PI accumulation and Engine norm hook. Checked adapter requires shape and the seven challenge layout. No PI-cache optimization refinement, formal norm identity, FS generation, witness/PCS soundness; optimized eq/subgroup/square model identities are proved separately by Algebra."
+      "scope": "Concrete denominator/adjugate/norm and helper/logUp loops, fixed config/ordered direct PI accumulation, checked seven-challenge adapter. Algebra/NormIdentity separately prove formula/adjugate identities; PiCache proves cached PI equals direct model. No concrete initial FS, helper witness or PCS soundness, or source-language refinement."
     },
     {
       "module": "Audit.Wire3.Gates",
@@ -2301,6 +2371,8 @@
         "Audit.Wire3.Integrated.concrete_engine_keeps_transcript",
         "Audit.Wire3.Integrated.concrete_engine_uses_packed_fold",
         "Audit.Wire3.Integrated.gate_evaluation_uses_fixed_config_bytes",
+        "Audit.Wire3.Integrated.valid_decoded_gate_configuration_evaluates",
+        "Audit.Wire3.Integrated.successful_gate_evaluation_checks_all_metadata",
         "Audit.Wire3.Integrated.accepted_preflights_and_original_verifier",
         "Audit.Wire3.Integrated.unavailable_gate_never_uses_zero_fallback",
         "Audit.Wire3.Integrated.malformed_norm_adapter_rejected",
@@ -2316,7 +2388,481 @@
         "mle/contracts/src/PackedClaimExt3.sol",
         "mle/src/verifier_v2.rs"
       ],
-      "scope": "Checked partial integration of concrete packed/norm/eq/gate hooks into Verifier.verify. Requires norm shape/seven-challenge layout and Some from the same-input partial gate evaluator, so unavailable ACTIVE gates cannot accept via zero fallback. Fixed config metadata decoding, initial FS/hash/deployment and WHIR remain observations. Extra preflight/error ordering is model-only; standalone lookup admission is not integrated. No full implementation or cryptographic soundness."
+      "scope": "Checked partial integration of concrete packed/norm/eq and complete 14-family GatesComplete hooks into Verifier.verify. Norm shape/seven-challenge layout and same-input gate Some prevent malformed-input fallback acceptance. Fixed config decoder, initial FS/hash/deployment and whole WHIR remain observations. Model-only preflight/error ordering and standalone lookup admission are not source refinements. No full implementation/cryptographic soundness."
+    },
+    {
+      "module": "Audit.Wire3.GatesAdditionalCoset",
+      "theorems": [
+        "Audit.Wire3.GatesAdditionalCoset.table_lengths",
+        "Audit.Wire3.GatesAdditionalCoset.table_values_canonical",
+        "Audit.Wire3.GatesAdditionalCoset.table_reads_in_bounds",
+        "Audit.Wire3.GatesAdditionalCoset.weight_zero_canonical",
+        "Audit.Wire3.GatesAdditionalCoset.pair_difference_exact",
+        "Audit.Wire3.GatesAdditionalCoset.chunk_step_uses_old_product",
+        "Audit.Wire3.GatesAdditionalCoset.run_chunk_retains_point",
+        "Audit.Wire3.GatesAdditionalCoset.intermediate_step_adds_four",
+        "Audit.Wire3.GatesAdditionalCoset.intermediates_output_length",
+        "Audit.Wire3.GatesAdditionalCoset.output_length",
+        "Audit.Wire3.GatesAdditionalCoset.evaluated_length_and_layout",
+        "Audit.Wire3.GatesAdditionalCoset.layout_access_bounds",
+        "Audit.Wire3.GatesAdditionalCoset.value_pair_access_bounds",
+        "Audit.Wire3.GatesAdditionalCoset.intermediate_pair_access_bounds",
+        "Audit.Wire3.GatesAdditionalCoset.next_chunk_access_bounds",
+        "Audit.Wire3.GatesAdditionalCoset.intermediate_checks_preserve_claim_order",
+        "Audit.Wire3.GatesAdditionalCoset.coset_nonbase_constant_positive"
+      ],
+      "sources": [
+        "mle/contracts/src/CosetInterpolationGateExt3.sol",
+        "mle/contracts/src/CosetInterpolationConstants.sol",
+        "mle/contracts/src/Plonky2GateEvaluatorExt3.sol",
+        "mle/src/gate_ext3.rs"
+      ],
+      "scope": "Concrete id13 interpolation layout/chunk recurrence with complete 124 u64 constants and old-product ordering. Ext2 over canonical Ext3, exact lengths/access bounds and normal example. No barycentric/degree/field or language refinement theorem."
+    },
+    {
+      "module": "Audit.Wire3.GatesAdditional",
+      "theorems": [
+        "Audit.Wire3.GatesAdditional.exponentiation_output_length",
+        "Audit.Wire3.GatesAdditional.exponentiation_uses_high_bit_first",
+        "Audit.Wire3.GatesAdditional.exponentiation_constraint_exact",
+        "Audit.Wire3.GatesAdditional.base_sum_output_length",
+        "Audit.Wire3.GatesAdditional.base_sum_range_member_satisfies_product",
+        "Audit.Wire3.GatesAdditional.base_sum_value_constraint_exact",
+        "Audit.Wire3.GatesAdditional.reducing_step_installs_claimed_next",
+        "Audit.Wire3.GatesAdditional.reducing_step_constraints_exact",
+        "Audit.Wire3.GatesAdditional.reducing_step_adds_two",
+        "Audit.Wire3.GatesAdditional.reducing_run_length",
+        "Audit.Wire3.GatesAdditional.reducing_output_length",
+        "Audit.Wire3.GatesAdditional.reducing_last_output_is_gate_output",
+        "Audit.Wire3.GatesAdditional.fixed_bind_length",
+        "Audit.Wire3.GatesAdditional.random_copy_constraint_length",
+        "Audit.Wire3.GatesAdditional.random_access_output_length",
+        "Audit.Wire3.GatesAdditional.selection_layer_length",
+        "Audit.Wire3.GatesAdditional.complete_selection_has_one_value",
+        "Audit.Wire3.GatesAdditional.random_selection_uses_exact_dimensions",
+        "Audit.Wire3.GatesAdditional.selection_zero_bit",
+        "Audit.Wire3.GatesAdditional.selection_one_bit",
+        "Audit.Wire3.GatesAdditional.reconstructed_index_two_bits",
+        "Audit.Wire3.GatesAdditional.block_index_bounded",
+        "Audit.Wire3.GatesAdditional.random_bit_access_bounds",
+        "Audit.Wire3.GatesAdditional.random_value_access_bounds",
+        "Audit.Wire3.GatesAdditional.random_header_access_bounds",
+        "Audit.Wire3.GatesAdditional.random_extra_access_bounds",
+        "Audit.Wire3.GatesAdditional.exponentiation_access_bounds",
+        "Audit.Wire3.GatesAdditional.base_sum_access_bounds",
+        "Audit.Wire3.GatesAdditional.reducing_coefficient_access_bounds",
+        "Audit.Wire3.GatesAdditional.reducing_wire_count_matches_metadata",
+        "Audit.Wire3.GatesAdditional.reducing_fixed_prefix_access_bounds",
+        "Audit.Wire3.GatesAdditional.reducing_accumulator_access_bounds",
+        "Audit.Wire3.GatesAdditional.validated_coset_dispatch",
+        "Audit.Wire3.GatesAdditional.validated_simple_dispatch",
+        "Audit.Wire3.GatesAdditional.validated_additional_dispatch",
+        "Audit.Wire3.GatesAdditional.exponentiation_nonbase_positive",
+        "Audit.Wire3.GatesAdditional.base_sum_binary_positive",
+        "Audit.Wire3.GatesAdditional.base_sum_keeps_nonbase_limb",
+        "Audit.Wire3.GatesAdditional.reducing_nonbase_positive",
+        "Audit.Wire3.GatesAdditional.reducing_extension_nonbase_positive",
+        "Audit.Wire3.GatesAdditional.random_access_nonbase_positive"
+      ],
+      "sources": [
+        "mle/contracts/src/Plonky2GateEvaluatorExt3.sol",
+        "mle/src/gate_ext3.rs"
+      ],
+      "scope": "Concrete ids8..13 exponentiation/base-sum/reducing/reducing-extension/random-access/coset dispatch with canonical Ext3 arithmetic, full recurrence/constraint order, validated availability and ordinary nonbase examples. No polynomial degree, range/boolean root exclusion, witness extraction or memory refinement."
+    },
+    {
+      "module": "Audit.Wire3.PoseidonConstants",
+      "theorems": [
+        "Audit.Wire3.PoseidonConstants.constant_table_lengths",
+        "Audit.Wire3.PoseidonConstants.all_constants_canonical",
+        "Audit.Wire3.PoseidonConstants.mds_circulant_exact",
+        "Audit.Wire3.PoseidonConstants.mds_diagonal_exact",
+        "Audit.Wire3.PoseidonConstants.final_partial_constant_zero",
+        "Audit.Wire3.PoseidonConstants.full_round_constant_access",
+        "Audit.Wire3.PoseidonConstants.partial_aux_access",
+        "Audit.Wire3.PoseidonConstants.partial_initial_access"
+      ],
+      "sources": [
+        "mle/contracts/src/PoseidonConstants.sol",
+        "plonky2/src/hash/poseidon.rs",
+        "plonky2/src/hash/poseidon_goldilocks.rs"
+      ],
+      "scope": "All 1023 actual constant words with lengths/canonicality. CI wordwise equality against Solidity and Rust is extraction drift checking, not full source semantics."
+    },
+    {
+      "module": "Audit.Wire3.Poseidon",
+      "theorems": [
+        "Audit.Wire3.Poseidon.coordinates_length",
+        "Audit.Wire3.Poseidon.coordinate_membership",
+        "Audit.Wire3.Poseidon.coordinates_order",
+        "Audit.Wire3.Poseidon.tail_coordinates_order",
+        "Audit.Wire3.Poseidon.at_makeState",
+        "Audit.Wire3.Poseidon.state_list_length",
+        "Audit.Wire3.Poseidon.add_base_is_field_add",
+        "Audit.Wire3.Poseidon.add_base_zero",
+        "Audit.Wire3.Poseidon.sbox_exact_seventh_power",
+        "Audit.Wire3.Poseidon.partial_m00_exact",
+        "Audit.Wire3.Poseidon.swap_constraints_length",
+        "Audit.Wire3.Poseidon.full_constraints_length",
+        "Audit.Wire3.Poseidon.full_step_length",
+        "Audit.Wire3.Poseidon.partial_step_length",
+        "Audit.Wire3.Poseidon.run_constraint_count",
+        "Audit.Wire3.Poseidon.first_full_constraint_count",
+        "Audit.Wire3.Poseidon.partial_constraint_count",
+        "Audit.Wire3.Poseidon.second_full_constraint_count",
+        "Audit.Wire3.Poseidon.stages_constraint_counts",
+        "Audit.Wire3.Poseidon.poseidon_constraint_count",
+        "Audit.Wire3.Poseidon.mds_constraint_count",
+        "Audit.Wire3.Poseidon.poseidon_short_input_rejected",
+        "Audit.Wire3.Poseidon.mds_short_input_rejected",
+        "Audit.Wire3.Poseidon.poseidon_success_exact",
+        "Audit.Wire3.Poseidon.mds_success_exact",
+        "Audit.Wire3.Poseidon.all_zero_iff",
+        "Audit.Wire3.Poseidon.all_zero_append",
+        "Audit.Wire3.Poseidon.full_constraints_zero_iff",
+        "Audit.Wire3.Poseidon.output_constraints_zero_iff",
+        "Audit.Wire3.Poseidon.swap_constraints_zero_iff",
+        "Audit.Wire3.Poseidon.mds_constraints_zero_iff",
+        "Audit.Wire3.Poseidon.poseidon_all_blocks_zero_iff",
+        "Audit.Wire3.Poseidon.run_preserves_constraint_prefix",
+        "Audit.Wire3.Poseidon.successful_run_has_checked_chain",
+        "Audit.Wire3.Poseidon.full_round_chain_checks_actual_sbox_inputs",
+        "Audit.Wire3.Poseidon.partial_round_chain_checks_actual_sbox_inputs",
+        "Audit.Wire3.Poseidon.final_partial_skips_zero_constant",
+        "Audit.Wire3.Poseidon.partial_step_matches_rust_zero_constant",
+        "Audit.Wire3.Poseidon.fixed_wire_layout_bounds",
+        "Audit.Wire3.Poseidon.mds_wire_layout_bounds",
+        "Audit.Wire3.Poseidon.all_zero_poseidon_reduction",
+        "Audit.Wire3.Poseidon.all_zero_mds_reduction",
+        "Audit.Wire3.Poseidon.diagonal_table_lookup",
+        "Audit.Wire3.Poseidon.scalar_zero",
+        "Audit.Wire3.Poseidon.sparse_mds_equals_full_diagonal",
+        "Audit.Wire3.Poseidon.witness_run_count",
+        "Audit.Wire3.Poseidon.zero_input_witness_length",
+        "Audit.Wire3.Poseidon.zero_mds_constraints",
+        "Audit.Wire3.Poseidon.zero_mds_success",
+        "Audit.Wire3.Poseidon.zero_input_poseidon_constraints",
+        "Audit.Wire3.Poseidon.zero_input_poseidon_success",
+        "Audit.Wire3.Poseidon.zero_input_matches_standard_output"
+      ],
+      "sources": [
+        "mle/contracts/src/PoseidonGateExt3.sol",
+        "mle/contracts/src/PoseidonConstants.sol",
+        "mle/src/gate_ext3.rs",
+        "plonky2/src/hash/poseidon_goldilocks.rs"
+      ],
+      "scope": "Complete Poseidon/MDS evaluation, 12-coordinate state, swap/delta, all 30 rounds, concrete sparse/full-diagonal equality, 123/24 constraints in order and Horner reduction. Full ordinary zero-input witness and standard Rust output vector kernel checked. No Poseidon security, alpha soundness or compiler refinement."
+    },
+    {
+      "module": "Audit.Wire3.GatesComplete",
+      "theorems": [
+        "Audit.Wire3.GatesComplete.validated_small_dispatch",
+        "Audit.Wire3.GatesComplete.every_validated_family_evaluates",
+        "Audit.Wire3.GatesComplete.validated_contribution_exists",
+        "Audit.Wire3.GatesComplete.validated_rows_evaluate",
+        "Audit.Wire3.GatesComplete.valid_configuration_always_evaluates",
+        "Audit.Wire3.GatesComplete.combined_success_requires_all_configuration",
+        "Audit.Wire3.GatesComplete.combined_has_output_iff_valid",
+        "Audit.Wire3.GatesComplete.unknown_gate_rejected_even_when_inactive",
+        "Audit.Wire3.GatesComplete.inactive_contribution_zero",
+        "Audit.Wire3.GatesComplete.satisfied_contribution_zero",
+        "Audit.Wire3.GatesComplete.all_satisfied_combination_zero",
+        "Audit.Wire3.GatesComplete.fourteen_family_dispatch_coverage"
+      ],
+      "sources": [
+        "mle/contracts/src/Plonky2GateEvaluatorExt3.sol",
+        "mle/contracts/src/PoseidonGateExt3.sol",
+        "mle/contracts/src/CosetInterpolationGateExt3.sol",
+        "mle/src/gate_ext3.rs"
+      ],
+      "scope": "All 14-family concrete dispatcher. Input lengths plus complete valid metadata iff an evaluation result exists; all configured rows validate before zero-filter skip. Installed in Integrated. Dispatch coverage is not circuit/degree/aggregation/cryptographic soundness or source refinement."
+    },
+    {
+      "module": "Audit.Wire3.NormIdentity",
+      "theorems": [
+        "Audit.Wire3.NormIdentity.vmul_left_comm",
+        "Audit.Wire3.NormIdentity.formal_product_scalar_coordinate",
+        "Audit.Wire3.NormIdentity.formal_product_linear_coordinate",
+        "Audit.Wire3.NormIdentity.formal_product_quadratic_coordinate",
+        "Audit.Wire3.NormIdentity.formal_adjugate_identity",
+        "Audit.Wire3.NormIdentity.formal_multiply_comm",
+        "Audit.Wire3.NormIdentity.formal_adjugate_identity_left",
+        "Audit.Wire3.NormIdentity.recompose_product",
+        "Audit.Wire3.NormIdentity.recompose_scalar",
+        "Audit.Wire3.NormIdentity.recomposed_adjugate_identity",
+        "Audit.Wire3.NormIdentity.sum_difference_butterfly",
+        "Audit.Wire3.NormIdentity.whir_sum_equals_packed_butterfly",
+        "Audit.Wire3.NormIdentity.even_sum_layer_equals_packed_layer",
+        "Audit.Wire3.NormIdentity.full_sum_layers_equal_packed_layers",
+        "Audit.Wire3.NormIdentity.final_polynomial_equals_packed_fold",
+        "Audit.Wire3.NormIdentity.recompose_lifted_coordinates",
+        "Audit.Wire3.NormIdentity.lifted_adjugate_matches_inverse_formula",
+        "Audit.Wire3.NormIdentity.lifted_norm_matches_inverse_formula",
+        "Audit.Wire3.NormIdentity.inverse_adjugate_identity",
+        "Audit.Wire3.NormIdentity.inverse_adjugate_canonical",
+        "Audit.Wire3.NormIdentity.embedded_multiplication",
+        "Audit.Wire3.NormIdentity.inverse_candidate_product",
+        "Audit.Wire3.NormIdentity.inverse_success_reduces_to_scalar_product"
+      ],
+      "sources": [
+        "mle/contracts/src/OuterLogupExt3Verifier.sol",
+        "mle/contracts/src/spongefish/GoldilocksExt3.sol",
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol",
+        "mle/src/permutation/norm_logup.rs"
+      ],
+      "scope": "Concrete polynomial adjugate identity over Ext3 formal coefficients, recomposition multiplication, lifted inverse candidate identity, and full-table WHIR sum-form/Packed difference-form equality. No assumed ring, prime, nonzero-norm, Fermat or soundness premise."
+    },
+    {
+      "module": "Audit.Wire3.ModularPower",
+      "theorems": [
+        "Audit.Wire3.ModularPower.reduced_base_power",
+        "Audit.Wire3.ModularPower.multiplied_reduced_base_power",
+        "Audit.Wire3.ModularPower.squared_base_power",
+        "Audit.Wire3.ModularPower.binary_step_preserves_power",
+        "Audit.Wire3.ModularPower.mod_pow_success_reduced",
+        "Audit.Wire3.ModularPower.mod_pow_success_canonical",
+        "Audit.Wire3.ModularPower.mod_pow_success_exact",
+        "Audit.Wire3.ModularPower.mod_pow_exact_with_sufficient_bits",
+        "Audit.Wire3.ModularPower.mod_pow_success_requires_bit_fuel",
+        "Audit.Wire3.ModularPower.mod_pow_has_output_iff_bit_fuel",
+        "Audit.Wire3.ModularPower.mod_pow_fuel_independent",
+        "Audit.Wire3.ModularPower.zero_exponent_returns_accumulator",
+        "Audit.Wire3.ModularPower.inverse_scalar_power_exact",
+        "Audit.Wire3.ModularPower.inverse_exact_if_norm_nonzero",
+        "Audit.Wire3.ModularPower.inverse_has_output_iff_norm_nonzero",
+        "Audit.Wire3.ModularPower.modulus_minus_one_exponent",
+        "Audit.Wire3.ModularPower.scalar_inverse_product_is_fermat_power",
+        "Audit.Wire3.ModularPower.inverse_success_product_is_fermat_power"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/GoldilocksExt3.sol"
+      ],
+      "scope": "Actual Nat.mod binary exponentiation exact value and necessary/sufficient bit-fuel success. Inverse success product equals embedded norm^(p-1) mod p via concrete adjugate identity. Does not replace it by one or assert prime/Fermat/irreducibility/word semantics."
+    },
+    {
+      "module": "Audit.Wire3.Spongefish",
+      "theorems": [
+        "Audit.Wire3.Spongefish.absorb_resets_counter",
+        "Audit.Wire3.Spongefish.ratchet_resets_counter",
+        "Audit.Wire3.Spongefish.challenge_input_length",
+        "Audit.Wire3.Spongefish.block_stream_length",
+        "Audit.Wire3.Spongefish.enough_blocks",
+        "Audit.Wire3.Spongefish.squeeze_success_exact",
+        "Audit.Wire3.Spongefish.ext3_challenge_uses_four_blocks",
+        "Audit.Wire3.Spongefish.counter_input_injective_bounded",
+        "Audit.Wire3.Spongefish.read_slice_success",
+        "Audit.Wire3.Spongefish.prover_message_reads_then_absorbs",
+        "Audit.Wire3.Spongefish.hint_is_not_absorbed",
+        "Audit.Wire3.Spongefish.verifier_message_preserves_read_cursors",
+        "Audit.Wire3.Spongefish.canonical_decode_preserves_raw_limbs",
+        "Audit.Wire3.Spongefish.prover_ext3_consumes_exact_canonical_bytes",
+        "Audit.Wire3.Spongefish.verifier_ext3_exact_cursor_and_bytes",
+        "Audit.Wire3.Spongefish.prover_many_exact_count_and_cursor",
+        "Audit.Wire3.Spongefish.verifier_many_exact_count_and_counter",
+        "Audit.Wire3.Spongefish.geometric_powers_length",
+        "Audit.Wire3.Spongefish.geometric_zero_does_not_squeeze",
+        "Audit.Wire3.Spongefish.geometric_one_does_not_squeeze",
+        "Audit.Wire3.Spongefish.pow_input_exact_length",
+        "Audit.Wire3.Spongefish.pow_sentinel_consumes_nothing",
+        "Audit.Wire3.Spongefish.pow_success_checks_actual_digest",
+        "Audit.Wire3.Spongefish.vec_prefix_success_exact"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/Keccak256Chain.sol",
+        "mle/contracts/src/spongefish/SpongefishWhir.sol",
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol"
+      ],
+      "scope": "Concrete inner WHIR hash-chain bytes, BE64 counter, one 120-byte four-block Ext3 challenge, strict canonical 24-byte reads, geometric powers, exact PoW input/threshold and hint Vec prefix. Hash arbitrary deterministic; no Keccak/RO/PoW probability, machine word or native IO-pattern refinement."
+    },
+    {
+      "module": "Audit.Wire3.WhirInitial",
+      "theorems": [
+        "Audit.Wire3.WhirInitial.prover_hash_exact_read",
+        "Audit.Wire3.WhirInitial.geometric_challenge_shape",
+        "Audit.Wire3.WhirInitial.receive_one_success",
+        "Audit.Wire3.WhirInitial.receive_commitments_success",
+        "Audit.Wire3.WhirInitial.read_claims_success",
+        "Audit.Wire3.WhirInitial.fixed_flat_map_length",
+        "Audit.Wire3.WhirInitial.range_loop_length",
+        "Audit.Wire3.WhirInitial.range_length",
+        "Audit.Wire3.WhirInitial.matrix_slots_length",
+        "Audit.Wire3.WhirInitial.complete_slots_success",
+        "Audit.Wire3.WhirInitial.checked_match_at_index",
+        "Audit.Wire3.WhirInitial.mask_byte_in_bounds",
+        "Audit.Wire3.WhirInitial.preserves_own_at_index",
+        "Audit.Wire3.WhirInitial.own_answer_index_bounded",
+        "Audit.Wire3.WhirInitial.ordered_matrix_row_index_bounded",
+        "Audit.Wire3.WhirInitial.phase_initial_trace",
+        "Audit.Wire3.WhirInitial.initial_all_roots_and_checked_claims",
+        "Audit.Wire3.WhirInitial.initial_exact_read_count",
+        "Audit.Wire3.WhirInitial.validated_form_count",
+        "Audit.Wire3.WhirInitial.initial_output_shapes",
+        "Audit.Wire3.WhirInitial.initial_sum_and_constraints_same_data",
+        "Audit.Wire3.WhirInitial.get_default_in_list",
+        "Audit.Wire3.WhirInitial.initialized_own_read_in_bounds",
+        "Audit.Wire3.WhirInitial.initial_forms_use_supplied_points",
+        "Audit.Wire3.WhirInitial.accumulate_access_bounds",
+        "Audit.Wire3.WhirInitial.receive_commitments_preserves_bound",
+        "Audit.Wire3.WhirInitial.read_claims_preserves_bound",
+        "Audit.Wire3.WhirInitial.complete_slots_preserves_bound",
+        "Audit.Wire3.WhirInitial.initial_preserves_byte_bound",
+        "Audit.Wire3.WhirInitial.example_params_are_valid",
+        "Audit.Wire3.WhirInitial.example_mask_has_checked_and_unchecked",
+        "Audit.Wire3.WhirInitial.example_cross_order_and_count",
+        "Audit.Wire3.WhirInitial.example_initial_phase_succeeds"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol",
+        "mle/contracts/src/spongefish/SpongefishWhir.sol"
+      ],
+      "scope": "Actual root/OOD/own-answer/bound-root reads, every claim mask check, ordered cross-OOD matrix, both RLC challenges and computed initial sum/constraints. Same source/state and exact consumption, canonical values, validated shape preconditions and nonempty 272-byte stage example. No decoder/evaluator observations besides deterministic Hash; validated params and final-form projection are caller boundaries, not complete WHIR/source/cryptographic proof."
+    },
+    {
+      "module": "Audit.Wire3.WhirFinalSpongefish",
+      "theorems": [
+        "Audit.Wire3.WhirFinalSpongefish.bytes_roundtrip",
+        "Audit.Wire3.WhirFinalSpongefish.transcript_bytes_roundtrip",
+        "Audit.Wire3.WhirFinalSpongefish.byte_conversion_length",
+        "Audit.Wire3.WhirFinalSpongefish.cursor_roundtrip",
+        "Audit.Wire3.WhirFinalSpongefish.hint_free_state_roundtrip",
+        "Audit.Wire3.WhirFinalSpongefish.read_message_has_two_actual_reads",
+        "Audit.Wire3.WhirFinalSpongefish.read_message_exact_bytes_and_canonical",
+        "Audit.Wire3.WhirFinalSpongefish.pow_success_has_actual_execution",
+        "Audit.Wire3.WhirFinalSpongefish.pow_sentinel_exact",
+        "Audit.Wire3.WhirFinalSpongefish.pow_success_cursor_exact",
+        "Audit.Wire3.WhirFinalSpongefish.challenge_has_actual_squeeze",
+        "Audit.Wire3.WhirFinalSpongefish.challenge_exact_bytes_and_counter",
+        "Audit.Wire3.WhirFinalSpongefish.pow_execution_preserves_hint_cursor",
+        "Audit.Wire3.WhirFinalSpongefish.pow_success_preserves_bound_and_zero_counter",
+        "Audit.Wire3.WhirFinalSpongefish.round_success_actual_sequence",
+        "Audit.Wire3.WhirFinalSpongefish.round_success_exact_consumption",
+        "Audit.Wire3.WhirFinalSpongefish.rounds_success_exact_consumption",
+        "Audit.Wire3.WhirFinalSpongefish.end_success_exact_transcript_and_hint_eof",
+        "Audit.Wire3.WhirFinalSpongefish.end_with_round_requires_actual_reads",
+        "Audit.Wire3.WhirFinalSpongefish.successful_byte_operations_execute_round",
+        "Audit.Wire3.WhirFinalSpongefish.round_without_pow_consumes_48",
+        "Audit.Wire3.WhirFinalSpongefish.round_with_pow_consumes_56",
+        "Audit.Wire3.WhirFinalSpongefish.zero_messages_read_two_canonical_values",
+        "Audit.Wire3.WhirFinalSpongefish.zero_message_round_executes"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol",
+        "mle/contracts/src/spongefish/SpongefishWhir.sol",
+        "mle/contracts/src/spongefish/Keccak256Chain.sol"
+      ],
+      "scope": "Instantiates all WhirFinal.Engine functions with actual Spongefish reads/PoW/challenge and lossless UInt8/Fin256 bytes. Successful existing round/end implies actual operations, exact 48/56-byte consumption and suffix/hint EOF; arbitrary-Hash round example. Earlier Context/Plan, row authentication and whole WHIR/source/cryptographic soundness remain unconnected."
+    },
+    {
+      "module": "Audit.Wire3.WhirPrefix",
+      "theorems": [
+        "Audit.Wire3.WhirPrefix.successful_prefix_is_one_execution",
+        "Audit.Wire3.WhirPrefix.successful_prefix_keeps_roots_and_all_checked_claims",
+        "Audit.Wire3.WhirPrefix.successful_prefix_exact_consumption",
+        "Audit.Wire3.WhirPrefix.first_round_starts_from_computed_sum_and_sponge",
+        "Audit.Wire3.WhirPrefix.projected_initial_constraints_have_exact_shape",
+        "Audit.Wire3.WhirPrefix.initialized_prefix_does_not_consume_hints",
+        "Audit.Wire3.WhirPrefix.concrete_initial_and_sumcheck_example"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol",
+        "mle/contracts/src/spongefish/SpongefishWhir.sol"
+      ],
+      "scope": "Concrete phaseInitial then first sumcheck using SAME bytes/computed initial sum/digest/counter/position, preserving checked claims/roots and initial constraints/form projection. Exact combined byte consumption and 320-byte nonempty stage example. No independent prior-sum/decoder oracle; no full parameter derivation, intermediate phases, final Plan, source refinement or cryptographic soundness."
+    },
+    {
+      "module": "Audit.Wire3.PiSharedBits",
+      "theorems": [
+        "Audit.Wire3.PiSharedBits.extend_mask_false_iff",
+        "Audit.Wire3.PiSharedBits.anchor_xor_self",
+        "Audit.Wire3.PiSharedBits.first_row_mask_unchanged",
+        "Audit.Wire3.PiSharedBits.varying_mask_false_iff",
+        "Audit.Wire3.PiSharedBits.mask_contains_every_row_difference",
+        "Audit.Wire3.PiSharedBits.boolean_factor_uses_actual_bit",
+        "Audit.Wire3.PiSharedBits.equal_bits_equal_factors",
+        "Audit.Wire3.PiSharedBits.full_product_cons",
+        "Audit.Wire3.PiSharedBits.selected_initial_multiplier",
+        "Audit.Wire3.PiSharedBits.full_product_initial_multiplier",
+        "Audit.Wire3.PiSharedBits.multiply_middle_commute",
+        "Audit.Wire3.PiSharedBits.selected_partition_product",
+        "Audit.Wire3.PiSharedBits.same_shared_bits_same_product",
+        "Audit.Wire3.PiSharedBits.shared_bit_factoring_exact",
+        "Audit.Wire3.PiSharedBits.actual_varying_mask_factoring",
+        "Audit.Wire3.PiSharedBits.duplicate_rows_do_not_create_varying_bits"
+      ],
+      "sources": [
+        "mle/contracts/src/OuterLogupExt3Verifier.sol",
+        "mle/src/permutation/norm_logup.rs"
+      ],
+      "scope": "Concrete Nat OR/XOR varying-row mask and selected-coordinate product. Proves common/varying bit factorization equals direct Boolean row equality from actual Ext3 algebra; no field/ROM or memory/parser refinement."
+    },
+    {
+      "module": "Audit.Wire3.PiCache",
+      "theorems": [
+        "Audit.Wire3.PiCache.newest_index_points_to_row",
+        "Audit.Wire3.PiCache.registered_index_points_to_row",
+        "Audit.Wire3.PiCache.add_at_preserves_rows",
+        "Audit.Wire3.PiCache.cache_add_rows",
+        "Audit.Wire3.PiCache.cache_add_row_membership",
+        "Audit.Wire3.PiCache.weighted_sum_append",
+        "Audit.Wire3.PiCache.weighted_sum_add_at",
+        "Audit.Wire3.PiCache.registering_zero_preserves_sum",
+        "Audit.Wire3.PiCache.weighted_sum_cache_add",
+        "Audit.Wire3.PiCache.initial_mask_invariant",
+        "Audit.Wire3.PiCache.step_preserves_mask_invariant",
+        "Audit.Wire3.PiCache.run_preserves_mask_invariant",
+        "Audit.Wire3.PiCache.step_sum_matches_direct",
+        "Audit.Wire3.PiCache.cache_loop_matches_direct",
+        "Audit.Wire3.PiCache.finish_loop_matches_weighted_sum",
+        "Audit.Wire3.PiCache.finish_uses_actual_row_equalities",
+        "Audit.Wire3.PiCache.cached_binding_equals_direct_norm",
+        "Audit.Wire3.PiCache.newest_index_none_iff",
+        "Audit.Wire3.PiCache.newest_index_has_no_later_match",
+        "Audit.Wire3.PiCache.cache_add_preserves_first_row",
+        "Audit.Wire3.PiCache.run_preserves_first_row",
+        "Audit.Wire3.PiCache.first_cached_row_is_first_input_row",
+        "Audit.Wire3.PiCache.first_mask_operation_is_source_noop",
+        "Audit.Wire3.PiCache.cache_mask_is_actual_or_of_xors",
+        "Audit.Wire3.PiCache.final_eta_update_is_skipped",
+        "Audit.Wire3.PiCache.empty_public_inputs",
+        "Audit.Wire3.PiCache.normal_duplicate_and_unsorted_rows",
+        "Audit.Wire3.PiCache.newest_search_uses_last_matching_index",
+        "Audit.Wire3.PiCache.duplicate_row_accumulation_retains_both_terms",
+        "Audit.Wire3.PiCache.duplicate_unsorted_example_exact",
+        "Audit.Wire3.PiCache.zero_eta_example_exact",
+        "Audit.Wire3.PiCache.duplicate_unsorted_example_value",
+        "Audit.Wire3.PiCache.zero_eta_keeps_first_input_only"
+      ],
+      "sources": [
+        "mle/contracts/src/OuterLogupExt3Verifier.sol",
+        "mle/src/permutation/norm_logup.rs"
+      ],
+      "scope": "Concrete newest-to-oldest row cache, duplicate-row sums, actual bitmask/shared-bit final loop and eta last-update omission; cached_binding_equals_direct_norm establishes full deterministic equality with Norm direct PI loop. Raw totalization equality is not malformed-input runtime acceptance; shape/word/memory/decoder and probabilistic per-input binding remain separate."
+    },
+    {
+      "module": "Audit.Wire3.GoldilocksCertificate",
+      "theorems": [
+        "Audit.Wire3.GoldilocksCertificate.modulus_minus_one_factorization",
+        "Audit.Wire3.GoldilocksCertificate.certificate_candidates_exact",
+        "Audit.Wire3.GoldilocksCertificate.certificate_has_six_entries",
+        "Audit.Wire3.GoldilocksCertificate.candidate_factor_positions_distinct",
+        "Audit.Wire3.GoldilocksCertificate.all_factor_checks_accept",
+        "Audit.Wire3.GoldilocksCertificate.each_factor_check",
+        "Audit.Wire3.GoldilocksCertificate.each_factor_power_value",
+        "Audit.Wire3.GoldilocksCertificate.each_factor_power_gcd",
+        "Audit.Wire3.GoldilocksCertificate.full_exponent_loop_value",
+        "Audit.Wire3.GoldilocksCertificate.base_seven_full_power_value",
+        "Audit.Wire3.GoldilocksCertificate.exponent_for_three_exact",
+        "Audit.Wire3.GoldilocksCertificate.exponent_for_three_has_no_remainder",
+        "Audit.Wire3.GoldilocksCertificate.base_two_third_exponent_loop_value",
+        "Audit.Wire3.GoldilocksCertificate.base_two_third_exponent_value",
+        "Audit.Wire3.GoldilocksCertificate.base_two_third_exponent_not_one",
+        "Audit.Wire3.GoldilocksCertificate.base_two_third_exponent_canonical"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/GoldilocksExt3.sol",
+        "mle/contracts/src/GoldilocksField.sol"
+      ],
+      "scope": "Kernel-checked numeric certificate: p-1 factor product, six base-seven power/gcd checks, exact modular-power bridges, and base-two third-exponent value. Criterion soundness, candidate-factor primality, general Fermat, Goldilocks primality and cubic irreducibility are NOT proved or assumed."
     }
   ]
 }

@@ -1,4 +1,5 @@
 import Audit.Wire3.WhirTerminal
+import Audit.Wire3.Spongefish
 
 /-!
 # WHIR final sumcheck, final claim, and exhaustion (54400f9f)
@@ -12,7 +13,9 @@ and check_eof. This model uses Solidity's explicit zero rejection and order.
 
 The SAME `finalVector` argument first passes WhirTerminal.verifyFinalRows and
 then the concrete final MLE fold. The round decoder, PoW verification and FS
-challenge generation are function observations. They cannot set the running
+challenge generation are function observations here, with a concrete byte-level
+instantiation in WhirFinalSpongefish. The cursor carries the actual modeled
+inner sponge digest/counter. These functions cannot set the running
 sum or final randomness directly: those are constructed by the executable
 quadratic recurrence. No field/PCS/FS soundness is asserted by observations.
 
@@ -25,9 +28,11 @@ new Solidity runtime guards. No proof connects byte parsing/Merkle to Context.
 Concrete modular inverse follows norm/adjugate and 64-step binary exponentiation.
 Its multiplicative-inverse identity, prime/irreducible field laws, assembly
 arithmetic/memory semantics, and exception/refinement equivalence remain open.
-EOF proves cursor equality under the supplied decoder observations, not an
-independent byte-consumption theorem. All earlier WHIR, transcript security,
-PoW security, query probability, and polynomial-commitment soundness are open.
+This module's EOF proves cursor equality under decoder observations;
+WhirFinalSpongefish proves the concrete engine's exact byte consumption.
+WhirInitial/WhirPrefix model the initial phases but do not derive this final
+Context through intermediate rounds and authenticated row reads. Transcript
+security, PoW security, query probability and PCS soundness remain open.
 -/
 
 namespace Audit.Wire3.WhirFinal
@@ -105,7 +110,7 @@ def expectedLinearForm (forms : List LinearForm) (allRandomness : List Ext3) : E
 
 structure Cursor where
   transcriptPos : Nat
-  spongeState : Bytes
+  spongeState : Spongefish.Sponge
   deriving DecidableEq
 
 structure RoundMessage where
@@ -426,7 +431,7 @@ theorem subtract_constraints_preserves_full_list_order (r : List Ext3) (a b : Li
 
 def testContext : Context :=
   { rowPlan := ⟨[⟨WhirTerminal.testRoot, [one]⟩], [0], 1, 2, 1, 1, 1⟩,
-    prefixRandomness := [zero], priorSum := one, afterRows := ⟨0, []⟩, hintPos := 0,
+    prefixRandomness := [zero], priorSum := one, afterRows := ⟨0, ⟨Spongefish.zeroDigest, 0⟩⟩, hintPos := 0,
     totalVariables := 2, powThreshold := 0, roundConstraints := [], forms := [⟨one, [zero, zero]⟩] }
 
 def testEngine : Engine :=

@@ -187,6 +187,40 @@ class GuardTests(unittest.TestCase):
             with self.assertRaisesRegex(G.GuardFailure, "command failed"):
                 REAL_COMMAND(["lean"], cwd=self.root)
 
+    def test_literal_array_keeps_order_and_nested_words(self):
+        source = "def table : List Nat := [[0x01, 2], [3_000, 0xFF]]"
+        pattern = r"def table\s*:\s*List Nat\s*:=\s*\["
+        self.assertEqual(G.literal_array(source, pattern), [1, 2, 3000, 255])
+
+    def test_literal_array_refuses_expressions_and_missing_tables(self):
+        pattern = r"def table\s*:=\s*\["
+        for source in ("", "def table := [1 + 2]", "def table := [oracle]",
+                       "def table := [1", "def table := []\ndef table := []"):
+            with self.assertRaises(G.GuardFailure):
+                G.literal_array(source, pattern)
+
+    def test_constant_blobs_are_big_endian_u64(self):
+        source = 'bytes internal constant X = hex"01020304050607080000000000000001";'
+        self.assertEqual(G.solidity_blob_tables(source), {"X": [0x0102030405060708, 1]})
+
+    def test_bad_constant_blob_width_and_duplicates_fail(self):
+        for source in ('bytes internal constant X = hex"01";',
+                       'bytes internal constant X = hex""; bytes internal constant X = hex"";'):
+            with self.assertRaises(G.GuardFailure):
+                G.solidity_blob_tables(source)
+
+    def test_constant_comment_declarations_are_ignored(self):
+        ignored = 'bytes internal constant FAKE = hex"01";'
+        active = 'bytes internal constant X = hex"0000000000000001";'
+        source = f"/* {ignored} /* nested */ */\n// {ignored}\n{active}"
+        self.assertEqual(G.solidity_blob_tables(source), {"X": [1]})
+        self.assertEqual(G.without_c_style_comments('"//literal/*still*/"'), '"//literal/*still*/"')
+
+    def test_unterminated_constant_comments_fail(self):
+        for source in ('/* missing end', '"missing end', '/* /* */'):
+            with self.assertRaises(G.GuardFailure):
+                G.without_c_style_comments(source)
+
 
 if __name__ == "__main__":
     unittest.main()
