@@ -180,10 +180,10 @@ raw認証成功とcanonical decode成功は別条件。final splitのdecode/集�
 
 | このcheckout内のRust/Solidityファイル | 合計 | 部分的なモデル対応あり | モデル対応なし |
 |---|---:|---:|---:|
-| MLE Rust (`mle/src/`、旧実装を含む) | 35 | 9 | 26 |
+| MLE Rust (`mle/src/`、旧実装を含む) | 35 | 10 | 25 |
 | MLE Solidity (`mle/contracts/src/`、旧実装を含む) | 33 | 18 | 15 |
 | その他（テスト・example・別crateを含む） | 222 | 2 | 220 |
-| 合計 | 290 | 29 | 261 |
+| 合計 | 290 | 30 | 260 |
 
 「部分的なモデル対応あり」はファイル全体の翻訳・証明を意味しない。
 行数ベースのcoverageや安全性の達成率でもない。
@@ -514,6 +514,31 @@ guard33件・dependency34件・provision20件、空白差分とruntime無変更�
 guard33件・dependency34件・provision20件、CI YAML、空白差分とruntime無変更もPASS。
 これらは手動モデル内の対応であり、source/compiler/Yul/EVM・メモリ・gasの形式的refinement、
 immutable VK由来、真の回路多項式、ROM/PCS健全性の証明ではない。40モデルfresh検査とも区別する。
+
+## 第9継続更新（4063db74以降）
+
+6モデル・140定理を追加し、58モデル・1571名付き定理へ拡張した。
+
+- **外側の実更新式**: evaluateRoundの係数和・具体inverse-two・逆向きHornerと、
+  具体Ext3体上多項式の評価を同一化。端点和=claim、送信非定数係数数による次数上界、
+  固定した不同claimの多項式の一致点数を証明した。coupled roundの両実更新・stateも保持する。
+  log sourceの固定5係数loopには既存係数長preflightが必要で、任意長helperを代用しない。
+- **外側challengeの区別**: 実3×32byte squeezeの同digest・連続counter・剰余を接続。
+  両係数列吸収後のlog 0..2/gate 3..5を同じ更新多項式へつなぐ。明示uniform triple law下で
+  固定多項式の一致確率≤d(ceil(2^256/p)/2^256)³。log 5/gate q+2は別々の上界で、
+  実Hash/FSのuniform性・独立性・適応的fixednessや確率の積増幅は証明していない。
+- **7familyの実次数**: 全14familyのzero-filter分岐を同じ具体制約/Hornerへ同一化した上で、
+  IDs 0,1,2,3,5,6,7の実制約式と多項式評価の一致を証明した。両wire/constant列がaffineなとき
+  次数は0,1,1,3,1,3,3以下。local constantも変数として保持し、Ext2の非剰余7とMDSの実定数・順序も保持。
+  実設定検査/入力長から選択行寄与≤q+1、明示affine重み後≤q+2を導く。
+  残7familyはsymbolic NONEとし、gate truth・全行和・認証endpoint・補間係数を仮定で埋めない。
+
+追加6モデルはrootと別担当が全文・実source・依存モデル・仮定を対照した。
+採用namespaceの直接buildと全統合guardはPASS。全1571名の実定理/型/推移的公理、
+405 reviewed hashes、18表1147語、7依存5601fileを検査した。
+source inventoryは290file中30部分対応/260未対応（coefficients.rsの部分対応を追加）。
+guard33件・dependency34件・provision20件、CI YAML、空白差分とruntime無変更もPASS。
+通常Lake検査と40モデルfresh検査の範囲は区別し、全実装/PCS健全性の完了とはしない。
 
 ## 次工程
 

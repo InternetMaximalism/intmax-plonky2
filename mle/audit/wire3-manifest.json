@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "c2717bb7e5dc6fe21aa50bfe6530a7644dd6ca49b2533e76ad8b6f0e9b7a86f8",
+      "sha256": "88391b54729d6829a704d0afa86f450ab1c9d2303d8ef6ac40e8023c9555e07b",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "d860cb4f2fa873ab2257b891597a46485bdfe1c71dba641375ada8bcc3a56db8",
+      "sha256": "fab7142e0f45bb52f045b216611dc1e53acfa39657baf8f1324673f65ad4254a",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "b03aa7fe87ba359747abb444fd51c5b2a83f11282d1c737e51e2462b939285c9",
+      "sha256": "2d136504b6956709510fe3bc03e6d4e17aa1b448fa5f6576f6092e6fd5a9dc50",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "0332eba6923e41809abc83e3b3647310a7de6abff722d2b6c04d9c1ef6a3eff0",
+      "sha256": "ae3eb40fff80dae0574973ff631a94cf11b42c3b4c72020649d9724c4422456f",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "afc4371135673a2ebe3d1c5bb268ce5f365af91a726b49a883c7b2bac46db817",
+      "sha256": "984cc36577483581dcfb9cde14a5051e36b9af8a649e52e7f4bc10c3aa7a35dd",
       "kind": "spec"
     },
     {
@@ -1996,6 +1996,36 @@
     {
       "path": "mle/audit/Audit/Wire3/WhirDomainPower.lean",
       "sha256": "4bf57bb504b6177e5ab9c047c5b7892f67d4658348881185ee20fe3ec93a0fb9",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/OuterRound.lean",
+      "sha256": "52a60e9fc62a5e556bf79ef3a4119f1957bd70706d54c09e326fe379a85d58d9",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/OuterChallenge.lean",
+      "sha256": "c21082d8098df42fe04c420193eecf28423f637407a5f427679437d76261b88d",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/GatePolynomial.lean",
+      "sha256": "570e26d1d222d60ce6f721cec0de91655a0829027695f665e049eb6a51e12645",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/GateBasicPolynomial.lean",
+      "sha256": "161f240bdeafbe547d6af7a0e65ac7bd6dfea048a511e8f869d3995cb4ed7d08",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/GateMdsPolynomial.lean",
+      "sha256": "c9497942f99a8d92bf6f9c8fd25d38ee821f7a9126126ecc899bac9eb705c4b0",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/GateCheckedPolynomial.lean",
+      "sha256": "cec8c025a63bf01387fba80ed6c1a70b85d4de5e151c582936f558ba740206f2",
       "kind": "current-model"
     }
   ],
@@ -3969,6 +3999,212 @@
         "mle/contracts/src/spongefish/SpongefishWhirVerify.sol"
       ],
       "scope": "Separate bitwise scalar rendering of actual _glPow low-64 mask, low-bit branch, shift and mulmod sequence, proved equal to existing binary modular power. All Fin64 base and Fin256 exponent inputs execute within 256 bit-fuel with exact residue and output<p<2^64, including zero exponent and base>=p. Same bounded transposed query yields exactly existing domainPoint; no generator-order inference. Manual scalar model, not Yul/parser/compiler/bytecode/memory/gas/refinement or cryptographic soundness."
+    },
+    {
+      "module": "Audit.Wire3.OuterRound",
+      "theorems": [
+        "Audit.Wire3.OuterRound.concrete_half_times_two",
+        "Audit.Wire3.OuterRound.two_times_concrete_half",
+        "Audit.Wire3.OuterRound.two_ne_zero",
+        "Audit.Wire3.OuterRound.half_is_actual_inverse_two",
+        "Audit.Wire3.OuterRound.source_sum_fold_exact",
+        "Audit.Wire3.OuterRound.source_horner_fold_exact",
+        "Audit.Wire3.OuterRound.actual_constant_coefficient_exact",
+        "Audit.Wire3.OuterRound.constant_coefficient_is_division_by_two",
+        "Audit.Wire3.OuterRound.actual_evaluate_round_exact",
+        "Audit.Wire3.OuterRound.coefficient_polynomial_is_field_horner",
+        "Audit.Wire3.OuterRound.polynomial_eval_exact",
+        "Audit.Wire3.OuterRound.actual_round_is_polynomial_eval",
+        "Audit.Wire3.OuterRound.full_coefficient_count",
+        "Audit.Wire3.OuterRound.constant_coefficient_position",
+        "Audit.Wire3.OuterRound.nonconstant_coefficient_positions",
+        "Audit.Wire3.OuterRound.polynomial_degree_at_most_message_length",
+        "Audit.Wire3.OuterRound.evaluate_at_zero",
+        "Audit.Wire3.OuterRound.coefficient_sum_fold_eq_list_sum",
+        "Audit.Wire3.OuterRound.coefficient_sum_eq_list_sum",
+        "Audit.Wire3.OuterRound.evaluate_at_one",
+        "Audit.Wire3.OuterRound.endpoint_sum_is_claim",
+        "Audit.Wire3.OuterRound.polynomial_endpoint_sum_is_claim",
+        "Audit.Wire3.OuterRound.actual_endpoint_sum_is_claim",
+        "Audit.Wire3.OuterRound.different_claims_give_different_polynomials",
+        "Audit.Wire3.OuterRound.actual_agreement_iff_polynomial",
+        "Audit.Wire3.OuterRound.fixed_different_claims_agree_at_most_degree",
+        "Audit.Wire3.OuterRound.fixed_different_claims_equal_length_bound",
+        "Audit.Wire3.OuterRound.lift_list_roundtrip",
+        "Audit.Wire3.OuterRound.actual_typed_round_is_polynomial_eval",
+        "Audit.Wire3.OuterRound.fixed_different_typed_claims_agreement_bound",
+        "Audit.Wire3.OuterRound.actual_coupled_round_uses_both_derived_polynomials",
+        "Audit.Wire3.OuterRound.nonconstant_outer_round_example",
+        "Audit.Wire3.OuterRound.empty_message_is_constant_half_claim",
+        "Audit.Wire3.OuterRound.nonbase_outer_round_example"
+      ],
+      "sources": [
+        "mle/contracts/src/OuterLogupExt3Verifier.sol",
+        "mle/src/sumcheck/coefficients.rs",
+        "mle/src/verifier_v2.rs",
+        "mle/src/sumcheck/gate_ext3_v2.rs"
+      ],
+      "scope": "Actual existing Verifier.evaluateRound forward coefficient sum, concrete inverse-two scalar and constant-first reverse Horner connected to constructed Ext3 Field polynomial. Exact endpoint sum, coefficient positions, degree bounded by sent nonconstant length, fixed distinct claims imply distinct polynomials and bounded agreement sets. Same coupled roundStep observation retains both actual updates and states. Fixed-five log source loop needs existing coefficient-count preflight; generic helper is not an unconditional source log verifier equivalence. No gate/prover interpolation truth, byte/VK/compiler refinement, adaptive FS or PCS proof."
+    },
+    {
+      "module": "Audit.Wire3.OuterChallenge",
+      "theorems": [
+        "Audit.Wire3.OuterChallenge.actual_digest_reduction_uses_consecutive_counters",
+        "Audit.Wire3.OuterChallenge.squeeze_ext3_at_bounded_counter",
+        "Audit.Wire3.OuterChallenge.squeeze_ext3_success",
+        "Audit.Wire3.OuterChallenge.squeeze_ext3_rejects_nonrepresentable_counter",
+        "Audit.Wire3.OuterChallenge.actual_three_digest_inputs_are_distinct",
+        "Audit.Wire3.OuterChallenge.word_size_is_256_bits",
+        "Audit.Wire3.OuterChallenge.word_size_positive",
+        "Audit.Wire3.OuterChallenge.actual_tuple_word_values_exact",
+        "Audit.Wire3.OuterChallenge.digest_tuple_cardinality",
+        "Audit.Wire3.OuterChallenge.tuple_reduction_is_same_words",
+        "Audit.Wire3.OuterChallenge.reduction_and_quotients_determine_sample",
+        "Audit.Wire3.OuterChallenge.quotient_sample_cardinality",
+        "Audit.Wire3.OuterChallenge.fixed_point_set_preimage_bound",
+        "Audit.Wire3.OuterChallenge.fixed_value_preimage_bound",
+        "Audit.Wire3.OuterChallenge.uniform_probability_between_zero_and_one",
+        "Audit.Wire3.OuterChallenge.uniform_tuple_probability_bound",
+        "Audit.Wire3.OuterChallenge.outer_round_tuple_event_exact",
+        "Audit.Wire3.OuterChallenge.fixed_different_outer_claims_uniform_bound",
+        "Audit.Wire3.OuterChallenge.fixed_different_outer_claims_uniform_bound_explicit",
+        "Audit.Wire3.OuterChallenge.actual_squeeze_round_update_is_derived_polynomial",
+        "Audit.Wire3.OuterChallenge.serialized_coefficients_keep_all_limbs",
+        "Audit.Wire3.OuterChallenge.actual_coupled_six_fields",
+        "Audit.Wire3.OuterChallenge.coupled_success_uses_same_committed_digest_and_six_counters",
+        "Audit.Wire3.OuterChallenge.coupled_success_updates_both_same_actual_polynomials",
+        "Audit.Wire3.OuterChallenge.outer_log_degree_five_uniform_bound",
+        "Audit.Wire3.OuterChallenge.outer_gate_configured_degree_uniform_bound",
+        "Audit.Wire3.OuterChallenge.ordinary_outer_three_digest_example",
+        "Audit.Wire3.OuterChallenge.ordinary_coupled_nonempty_messages_example"
+      ],
+      "sources": [
+        "mle/contracts/src/TranscriptV2.sol",
+        "mle/src/transcript_v2.rs",
+        "mle/contracts/src/OuterLogupExt3Verifier.sol",
+        "mle/src/verifier_v2.rs"
+      ],
+      "scope": "Outer actual Transcript.squeeze executed three times; same digest and consecutive counters reduce the same three 32-byte hash outputs. Existing coupledRound commits both serialized coefficient vectors before its six counters, with log 0..2 and gate 3..5 connected to same OuterRound polynomials. Explicit uniform triple-of-32-byte-output law gives d*(ceil(2^256/p)/2^256)^3 fixed-claim/message bound including reduction bias; log 5 and gate q+2 are separate lane bounds. No real hash uniformity, independence, adaptive fixedness or lane-product amplification, source word-loop/ABI/compiler refinement, circuit truth or PCS soundness."
+    },
+    {
+      "module": "Audit.Wire3.GatePolynomial",
+      "theorems": [
+        "Audit.Wire3.GatePolynomial.value_zero",
+        "Audit.Wire3.GatePolynomial.value_one",
+        "Audit.Wire3.GatePolynomial.value_constant",
+        "Audit.Wire3.GatePolynomial.value_nat_constant",
+        "Audit.Wire3.GatePolynomial.value_add",
+        "Audit.Wire3.GatePolynomial.value_sub",
+        "Audit.Wire3.GatePolynomial.value_mul",
+        "Audit.Wire3.GatePolynomial.value_scalar",
+        "Audit.Wire3.GatePolynomial.actual_contribution_branch_erased",
+        "Audit.Wire3.GatePolynomial.every_validated_family_branch_erased",
+        "Audit.Wire3.GatePolynomial.affine_eval_exact",
+        "Audit.Wire3.GatePolynomial.affine_actual_arithmetic",
+        "Audit.Wire3.GatePolynomial.affine_degree",
+        "Audit.Wire3.GatePolynomial.affine_at_zero",
+        "Audit.Wire3.GatePolynomial.affine_at_one",
+        "Audit.Wire3.GatePolynomial.column_values_preserve_length",
+        "Audit.Wire3.GatePolynomial.affine_columns_preserve_length",
+        "Audit.Wire3.GatePolynomial.affine_columns_have_degree_one",
+        "Audit.Wire3.GatePolynomial.affine_columns_at_zero",
+        "Audit.Wire3.GatePolynomial.affine_columns_at_one",
+        "Audit.Wire3.GatePolynomial.read_poly_is_actual_read",
+        "Audit.Wire3.GatePolynomial.read_poly_degree",
+        "Audit.Wire3.GatePolynomial.add_degree_bound",
+        "Audit.Wire3.GatePolynomial.sub_degree_bound",
+        "Audit.Wire3.GatePolynomial.mul_degree_bound",
+        "Audit.Wire3.GatePolynomial.actual_product_eval",
+        "Audit.Wire3.GatePolynomial.product_poly_degree",
+        "Audit.Wire3.GatePolynomial.selector_factor_values_exact",
+        "Audit.Wire3.GatePolynomial.selector_actual_evaluation",
+        "Audit.Wire3.GatePolynomial.selector_factors_degree_one",
+        "Audit.Wire3.GatePolynomial.selector_label_count_bound",
+        "Audit.Wire3.GatePolynomial.selector_factor_count_bound",
+        "Audit.Wire3.GatePolynomial.selector_poly_degree_bound",
+        "Audit.Wire3.GatePolynomial.actual_horner_eval",
+        "Audit.Wire3.GatePolynomial.fixed_alpha_horner_degree"
+      ],
+      "sources": [
+        "mle/contracts/src/Plonky2GateEvaluatorExt3.sol",
+        "mle/src/gate_ext3.rs",
+        "mle/src/sumcheck/gate_ext3_v2.rs"
+      ],
+      "scope": "Concrete Field-polynomial bridges for actual selector factors, fixed-alpha Horner and all-fourteen-family zero-filter branch erasure. Both wire and constant columns are affine, metadata/public hash/alpha fixed; endpoint evaluation and degree derived. No per-family degree oracle, circuit truth, authenticated endpoint/MLE eq provenance or runtime/compiler refinement."
+    },
+    {
+      "module": "Audit.Wire3.GateBasicPolynomial",
+      "theorems": [
+        "Audit.Wire3.GateBasicPolynomial.constant_evaluation_exact",
+        "Audit.Wire3.GateBasicPolynomial.public_input_evaluation_exact",
+        "Audit.Wire3.GateBasicPolynomial.arithmetic_evaluation_exact",
+        "Audit.Wire3.GateBasicPolynomial.arithmetic_list_evaluation_exact",
+        "Audit.Wire3.GateBasicPolynomial.constant_degree",
+        "Audit.Wire3.GateBasicPolynomial.public_input_degree",
+        "Audit.Wire3.GateBasicPolynomial.arithmetic_degree",
+        "Audit.Wire3.GateBasicPolynomial.arithmetic_list_degree",
+        "Audit.Wire3.GateBasicPolynomial.pair_read_exact",
+        "Audit.Wire3.GateBasicPolynomial.mul_seven_exact",
+        "Audit.Wire3.GateBasicPolynomial.pair_mul_exact",
+        "Audit.Wire3.GateBasicPolynomial.arithmetic_pair_exact",
+        "Audit.Wire3.GateBasicPolynomial.multiplication_pair_exact",
+        "Audit.Wire3.GateBasicPolynomial.pair_constraints_exact",
+        "Audit.Wire3.GateBasicPolynomial.arithmetic_extension_evaluation_exact",
+        "Audit.Wire3.GateBasicPolynomial.multiplication_extension_evaluation_exact",
+        "Audit.Wire3.GateBasicPolynomial.pair_read_degree",
+        "Audit.Wire3.GateBasicPolynomial.pair_mul_degree",
+        "Audit.Wire3.GateBasicPolynomial.arithmetic_pair_degree",
+        "Audit.Wire3.GateBasicPolynomial.multiplication_pair_degree",
+        "Audit.Wire3.GateBasicPolynomial.pair_constraints_degree",
+        "Audit.Wire3.GateBasicPolynomial.arithmetic_extension_degree",
+        "Audit.Wire3.GateBasicPolynomial.multiplication_extension_degree"
+      ],
+      "sources": [
+        "mle/contracts/src/Plonky2GateEvaluatorExt3.sol",
+        "mle/src/gate_ext3.rs"
+      ],
+      "scope": "Literal polynomial terms and exact evaluation for actual families 0,1,2,3,6,7. With affine wire and constant columns derive degrees 0,1,1,3,3,3 including varying arithmetic local constants and actual Ext2 nonresidue 7/lane order. No constraint satisfaction/Booleanity/circuit semantics or source/compiler refinement assumed."
+    },
+    {
+      "module": "Audit.Wire3.GateMdsPolynomial",
+      "theorems": [
+        "Audit.Wire3.GateMdsPolynomial.weighted_sum_eval",
+        "Audit.Wire3.GateMdsPolynomial.weighted_sum_degree",
+        "Audit.Wire3.GateMdsPolynomial.mds_circulant_actual_eval",
+        "Audit.Wire3.GateMdsPolynomial.mds_general_actual_eval",
+        "Audit.Wire3.GateMdsPolynomial.mds_circulant_degree",
+        "Audit.Wire3.GateMdsPolynomial.mds_general_degree",
+        "Audit.Wire3.GateMdsPolynomial.mds_list_actual_eval",
+        "Audit.Wire3.GateMdsPolynomial.mds_list_degree"
+      ],
+      "sources": [
+        "mle/contracts/src/PoseidonGateExt3.sol",
+        "mle/src/gate_ext3.rs"
+      ],
+      "scope": "Actual 12-column rotated circulant plus diagonal MDS, both Ext2 lanes, 48-wire and 24-term order connected to concrete Field polynomials. Degree at most one for affine wire inputs. This is linear MDS family 5, not nonlinear Poseidon family 4 or hash/circuit/compiler soundness."
+    },
+    {
+      "module": "Audit.Wire3.GateCheckedPolynomial",
+      "theorems": [
+        "Audit.Wire3.GateCheckedPolynomial.unsupported_polynomial_dispatch_none",
+        "Audit.Wire3.GateCheckedPolynomial.supported_polynomials_exist",
+        "Audit.Wire3.GateCheckedPolynomial.polynomial_dispatch_actual_evaluation",
+        "Audit.Wire3.GateCheckedPolynomial.validated_polynomial_terms_degree",
+        "Audit.Wire3.GateCheckedPolynomial.checked_contribution_exact",
+        "Audit.Wire3.GateCheckedPolynomial.checked_contribution_degree",
+        "Audit.Wire3.GateCheckedPolynomial.affine_checked_contribution",
+        "Audit.Wire3.GateCheckedPolynomial.affine_weighted_contribution_degree",
+        "Audit.Wire3.GateCheckedPolynomial.every_configured_family_branch_erased",
+        "Audit.Wire3.GateCheckedPolynomial.fully_configured_affine_row",
+        "Audit.Wire3.GateCheckedPolynomial.varying_coefficient_arithmetic_polynomial",
+        "Audit.Wire3.GateCheckedPolynomial.varying_coefficient_arithmetic_degree"
+      ],
+      "sources": [
+        "mle/contracts/src/Plonky2GateEvaluatorExt3.sol",
+        "mle/src/gate_ext3.rs",
+        "mle/src/sumcheck/gate_ext3_v2.rs"
+      ],
+      "scope": "Symbolic dispatcher only for seven actual families 0,1,2,3,5,6,7; remaining seven explicitly NONE. Successful actual validation and both input lengths derive fixed polynomial before every evaluation point, selected actual contribution degree<=q+1 and explicit affine weight degree<=q+2. Full configuration wrapper retains actual combined success; no all-row sum, actual eq-weight/endpoint provenance, interpolation/truth/PCS/FS or language/compiler refinement."
     }
   ]
 }

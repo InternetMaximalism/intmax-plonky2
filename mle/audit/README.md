@@ -63,8 +63,12 @@
 | [WhirQuicksort/Correctness](Audit/Wire3/WhirQuicksortCorrectness.lean) | 実indexed scan/swap/partition/左右再帰をモデル化。一般終了・範囲外保存・整列・重複数保存から基準sortとの一致を証明 |
 | [WhirSamplingExecution](Audit/Wire3/WhirSamplingExecution.lean) | 実sort→indexed compaction→raw queryを全WHIR両sampling箇所へ接続。結果・全状態・失敗の一致と単一checked設定入口の形状を証明 |
 | [WhirDomainPower](Audit/Wire3/WhirDomainPower.lean) | 実64bit mask/low-bit/shift/mulmodのscalar loopと既存冪乗の一致。256bit指数で終了し、範囲内queryの実domainPointへ接続。compiler/EVM refinementではない |
+| [OuterRound](Audit/Wire3/OuterRound.lean) | 外側の実係数和・inverse-two・Hornerを具体体多項式へ接続。端点和、次数、固定不同claimの一致点数、両laneの同じ更新を証明 |
+| [OuterChallenge](Audit/Wire3/OuterChallenge.lean) | 外側の実3×32byte squeezeとcoupled commit後の6counterを接続。明示uniform law下の偏り込み固定多項式上界。実FSや両laneの積増幅は未証明 |
+| [GatePolynomial/Basic/Mds](Audit/Wire3/GatePolynomial.lean) | 全14familyのzero-filter分岐除去と、7familyの実制約式・selector・固定alpha Hornerへの多項式評価一致と次数 |
+| [GateCheckedPolynomial](Audit/Wire3/GateCheckedPolynomial.lean) | 7familyに限定し、実設定検査と両入力長から寄与次数≤q+1、明示affine重み後≤q+2。未対応familyはNONEを保持 |
 
-現行rootは52モデル・1431件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
+現行rootは58モデル・1571件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
 件数は暗号安全性の達成率ではありません。
 
 [スコープと未証明事項](SCOPE.md)、[結果・再現手順・次工程](REPORT.md)、

@@ -57,3 +57,9 @@ import Audit.Wire3.WhirQuicksort
 import Audit.Wire3.WhirQuicksortCorrectness
 import Audit.Wire3.WhirSamplingExecution
 import Audit.Wire3.WhirDomainPower
+import Audit.Wire3.OuterRound
+import Audit.Wire3.OuterChallenge
+import Audit.Wire3.GatePolynomial
+import Audit.Wire3.GateBasicPolynomial
+import Audit.Wire3.GateMdsPolynomial
+import Audit.Wire3.GateCheckedPolynomial

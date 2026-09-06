@@ -85,6 +85,13 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   異なる長さだけでは末尾zeroにより同じ多項式になり得る。symbolic Polynomialのnoncomputable性と
   実Hornerの実行可能性を区別し、FSで固定される時点・分布・適応的選択の確率は別課題とする。
 - Verifierは正規化済みtyped入力に対する成功境界モデル。
+  OuterRoundは同じevaluateRoundの前向き係数和、具体inverse-two、逆向きHornerを
+  具体Field上多項式へ接続し、端点和・次数・固定不同claimの一致点数を証明する。
+  外側logのsource固定5係数loopへの適用には既存preflightの係数長5が必要。
+  OuterChallengeは内側とは別に実3×32byte squeeze、同digestと連続counterを接続し、
+  coupledRoundの両message吸収後log 0..2/gate 3..5と同じ多項式を保持する。
+  明示uniform triple lawの固定多項式上界はd(ceil(2^256/p)/2^256)³であり、
+  実hashの独立性・uniform性・適応的fixednessや両lane確率の積を主張しない。
   configuration、decoder、initial transcript、gate/norm/eq評価、hash、WHIR tail等を
   入力付き関数観測として残す。例外・gas分類は実EVMの全分類ではない。
 - Solidityのenvelope/deployment検査はconstructorで行い、callでは設定hashを照合する。
@@ -179,6 +186,13 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   全1147定数はソースと逐語比較するが、抽出検査をformal refinementとは呼ばない。
   zero-filter skipは保持する。degree budget検査から式の多項式次数証明は導かず、
   集約値0から全制約0への逆方向も主張しない。
+  GatePolynomialは全14familyのzero-filter分岐を同じ具体term/Hornerへ同一化し、
+  selectorの実因子と固定alpha Hornerの次数を導く。GateBasicPolynomial/Mdsは
+  IDs 0,1,2,3,5,6,7の実制約式へ評価一致を証明し、両wire/constant列のaffine入力から
+  それぞれ次数0,1,1,3,1,3,3を導く。Arithmeticのlocal constantも変数なので上界は3。
+  GateCheckedPolynomialはこの7familyだけで、実validateGate/両入力長/全設定の検査から
+  選択行寄与≤q+1、明示affine重み後≤q+2を証明する。残る7familyはsymbolic NONE。
+  重みの実eq列由来、全行和、補間/送信係数、各gate真偽・認証endpointは別境界。
 - Integrated.verifyはchecked norm形状と7challenge layout、同じ入力での全gate計算の
   Someを検査後、packed/norm/eq/gateを具体化したVerifier.verifyへ進む。
   modelEngineだけの利用にはこの保証がなく、getD zeroは旧interfaceへの全域化にすぎない。
@@ -198,6 +212,8 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    source/compiler refinementと外側統合入口への接続は残る。
    固定generatorの数学的位数は証明済みだが、native依存/codegenからの生成対応も対象に含める。
 2. 全14 gate評価の式から実多項式次数・gate意味論・sumcheckへの接続を証明。
+   7familyの実式/設定済み行次数と外側係数復元は接続済みだが、残7family・全行和・
+   補間/送信係数・回路truth chainへの接続を完成したとはしない。
    PI cacheの証明済み同値、selector/lookupの入口接続も全体経路へ反映。
 3. setup/VK/config生成、immutable store、全compact decoder、metadata decoder、
    初期transcript・真のchallenge・public-input hashをIntegratedへ接続。
@@ -215,7 +231,8 @@ GoldilocksCertificate単独は数値証明書であり、素数性の根拠はGo
 Lucas適用・全prime-divisor列挙・小因子の素数性の証明と組み合わせたものに限る。
 Mathlib v4.10.0のcommitと公式lockの6依存を監査専用に固定し、直接importは特定の
 モジュール/名称だけ許可する（Foundationの3import、NormのRing、WhirPolynomialのRoots、
-WhirChallengeのFintype.Card、WhirQuicksortのList.Perm、CorrectnessのList.Sort）。
+WhirChallengeのFintype.Card、WhirQuicksortのList.Perm、CorrectnessのList.Sort、
+GatePolynomialのList.Count）。
 標準3公理allowlistと全名付き定理の検査は維持する。
 依存guardは全tracked sourceの実Git blob・HEAD・origin・固定release tagと追加sourceを検査。
 この検査は生成済み.oleanやProofWidgets release archiveの出自を認証しない。

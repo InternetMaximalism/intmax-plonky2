@@ -35,6 +35,7 @@ EXTERNAL_IMPORTS = {
     "Audit.Wire3.WhirChallenge": frozenset({"Mathlib.Data.Fintype.Card"}),
     "Audit.Wire3.WhirQuicksort": frozenset({"Mathlib.Data.List.Perm"}),
     "Audit.Wire3.WhirQuicksortCorrectness": frozenset({"Mathlib.Data.List.Sort"}),
+    "Audit.Wire3.GatePolynomial": frozenset({"Mathlib.Data.List.Count"}),
 }
 REQUIRED_MODULES = {"Audit.Wire3." + name for name in (
     "Arithmetic", "Packed", "Transcript", "Compact", "Sumcheck", "Verifier",
@@ -51,6 +52,8 @@ REQUIRED_MODULES = {"Audit.Wire3." + name for name in (
     "WhirConfigured", "WhirQuicksort", "WhirQuicksortCorrectness",
     "WhirSamplingExecution",
     "WhirDomainPower",
+    "OuterRound", "OuterChallenge", "GatePolynomial", "GateBasicPolynomial",
+    "GateMdsPolynomial", "GateCheckedPolynomial",
 )}
 REQUIRED = {
     PROJECT + "/check-wire3.py", PROJECT + "/test-check-wire3.py",
