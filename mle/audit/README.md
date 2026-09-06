@@ -57,8 +57,10 @@
 | [GoldilocksDomain](Audit/Wire3/GoldilocksDomain.lean) | 固定生成元7の位数p−1、k≤32で派生根の位数2^k、transpose指数と相異点の証明。任意shape-valid generatorや設定生成の証明ではない |
 | [WhirQuadratic](Audit/Wire3/WhirQuadratic.lean) | 実sumcheckのc1復元/Horner、端点和、次数≤2と固定不同claimの一致点数≤2。比較側のtruth/FS/確率は別条件 |
 | [WhirParameters](Audit/Wire3/WhirParameters.lean) | 実順の全typed設定guard、bound/deployment入口の区別、raw点の損失なしcanonical化と既存WhirInitial.validatedParamsへの接続 |
+| [WhirDomainBridge](Audit/Wire3/WhirDomainBridge.lean) | 実domainPointを固定生成式へ接続。明示した生成元・次元条件下で単射と、同長・不同の固定vectorの一致query数≤長さ−1 |
+| [WhirChallenge](Audit/Wire3/WhirChallenge.lean) | 実120byte/3×LE40byte還元の全単射と事象数上界。明示的uniform入力なら固定不同WHIR quadraticの一致確率≤2(ceil(2^320/p)/2^320)³。実FS分布は未証明 |
 
-現行rootは45モデル・1191件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
+現行rootは47モデル・1250件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
 件数は暗号安全性の達成率ではありません。
 
 [スコープと未証明事項](SCOPE.md)、[結果・再現手順・次工程](REPORT.md)、

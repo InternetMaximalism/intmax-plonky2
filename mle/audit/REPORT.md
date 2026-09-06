@@ -464,6 +464,30 @@ runnerは全sourceと失敗経路を独立レビューし、補助self-check12�
 Lean toolchain/core artifact・Python/Git・固定metaprogramと競合する悪意あるFS変更がないことは
 信頼境界に残る。実装refinement、暗号健全性、後続モデルのfresh検査を証明したことにはしない。
 
+## 第7継続更新（ac3476bb以降）
+
+2モデル・59定理を追加し、47モデル・1250名付き定理へ拡張した。
+
+- **実評価点での一致query数**: WhirIntermediate.domainPointの同じraw Ext3値を
+  具体Fieldへ包み、固定生成元由来のtranspose後の点との一致を証明。
+  k≤32、実generatorと固定値の一致、正のcoset次元と積=2^kの明示条件下で単射を導き、
+  同長・不同の固定canonical vectorの一致する相異query数≤長さ−1を証明した。
+  実raw Hornerと正規化比較の双方へ接続。実query範囲や設定生成の証明ではない。
+- **実剰余変換を含む条件付き上界**: 全120byte入力と3個の40byte LE整数の全単射を
+  証明し、同じ入力の実reduceChallengeへ接続。商/剰余の単射を使い、d点に還元される
+  入力の個数≤d・ceil(2^320/p)³を、巨大な全入力空間の列挙なしで導いた。
+  全120byte入力を等確率と定義した有限uniform lawでは、固定した不同WHIR quadraticの
+  一致確率≤2(ceil(2^320/p)/2^320)³。これは実Keccak/FSの分布や独立性を証明しない。
+  外側MLEは3×32byte squeeze/異なる係数復元式なので、この内側定理とは区別する。
+
+追加2モデルはrootが全文・実source・依存モデル・明示前提を対照し、採用名で直接buildした。
+別担当の独立read-onlyレビューでも必須修正なし。内外のchallenge分布を混同しない説明を
+WhirChallenge冒頭にも追加した。統合guardは全1250名の実定理/型/推移的公理、394 hashes、
+18表1147語、7依存5601fileを検査してPASS。source inventoryは290file中29部分対応/261未対応。
+guard33件・dependency34件・provision20件、空白差分とruntime無変更の検査もPASS。
+全体の実装/PCS健全性は未完了であり、
+40モデルfresh検査を、この47モデルのfresh再生成実績へ読み替えない。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

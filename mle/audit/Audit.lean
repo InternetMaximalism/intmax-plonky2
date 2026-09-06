@@ -50,3 +50,5 @@ import Audit.Wire3.WhirTail
 import Audit.Wire3.GoldilocksDomain
 import Audit.Wire3.WhirQuadratic
 import Audit.Wire3.WhirParameters
+import Audit.Wire3.WhirDomainBridge
+import Audit.Wire3.WhirChallenge

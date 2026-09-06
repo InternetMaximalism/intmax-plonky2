@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "30c4f1070e0606b59bf4000c7f18271a9253e7fffa11f55fc5dffab91eee64de",
+      "sha256": "8e4b29ab58a4fd77e524641640f3ffc3522dbd883f09ea133902efa04523bb38",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "da5ffb6c4a1163cd474fb244332053c6293c6ee877411acb6d64032124af65ba",
+      "sha256": "537ab6ce3226fc7406b3540f63a262976b6965cf332b2d48fd397b39b79fdede",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "b98c4adbb015e82058dbd562794fde10745c4f42f876243d86e47d7ab729da39",
+      "sha256": "4f86d85faeddb4f770efad7ac3913fa028db215cd8c8e47004404aed2997ec09",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "cb447e4c252f4e61c07ef483f935a4367e605902a788df8ed5991c94c3327670",
+      "sha256": "3e394d2007a167776197ff52bc8357f72d980fa9c8c87408c70ff325c80ad054",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "89c618024d3dc6eeb581ba11cb77233be9fc2ca9535221699314547aa9dd7c19",
+      "sha256": "ecb063650deff1f91b24b46432738ef362017d98e4f4e638f521b585b03d5460",
       "kind": "spec"
     },
     {
@@ -1962,6 +1962,16 @@
       "path": "util/src/transpose_util.rs",
       "sha256": "934476bffb6f918d14565fdc3f742e6f7cb8e260ae59663c4b183f09fe870caa",
       "kind": "implementation"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/WhirChallenge.lean",
+      "sha256": "151010ffecf7b6ee5c23eb2807885e63ea7c4d9d5c5c444605c55af947784792",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/WhirDomainBridge.lean",
+      "sha256": "19bb7ea69a15c5fba4c04949e50a8c2d5e214662fee364998023250598bc5124",
+      "kind": "current-model"
     }
   ],
   "models": [
@@ -3629,6 +3639,85 @@
         "mle/contracts/src/spongefish/SpongefishWhirVerify.sol"
       ],
       "scope": "Manual executable typed parameter-admission sequence with all source scalars and raw Ext3 points retained: initial folding/domain, every round folding/domain, final remainder/size, exact single/multi-point branches and canonical raw coordinate conversion. Distinct bound and deployment entry guards. Success yields existing folding schedule, all domains, lossless typed forms, positive exact evaluation count and WhirInitial.validatedParams without an extra assumed shape. Does not validate unused sample/PoW parameters, expected-value canonicality, production 3x1 caller provenance, generator exact order, ABI/uint widths/overflow/memory/compiler semantics or cryptographic soundness."
+    },
+    {
+      "module": "Audit.Wire3.WhirDomainBridge",
+      "theorems": [
+        "Audit.Wire3.WhirDomainBridge.actual_domain_point_canonical",
+        "Audit.Wire3.WhirDomainBridge.actual_domain_point_base_limbs",
+        "Audit.Wire3.WhirDomainBridge.actual_c0_is_transposed_canonical_value",
+        "Audit.Wire3.WhirDomainBridge.actual_raw_point_is_same_transposed_base",
+        "Audit.Wire3.WhirDomainBridge.actual_c0_injective",
+        "Audit.Wire3.WhirDomainBridge.actual_domain_points_injective",
+        "Audit.Wire3.WhirDomainBridge.actual_element_raw_exact",
+        "Audit.Wire3.WhirDomainBridge.actual_elements_injective",
+        "Audit.Wire3.WhirDomainBridge.actual_point_equality_iff_same_index",
+        "Audit.Wire3.WhirDomainBridge.query_image_card_preserved",
+        "Audit.Wire3.WhirDomainBridge.query_points_membership_is_actual_image",
+        "Audit.Wire3.WhirDomainBridge.agreeing_indices_membership_exact",
+        "Audit.Wire3.WhirDomainBridge.agreement_image_is_actual_horner_agreement_set",
+        "Audit.Wire3.WhirDomainBridge.agreement_card_preserved_at_actual_points",
+        "Audit.Wire3.WhirDomainBridge.fixed_canonical_vectors_agree_at_most_length_sub_one_queries",
+        "Audit.Wire3.WhirDomainBridge.actual_horner_evaluation_is_canonical",
+        "Audit.Wire3.WhirDomainBridge.checked_agreement_is_raw_equality",
+        "Audit.Wire3.WhirDomainBridge.fixed_canonical_vectors_checked_agreement_bound",
+        "Audit.Wire3.WhirDomainBridge.enough_distinct_queries_separate_fixed_vectors",
+        "Audit.Wire3.WhirDomainBridge.actual_zero_index_is_one",
+        "Audit.Wire3.WhirDomainBridge.empty_query_set_has_no_agreements"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol",
+        "mle/contracts/src/spongefish/GoldilocksExt3.sol"
+      ],
+      "scope": "Exact existing WhirIntermediate.domainPoint base limb equals the fixed transposed generator residue, with same raw triple wrapped in concrete Ext3 Field. Explicit k<=32, actual generator equality and positive coset dimensions/product imply actual index-to-point injectivity and image cardinal preservation. Same-length distinct canonical fixed final vectors agree on at most length-1 distinct bounded query indices, for raw Horner equality and actual normalized comparison. Not source query range, arbitrary generator, config provenance, glPow/machine/refinement or adaptive/FS/PCS probability."
+    },
+    {
+      "module": "Audit.Wire3.WhirChallenge",
+      "theorems": [
+        "Audit.Wire3.WhirChallenge.ceiling_quotient_pred_form",
+        "Audit.Wire3.WhirChallenge.quotient_lt_ceiling",
+        "Audit.Wire3.WhirChallenge.ceiling_quotient_is_least_upper_multiple",
+        "Audit.Wire3.WhirChallenge.same_remainder_and_quotient_are_same_word",
+        "Audit.Wire3.WhirChallenge.fixed_residue_fiber_bound",
+        "Audit.Wire3.WhirChallenge.from_le_is_bounded",
+        "Audit.Wire3.WhirChallenge.le_from_le_roundtrip",
+        "Audit.Wire3.WhirChallenge.byte_block_cardinality",
+        "Audit.Wire3.WhirChallenge.word_size_is_320_bits",
+        "Audit.Wire3.WhirChallenge.word_size_positive",
+        "Audit.Wire3.WhirChallenge.modulus_positive",
+        "Audit.Wire3.WhirChallenge.input_forward_slices",
+        "Audit.Wire3.WhirChallenge.input_inverse_is_three_encodings",
+        "Audit.Wire3.WhirChallenge.actual_reduction_exact",
+        "Audit.Wire3.WhirChallenge.encoded_sample_reduction_exact",
+        "Audit.Wire3.WhirChallenge.equiv_event_card",
+        "Audit.Wire3.WhirChallenge.fixed_40byte_residue_preimage_bound",
+        "Audit.Wire3.WhirChallenge.fixed_40byte_uniform_probability_bound",
+        "Audit.Wire3.WhirChallenge.reduction_and_quotients_determine_sample",
+        "Audit.Wire3.WhirChallenge.quotient_sample_cardinality",
+        "Audit.Wire3.WhirChallenge.sample_cardinality",
+        "Audit.Wire3.WhirChallenge.actual_120byte_cardinality",
+        "Audit.Wire3.WhirChallenge.event_bound_by_residue_and_code",
+        "Audit.Wire3.WhirChallenge.fixed_point_set_preimage_bound",
+        "Audit.Wire3.WhirChallenge.at_most_d_points_preimage_bound",
+        "Audit.Wire3.WhirChallenge.fixed_ext3_value_preimage_bound",
+        "Audit.Wire3.WhirChallenge.actual_reduction_element_exact",
+        "Audit.Wire3.WhirChallenge.actual_byte_and_sample_event_counts_agree",
+        "Audit.Wire3.WhirChallenge.actual_120byte_point_set_preimage_bound",
+        "Audit.Wire3.WhirChallenge.actual_120byte_fixed_value_preimage_bound",
+        "Audit.Wire3.WhirChallenge.uniform_byte_probability_is_between_zero_and_one",
+        "Audit.Wire3.WhirChallenge.uniform_empty_event_probability",
+        "Audit.Wire3.WhirChallenge.uniform_entire_field_probability",
+        "Audit.Wire3.WhirChallenge.uniform_byte_probability_bound",
+        "Audit.Wire3.WhirChallenge.uniform_byte_probability_product_form",
+        "Audit.Wire3.WhirChallenge.actual_quadratic_byte_event_exact",
+        "Audit.Wire3.WhirChallenge.fixed_quadratics_uniform_byte_probability_bound",
+        "Audit.Wire3.WhirChallenge.fixed_quadratics_uniform_bound_explicit"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/SpongefishWhir.sol",
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol"
+      ],
+      "scope": "Explicit bijections between fixed-length byte lists and little-endian words, including same 120-byte input split at 0/40/80 and actual Spongefish.reduceChallenge. Generic quotient/remainder injection bounds residue and three-limb event preimage counts by d*ceil(2^320/p)^3 without enumerating the sample space. Under the explicitly defined finite uniform 120-byte count/total law, fixed distinct inner-WHIR quadratic claims have probability at most 2*(ceil(2^320/p)/2^320)^3. No uniformity/independence/fixedness derived from Keccak/ROM/Fiat-Shamir; not the different outer MLE transcript/round distribution, source/Yul refinement or full PCS soundness."
     }
   ]
 }

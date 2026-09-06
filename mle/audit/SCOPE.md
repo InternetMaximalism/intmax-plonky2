@@ -48,6 +48,12 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   120byteを一括生成して3個のLE40byte値に還元するchallenge、24byteの厳密canonical読取り、
   PoWのchallenge32＋nonce8＋zero24とLE先頭8byte判定、hint Vec prefixを具体化。
   生の定数Hash引数はRO・衝突耐性・entropyの仮定ではない。実wordload/uint256/IO-patternは別境界。
+  WhirChallengeは同じ120byteの0/40/80 sliceと3個のLE整数との全単射を証明し、
+  実reduceChallengeのd点への入力数をd・ceil(2^320/p)³以下に制限する。
+  全120byte文字列を等確率と定義した有限uniform lawの下では、固定した不同の内側WHIR
+  quadraticの一致確率は2(ceil(2^320/p)/2^320)³以下。これは実Keccak/FSのuniform性、
+  前のmessageからの独立性・適応選択の固定性を導いた定理ではない。
+  外側MLEの3回の32byte squeezeと別の係数復元式には、この内側WHIR定理を適用しない。
 - WhirSampling.challengeRawは1byteにつき1hash/counter更新、BE query、power-of-two maskを具体化。
   count=0/numLeaves=1の無消費分岐、counter上限、raw rangeを証明する。
   challengeIndicesReferenceは実行可能な挿入sortと隣接dedupの基準版であり、sourceの
@@ -137,6 +143,12 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   GoldilocksDomainは6素因子証明書からorder(7)=p−1、k≤32で固定根7^((p−1)/2^k)の
   位数2^kと相異indexの冪/transpose後のcanonical値の単射性を証明する。
   この固定生成式へのArk/native WHIR/codegenの形式的対応、digest bindingは別課題。
+  WhirDomainBridgeは実WhirIntermediate.domainPointそのもののc0を、このtranspose後の
+  canonical値へ接続する。k≤32・実generatorの固定値との一致・正のcoset次元と積=2^kを
+  明示したときだけ、実点の単射、query像のcardinality保存、同長・不同の固定canonical
+  最終vectorの一致query数≤長さ−1を導く。raw Hornerと正規化比較の両方を扱う。
+  queryはFinset (Fin (2^k))であり、重複sample列・実query range/configへの接続・
+  _glPowの機械語対応・FS確率を、この定理から暗黙に得たとはしない。
   値はstored VK/config由来である必要があり、proverが自由に変更できるfieldとはしない。
 - Normはformal-coordinate式とhelper/logUp集計を具体化。PIはRustの順序付き直接和で、
   PiSharedBits/PiCacheでSolidityのrow-cache/shared-bit最適化とのモデル内同値を証明。
@@ -186,7 +198,8 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
 GoldilocksCertificate単独は数値証明書であり、素数性の根拠はGoldilocksFoundationの
 Lucas適用・全prime-divisor列挙・小因子の素数性の証明と組み合わせたものに限る。
 Mathlib v4.10.0のcommitと公式lockの6依存を監査専用に固定し、直接importは特定の
-モジュール/名称だけ許可する（Foundationの3import、NormのRing、WhirPolynomialのRoots）。
+モジュール/名称だけ許可する（Foundationの3import、NormのRing、WhirPolynomialのRoots、
+WhirChallengeのFintype.Card）。
 標準3公理allowlistと全名付き定理の検査は維持する。
 依存guardは全tracked sourceの実Git blob・HEAD・origin・固定release tagと追加sourceを検査。
 この検査は生成済み.oleanやProofWidgets release archiveの出自を認証しない。
