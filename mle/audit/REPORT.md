@@ -282,7 +282,7 @@ release artifactの信頼境界またはソース再生成手順を明確にす�
 Mathlib候補・採用準備中の依存checkerはこの結果に含めない。この時点のrootはStd-only。
 リモートCI・全Rust/Solidity試験は再実行していない。main/push/親pinも変更しない。
 
-## 第4継続更新（f7236217以降）
+## 第4チェックポイント（da3df4ed）
 
 3モデル・55定理を追加し、37モデル・937定理へ拡張した。
 本番のRust/Solidity依存には触れず、監査専用のLean数学依存を導入した。
@@ -309,7 +309,8 @@ Mathlib候補・採用準備中の依存checkerはこの結果に含めない。
 Mathlib v4.10.0 `a719ba5c3115d47b68bf0497a9dd1bcbb21ea663` と、その公式lockの
 6依存を全てcommit固定した。正確なURL/SHAは追跡する `lake-manifest.json` と
 `check-proof-dependencies.py` の独立policyで照合する。直接外部importはFoundationの3名称、
-NormのRingだけに限定し、無制限なMathlib importや歴史資料の公理は許可しない。
+NormのRingだけに限定した（第5継続でWhirPolynomialのRootsを追加）。
+無制限なMathlib importや歴史資料の公理は許可しない。
 
 ```sh
 python3 -B mle/audit/test-check-wire3.py
@@ -335,7 +336,7 @@ Mathlib cache getや互換性不明の既存バイナリcacheは使っていな�
 標準3公理と全定理検査は維持するが、Lean toolchain・imported object・実行環境の信頼は別境界。
 別途fresh出力でのsource再生成手順を調査しており、この調査結果を現行PASSへ混ぜない。
 
-### 第4継続の検査状態
+### 第4チェックポイントの検査
 
 依存guardの34件、provisionの20件、main guardの33件の単体テストはPASS。
 7依存の実source pin照合とCI YAML/空白差分・実行コード無変更も確認した。
@@ -347,6 +348,50 @@ build前後の7依存5601 tracked fileの照合もPASS。これらは言語refin
 helperは検査済みsource bytesを明示compileして読み込む形へ変更した。
 cache loaderを使わないことを単体検査する。依存source pinやLeanの公理条件は緩めていない。
 リモートCI・全Rust/Solidity試験は未実行。main/push/親pinを変更していない。
+
+## 第5継続更新（da3df4ed以降）
+
+3モデル・82定理を追加し、40モデル・1019名付き定理へ拡張した。
+
+- **最終多項式の意味と一致点数**: 実reverse-Hornerと具体Ext3体上のPolynomial.evalが
+  同じraw値を返すことを証明。係数を反転せず、全canonical raw係数を損失なく持ち上げる。
+  同長・不同の2つの固定vectorなら、その評価が一致する相異点数は高々長さ−1。
+  空列・singleton zero、異なる長さでも同じ多項式になる例も明示する。
+  根の個数はMathlibの証明済み定理から導出し、旧Polyの根個数公理は使わない。
+  これは固定性/FS/query分布/適応選択/PCS確率の証明ではない。
+- **evalL0の実逆元接続**: 実specialized squareの反復からx^(2^bits)を導出。
+  degreeBits<64から0<n<pとuint64範囲を証明し、実denominator inverseを使った有理式一致へ接続。
+  出力存在 iff bits<64かつx≠1。x=1を数学的な補間値1に置換せず実sourceどおりnoneとする。
+  ほかのn次根における正当なzero出力と、逆元が存在しない場合を区別する。
+- **中間WHIRの同一実行**: 実WhirPrefixから始め、new root/全OOD challenge/全answers/PoW、
+  reference sampling、前rootの実raw Merkle、実RLC、canonical decodeと全列dot、
+  constraint保存、具体sumcheck、previous root更新を一つの状態列へ接続。
+  初段3 base roots×1vectorから後段single Ext3 rootへの切替えも実装する。
+  成功時の全query/全group/全column、同RLC index、rootの元32byte slice、
+  乱数prefix・constraint数・transcript/hint cursorを証明。
+  初期処理＋最初のsumcheck＋2中間roundの通常toy例は736 transcript bytes/128 hint bytesを消費する。
+  toy hashの実行例であり、production暗号proofの生成例ではない。
+
+WhirIntermediateのProfileShapeはVK/config由来のprevious-round設定の投影で、
+sourceに存在しないguardを追加したものではない。domain pointのNat.powは_glPowの
+数学的結果のモデルであり、binary loopの言語refinementはまだ別課題。
+純粋decode→dotとsourceの逐次decode/算術の命令対応、in-place quicksortも未証明。
+最終vector/read/Merkleから元prefix由来のFinal.Context、finalsumcheck/claim/EOFへの
+接続は次工程であり、今回の中間round証明だけで全WHIRを完了としない。
+
+WhirPolynomial/GoldilocksLagrangeは別担当が全文・実ソース・前提を独立レビューしてPASS。
+WhirIntermediateもrootが全定義・定理・元の各source phaseを対照した。
+外部importはWhirPolynomialのMathlib.Algebra.Polynomial.Rootsだけを追加許可する。
+統合guardと全1019定理の検査はPASS。40モデル・387 reviewed hashes、runtime 290/部分対応28、
+18表1147語、build前後の7依存5601 tracked fileの照合もPASS。
+main guard33件、CI YAML/空白差分、実行コード無変更も再確認した。
+これは通常Lake成果物を用いた検査であり、fresh source再生成の検査結果はまだ含めない。
+実装・main・push・親pinは変更しない。
+
+相異なる評価点の前提を実queryへ接続する際、_validateDomain単独はgeneratorの位数を
+検査しない点を静的に確認した。固定VK/configのgenerator生成経路から位数を証明する必要があり、
+単なる形状検査を原始根の証明へ読み替えない。これは攻撃の実証や、全固定configの
+安全/不安全の判定ではなく、今後の健全性証明で閉じるべき設定生成の境界である。
 
 ## 次工程
 

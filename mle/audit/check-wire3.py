@@ -31,6 +31,7 @@ EXTERNAL_IMPORTS = {
         "Mathlib.NumberTheory.LucasPrimality", "Mathlib.FieldTheory.Finite.Basic",
         "Mathlib.Tactic.NormNum.Prime"}),
     "Audit.Wire3.GoldilocksNorm": frozenset({"Mathlib.Tactic.Ring"}),
+    "Audit.Wire3.WhirPolynomial": frozenset({"Mathlib.Algebra.Polynomial.Roots"}),
 }
 REQUIRED_MODULES = {"Audit.Wire3." + name for name in (
     "Arithmetic", "Packed", "Transcript", "Compact", "Sumcheck", "Verifier",
@@ -41,6 +42,7 @@ REQUIRED_MODULES = {"Audit.Wire3." + name for name in (
     "PiSharedBits", "PiCache", "GoldilocksCertificate",
     "MerkleExtraction", "WhirSampling", "WhirRows", "WhirRowBinding", "FermatBridge",
     "WhirSchedule", "GoldilocksFoundation", "GoldilocksNorm", "GoldilocksExt3Field",
+    "WhirPolynomial", "GoldilocksLagrange", "WhirIntermediate",
 )}
 REQUIRED = {
     PROJECT + "/check-wire3.py", PROJECT + "/test-check-wire3.py",

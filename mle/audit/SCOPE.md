@@ -24,7 +24,9 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   GoldilocksFoundationは具体pの素数性・一般Fermat・立方根2の不存在を証明する。
   GoldilocksNormは全非零canonical Ext3で実inverseの成功・左右逆元性を証明する。
   GoldilocksExt3Fieldは実演算/実inverseのwrapperにFieldを構成し、標数pと要素数p³を証明。
-  X^3-2のPolynomial.Irreducibleとしての明示定理やevalL0の完全接続はまだ別課題。
+  GoldilocksLagrangeは実square反復を2冪乗へ接続し、evalL0の出力存在 iff
+  degreeBits<64かつx≠1と、実inverse成功後の有理式一致を証明。x=1の失敗は保持する。
+  X^3-2のPolynomial.Irreducibleとしての明示定理、機械語のshift/cast/memoryは別課題。
   Algebraでは実際のc0/c1/c2式から加法・乗法の交換/結合/分配、加法逆元と取消を証明。
   ring法則を仮定するレコードは使わない。NormIdentityはformal adjugate/norm恒等式、
   ModularPowerは具体binary exponentiationの値と成功fuel条件を証明する。
@@ -59,6 +61,11 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
 - Sumcheckのcollision reductionは意味的なmessage/truth関数を対象とする。
   honest truth chainとの対応が前提で、production verifierがtruthを検査するわけではない。
   coefficient復元・gate/norm多項式との完全な接続、次数・根の個数・確率・FS変換は残る。
+  WhirPolynomialは終端の実constant-first Hornerだけを具体Ext3体上Polynomialへ接続し、
+  同長・不同の固定canonical最終vectorの一致する相異点数≤長さ−1を証明する。
+  Finsetは重複のない点集合であり、query listやsource domain mapの単射性を仮定せず代入しない。
+  異なる長さだけでは末尾zeroにより同じ多項式になり得る。symbolic Polynomialのnoncomputable性と
+  実Hornerの実行可能性を区別し、FSで固定される時点・分布・適応的選択の確率は別課題とする。
 - Verifierは正規化済みtyped入力に対する成功境界モデル。
   configuration、decoder、initial transcript、gate/norm/eq評価、hash、WHIR tail等を
   入力付き関数観測として残す。例外・gas分類は実EVMの全分類ではない。
@@ -82,7 +89,14 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   全claimのmask照合、cross行列、vector/constraint RLC、初期sumを具体化。
   WhirPrefixはその実結果・同一byte列を最初のsumcheckへ渡す。
   Params/form配列はvalidated callerからの投影で、runtimeで新しく保存するfieldではない。
-  中間round/sampling/row bytesから最終Contextまでの接続、外側WHIR引数との型変換は残る。
+  WhirIntermediateはこの同prefixから中間round列へ同じsum/roots/vector RLC/randomness/cursorsを渡す。
+  new root→全OOD challenge→全answers→PoW→sampling→前rootのraw Merkle→round RLC→
+  OOD/全queryのdecoded dot→constraint保存→sumcheck→previous root更新を具体化。
+  round0は3 base roots×1vector、以後single Ext3 rootだけを対象とする。全query/全group/全columnと
+  実RLC index、根の32byte slice、読取り量、constraint数を成功実行から導出する。
+  ProfileShapeはvalidated callerのprevious-round設定投影であり追加runtime guardではない。
+  source quicksort、domainPowのbinary loop、decode/算術の命令順の形式的対応は残る。
+  最終Contextまでの全接続、外側WHIR引数との型変換も引き続き別課題。
 - Merkleはraw32byte digest、左右64byte圧縮、厳密昇順と層別sibling処理を具体化。
   読取りがある場合のcursor境界と、same-index/same-depthの2本のpathが異なるleaf hashを
   同じrootへ送るなら圧縮入力の衝突があることを証明。hashの単射性は仮定しない。
@@ -100,6 +114,9 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
 - WhirScheduleは既存_validateParametersのfolding guardのみの投影。初期・中間・終端の
   変数数の完全分割、各roundのremaining/suffix、underflowなし、最終2冪サイズを証明する。
   domain/generator/coset/点配列/ABIの全検証は未実装。成功を完全設定検証済みとしない。
+  sourceの_validateDomain単独はgeneratorの非零/canonical性と形状だけを検査し、位数は検査しない。
+  query indexを相異なる評価点へ写すには、固定VKのgenerator生成から必要な位数を別途導出する。
+  この条件をshape検査の成功やFinsetの重複なし条件から暗黙に得たことにしない。
   値はstored VK/config由来である必要があり、proverが自由に変更できるfieldとはしない。
 - Normはformal-coordinate式とhelper/logUp集計を具体化。PIはRustの順序付き直接和で、
   PiSharedBits/PiCacheでSolidityのrow-cache/shared-bit最適化とのモデル内同値を証明。
@@ -126,18 +143,18 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
 
 ## 未完了の全体証明（優先順）
 
-1. 具体化済みWHIR initial/最初のsumcheck・内側byte/PoWを中間round・samplingへつなぎ、
+1. 具体化済みWHIR initial/最初のsumcheck・中間round・内側byte/PoWから終端へつなぎ、
    Plan/ContextとfixedVK/root/pointへの認証を接続。raw row bytes→leaf hash→multiproof→
    各queryの開示path→終端比較を一つの実行経路として証明。raw row→multiproof→path→
-   復号/dotのbindingは接続済みだが、samplingのquicksort同値と中間round全体は残る。
-   native依存revisionも対象に含める。
+   復号/dotのbindingと中間round列は接続済みだが、samplingのquicksort同値と最終Contextは残る。
+   native依存revisionとgeneratorの生成/位数保証も対象に含める。
 2. 全14 gate評価の式から実多項式次数・gate意味論・sumcheckへの接続を証明。
    PI cacheの証明済み同値、selector/lookupの入口接続も全体経路へ反映。
 3. setup/VK/config生成、immutable store、全compact decoder、metadata decoder、
    初期transcript・真のchallenge・public-input hashをIntegratedへ接続。
    現在別モジュールのWhirFinal/Merkleを、全whirTailの代替と誤認しない。
 4. 証明済みの素数性・具体Ext3有限体/逆元を、Rust/Yulの実行意味論へ接続し、
-   手動対照を形式的refinementへ置換。evalL0等の残る演算にも適用する。
+   手動対照を形式的refinementへ置換。evalL0のモデル内証明も全呼出し経路へ適用する。
 5. honest proverの全段階、completeness、再帰回路/親statementとのcompositionを証明。
 6. 暗号仮定を明記したPCS/Fiat–Shamir/grindingの定量的健全性を証明。
    全てのhashに無条件の数学的安全性があると仮定しない。
@@ -148,7 +165,8 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
 GoldilocksCertificate単独は数値証明書であり、素数性の根拠はGoldilocksFoundationの
 Lucas適用・全prime-divisor列挙・小因子の素数性の証明と組み合わせたものに限る。
 Mathlib v4.10.0のcommitと公式lockの6依存を監査専用に固定し、直接importは特定の
-モジュール/名称だけ許可する。標準3公理allowlistと全名付き定理の検査は維持する。
+モジュール/名称だけ許可する（Foundationの3import、NormのRing、WhirPolynomialのRoots）。
+標準3公理allowlistと全名付き定理の検査は維持する。
 依存guardは全tracked sourceの実Git blob・HEAD・origin・固定release tagと追加sourceを検査。
 この検査は生成済み.oleanやProofWidgets release archiveの出自を認証しない。
 通常Lakeビルドにはそれらの成果物とLean toolchainの信頼境界があり、全source-only再現とは呼ばない。

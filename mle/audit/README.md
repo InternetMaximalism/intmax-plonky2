@@ -49,8 +49,11 @@
 | [GoldilocksFoundation](Audit/Wire3/GoldilocksFoundation.lean) | 具体証明書と証明済みLucas基準からpの素数性、一般Fermat、立方根2の不存在を導出。新しい体公理を置かない |
 | [GoldilocksNorm](Audit/Wire3/GoldilocksNorm.lean) | 実normが0 iff canonical Ext3が0。全非零入力で実WhirFinal.inverseが成功し、左右の積が1になることを証明 |
 | [GoldilocksExt3Field](Audit/Wire3/GoldilocksExt3Field.lean) | 実演算・実inverseを包む型にFieldを構成。標数p、三座標との全単射、要素数p³、Fermat/Frobeniusを証明 |
+| [WhirPolynomial](Audit/Wire3/WhirPolynomial.lean) | 実constant-first Hornerと具体体上Polynomial.evalの一致。同長・不同の固定canonical vectorの一致点数≤長さ−1。query分布や適応選択の確率ではない |
+| [GoldilocksLagrange](Audit/Wire3/GoldilocksLagrange.lean) | 実反復squareと2冪乗、guardとscalar範囲、実inverseを通るevalL0の有理式一致。x=1はsourceどおり失敗 |
+| [WhirIntermediate](Audit/Wire3/WhirIntermediate.lean) | 初期prefixからnew root/OOD/PoW/前rootのraw Merkle/RLC/dot/constraint/sumcheckまで同じ実状態で接続。3 base roots→単一Ext3 root。設定投影・reference sortの境界は残る |
 
-現行rootは37モデル・937件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
+現行rootは40モデル・1019件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
 件数は暗号安全性の達成率ではありません。
 
 [スコープと未証明事項](SCOPE.md)、[結果・再現手順・次工程](REPORT.md)、

@@ -42,3 +42,6 @@ import Audit.Wire3.WhirSchedule
 import Audit.Wire3.GoldilocksFoundation
 import Audit.Wire3.GoldilocksNorm
 import Audit.Wire3.GoldilocksExt3Field
+import Audit.Wire3.WhirPolynomial
+import Audit.Wire3.GoldilocksLagrange
+import Audit.Wire3.WhirIntermediate
