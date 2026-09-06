@@ -58,10 +58,10 @@
 追加6モデルは別担当による独立read-onlyレビューも実施。
 Integratedのエラー分類/順序はモデル上のもので、実装の例外・slashing証拠との一致ではない。
 
-## 今回の継続更新（69516414以降）
+## 第2チェックポイント（4422b4c7）
 
 14モデルを追加し、既存統合入口への2定理追加と合わせて326定理増えた。
-現行rootは計28モデル・698名付き定理。件数を安全性の達成率とはしない。
+この時点のrootは計28モデル・698名付き定理。件数を安全性の達成率とはしない。
 
 - **全14 gateの具体評価と統合**: 残る8familyの評価を完成し、GatesCompleteを
   Integratedへ接続した。valid設定と入力長から実評価結果Someが得られることを証明。
@@ -103,6 +103,32 @@ PI cacheの正常例はPI集計部分の計算例で、完全なNorm terminal/ve
 成果は専用ローカルブランチ `codex/lean-wire3-audit-20260906` にチェックポイント保存する。
 全体目標は引き続き進行中であり、この段階で完了としない。
 
+## 第3継続更新（4422b4c7以降）
+
+現行のraw hint/Merkle処理を接続し、6モデル・184定理を追加した。
+現行rootは34モデル・882定理。全体目標は引き続き未完了。
+
+- **実multiproofからのpath抽出**: paired/lone双方の実層処理をたどり、全入力leafから
+  実チェックrootまでのdepth長pathを導出。独立した認証pathの正しさを仮定しない。
+- **元の行bytesからのbinding**: Vec要素数、連続hint slice、raw hash、既存Merkleの
+  同root/indices/cursorを接続。実openGroupの同root/depth/index行について、bytes・同Layoutの
+  canonical復号値・同weightsの全列dotが一致するか、具体的hash衝突があることを証明。
+  これは衝突確率の評価や、全WHIRの受理健全性ではない。
+- **sampling**: hashをbyteごとに呼びcounterを進める実raw query生成、BE順、mask、
+  特殊分岐、上限を具体化。並べ替えは挿入sortの実行可能な基準版とし、sourceの
+  in-place quicksort同値は明確に未証明。基準版でのsortednessを実装証明へ流用しない。
+- **逆元の条件付き接続**: 明示したFermatAt(norm)から実inverseの実行・左右逆元・
+  消去・除算を証明。7の具体証明書から無条件の逆元例も得た。
+  全非零値のFermat/非零norm/既約性を証明済みとはしない。
+- **folding schedule**: 実設定guardの投影から、初期＋全中間＋終端が元の変数数に
+  等しいこと、各roundのnumVariablesが残suffixと一致すること、減算の安全性、
+  interleaving/最終サイズを証明。domainや点配列を含む完全設定検証ではない。
+
+raw認証成功とcanonical decode成功は別条件。final splitのdecode/集計がMerkleに先行する
+分岐順も隠さず、今のopenGroupをその完成モデルとは呼ばない。
+追加モデルは実装担当と異なる担当が全文・元ソース・主要定理を対照した。
+手動レビューは言語間のformal refinementの代用ではない。
+
 ## 独立レビューで修正したモデル対応差
 
 1. **設定検査のタイミング**:
@@ -140,6 +166,12 @@ PI cacheの正常例はPI集計部分の計算例で、完全なNorm terminal/ve
 | connected initial prefix | `WhirPrefix.successful_prefix_is_one_execution`, `WhirPrefix.successful_prefix_exact_consumption` |
 | cached PI equivalence | `PiCache.cached_binding_equals_direct_norm`, `PiSharedBits.actual_varying_mask_factoring` |
 | numeric field certificate only | `GoldilocksCertificate.all_factor_checks_accept`, `GoldilocksCertificate.base_two_third_exponent_value` |
+| actual multiproof extraction | `MerkleExtraction.accepted_nonempty_opening_extracts_paths`, `MerkleExtraction.accepted_raw_rows_bind_or_hash_collision` |
+| bytewise sampling / reference boundary | `WhirSampling.raw_nontrivial_success`, `WhirSampling.reference_sampling_output_properties` |
+| raw row / cursor connection | `WhirRows.group_success_same_merkle_inputs`, `WhirRows.empty_group_consumes_exactly_eight` |
+| actual decoded row / dot binding | `WhirRowBinding.accepted_decoded_rows_bind_or_collision`, `WhirRowBinding.accepted_full_column_dot_binding` |
+| conditional inverse units | `FermatBridge.norm_fermat_gives_actual_two_sided_unit`, `FermatBridge.actual_division_equation_iff` |
+| folding schedule projection | `WhirSchedule.accepted_schedule_partitions_original_variables`, `WhirSchedule.accepted_round_annotations_equal_remaining_suffix` |
 
 上表の名前は共通prefix `Audit.Wire3.` を省略。
 全名付き定理は[manifest](wire3-manifest.json)で管理し、検査は抜粋ではなく全件に対して行う。
@@ -195,7 +227,7 @@ CI jobは現行rootとguardを検査するが、リモートCIはこの作業で
 実装を変更していないため、全Rust/Solidity試験も今回は再実行していない。
 これらのLean検査を、全体暗号監査の完了とはしない。
 
-### 今回の検査
+### 第2チェックポイントの検査
 
 2026-09-06にこの作業checkoutで統合guardを実行し、以下を確認した。
 
@@ -215,16 +247,45 @@ CI jobは現行rootとguardを検査するが、リモートCIはこの作業で
 
 ### 有限体証明の依存調査
 
-調査した現監査・親の2監査はLean4.10、依存packagesなし。利用可能な4.10互換Mathlib
+第2チェックポイント時の現監査・親の2監査はLean4.10、依存packagesなし。利用可能な4.10互換Mathlib
 checkoutや具体Goldilocks素数性証明は見つからなかった。別版由来と思われるbinary cacheは
-対応source/toolchain/lockを確認できないため採用せず、新規依存・ネットワーク利用もまだない。
+対応source/toolchain/lockを確認できないため採用せず、この時点ではネットワーク利用もなかった。
+
+第3継続では公式Mathlib v4.10.0を一時領域で調査した。commitは
+`a719ba5c3115d47b68bf0497a9dd1bcbb21ea663`、公式lockの6推移依存のHEADも一致。
+LucasPrimality/Finite.Basic/NormNum.Primeとその依存1333 build targetは成功した。
+Mathlib cache getは使っていないが、ProofWidgetsはpackage設定によりrelease archiveを取得した。
+**このビルドを全依存source-onlyと記載しない。** 素数性/Fermat候補はまだcurrent root外の実験で、
+882定理へ含めない。監査lakefile/lockや本番の依存設定への採用もまだ行っていない。
+隔離候補の10定理はcompile成功し、主要6定理の公理は標準3件のみだった。
+Lucasから具体pの素数性、一般Fermat、立方根2の排除、実inverse成功時の左右逆元を導出するが、
+この候補の採用前にcurrent rootの未証明範囲を「解消済み」へ変更しない。
+採用前に完全pin/実ファイル内容/未追跡source/import/search path/公理の検査と、
+release artifactの信頼境界またはソース再生成手順を明確にする。
+
 次は素数性判定基準と小因子の証明→Fermat→成功時inverse正当性を閉じる。
 三次式の既約性は、その後に非零Ext3のnorm非零と体全体の構成へ接続する。
 Mathlib採用なら対応版・全推移依存を固定し、guardの許可対象を限定して標準公理検査を維持する。
 
+### 第3チェックポイントの検査
+
+2026-09-06に現行rootの統合guardを実行した。
+
+| 検査 | 結果 |
+|---|---|
+| 現行rootのbuildと全名付き定理の推移公理検査 | PASS — 34モデル・882件、標準3公理のみ |
+| source inventoryとbuild前後hash | PASS — 290ソースを含む376ファイル |
+| 実定数逐語照合 | PASS — 18表・1147語、PoseidonはRustとも一致 |
+| guard単体テスト | PASS — 27件 |
+| CI YAML構文・差分の空白検査 | PASS |
+| 対象baseからのRust/Solidity/実行依存差分 | なし |
+
+Mathlib候補・採用準備中の依存checkerはこの結果に含めない。current rootは引き続きStd-only。
+リモートCI・全Rust/Solidity試験は再実行していない。main/push/親pinも変更しない。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。
-特にWHIR中間round・sampling・raw opening/Plan/Contextを接続し、全gateの意味論・次数、
+特にWHIR中間round・samplingの実quicksort・raw opening/Plan/Contextを接続し、全gateの意味論・次数、
 実行意味論・有限体の基礎・確率的健全性を証明することが必要。
 この更新のみを根拠に本番利用や「criticalな健全性問題なし」を宣言しない。

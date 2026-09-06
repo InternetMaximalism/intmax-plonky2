@@ -27,6 +27,9 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   ModularPowerは具体binary exponentiationの値と成功fuel条件を証明する。
   inverse成功時の積はnorm^(p−1) mod pへ還元できるが、これが1であるFermat証明と
   非零Ext3のnormが非零である証明は残る。有限体性を前提レコードへ隠さない。
+  FermatBridgeはFermatAt(norm)を可視の定理引数として、実inverseの左右逆元・
+  canonical消去・除算を接続する。基数7の実例は数値証明書からこの仮説を解消するが、
+  一般Fermatや全非零Ext3のnorm非零を証明したわけではない。
 - Packedは関数的なloopモデル。paddingとの結果一致を証明するが、実in-placeメモリ操作
   の安全性は含まない。Rustの配列実装への適用には入力長・width・次の2冪・point長の接続が必要。
 - Transcriptのhashは任意の決定的関数。同一の旧digestの下でのhash前tag/payloadの
@@ -39,6 +42,12 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   120byteを一括生成して3個のLE40byte値に還元するchallenge、24byteの厳密canonical読取り、
   PoWのchallenge32＋nonce8＋zero24とLE先頭8byte判定、hint Vec prefixを具体化。
   生の定数Hash引数はRO・衝突耐性・entropyの仮定ではない。実wordload/uint256/IO-patternは別境界。
+- WhirSampling.challengeRawは1byteにつき1hash/counter更新、BE query、power-of-two maskを具体化。
+  count=0/numLeaves=1の無消費分岐、counter上限、raw rangeを証明する。
+  challengeIndicesReferenceは実行可能な挿入sortと隣接dedupの基準版であり、sourceの
+  in-place quicksortそのものではない。sortedness・membership・件数・非空性を証明しても、
+  source quicksortのswap/partition/termination/メモリとの同値を得たことにはしない。
+  原始query集合からこの基準出力へ移る差は、全WHIR接続時にも可視の未証明境界とする。
 - Compactはtyped Proofを返す完全decoderではなく、byte grammarを走査してchunksを返す。
   trusted Shapeの全検証、Rustのより厳しい可変cap、debug WHIR pattern再構成、
   opaque WHIR bytes内部、EVM構造体メモリ配置は未対応。
@@ -73,8 +82,21 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
 - Merkleはraw32byte digest、左右64byte圧縮、厳密昇順と層別sibling処理を具体化。
   読取りがある場合のcursor境界と、same-index/same-depthの2本のpathが異なるleaf hashを
   同じrootへ送るなら圧縮入力の衝突があることを証明。hashの単射性は仮定しない。
-  多重開示から個々のpathを抽出する証明、row serialization/hashとの接続、
-  WhirTerminal.authenticateの置換、衝突確率、Yulの配列操作は未完了。
+  MerkleExtractionはこの同じ成功executionから各leafのdepth長pathを抽出する。
+  WhirRowsは元hint行のread/hashと既存Merkleへ直結し、WhirRowBindingは実openGroupの
+  同root/index/depth行を、raw bytes・同Layoutの復号値・同weightsのdotが一致するか、
+  実raw leaf入力または64byte圧縮入力のhash衝突へ還元する。
+  独立leaf hash/pathやserialize単射性を前提として代入しない。
+  WhirTerminal.authenticateの全入口での置換、衝突確率、Yulの配列操作は未完了。
+- WhirRows.openGroup/openGroupsはraw phaseのみ。base8/Ext3-24のcanonical decodeは別操作で、
+  raw認証成功だけからcanonical値の存在を導かない。実final splitのrow loop内decode/集計は
+  この順序のまま未実装とし、先読みdecodeへ組み替えて同値としない。
+  空queryも8byteのVec=0 prefixを読み、Merkleの空openingはその後offsetを維持する。
+  Layout/weights/indicesの前段導出とfull tailへの接続は別課題。
+- WhirScheduleは既存_validateParametersのfolding guardのみの投影。初期・中間・終端の
+  変数数の完全分割、各roundのremaining/suffix、underflowなし、最終2冪サイズを証明する。
+  domain/generator/coset/点配列/ABIの全検証は未実装。成功を完全設定検証済みとしない。
+  値はstored VK/config由来である必要があり、proverが自由に変更できるfieldとはしない。
 - Normはformal-coordinate式とhelper/logUp集計を具体化。PIはRustの順序付き直接和で、
   PiSharedBits/PiCacheでSolidityのrow-cache/shared-bit最適化とのモデル内同値を証明。
   OR/XOR mask、newest-first検索、重複/順序、eta最後更新省略も具体化している。
@@ -102,7 +124,9 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
 
 1. 具体化済みWHIR initial/最初のsumcheck・内側byte/PoWを中間round・samplingへつなぎ、
    Plan/ContextとfixedVK/root/pointへの認証を接続。raw row bytes→leaf hash→multiproof→
-   各queryの開示path→終端比較を一つの実行経路として証明。native依存revisionも対象に含める。
+   各queryの開示path→終端比較を一つの実行経路として証明。raw row→multiproof→path→
+   復号/dotのbindingは接続済みだが、samplingのquicksort同値と中間round全体は残る。
+   native依存revisionも対象に含める。
 2. 全14 gate評価の式から実多項式次数・gate意味論・sumcheckへの接続を証明。
    PI cacheの証明済み同値、selector/lookupの入口接続も全体経路へ反映。
 3. setup/VK/config生成、immutable store、全compact decoder、metadata decoder、

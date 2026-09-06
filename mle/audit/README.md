@@ -40,8 +40,14 @@
 | [WhirPrefix](Audit/Wire3/WhirPrefix.lean) | 初期処理→最初のsumcheckを同一source・初期sum・spongeで接続。中間以降の全WHIR接続ではない |
 | [PiSharedBits/PiCache](Audit/Wire3/PiCache.lean) | 実OR/XOR共通bit分離・逆順検索・重複行合算・eta末尾更新省略を含むキャッシュと直接PI和の同値 |
 | [GoldilocksCertificate](Audit/Wire3/GoldilocksCertificate.lean) | 今後の体証明で使う具体べき乗/gcd証明書。判定法の健全性や素数性そのものは未証明 |
+| [MerkleExtraction](Audit/Wire3/MerkleExtraction.lean) | 実multiproof成功から全leafの深さ付きpathを抽出。同root/index/depthの開示を一致または具体的hash衝突へ還元 |
+| [WhirSampling](Audit/Wire3/WhirSampling.lean) | byteごとの実hash/counter・BE query・mask。挿入sort基準版の順序/集合を証明するがsource quicksortとの同値は未証明 |
+| [WhirRows](Audit/Wire3/WhirRows.lean) | Vec要素数→元の連続hint行→raw hash→既存Merkleのcursor接続。canonical decoderは実行順を保つため別操作 |
+| [WhirRowBinding](Audit/Wire3/WhirRowBinding.lean) | 実openGroupの同root/depth/index行についてraw bytes・同Layoutの復号値・同weightsの内積が一致するか、具体的hash衝突があることを証明 |
+| [FermatBridge](Audit/Wire3/FermatBridge.lean) | 明示したFermat等式から実inverseの左右逆元・消去・除算を証明。基数7の例は無条件、一般Fermat/素数性は未解消 |
+| [WhirSchedule](Audit/Wire3/WhirSchedule.lean) | 実folding検査の投影から全変数の分割・各roundの残suffix・underflowなし・最終サイズを証明。domain/点を含む完全設定検査ではない |
 
-現行rootは28モデル・698件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
+現行rootは34モデル・882件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
 件数は暗号安全性の達成率ではありません。
 
 [スコープと未証明事項](SCOPE.md)、[結果・再現手順・次工程](REPORT.md)、

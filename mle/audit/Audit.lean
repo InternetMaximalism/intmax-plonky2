@@ -33,3 +33,9 @@ import Audit.Wire3.WhirPrefix
 import Audit.Wire3.PiSharedBits
 import Audit.Wire3.PiCache
 import Audit.Wire3.GoldilocksCertificate
+import Audit.Wire3.MerkleExtraction
+import Audit.Wire3.WhirSampling
+import Audit.Wire3.WhirRows
+import Audit.Wire3.WhirRowBinding
+import Audit.Wire3.FermatBridge
+import Audit.Wire3.WhirSchedule

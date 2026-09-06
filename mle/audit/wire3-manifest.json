@@ -195,7 +195,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "a695eac98e34b5e44735b004732f7c8bc131a9e07dabcdeb1e02d80e74af6a5f",
+      "sha256": "eae41ade8f03eb59b01db2a052b4034304d93bb3d13f290a6faa369ed61f59e2",
       "kind": "current-model"
     },
     {
@@ -334,6 +334,11 @@
       "kind": "current-model"
     },
     {
+      "path": "mle/audit/Audit/Wire3/FermatBridge.lean",
+      "sha256": "7111cbe39578836be9a18b237fffdf6bcb91a472aa3a5ec21356e81062da4837",
+      "kind": "current-model"
+    },
+    {
       "path": "mle/audit/Audit/Wire3/Gates.lean",
       "sha256": "3c4e762d28468b62aee0861634e07901320f853d689f84e42cac2cf0115f93de",
       "kind": "current-model"
@@ -365,7 +370,12 @@
     },
     {
       "path": "mle/audit/Audit/Wire3/Merkle.lean",
-      "sha256": "32a7bbbe386837d03cee8c1791ab41805b69a704c860c32de8ac6a62d4d2b97d",
+      "sha256": "224cee0c1411ccfd0bbdea07bba59f6059f5399144693123c34b4219fdc8fe0d",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/MerkleExtraction.lean",
+      "sha256": "deed7ec034770cd6bb62cb6d698a948332119a67471e48805bc4c28b2792e729",
       "kind": "current-model"
     },
     {
@@ -449,6 +459,26 @@
       "kind": "current-model"
     },
     {
+      "path": "mle/audit/Audit/Wire3/WhirRowBinding.lean",
+      "sha256": "f28a293b05d31cbeb81eb526545932b7820046d9028fa308ef66f5e57d6498aa",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/WhirRows.lean",
+      "sha256": "7f896b77934de4fa0a7a4023fee960cf3f7ae9ce19b6e6dd8f59133c85182c60",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/WhirSampling.lean",
+      "sha256": "7ac192ce70b68a9753d9eee7a6c4398bb465ff80258bc12f746b5c68fbcbbcf6",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/WhirSchedule.lean",
+      "sha256": "873077649bb44af8e205bdfea19acca3b3b1de85762f8512774d26dd6369ef0c",
+      "kind": "current-model"
+    },
+    {
       "path": "mle/audit/Audit/Wire3/WhirTerminal.lean",
       "sha256": "53b25dcff1d98bedd69fd51882f15038cf433e01315259989faf98bd2ff7760b",
       "kind": "current-model"
@@ -475,22 +505,22 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "4c68259d7831b2d807facd2ff7c101140499764e4bdfd7c1bc649bad50ef172b",
+      "sha256": "5418ad4d1e3bcff47726c716df846b41293600c878ff49dac7038737342a67ed",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "134ea408d706743f1c151e88212b3b44e8b2dd3a91cd3ff7a6bf7132c3338170",
+      "sha256": "a7d5c0efb908afc9002b9ee5ae56272b9e58b358811fd02e0e9ff0ee164c3894",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "5b6fba9cf928f8ea2f11f8a081d39e0f436ceddb5fff1c76c3d30347f82a6bcc",
+      "sha256": "f263304c0c4d222a2528687f1245d258c4199584d4c893098e2656a205bfc2fd",
       "kind": "spec"
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "af2a05c0c36957022ed14961b5f43b86b7e71b18c6b91dadb03759dc00d88775",
+      "sha256": "ebd7c310b4fb86eca38de35ff72f7a75e84f97cf60a668fa7ef2c649e502911b",
       "kind": "tooling"
     },
     {
@@ -2186,7 +2216,7 @@
       "sources": [
         "mle/contracts/src/spongefish/SpongefishMerkle.sol"
       ],
-      "scope": "Actual bounded hint bytes, ordered 64-byte compression, strict index order, paired/lone layered decommitment, empty-opening exception and cursor progress. Same-index/same-depth path leaf-hash disagreement reduces to an actual compression-input collision. No multiproof path extraction, raw-row/leaf binding, WhirTerminal adapter, hash probability or Yul/word refinement."
+      "scope": "Actual bounded hint bytes, ordered 64-byte compression, strict index order, paired/lone layered decommitment, empty-opening exception and cursor progress. Same-index/same-depth path leaf-hash disagreement reduces to a compression collision. MerkleExtraction and WhirRows/WhirRowBinding now add multiproof extraction/raw-row connections separately. Full WHIR adapter, hash probability and Yul/word refinement remain unproved."
     },
     {
       "module": "Audit.Wire3.Norm",
@@ -2863,6 +2893,248 @@
         "mle/contracts/src/GoldilocksField.sol"
       ],
       "scope": "Kernel-checked numeric certificate: p-1 factor product, six base-seven power/gcd checks, exact modular-power bridges, and base-two third-exponent value. Criterion soundness, candidate-factor primality, general Fermat, Goldilocks primality and cubic irreducibility are NOT proved or assumed."
+    },
+    {
+      "module": "Audit.Wire3.MerkleExtraction",
+      "theorems": [
+        "Audit.Wire3.MerkleExtraction.sibling_index_same_parent",
+        "Audit.Wire3.MerkleExtraction.sibling_index_opposite_parity",
+        "Audit.Wire3.MerkleExtraction.paired_parent_digest",
+        "Audit.Wire3.MerkleExtraction.successful_layer_gives_each_parent",
+        "Audit.Wire3.MerkleExtraction.successful_layers_extract_paths",
+        "Audit.Wire3.MerkleExtraction.accepted_nonempty_opening_extracts_paths",
+        "Audit.Wire3.MerkleExtraction.two_accepted_openings_bind_or_compression_collision",
+        "Audit.Wire3.MerkleExtraction.accepted_raw_rows_bind_or_hash_collision",
+        "Audit.Wire3.MerkleExtraction.positive_three_leaf_opening"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/SpongefishMerkle.sol"
+      ],
+      "scope": "Extract exact-depth paths from the same successful layered multiproof, including paired and lone nodes. Two accepted leaves at the same root/index/depth bind or yield an actual 64-byte compression collision; raw leaf input collision is distinguished. No Yul/word refinement, collision probability or full PCS soundness."
+    },
+    {
+      "module": "Audit.Wire3.WhirSampling",
+      "theorems": [
+        "Audit.Wire3.WhirSampling.logarithm_source_recurrence",
+        "Audit.Wire3.WhirSampling.logarithm_of_power_two",
+        "Audit.Wire3.WhirSampling.power_two_query_width",
+        "Audit.Wire3.WhirSampling.source_query_width_bounded",
+        "Audit.Wire3.WhirSampling.hash_byte_is_actual_first_byte",
+        "Audit.Wire3.WhirSampling.entropy_byte_count",
+        "Audit.Wire3.WhirSampling.entropy_byte_at_counter",
+        "Audit.Wire3.WhirSampling.bytewise_squeeze_one_matches_existing_sponge",
+        "Audit.Wire3.WhirSampling.sample_bytes_success",
+        "Audit.Wire3.WhirSampling.distinct_byte_positions_use_distinct_hash_inputs",
+        "Audit.Wire3.WhirSampling.append_be_arithmetic",
+        "Audit.Wire3.WhirSampling.query_loop_is_ordered_be_fold",
+        "Audit.Wire3.WhirSampling.query_two_bytes_big_endian",
+        "Audit.Wire3.WhirSampling.power_two_mask_is_remainder",
+        "Audit.Wire3.WhirSampling.power_two_mask_range",
+        "Audit.Wire3.WhirSampling.raw_queries_length",
+        "Audit.Wire3.WhirSampling.raw_query_at_index",
+        "Audit.Wire3.WhirSampling.raw_queries_in_domain",
+        "Audit.Wire3.WhirSampling.zero_count_does_not_squeeze",
+        "Audit.Wire3.WhirSampling.singleton_domain_does_not_squeeze",
+        "Audit.Wire3.WhirSampling.empty_domain_nonempty_request_rejected",
+        "Audit.Wire3.WhirSampling.raw_nontrivial_success",
+        "Audit.Wire3.WhirSampling.raw_success_preserves_state_and_range",
+        "Audit.Wire3.WhirSampling.insert_reference_membership",
+        "Audit.Wire3.WhirSampling.insert_reference_length",
+        "Audit.Wire3.WhirSampling.insert_reference_sorted",
+        "Audit.Wire3.WhirSampling.sort_reference_membership",
+        "Audit.Wire3.WhirSampling.sort_reference_length",
+        "Audit.Wire3.WhirSampling.sort_reference_sorted",
+        "Audit.Wire3.WhirSampling.dedup_from_preserves_membership_with_previous",
+        "Audit.Wire3.WhirSampling.adjacent_dedup_membership",
+        "Audit.Wire3.WhirSampling.dedup_from_length",
+        "Audit.Wire3.WhirSampling.adjacent_dedup_length",
+        "Audit.Wire3.WhirSampling.dedup_from_strict_and_above",
+        "Audit.Wire3.WhirSampling.adjacent_dedup_of_sorted_is_strict",
+        "Audit.Wire3.WhirSampling.sorted_unique_reference_membership",
+        "Audit.Wire3.WhirSampling.sorted_unique_reference_length",
+        "Audit.Wire3.WhirSampling.sorted_unique_reference_strict",
+        "Audit.Wire3.WhirSampling.strict_ascending_has_no_duplicates",
+        "Audit.Wire3.WhirSampling.sorted_unique_reference_nonempty",
+        "Audit.Wire3.WhirSampling.reference_success_has_same_raw_execution",
+        "Audit.Wire3.WhirSampling.reference_sampling_output_properties",
+        "Audit.Wire3.WhirSampling.reference_sampling_membership_exact",
+        "Audit.Wire3.WhirSampling.reference_sampling_counter_exact",
+        "Audit.Wire3.WhirSampling.source_counter_guard_equivalent",
+        "Audit.Wire3.WhirSampling.query_loop_numeric_bound",
+        "Audit.Wire3.WhirSampling.query_word_bound",
+        "Audit.Wire3.WhirSampling.all_query_counters_bounded",
+        "Audit.Wire3.WhirSampling.strict_ascending_length_within_interval",
+        "Audit.Wire3.WhirSampling.reference_distinct_count_bounded_by_leaves",
+        "Audit.Wire3.WhirSampling.reference_zero_request_exact",
+        "Audit.Wire3.WhirSampling.reference_singleton_domain_exact",
+        "Audit.Wire3.WhirSampling.reference_nonempty_request_has_nonempty_output",
+        "Audit.Wire3.WhirSampling.example_individual_entropy_bytes",
+        "Audit.Wire3.WhirSampling.example_raw_repeated_queries",
+        "Audit.Wire3.WhirSampling.example_sorted_deduplicated_queries",
+        "Audit.Wire3.WhirSampling.example_two_byte_query_is_big_endian",
+        "Audit.Wire3.WhirSampling.example_source_adjacent_dedup_preserves_order"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol",
+        "mle/contracts/src/spongefish/Keccak256Chain.sol"
+      ],
+      "scope": "Concrete UNSORTED query generation: individual 47-byte hash/counter per entropy byte, BE shift/or, power-of-two mask, special branches and counter bounds. challengeIndicesReference uses executable insertion sort plus adjacent dedup: strictness, membership, counts and nonempty properties apply to the reference, NOT proved equivalent to source in-place quicksort. No uniformity, word/memory or full WHIR/crypto proof."
+    },
+    {
+      "module": "Audit.Wire3.WhirRows",
+      "theorems": [
+        "Audit.Wire3.WhirRows.row_hashes_length",
+        "Audit.Wire3.WhirRows.hash_uses_unchanged_raw_bytes",
+        "Audit.Wire3.WhirRows.row_hash_at_same_position",
+        "Audit.Wire3.WhirRows.decode_base_exact",
+        "Audit.Wire3.WhirRows.decode_base_rejects_noncanonical",
+        "Audit.Wire3.WhirRows.decode_element_exact_length",
+        "Audit.Wire3.WhirRows.decode_ext3_keeps_all_three_raw_limbs",
+        "Audit.Wire3.WhirRows.decoded_elements_are_canonical",
+        "Audit.Wire3.WhirRows.decode_fields_exact_shape",
+        "Audit.Wire3.WhirRows.decoded_row_exact_columns_and_bytes",
+        "Audit.Wire3.WhirRows.decoded_row_all_canonical",
+        "Audit.Wire3.WhirRows.hint_read_same_slice",
+        "Audit.Wire3.WhirRows.rows_success_exact",
+        "Audit.Wire3.WhirRows.authentication_has_same_merkle_call",
+        "Audit.Wire3.WhirRows.group_success_actual_sequence",
+        "Audit.Wire3.WhirRows.group_success_prefix_value",
+        "Audit.Wire3.WhirRows.group_success_contiguous_rows",
+        "Audit.Wire3.WhirRows.group_success_same_merkle_inputs",
+        "Audit.Wire3.WhirRows.nonempty_group_requires_computed_root",
+        "Audit.Wire3.WhirRows.group_success_cursor_bounds",
+        "Audit.Wire3.WhirRows.contiguous_slice_at",
+        "Audit.Wire3.WhirRows.successful_row_is_original_hint_slice",
+        "Audit.Wire3.WhirRows.successful_decode_and_hash_same_slice",
+        "Audit.Wire3.WhirRows.successful_leaf_hash_is_original_slice_hash",
+        "Audit.Wire3.WhirRows.empty_group_is_only_vec_prefix",
+        "Audit.Wire3.WhirRows.empty_group_consumes_exactly_eight",
+        "Audit.Wire3.WhirRows.groups_success_next_is_actual_returned_cursor",
+        "Audit.Wire3.WhirRows.groups_success_count_and_cursor",
+        "Audit.Wire3.WhirRows.base_row_open_example",
+        "Audit.Wire3.WhirRows.base_row_decode_example",
+        "Audit.Wire3.WhirRows.ext3_row_open_example",
+        "Audit.Wire3.WhirRows.ext3_three_limbs_decode_example",
+        "Audit.Wire3.WhirRows.empty_query_prefix_example",
+        "Audit.Wire3.WhirRows.two_groups_cursor_example",
+        "Audit.Wire3.WhirRows.lone_leaf_sibling_cursor_example"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol",
+        "mle/contracts/src/spongefish/SpongefishMerkle.sol"
+      ],
+      "scope": "Actual Vec element count, contiguous original hint rows, raw hashes and existing Merkle.verify with exact cursor threading; base8/Ext3-24 canonical decoding is an explicit separate operation. Raw success alone is not canonical decoding. Final split's interleaved decode/accumulation, Layout derivation, dot/FS/full tail/word refinement/cryptographic soundness remain outside."
+    },
+    {
+      "module": "Audit.Wire3.WhirRowBinding",
+      "theorems": [
+        "Audit.Wire3.WhirRowBinding.row_collision_exposes_actual_hash_inputs",
+        "Audit.Wire3.WhirRowBinding.get_some_same_position_mem_zip",
+        "Audit.Wire3.WhirRowBinding.raw_row_membership_gives_actual_hash_membership",
+        "Audit.Wire3.WhirRowBinding.accepted_group_row_extracts_same_hash_path",
+        "Audit.Wire3.WhirRowBinding.accepted_group_position_extracts_same_hash_path",
+        "Audit.Wire3.WhirRowBinding.accepted_raw_rows_bind_or_collision",
+        "Audit.Wire3.WhirRowBinding.accepted_positions_bind_or_collision",
+        "Audit.Wire3.WhirRowBinding.same_bytes_same_decoder",
+        "Audit.Wire3.WhirRowBinding.successful_same_bytes_same_values",
+        "Audit.Wire3.WhirRowBinding.accepted_decoded_rows_bind_or_collision",
+        "Audit.Wire3.WhirRowBinding.distinct_accepted_decoded_rows_expose_hash_collision",
+        "Audit.Wire3.WhirRowBinding.decoded_dot_uses_same_values",
+        "Audit.Wire3.WhirRowBinding.decoded_dot_success_extracts_actual_decoder",
+        "Audit.Wire3.WhirRowBinding.successful_dot_has_exact_weight_count",
+        "Audit.Wire3.WhirRowBinding.accepted_decoded_dots_bind_or_collision",
+        "Audit.Wire3.WhirRowBinding.accepted_full_column_dot_binding",
+        "Audit.Wire3.WhirRowBinding.distinct_accepted_dot_values_expose_hash_collision",
+        "Audit.Wire3.WhirRowBinding.ordinary_opened_row_path_example",
+        "Audit.Wire3.WhirRowBinding.unequal_offsets_do_not_change_decoded_values",
+        "Audit.Wire3.WhirRowBinding.ordinary_dot_example"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol",
+        "mle/contracts/src/spongefish/SpongefishMerkle.sol"
+      ],
+      "scope": "Actual openGroup returned rows give hashed-leaf membership and extracted Merkle paths. Same-root/depth/index raw bytes, same-Layout decoded values and same-weight concrete terminal dots agree or expose an actual leaf/compression hash collision. No independent path/hash or serialization injectivity premise; caller Layout/weights derivation and full WHIR/language/crypto refinement remain unproved."
+    },
+    {
+      "module": "Audit.Wire3.FermatBridge",
+      "theorems": [
+        "Audit.Wire3.FermatBridge.fermat_exponent_positive",
+        "Audit.Wire3.FermatBridge.zero_does_not_satisfy_fermat",
+        "Audit.Wire3.FermatBridge.fermat_at_reduction_iff",
+        "Audit.Wire3.FermatBridge.fermat_at_requires_nonzero",
+        "Audit.Wire3.FermatBridge.fermat_at_requires_nonzero_residue",
+        "Audit.Wire3.FermatBridge.fermat_at_one",
+        "Audit.Wire3.FermatBridge.fermat_at_product",
+        "Audit.Wire3.FermatBridge.fermat_at_power",
+        "Audit.Wire3.FermatBridge.certificate_proves_fermat_at_seven",
+        "Audit.Wire3.FermatBridge.actual_norm_is_canonical",
+        "Audit.Wire3.FermatBridge.inverse_success_is_canonical",
+        "Audit.Wire3.FermatBridge.norm_fermat_makes_inverse_execute",
+        "Audit.Wire3.FermatBridge.inverse_success_is_right_inverse",
+        "Audit.Wire3.FermatBridge.inverse_success_is_left_inverse",
+        "Audit.Wire3.FermatBridge.norm_fermat_gives_actual_two_sided_unit",
+        "Audit.Wire3.FermatBridge.left_unit_cancels_canonical",
+        "Audit.Wire3.FermatBridge.left_unit_cancels_normalized",
+        "Audit.Wire3.FermatBridge.actual_inverse_cancels_left",
+        "Audit.Wire3.FermatBridge.actual_inverse_cancels_right",
+        "Audit.Wire3.FermatBridge.actual_inverse_is_unique",
+        "Audit.Wire3.FermatBridge.actual_division_multiply_back",
+        "Audit.Wire3.FermatBridge.actual_division_equation_iff",
+        "Audit.Wire3.FermatBridge.actual_division_preserves_nonzero",
+        "Audit.Wire3.FermatBridge.actual_unit_has_no_nonzero_annihilator",
+        "Audit.Wire3.FermatBridge.actual_units_have_product_unit",
+        "Audit.Wire3.FermatBridge.certified_base_two_value_excludes_cubic_root",
+        "Audit.Wire3.FermatBridge.general_fermat_would_exclude_all_cubic_roots",
+        "Audit.Wire3.FermatBridge.norm_of_embedded_seven",
+        "Audit.Wire3.FermatBridge.embedded_seven_actual_inverse_is_two_sided",
+        "Audit.Wire3.FermatBridge.powers_of_seven_cannot_be_cubic_root_of_two"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/GoldilocksExt3.sol",
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol"
+      ],
+      "scope": "Explicit per-norm FermatAt hypothesis implies actual inverse execution and two-sided unit, canonical cancellation/unique inverse/division equations. Numerical base-seven certificate discharges concrete examples; general Fermat, primality, all-nonzero Ext3 norm and irreducibility are not proved by this module. No assumed ring axioms or language/cryptographic refinement."
+    },
+    {
+      "module": "Audit.Wire3.WhirSchedule",
+      "theorems": [
+        "Audit.Wire3.WhirSchedule.initial_checks_exact",
+        "Audit.Wire3.WhirSchedule.round_checks_exact",
+        "Audit.Wire3.WhirSchedule.empty_rounds_return_remainder",
+        "Audit.Wire3.WhirSchedule.cons_rounds_success_iff",
+        "Audit.Wire3.WhirSchedule.schedule_success_exact",
+        "Audit.Wire3.WhirSchedule.checked_round_sum_reaches_final",
+        "Audit.Wire3.WhirSchedule.checked_rounds_never_increase_remaining",
+        "Audit.Wire3.WhirSchedule.checked_rounds_sum_equals_factor_times_count",
+        "Audit.Wire3.WhirSchedule.check_rounds_append",
+        "Audit.Wire3.WhirSchedule.checked_round_at_position",
+        "Audit.Wire3.WhirSchedule.checked_round_prefix_reaches_annotated_remaining",
+        "Audit.Wire3.WhirSchedule.checked_round_member_guards",
+        "Audit.Wire3.WhirSchedule.accepted_initial_subtraction_has_no_underflow",
+        "Audit.Wire3.WhirSchedule.accepted_schedule_partitions_original_variables",
+        "Audit.Wire3.WhirSchedule.accepted_schedule_factor_partition",
+        "Audit.Wire3.WhirSchedule.accepted_round_annotations_equal_remaining_suffix",
+        "Audit.Wire3.WhirSchedule.accepted_prefix_executes_to_round_annotation",
+        "Audit.Wire3.WhirSchedule.accepted_final_remainder_exact",
+        "Audit.Wire3.WhirSchedule.accepted_round_subtraction_has_no_underflow",
+        "Audit.Wire3.WhirSchedule.accepted_rounds_are_positive_and_bounded",
+        "Audit.Wire3.WhirSchedule.accepted_final_size_exact",
+        "Audit.Wire3.WhirSchedule.accepted_initial_interleaving_exact",
+        "Audit.Wire3.WhirSchedule.accepted_declared_round_count_exact",
+        "Audit.Wire3.WhirSchedule.accepted_original_counts_match",
+        "Audit.Wire3.WhirSchedule.guarded_power_is_one_shift_and_fits",
+        "Audit.Wire3.WhirSchedule.accepted_final_size_positive_and_fits",
+        "Audit.Wire3.WhirSchedule.accepted_round_interleaving_positive_and_fits",
+        "Audit.Wire3.WhirSchedule.nonempty_round_schedule_example",
+        "Audit.Wire3.WhirSchedule.normal_round_sequence_example",
+        "Audit.Wire3.WhirSchedule.normal_second_round_annotation_example",
+        "Audit.Wire3.WhirSchedule.zero_final_rounds_singleton_size_example",
+        "Audit.Wire3.WhirSchedule.empty_rounds_do_not_add_unused_factor_bound"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol"
+      ],
+      "scope": "Projection of the actual folding schedule guards only: checked remaining-variable subtraction, exact initial/intermediate/final partition, per-round suffix annotations, interleaving and final powers of two. Domain/generator/coset/evaluation points/ABI checks and caller VK derivation are not implemented; true is NOT complete parameter validation or a source-execution/soundness theorem."
     }
   ]
 }

@@ -15,9 +15,11 @@ The path collision reduction below needs NO injectivity axiom for Keccak: two
 same-index, same-depth paths with the same root either have the same leaf hash,
 or exhibit an unequal pair of 64-byte inputs hashing equally along those paths.
 This is a deterministic conditional reduction, not a collision probability,
-leaf-preimage binding, full multiproof path-extraction theorem, or PCS soundness.
-Yul/bytecode refinement, source leaf-row serialization, and connection of every
-multi-opening row to WhirTerminal.authenticate remain separate obligations.
+leaf-preimage binding, full multiproof path-extraction theorem, or PCS soundness
+within THIS foundational module. MerkleExtraction now derives paths from this
+same layered execution; WhirRows/WhirRowBinding connect actual raw row reads and
+decoding to it. Yul/bytecode refinement, complete WHIR integration and replacement
+of WhirTerminal.authenticate in a full verifier remain separate obligations.
 -/
 namespace Audit.Wire3.Merkle
 
