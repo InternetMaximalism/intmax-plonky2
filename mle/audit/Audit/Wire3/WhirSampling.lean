@@ -18,11 +18,12 @@ overflow/allocation, Yul word accesses and source execution refinement remain.
 
 `dedupAdjacent` transcribes the sorted array's adjacent compaction. For useful
 sortedness/membership results, `sortReference` is a concrete insertion sort.
-IT IS NOT the source's in-place quicksort. No theorem refines quicksort's swaps,
-partition recursion, scratch memory or termination to this reference. Therefore
-`challengeIndicesReference` is not claimed source-equivalent as a whole. Its
-raw sampling prefix is concrete; production sorting is an explicit remaining
-refinement obligation, not hidden behind a sorted-set oracle or an axiom.
+IT IS NOT the source's in-place quicksort. This module alone does not prove
+quicksort correspondence. WhirQuicksortCorrectness separately proves the actual
+indexed Nat/List runner's termination, sortedness, multiplicities and equality
+to this reference. WhirSamplingExecution connects indexed compaction and both
+whole-WHIR sampler sites. Scratch memory, uint256, gas and source/compiler
+refinement remain separate; the reference alone is not whole-source certified.
 -/
 namespace Audit.Wire3.WhirSampling
 open Spongefish (Hash Bytes Byte Digest State)

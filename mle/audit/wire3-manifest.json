@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "8e4b29ab58a4fd77e524641640f3ffc3522dbd883f09ea133902efa04523bb38",
+      "sha256": "c2717bb7e5dc6fe21aa50bfe6530a7644dd6ca49b2533e76ad8b6f0e9b7a86f8",
       "kind": "current-model"
     },
     {
@@ -480,7 +480,7 @@
     },
     {
       "path": "mle/audit/Audit/Wire3/WhirIntermediate.lean",
-      "sha256": "c567c50751a13bd79cdd59281d0ad4759babd42fe854ea02dc69dc7701df15f1",
+      "sha256": "ff6764242df9c35b48901618d7512b707ff73cfe036560e7e10f1c2f03801942",
       "kind": "current-model"
     },
     {
@@ -515,7 +515,7 @@
     },
     {
       "path": "mle/audit/Audit/Wire3/WhirSampling.lean",
-      "sha256": "7ac192ce70b68a9753d9eee7a6c4398bb465ff80258bc12f746b5c68fbcbbcf6",
+      "sha256": "7a315aa0cf10488c527a07d1e4516592aed36228cc94f4bd3e2a0de5c4b26068",
       "kind": "current-model"
     },
     {
@@ -525,7 +525,7 @@
     },
     {
       "path": "mle/audit/Audit/Wire3/WhirTail.lean",
-      "sha256": "7b7878ec7a7bd9a69ea392f935003d70af8579a222c4f7c142450b8ff237409b",
+      "sha256": "c36687d3f8c01ed2e0c96d488f114e7a20cee858182bf3db736fbc73be2305b2",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "537ab6ce3226fc7406b3540f63a262976b6965cf332b2d48fd397b39b79fdede",
+      "sha256": "d860cb4f2fa873ab2257b891597a46485bdfe1c71dba641375ada8bcc3a56db8",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "4f86d85faeddb4f770efad7ac3913fa028db215cd8c8e47004404aed2997ec09",
+      "sha256": "b03aa7fe87ba359747abb444fd51c5b2a83f11282d1c737e51e2462b939285c9",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "3e394d2007a167776197ff52bc8357f72d980fa9c8c87408c70ff325c80ad054",
+      "sha256": "0332eba6923e41809abc83e3b3647310a7de6abff722d2b6c04d9c1ef6a3eff0",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "ecb063650deff1f91b24b46432738ef362017d98e4f4e638f521b585b03d5460",
+      "sha256": "afc4371135673a2ebe3d1c5bb268ce5f365af91a726b49a883c7b2bac46db817",
       "kind": "spec"
     },
     {
@@ -1971,6 +1971,31 @@
     {
       "path": "mle/audit/Audit/Wire3/WhirDomainBridge.lean",
       "sha256": "19bb7ea69a15c5fba4c04949e50a8c2d5e214662fee364998023250598bc5124",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/WhirConfigured.lean",
+      "sha256": "7a9eb099e9c0e6c8b87065c0c1e36a6652fe5b09bda0c1dcbd62617db143643a",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/WhirQuicksort.lean",
+      "sha256": "f3ddbf5e6bc58928857f5aca3727bf10d861da3375654f99bea612fe37e5211f",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/WhirQuicksortCorrectness.lean",
+      "sha256": "c09cb8a3be3d8fe8171dd69a38bfa8dc4e50fab7fc2df117c4fbdfc9447023ac",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/WhirSamplingExecution.lean",
+      "sha256": "1d742752b7ed3f88eebb0e27a61d7410722dad39deee2923c0d8dd7d55641a7a",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/WhirDomainPower.lean",
+      "sha256": "4bf57bb504b6177e5ab9c047c5b7892f67d4658348881185ee20fe3ec93a0fb9",
       "kind": "current-model"
     }
   ],
@@ -3718,6 +3743,232 @@
         "mle/contracts/src/spongefish/SpongefishWhirVerify.sol"
       ],
       "scope": "Explicit bijections between fixed-length byte lists and little-endian words, including same 120-byte input split at 0/40/80 and actual Spongefish.reduceChallenge. Generic quotient/remainder injection bounds residue and three-limb event preimage counts by d*ceil(2^320/p)^3 without enumerating the sample space. Under the explicitly defined finite uniform 120-byte count/total law, fixed distinct inner-WHIR quadratic claims have probability at most 2*(ceil(2^320/p)/2^320)^3. No uniformity/independence/fixedness derived from Keccak/ROM/Fiat-Shamir; not the different outer MLE transcript/round distribution, source/Yul refinement or full PCS soundness."
+    },
+    {
+      "module": "Audit.Wire3.WhirConfigured",
+      "theorems": [
+        "Audit.Wire3.WhirConfigured.opening_projection_keeps_all_fields",
+        "Audit.Wire3.WhirConfigured.checked_generator_is_not_reduced",
+        "Audit.Wire3.WhirConfigured.initial_open_columns_and_count_are_source_fields",
+        "Audit.Wire3.WhirConfigured.round_projection_keeps_all_five_fields",
+        "Audit.Wire3.WhirConfigured.final_projection_keeps_all_fields",
+        "Audit.Wire3.WhirConfigured.phase_pairs_count",
+        "Audit.Wire3.WhirConfigured.phase_pairs_round_params_exact",
+        "Audit.Wire3.WhirConfigured.open_at_successor_is_previous_round",
+        "Audit.Wire3.WhirConfigured.open_at_is_source_get_open_params",
+        "Audit.Wire3.WhirConfigured.final_open_is_last_position",
+        "Audit.Wire3.WhirConfigured.checked_final_open_matches_declared_round_index",
+        "Audit.Wire3.WhirConfigured.phase_pairs_each_position",
+        "Audit.Wire3.WhirConfigured.phase_pairs_append_uses_previous_slice",
+        "Audit.Wire3.WhirConfigured.last_open_append",
+        "Audit.Wire3.WhirConfigured.intermediate_run_append_threads_same_state",
+        "Audit.Wire3.WhirConfigured.actual_round_at_split_has_continuous_configuration_and_state",
+        "Audit.Wire3.WhirConfigured.configured_success_uses_only_checked_projection",
+        "Audit.Wire3.WhirConfigured.configured_success_has_valid_initial_parameters",
+        "Audit.Wire3.WhirConfigured.configured_success_initial_and_intermediate_provenance",
+        "Audit.Wire3.WhirConfigured.domain_and_folding_guards_supply_open_shape",
+        "Audit.Wire3.WhirConfigured.checked_profile_supplies_initial_open_shape",
+        "Audit.Wire3.WhirConfigured.checked_profile_supplies_each_later_open_shape",
+        "Audit.Wire3.WhirConfigured.prefix_success_supplies_binding_dimensions",
+        "Audit.Wire3.WhirConfigured.prefix_success_derives_initial_profile_shape",
+        "Audit.Wire3.WhirConfigured.last_open_keeps_checked_shape",
+        "Audit.Wire3.WhirConfigured.actual_round_derives_next_profile_shape",
+        "Audit.Wire3.WhirConfigured.actual_sequence_derives_final_profile_shape",
+        "Audit.Wire3.WhirConfigured.actual_sequence_folding_count_exact",
+        "Audit.Wire3.WhirConfigured.actual_round_preserves_constraint_shape",
+        "Audit.Wire3.WhirConfigured.actual_sequence_preserves_constraint_shape",
+        "Audit.Wire3.WhirConfigured.checked_round_annotations_bounded_by_original",
+        "Audit.Wire3.WhirConfigured.prefix_success_derives_forms_and_initial_constraint_shape",
+        "Audit.Wire3.WhirConfigured.configured_success_derives_tail_profile_shape",
+        "Audit.Wire3.WhirConfigured.configured_success_derives_existing_context_shape",
+        "Audit.Wire3.WhirConfigured.configured_success_final_counts_and_both_eof",
+        "Audit.Wire3.WhirConfigured.checked_projection_preserves_all_generator_scalars",
+        "Audit.Wire3.WhirConfigured.configured_success_completed_round_count_exact",
+        "Audit.Wire3.WhirConfigured.configured_split_branch_matches_source_predicate",
+        "Audit.Wire3.WhirConfigured.configured_success_each_round_derives_its_input_profile",
+        "Audit.Wire3.WhirConfigured.invalid_parameters_do_not_reach_any_phase",
+        "Audit.Wire3.WhirConfigured.no_round_projection_uses_initial_open",
+        "Audit.Wire3.WhirConfigured.nonzero_round_projection_uses_previous_slice",
+        "Audit.Wire3.WhirConfigured.ordinary_profiles_and_parameter_checks_succeed",
+        "Audit.Wire3.WhirConfigured.configured_zero_intermediate_round_execution_example",
+        "Audit.Wire3.WhirConfigured.configured_one_intermediate_round_execution_example"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol"
+      ],
+      "scope": "Single checked typed Params supplies all initial, previous-opening/current-round pairs and final phase arguments. Same checkBound and actual execution plus explicit CallerProfile nc=3,nv=1 derive every reached intermediate ProfileShape and final Tail/ProfileShape/contextShape, exact counts, state continuity and both EOF. Raw generator packaging preserves its checked value. Generic Params type is NOT generic source correspondence: the modeled source route remains 3x1. No VK/digest/ABI/word/overflow/compiler/gas/FS or PCS proof."
+    },
+    {
+      "module": "Audit.Wire3.WhirQuicksort",
+      "theorems": [
+        "Audit.Wire3.WhirQuicksort.except_ok_bind",
+        "Audit.Wire3.WhirQuicksort.except_error_bind",
+        "Audit.Wire3.WhirQuicksort.except_pure",
+        "Audit.Wire3.WhirQuicksort.lookup_bounds",
+        "Audit.Wire3.WhirQuicksort.lookup_value",
+        "Audit.Wire3.WhirQuicksort.lookup_self",
+        "Audit.Wire3.WhirQuicksort.scan_left_success",
+        "Audit.Wire3.WhirQuicksort.scan_right_success",
+        "Audit.Wire3.WhirQuicksort.scan_left_has_sentinel",
+        "Audit.Wire3.WhirQuicksort.scan_right_has_sentinel",
+        "Audit.Wire3.WhirQuicksort.middle_pivot_bounds",
+        "Audit.Wire3.WhirQuicksort.initial_scans_succeed",
+        "Audit.Wire3.WhirQuicksort.head_set_perm",
+        "Audit.Wire3.WhirQuicksort.indexed_swap_perm",
+        "Audit.Wire3.WhirQuicksort.swap_success_perm",
+        "Audit.Wire3.WhirQuicksort.swap_success_bounds",
+        "Audit.Wire3.WhirQuicksort.getD_set_same",
+        "Audit.Wire3.WhirQuicksort.getD_set_other",
+        "Audit.Wire3.WhirQuicksort.overwrite_pair_values",
+        "Audit.Wire3.WhirQuicksort.swap_in_bounds_executes",
+        "Audit.Wire3.WhirQuicksort.iteration_success_facts",
+        "Audit.Wire3.WhirQuicksort.initial_sentinels",
+        "Audit.Wire3.WhirQuicksort.iteration_total_preserves_sentinels",
+        "Audit.Wire3.WhirQuicksort.partition_total",
+        "Audit.Wire3.WhirQuicksort.source_partition_total",
+        "Audit.Wire3.WhirQuicksort.initial_classified",
+        "Audit.Wire3.WhirQuicksort.crossed_scans_classified",
+        "Audit.Wire3.WhirQuicksort.scanned_swap_classified",
+        "Audit.Wire3.WhirQuicksort.iteration_success_sentinels",
+        "Audit.Wire3.WhirQuicksort.iteration_success_classified",
+        "Audit.Wire3.WhirQuicksort.partition_success_classified",
+        "Audit.Wire3.WhirQuicksort.partition_success_facts",
+        "Audit.Wire3.WhirQuicksort.partition_success_length",
+        "Audit.Wire3.WhirQuicksort.partition_success_multiplicities",
+        "Audit.Wire3.WhirQuicksort.partition_success_sentinels",
+        "Audit.Wire3.WhirQuicksort.source_partition_spec",
+        "Audit.Wire3.WhirQuicksort.swap_success_frame",
+        "Audit.Wire3.WhirQuicksort.iteration_success_frame",
+        "Audit.Wire3.WhirQuicksort.partition_success_frame",
+        "Audit.Wire3.WhirQuicksort.quicksort_success_perm",
+        "Audit.Wire3.WhirQuicksort.quicksort_success_length",
+        "Audit.Wire3.WhirQuicksort.quicksort_success_multiplicities",
+        "Audit.Wire3.WhirQuicksort.empty_example",
+        "Audit.Wire3.WhirQuicksort.singleton_example",
+        "Audit.Wire3.WhirQuicksort.reversed_example",
+        "Audit.Wire3.WhirQuicksort.duplicate_example",
+        "Audit.Wire3.WhirQuicksort.equal_example",
+        "Audit.Wire3.WhirQuicksort.subrange_example",
+        "Audit.Wire3.WhirQuicksort.partition_example",
+        "Audit.Wire3.WhirQuicksort.subrange_partition_example",
+        "Audit.Wire3.WhirQuicksort.right_zero_break_example",
+        "Audit.Wire3.WhirQuicksort.post_swap_zero_break_example",
+        "Audit.Wire3.WhirQuicksort.scan_crossing_example",
+        "Audit.Wire3.WhirQuicksort.scan_fuel_example",
+        "Audit.Wire3.WhirQuicksort.bounds_example",
+        "Audit.Wire3.WhirQuicksort.partition_fuel_example",
+        "Audit.Wire3.WhirQuicksort.recursion_fuel_example"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol"
+      ],
+      "scope": "Manual indexed Nat/List rendering of source midpoint pivot, ordered scans, zero breaks, simultaneous-read two-write swap, and left-before-right recursion. Actual cell sentinels prove single-partition totality, bounds, frame, classification and multiplicity preservation; successful recursion preserves elements. Separate WhirQuicksortCorrectness discharges full totality, sortedness and reference equality. Fuel is model step budget, not gas/new source guard; uint256, memory and compiler/source refinement excluded."
+    },
+    {
+      "module": "Audit.Wire3.WhirQuicksortCorrectness",
+      "theorems": [
+        "Audit.Wire3.WhirQuicksortCorrectness.initial_iteration_strict",
+        "Audit.Wire3.WhirQuicksortCorrectness.source_partition_strict",
+        "Audit.Wire3.WhirQuicksortCorrectness.source_recursive_widths_decrease",
+        "Audit.Wire3.WhirQuicksortCorrectness.quicksort_total",
+        "Audit.Wire3.WhirQuicksortCorrectness.full_quicksort_total",
+        "Audit.Wire3.WhirQuicksortCorrectness.frame_trans",
+        "Audit.Wire3.WhirQuicksortCorrectness.frame_widen",
+        "Audit.Wire3.WhirQuicksortCorrectness.quicksort_success_frame",
+        "Audit.Wire3.WhirQuicksortCorrectness.getD_at",
+        "Audit.Wire3.WhirQuicksortCorrectness.frame_prefix",
+        "Audit.Wire3.WhirQuicksortCorrectness.frame_suffix",
+        "Audit.Wire3.WhirQuicksortCorrectness.slice_decompose",
+        "Audit.Wire3.WhirQuicksortCorrectness.slice_perm_of_frame",
+        "Audit.Wire3.WhirQuicksortCorrectness.slice_membership",
+        "Audit.Wire3.WhirQuicksortCorrectness.range_all_perm_frame",
+        "Audit.Wire3.WhirQuicksortCorrectness.quicksort_success_range_all",
+        "Audit.Wire3.WhirQuicksortCorrectness.left_reorder_classified",
+        "Audit.Wire3.WhirQuicksortCorrectness.right_reorder_classified",
+        "Audit.Wire3.WhirQuicksortCorrectness.small_range_sorted",
+        "Audit.Wire3.WhirQuicksortCorrectness.left_sorted_after_right_frame",
+        "Audit.Wire3.WhirQuicksortCorrectness.sorted_of_classified_halves",
+        "Audit.Wire3.WhirQuicksortCorrectness.quicksort_success_sorted",
+        "Audit.Wire3.WhirQuicksortCorrectness.full_quicksort_success_sorted",
+        "Audit.Wire3.WhirQuicksortCorrectness.reference_insert_perm",
+        "Audit.Wire3.WhirQuicksortCorrectness.reference_sort_perm",
+        "Audit.Wire3.WhirQuicksortCorrectness.reference_nondecreasing_is_sorted",
+        "Audit.Wire3.WhirQuicksortCorrectness.full_quicksort_success_eq_reference",
+        "Audit.Wire3.WhirQuicksortCorrectness.full_quicksort_exact_reference",
+        "Audit.Wire3.WhirQuicksortCorrectness.complete_empty_example",
+        "Audit.Wire3.WhirQuicksortCorrectness.complete_duplicate_example",
+        "Audit.Wire3.WhirQuicksortCorrectness.complete_subrange_example"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol"
+      ],
+      "scope": "Unchanged indexed runner: first actual midpoint swap implies strict recursive width decrease and general sufficient-fuel totality. Actual frame and permutation give slice preservation; recursion gives sortedness. Only then sorted-permutation uniqueness yields exact existing insertion-sort equality for every list, including empty/singleton. No external sortedness premise or reliance on finite examples; no memory/uint256/gas/compiler/PCS proof."
+    },
+    {
+      "module": "Audit.Wire3.WhirSamplingExecution",
+      "theorems": [
+        "Audit.Wire3.WhirSamplingExecution.small_reference_identity",
+        "Audit.Wire3.WhirSamplingExecution.small_dedup_identity",
+        "Audit.Wire3.WhirSamplingExecution.quicksort_stage_exact",
+        "Audit.Wire3.WhirSamplingExecution.quicksort_stage_preserves_original_length",
+        "Audit.Wire3.WhirSamplingExecution.sort_and_dedup_exact",
+        "Audit.Wire3.WhirSamplingExecution.sort_and_dedup_strict",
+        "Audit.Wire3.WhirSamplingExecution.sort_and_dedup_membership",
+        "Audit.Wire3.WhirSamplingExecution.zero_count_returns_before_domain_branch",
+        "Audit.Wire3.WhirSamplingExecution.singleton_domain_returns_before_raw_or_sort",
+        "Audit.Wire3.WhirSamplingExecution.challenge_indices_exact_reference",
+        "Audit.Wire3.WhirSamplingExecution.successful_sampling_same_raw_cursor",
+        "Audit.Wire3.WhirSamplingExecution.sort_and_dedup_does_not_change_raw_state",
+        "Audit.Wire3.WhirSamplingExecution.successful_sampling_properties",
+        "Audit.Wire3.WhirSamplingExecution.successful_sampling_counter_exact",
+        "Audit.Wire3.WhirSamplingExecution.open_previous_exact_reference",
+        "Audit.Wire3.WhirSamplingExecution.round_exact_reference",
+        "Audit.Wire3.WhirSamplingExecution.rounds_exact_reference",
+        "Audit.Wire3.WhirSamplingExecution.prefix_exact_reference",
+        "Audit.Wire3.WhirSamplingExecution.final_rows_exact_reference",
+        "Audit.Wire3.WhirSamplingExecution.tail_exact_reference",
+        "Audit.Wire3.WhirSamplingExecution.whole_run_exact_reference",
+        "Audit.Wire3.WhirSamplingExecution.actual_sort_compaction_duplicate_example",
+        "Audit.Wire3.WhirSamplingExecution.nontrivial_sampling_cursor_example",
+        "Audit.Wire3.WhirSamplingExecution.zero_count_precedes_singleton_example",
+        "Audit.Wire3.WhirSamplingExecution.singleton_skips_squeeze_and_sort_example",
+        "Audit.Wire3.WhirSamplingExecution.whole_execution_example",
+        "Audit.Wire3.WhirSamplingExecution.configured_run_exact_reference",
+        "Audit.Wire3.WhirSamplingExecution.configured_actual_success_derives_context_shape"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol"
+      ],
+      "scope": "Same source count=0 then singleton returns, actual indexed quicksort and compaction after concrete challengeRaw. Unconditional equality of full Option(indices,State) to reference sampler, including failure; same raw cursor/counter. Both intermediate and final sites replaced and complete Tail run results proved equal. Single checkBound/config projection wrapper and explicit 3x1 profile derive contextShape with actual sampler. No source/compiler/memory/word/gas/FS probability or PCS claim."
+    },
+    {
+      "module": "Audit.Wire3.WhirDomainPower",
+      "theorems": [
+        "Audit.Wire3.WhirDomainPower.mask_is_low_64_bits",
+        "Audit.Wire3.WhirDomainPower.mask_preserves_bounded_input",
+        "Audit.Wire3.WhirDomainPower.mask_always_bounded",
+        "Audit.Wire3.WhirDomainPower.bit_test_is_arithmetic_branch",
+        "Audit.Wire3.WhirDomainPower.shift_is_integer_halving",
+        "Audit.Wire3.WhirDomainPower.bitwise_loop_equals_existing_power_loop",
+        "Audit.Wire3.WhirDomainPower.loop_success_exact",
+        "Audit.Wire3.WhirDomainPower.loop_success_canonical",
+        "Audit.Wire3.WhirDomainPower.loop_has_output_iff_bit_budget",
+        "Audit.Wire3.WhirDomainPower.bounded_exponent_executes",
+        "Audit.Wire3.WhirDomainPower.typed_power_exact",
+        "Audit.Wire3.WhirDomainPower.typed_power_always_executes",
+        "Audit.Wire3.WhirDomainPower.multiply_square_intermediates_canonical",
+        "Audit.Wire3.WhirDomainPower.branch_accumulator_canonical",
+        "Audit.Wire3.WhirDomainPower.actual_generator_fits_input_word",
+        "Audit.Wire3.WhirDomainPower.bounded_domain_point_equals_existing_point",
+        "Audit.Wire3.WhirDomainPower.transposed_exponent_bounded",
+        "Audit.Wire3.WhirDomainPower.domain_query_uses_same_point",
+        "Audit.Wire3.WhirDomainPower.zero_exponent_is_one",
+        "Audit.Wire3.WhirDomainPower.base_seven_squared_example"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol"
+      ],
+      "scope": "Separate bitwise scalar rendering of actual _glPow low-64 mask, low-bit branch, shift and mulmod sequence, proved equal to existing binary modular power. All Fin64 base and Fin256 exponent inputs execute within 256 bit-fuel with exact residue and output<p<2^64, including zero exponent and base>=p. Same bounded transposed query yields exactly existing domainPoint; no generator-order inference. Manual scalar model, not Yul/parser/compiler/bytecode/memory/gas/refinement or cryptographic soundness."
     }
   ]
 }

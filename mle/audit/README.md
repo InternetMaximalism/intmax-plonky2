@@ -41,7 +41,7 @@
 | [PiSharedBits/PiCache](Audit/Wire3/PiCache.lean) | 実OR/XOR共通bit分離・逆順検索・重複行合算・eta末尾更新省略を含むキャッシュと直接PI和の同値 |
 | [GoldilocksCertificate](Audit/Wire3/GoldilocksCertificate.lean) | 体証明で使う具体べき乗/gcd証明書。単独では素数性を結論せず、GoldilocksFoundationのLucas証明に渡す |
 | [MerkleExtraction](Audit/Wire3/MerkleExtraction.lean) | 実multiproof成功から全leafの深さ付きpathを抽出。同root/index/depthの開示を一致または具体的hash衝突へ還元 |
-| [WhirSampling](Audit/Wire3/WhirSampling.lean) | byteごとの実hash/counter・BE query・mask。挿入sort基準版の順序/集合を証明するがsource quicksortとの同値は未証明 |
+| [WhirSampling](Audit/Wire3/WhirSampling.lean) | byteごとの実hash/counter・BE query・maskと挿入sort基準版。実indexed sortとの接続は後段WhirSamplingExecutionを参照 |
 | [WhirRows](Audit/Wire3/WhirRows.lean) | Vec要素数→元の連続hint行→raw hash→既存Merkleのcursor接続。canonical decoderは実行順を保つため別操作 |
 | [WhirRowBinding](Audit/Wire3/WhirRowBinding.lean) | 実openGroupの同root/depth/index行についてraw bytes・同Layoutの復号値・同weightsの内積が一致するか、具体的hash衝突があることを証明 |
 | [FermatBridge](Audit/Wire3/FermatBridge.lean) | 明示したFermat等式から実inverseの左右逆元・消去・除算を証明。後段Foundation/Normが一般Fermatと非零norm条件を解消 |
@@ -59,8 +59,12 @@
 | [WhirParameters](Audit/Wire3/WhirParameters.lean) | 実順の全typed設定guard、bound/deployment入口の区別、raw点の損失なしcanonical化と既存WhirInitial.validatedParamsへの接続 |
 | [WhirDomainBridge](Audit/Wire3/WhirDomainBridge.lean) | 実domainPointを固定生成式へ接続。明示した生成元・次元条件下で単射と、同長・不同の固定vectorの一致query数≤長さ−1 |
 | [WhirChallenge](Audit/Wire3/WhirChallenge.lean) | 実120byte/3×LE40byte還元の全単射と事象数上界。明示的uniform入力なら固定不同WHIR quadraticの一致確率≤2(ceil(2^320/p)/2^320)³。実FS分布は未証明 |
+| [WhirConfigured](Audit/Wire3/WhirConfigured.lean) | 単一checked設定から全相へ投影し、実行成功と明示3×1条件から全到達相/終端Contextの形状を導出 |
+| [WhirQuicksort/Correctness](Audit/Wire3/WhirQuicksortCorrectness.lean) | 実indexed scan/swap/partition/左右再帰をモデル化。一般終了・範囲外保存・整列・重複数保存から基準sortとの一致を証明 |
+| [WhirSamplingExecution](Audit/Wire3/WhirSamplingExecution.lean) | 実sort→indexed compaction→raw queryを全WHIR両sampling箇所へ接続。結果・全状態・失敗の一致と単一checked設定入口の形状を証明 |
+| [WhirDomainPower](Audit/Wire3/WhirDomainPower.lean) | 実64bit mask/low-bit/shift/mulmodのscalar loopと既存冪乗の一致。256bit指数で終了し、範囲内queryの実domainPointへ接続。compiler/EVM refinementではない |
 
-現行rootは47モデル・1250件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
+現行rootは52モデル・1431件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
 件数は暗号安全性の達成率ではありません。
 
 [スコープと未証明事項](SCOPE.md)、[結果・再現手順・次工程](REPORT.md)、

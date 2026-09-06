@@ -488,9 +488,36 @@ guard33件・dependency34件・provision20件、空白差分とruntime無変更�
 全体の実装/PCS健全性は未完了であり、
 40モデルfresh検査を、この47モデルのfresh再生成実績へ読み替えない。
 
+## 第8継続更新（6642bd83以降）
+
+5モデル・181定理を追加し、52モデル・1431名付き定理へ拡張した。
+
+- **単一設定から全相へ**: checkBound済みの同じpから初期/前round opening/当round/終端を
+  投影。別の形状仮定なしで、実行成功と明示3×1条件から全到達中間相・終端Contextの形状、
+  同一stateの連続、fold分割、正確な件数・両EOFを導く。raw generatorはcanonical検査により保持。
+  generic Paramsを受ける型であっても、source対応を3×1外へ拡大しない。
+- **実indexed sortの一般証明**: midpoint pivotの実scan/swapからsentinel・partition分類を維持し、
+  最初のswapがiを増やしjを減らすことから再帰幅の厳密縮小と全終了を証明。
+  範囲外不変・区間内要素保存を使って全再帰の整列を導き、最後にだけ基準sortとの一致を結論する。
+  大きなfuelを与えた例や外部sortedness仮定で一般性を代用しない。
+- **実samplingでの全実行**: 実sort→indexed compaction→raw queryを接続し、count=0とsingleleafの
+  早期分岐を保持。基準版とOption全体・全State・失敗が一致し、両sampling箇所を差替えた
+  初期→中間→終端の全結果も一致する。単一checked設定入口とそのcontextShapeも接続。
+- **実bitwise冪乗との接続**: 64bit mask、low-bit分岐、右shift、各mulmodのscalar loopを
+  既存冪乗runnerへ同一化。全Fin64入力/Fin256指数で256fuel以内の終了と正確値、返却値<p<2^64、
+  同じ範囲内transpose queryでの既存domainPoint一致を証明。任意generatorの位数は結論しない。
+
+追加全候補の全文・source・依存モデルはrootと別担当で対照し、必須修正は残らなかった。
+採用namespaceへの移行で生じた曖昧なimport名を完全修飾へ修正し、全model/root buildを再検査した。
+統合guardは全1431名の実定理/型/推移的公理、399 reviewed hashes、18表1147語、
+7依存5601fileの検査にPASS。source inventoryは290file中29部分対応/261未対応を維持。
+guard33件・dependency34件・provision20件、CI YAML、空白差分とruntime無変更もPASS。
+これらは手動モデル内の対応であり、source/compiler/Yul/EVM・メモリ・gasの形式的refinement、
+immutable VK由来、真の回路多項式、ROM/PCS健全性の証明ではない。40モデルfresh検査とも区別する。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。
-特にsamplingの実quicksort・typed設定から全phase/外側入口への接続を進め、全gateの意味論・次数、
+特にtyped設定/実sampling経路から外側入口への接続を進め、全gateの意味論・次数、
 実行意味論・有限体証明の全体接続・確率的健全性を証明することが必要。
 この更新のみを根拠に本番利用や「criticalな健全性問題なし」を宣言しない。

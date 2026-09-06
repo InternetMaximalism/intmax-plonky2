@@ -58,8 +58,14 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   count=0/numLeaves=1の無消費分岐、counter上限、raw rangeを証明する。
   challengeIndicesReferenceは実行可能な挿入sortと隣接dedupの基準版であり、sourceの
   in-place quicksortそのものではない。sortedness・membership・件数・非空性を証明しても、
-  source quicksortのswap/partition/termination/メモリとの同値を得たことにはしない。
-  原始query集合からこの基準出力へ移る差は、全WHIR接続時にも可視の未証明境界とする。
+  source quicksortとの同値をこの基準版単独から得たことにはしない。
+  WhirQuicksort/Correctnessは実indexed scan/swap/左右再帰から
+  partitionのsentinel・分類・範囲外不変・要素数保存を証明し、最初の実swapから再帰幅の
+  厳密縮小と十分なfuelでの全終了を導く。整列と重複数保存を証明した後にだけ基準sortと同一化する。
+  WhirSamplingExecutionは実sort/compactionをraw samplingへ接続し、count=0→singleleafの
+  分岐順を保ち、全Option結果・全state・失敗を基準版と一致させる。両sampling箇所を差替えた
+  全WHIR実行と単一checked設定入口にも接続した。これにより数学的sort置換の境界は解消したが、
+  配列メモリ・uint256/overflow・gas・source/compiler refinementは証明していない。
   WhirDedupはquicksort後の実indexed compactionをモデル化し、現在のbuffer[i]/[i−1]比較、
   条件付き上書き、全read/write境界、n−1回の終了、最終長と基準dedupの同値を証明する。
   その同値にsortednessは不要で、strict ascendingの系だけがsorted入力を要求する。
@@ -136,7 +142,11 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   成功から既存Schedule、全domain、全点の長さ/canonical性、正確なevaluation件数、
   WhirInitial.validatedParamsを導く。expectedの値をbound guardがcanonical検査したとはしない。
   samples/PoW threshold/末尾mask bitsはsource sliceに検査がないため独自に制約しない。
-  ABI・整数幅/overflow・immutable config由来と3×1 profile・全typed実行への設定投影は未証明。
+  WhirParameters単独ではABI・整数幅/overflow・immutable config由来と3×1 profile・全相への投影を扱わない。
+  全typed相への投影は後段WhirConfiguredで接続済み。単一checkBound済みpから全phase引数を導き、
+  実行成功と明示CallerProfile(nc=3,nv=1)だけから全中間ProfileShapeと終端contextShapeを導く。
+  別のshape仮定や新runtime guardを追加しない。generic Params型でもsource対応は3×1内に限定。
+  immutable VK由来・ABI/整数幅/overflowとgeneric nc/nv profileへの拡張は別境界のまま。
   sourceの_validateDomain単独はgeneratorの非零/canonical性と形状だけを検査し、位数は検査しない。
   query indexを相異なる評価点へ写すには、固定VKのgenerator生成から必要な位数を別途導出する。
   この条件をshape検査の成功やFinsetの重複なし条件から暗黙に得たことにしない。
@@ -149,6 +159,11 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   最終vectorの一致query数≤長さ−1を導く。raw Hornerと正規化比較の両方を扱う。
   queryはFinset (Fin (2^k))であり、重複sample列・実query range/configへの接続・
   _glPowの機械語対応・FS確率を、この定理から暗黙に得たとはしない。
+  WhirDomainPowerは別のbitwise scalar loopで、64bit mask・実low-bit条件・右shift・mulmodを
+  既存binary powerへ接続。uint64入力とuint256指数のFin境界で256fuel以内の成功・正確値・
+  出力<p<2^64を導く。同じtranspose指数が2^k内ならk≤32で実domainPointと一致する。
+  初期baseがp以上でもuint64内なら保持し、zero exponentでは1を返す。fuelはgasではない。
+  手動scalarモデルであり、Yul/parser/compiler/bytecodeとの形式的対応を得たことにはしない。
   値はstored VK/config由来である必要があり、proverが自由に変更できるfieldとはしない。
 - Normはformal-coordinate式とhelper/logUp集計を具体化。PIはRustの順序付き直接和で、
   PiSharedBits/PiCacheでSolidityのrow-cache/shared-bit最適化とのモデル内同値を証明。
@@ -179,7 +194,8 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    Plan/ContextとfixedVK/root/pointへの認証を接続。raw row bytes→leaf hash→multiproof→
    各queryの開示path→終端比較を一つの実行経路として証明。raw row→multiproof→path→
    復号/dotのbinding、中間round列、限定3×1 tailのderived Contextは接続済み。
-   samplingのquicksort同値、typed設定から全phaseの投影、外側統合入口への接続は残る。
+   indexed quicksort/compactionの全実行同値、単一typed設定から全phaseの投影は接続済み。
+   source/compiler refinementと外側統合入口への接続は残る。
    固定generatorの数学的位数は証明済みだが、native依存/codegenからの生成対応も対象に含める。
 2. 全14 gate評価の式から実多項式次数・gate意味論・sumcheckへの接続を証明。
    PI cacheの証明済み同値、selector/lookupの入口接続も全体経路へ反映。
@@ -199,7 +215,7 @@ GoldilocksCertificate単独は数値証明書であり、素数性の根拠はGo
 Lucas適用・全prime-divisor列挙・小因子の素数性の証明と組み合わせたものに限る。
 Mathlib v4.10.0のcommitと公式lockの6依存を監査専用に固定し、直接importは特定の
 モジュール/名称だけ許可する（Foundationの3import、NormのRing、WhirPolynomialのRoots、
-WhirChallengeのFintype.Card）。
+WhirChallengeのFintype.Card、WhirQuicksortのList.Perm、CorrectnessのList.Sort）。
 標準3公理allowlistと全名付き定理の検査は維持する。
 依存guardは全tracked sourceの実Git blob・HEAD・origin・固定release tagと追加sourceを検査。
 この検査は生成済み.oleanやProofWidgets release archiveの出自を認証しない。

@@ -21,11 +21,13 @@ is an explicit correspondence precondition, NOT a new runtime validation pass.
 Other commitment/vector profiles and full schedule/ABI validation are excluded.
 
 WhirSampling uses concrete bytewise challenges but reference insertion sort,
-NOT a refinement of source in-place quicksort. Raw rows are authenticated before
+with its indexed-runner substitution supplied by WhirSamplingExecution, not a
+compiler refinement of source in-place quicksort. Raw rows are authenticated before
 RLC and canonical decoding, as in intermediate rounds (not final split reads).
 Canonical decode then pure dot denotes the source's interleaved decode/accumulate
 loop's mathematical result; its instruction/error/memory refinement is unproved.
-Domain powers use Nat.pow modulo p, not a proof of the source _glPow loop.
+Domain powers use Nat.pow modulo p. WhirDomainPower supplies the bitwise scalar
+loop equality under bounded exponents, not a compiled _glPow refinement theorem.
 Pure domain-point calculation is a projection with no transcript/hint effect;
 its allocation timing (before standard Merkle, after split Merkle) is not modeled.
 List get? failures expose missing source shape conditions rather than making

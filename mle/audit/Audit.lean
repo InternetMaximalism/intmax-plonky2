@@ -52,3 +52,8 @@ import Audit.Wire3.WhirQuadratic
 import Audit.Wire3.WhirParameters
 import Audit.Wire3.WhirDomainBridge
 import Audit.Wire3.WhirChallenge
+import Audit.Wire3.WhirConfigured
+import Audit.Wire3.WhirQuicksort
+import Audit.Wire3.WhirQuicksortCorrectness
+import Audit.Wire3.WhirSamplingExecution
+import Audit.Wire3.WhirDomainPower

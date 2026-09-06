@@ -26,8 +26,11 @@ each. No general single-commitment/multi-vector initial route is claimed.
 The source's mutable final-vector fold is represented by an immutable snapshot;
 instruction mutation, allocation, calldata/Yul, overflow, gas, exception payloads,
 Rust/compiler refinement and full parameter decoding remain unproved.
-Reference insertion sort still replaces source quicksort without refinement;
-domain powers remain concrete Nat.pow mod p, not _glPow instruction refinement.
+The reference sampler here is replaced by proved-equal indexed quicksort and
+compaction in WhirSamplingExecution. WhirConfigured derives ProfileShape from
+one checked config and actual execution, retaining the explicit 3-by-1 profile.
+Domain powers are Nat.pow mod p; WhirDomainPower proves the bitwise scalar loop
+equality for bounded exponents. These are not source/compiler refinements.
 The concrete whole execution here is a MANUAL MODEL, not a proof of whole-source
 equivalence or WHIR/PCS probabilistic soundness, hash security or FS independence.
 -/
