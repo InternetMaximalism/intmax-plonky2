@@ -68,3 +68,13 @@ import Audit.Wire3.GateLoopPolynomial
 import Audit.Wire3.GateRandomPolynomial
 import Audit.Wire3.GateTwelvePolynomial
 import Audit.Wire3.WhirRlc
+import Audit.Wire3.GateCosetPolynomial
+import Audit.Wire3.GatePoseidonPolynomial
+import Audit.Wire3.GateAllPolynomial
+import Audit.Wire3.GateAggregatePolynomial
+import Audit.Wire3.GateSuffixPolynomial
+import Audit.Wire3.OuterInterpolation
+import Audit.Wire3.OuterInterpolationTotal
+import Audit.Wire3.DenseMleIndexed
+import Audit.Wire3.OuterInitial
+import Audit.Wire3.OuterAdapter

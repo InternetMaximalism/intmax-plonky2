@@ -70,8 +70,14 @@
 | [NormPolynomial](Audit/Wire3/NormPolynomial.lean) | off-cube形式norm/adjugateと実寄与式からhelper≤4、eq重み込み行・有限和≤5、PI≤2。endpoint抽出/PI routing/送信係数は別境界 |
 | [GateLoop/Random/TwelvePolynomial](Audit/Wire3/GateTwelvePolynomial.lean) | Exponentiation・BaseSum・Reducing2種・RandomAccessを追加し12familyの実次数と設定済み行寄与を証明。Poseidon/Cosetのsymbolic NONEは残る |
 | [WhirRlc](Audit/Wire3/WhirRlc.lean) | 実geometric係数とrow dotを同じ多項式へ接続。固定同長不同vectorの一致点数≤n−1、明示uniform120byte上界、2RLCの実順序/別state・無消費分岐 |
+| [GateCoset/Poseidon/AllPolynomial](Audit/Wire3/GateAllPolynomial.lean) | Poseidon4の全30round実状態・S-box・MDSから123制約・次数≤7、Coset13のchunk/reset/中間からD≥2で次数≤D。全14familyの実validateGateから寄与≤q+1、affine重み後≤q+2。gate truth/endpoint由来は別境界 |
+| [GateAggregate/SuffixPolynomial](Audit/Wire3/GateSuffixPolynomial.lean) | 実combineRows全行の順序付き集約を1多項式へ接続し次数q+1、実設定包絡q≤8から重み後≤10。2s/2s+1読取り・同一challenge補間・Boolean suffix和も同じ多項式。Rust slot-first順序との可換は未証明 |
+| [OuterInterpolation/Total](Audit/Wire3/OuterInterpolationTotal.lean) | coefficients.rsの実Gauss消去（自然node・pivot交換なし・書込み前factor）を添字付きで模し、証明専用ghost RHSで到達pivot=∏(p−j)を同定。n≤pで全段成功・実inverse実行・非空全域、norm5/gate q+2へ特殊化 |
+| [DenseMleIndexed](Audit/Wire3/DenseMleIndexed.lean) | ext3.rs bindの2i/2i+1 read-before-write・増順書込み・truncate・未書込suffix不変、Valid長=2^numVars、numVars>0 guard、全bindManyとPacked.layer/foldの一致、affine Norm橋 |
+| [OuterInitial](Audit/Wire3/OuterInitial.lean) | 外側初期transcriptの16frame（circuit digest・raw PI・15語metadata・config digest・64/32byte識別子・2roots）とeta〜gate tauの順序/counter、d≤13で全checked squeeze成功。PI hash・VK意味論・Hash安全性は未証明 |
+| [OuterAdapter](Audit/Wire3/OuterAdapter.lean) | 40byte内部snapshotの無損失decoder、実coupledRoundの6limb/counter、5claim+空第6cell→index domain→log/gate index列の実順序、checked外側loop=Verifier.roundStep、初期→WHIR contextのOption prefix。既存total Engineとの一致は明示CommitAgrees/SamplesAgree条件付き |
 
-現行rootは63モデル・1716件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
+現行rootは73モデル・2038件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
 件数は暗号安全性の達成率ではありません。
 
 [スコープと未証明事項](SCOPE.md)、[結果・再現手順・次工程](REPORT.md)、

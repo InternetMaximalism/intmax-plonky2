@@ -38,12 +38,30 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   raw Nat値の非零や、Ext3係数を持つoff-cube formal normへの同じ非零主張は導かない。
 - Packedは関数的なloopモデル。paddingとの結果一致を証明するが、実in-placeメモリ操作
   の安全性は含まない。Rustの配列実装への適用には入力長・width・次の2冪・point長の接続が必要。
+  DenseMleIndexedはext3.rsのbind loopを添字付きmutable bufferとして模し、各iで2i/2i+1を書込み前に読み、
+  増順に書き、最後にtruncateすること、未書込suffixの不変、Valid表長=2^numVars、source numVars>0 guard、
+  全bindMany実行とPacked.layer/foldの一致、affine Normへの橋を証明する。
+  constructor/from_base/trailing_zeros、usize/メモリ/compiler refinement、endpoint由来の完全接続は残る。
 - Transcriptのhashは任意の決定的関数。同一の旧digestの下でのhash前tag/payloadの
   一意性から、hash後の単射性・ランダム性は導かない。
   counterの結果はcheckedで成功する呼出しが対象。
   `commitClaims` 等のraw helperは、preflightでcanonical値・payloadのu64長上限が
   保証された環境を対象とし、そのpreflight接続自体は未証明。
   初期statement/root吸収の全手順と全Engineへの接続は残る。
+  OuterInitialは外側初期transcriptの16frame（初期化domain、statement domain、circuit digest、
+  raw public inputs、packed schemaと15語u64-LE metadata、config digest、64/32byteのWHIR識別子、
+  preprocessed/witness root）と、eta→beta/gamma→norm-inverse root吸収→xi→lambda/rho/kappa→
+  log tau→gate alpha→gate tauの順序・counterを具体化し、d≤13で全checked squeezeの成功と同一結果、
+  識別子長guardのnone、toInitialの往復を証明する。40byte snapshotは内部adapterでproof wire fieldではなく、
+  PI hash再計算・config digest計算・VK/config意味論・Hashの衝突耐性/uniform性・下流Engineの全埋め込みは未証明。
+  OuterAdapterは40byte内部snapshotの無損失decode（長さ40以外はnone）、実coupledRoundへのcheckedな委譲
+  （round domain→u64-LE round→log vec→gate vec→challenge domain→log limb 0..2/gate limb 3..5、結果counter 6）、
+  5個のclaim vectorと空の第6cell→index domain→log index列→gate index列（counter 3i/3·bits+3i）、
+  既存Transcript.constituentIndicesとの全limb一致、Verifier.roundStepと定義的に同じchecked loop、
+  初期識別子guard→checked導出→coupled rounds→claim/index→packed fold→whirContextのOption prefixを具体化する。
+  malformed decodeをzero/defaultへ全域化しない。既存total Engineとの一致はCommitAgrees/SamplesAgree/初期一致/
+  fold一致を明示した条件付き定理であり、任意Engineのsource同値・完全受理・PCS/WHIR接続ではない。
+  shape外ではraw zipが不等長listを切詰めるため、source対応の結論はenvelope/shape/InputSizes前提下に限る。
 - Spongefishはこれと別の内側WHIRのchain。state||squeeze||BE64counterの47byte入力、
   120byteを一括生成して3個のLE40byte値に還元するchallenge、24byteの厳密canonical読取り、
   PoWのchallenge32＋nonce8＋zero24とLE先頭8byte判定、hint Vec prefixを具体化。
@@ -98,6 +116,13 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   coupledRoundの両message吸収後log 0..2/gate 3..5と同じ多項式を保持する。
   明示uniform triple lawの固定多項式上界はd(ceil(2^256/p)/2^256)³であり、
   実hashの独立性・uniform性・適応的fixednessや両lane確率の積を主張しない。
+  OuterInterpolation/Totalはcoefficients.rsのGauss消去（自然node、増順冪、RHS列n、pivot交換なし、
+  対角inverse、pivot..=n正規化、pivot行clone、pivot以外の増順対象行、書込み前factor捕捉、増順列減算、
+  係数順抽出）を添字付きで模す。証明専用のghost RHSで到達pivot値∏_{j<p}(p−j)を同定し、n≤pなら全prefix/
+  全n段が成功して実WhirFinal.inverseが実行され、非空入力で全域、空入力は拒否する。degree<pで0..degreeの
+  sampleから正確な係数と省略定数messageを得て、実evaluateRoundがf(r)を返す。norm次数5とchecked gateの
+  q+2（q>0、q+2≤10）へ特殊化する。Vec/メモリ/compiler refinement、実current_roundのdataflow、
+  回路truth、FS/PCSは含まない。
   configuration、decoder、initial transcript、gate/norm/eq評価、hash、WHIR tail等を
   入力付き関数観測として残す。例外・gas分類は実EVMの全分類ではない。
 - Solidityのenvelope/deployment検査はconstructorで行い、callでは設定hashを照合する。
@@ -211,6 +236,15 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   実際に再計算し、bitごとに次数上界が増える。Boolean性・range truthは仮定しない。
   実metadata/全設定/両入力長から12familyの寄与≤q+1/affine重み後≤q+2を証明する。
   前段7family dispatcherとこの12family dispatcherを区別し、Poseidon4/Coset13のNONEは残す。
+  GateCoset/Poseidon/AllPolynomialはPoseidon4の全30round（swap/delta、各S-box前のfresh wire、partial最終
+  roundの定数省略、circulant/sparse MDS）を制約消失を仮定せず123制約・次数≤7、Coset13のold-product評価→
+  更新/reset/中間claimed E-Pを4+4·intermediates制約・D≥2で次数≤Dとして証明し、全14familyの実validateGate
+  から寄与≤q+1、affine重み後≤q+2を導く。この全family wrapperにsymbolic NONEは残らない。
+  GateAggregate/SuffixPolynomialは実combineRows全行の順序付き集約を1多項式へ接続して次数q+1、実設定包絡
+  q≤8から重み後≤10、2s/2s+1の実読取りと同一challenge補間、0..2^remaining−1のBoolean suffix和
+  （remaining=0を含む）を同じ多項式で証明する。TableShapeは供給表への明示条件で新runtime guardではない。
+  Rustのslot-first/forward alpha powersとの可換、mutable grid転置、DenseMle endpoint由来、
+  補間/reduced emitter/canonical publicHash preflight、回路truth/PCS/FSは未証明。
 - Integrated.verifyはchecked norm形状と7challenge layout、同じ入力での全gate計算の
   Someを検査後、packed/norm/eq/gateを具体化したVerifier.verifyへ進む。
   modelEngineだけの利用にはこの保証がなく、getD zeroは旧interfaceへの全域化にすぎない。
@@ -230,8 +264,9 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    source/compiler refinementと外側統合入口への接続は残る。
    固定generatorの数学的位数は証明済みだが、native依存/codegenからの生成対応も対象に含める。
 2. 全14 gate評価の式から実多項式次数・gate意味論・sumcheckへの接続を証明。
-   12familyの実式/設定済み行次数と外側係数復元は接続済みだが、残2family・全行和・
-   補間/送信係数・回路truth chainへの接続を完成したとはしない。
+   全14familyの実式/設定済み行次数、全行和とBoolean suffix和、外側係数復元と補間全域性は
+   接続済みだが、Rust slot-first順序との可換・DenseMle endpoint由来・回路truth chainへの接続を
+   完成したとはしない。
    PI cacheの証明済み同値、selector/lookupの入口接続も全体経路へ反映。
 3. setup/VK/config生成、immutable store、全compact decoder、metadata decoder、
    初期transcript・真のchallenge・public-input hashをIntegratedへ接続。

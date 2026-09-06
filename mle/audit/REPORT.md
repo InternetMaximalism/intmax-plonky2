@@ -568,6 +568,71 @@ source inventoryは290file中30部分対応/260未対応を維持。
 guard33件・dependency34件・provision20件、CI YAML、空白差分とruntime無変更もPASS。
 実装・main・push・親pinは変更せず、全実装/PCS健全性を完了したとはしない。
 
+## 第11継続更新（c2b3684a以降）
+
+10モデル・322定理を追加し、73モデル・2038名付き定理へ拡張した。
+
+- **全14familyのgate次数**: Poseidon4の実状態（swap/delta、各S-box前のfresh wire、partial最終roundの
+  定数省略、circulant/sparse MDSとpartial-initial行列）を既存の実定数表で実行し、制約消失を仮定せず
+  123制約・次数≤7を導く。Coset13はold-product評価→更新、中間claimed E/P制約→reset、clamped next
+  count≤D−1から、実metadataのD≥2で次数≤D、4+4·intermediates制約。全14familyの実validateGate成功から
+  symbolic term listの存在、GatesComplete.evaluateUnfilteredとの評価一致、family別上界
+  0,1,1,3,7,1,3,3,4,base,2,2,bits+1,D、選択行寄与≤q+1、明示affine重み後≤q+2を証明する。
+  12family dispatcherのNONEはこの全family wrapperには残らないが、gate truth・endpoint由来は別境界。
+- **全行集約とBoolean suffix和**: 実combineRows全行が同じwires/constants/publicHash/alphaを使う順序付き
+  集約を評価点の前に固定した1多項式へ接続し、validateRowsから次数q+1、完全なevalCombinedとの一致、
+  実設定包絡q≤8から重み後≤10を導く。2s/2s+1の実読取り・同一challengeの実行可能補間・
+  0..2^remaining−1の増順suffix和（remaining=0を含む）も同じ多項式で証明し、明示TableShape下では
+  fallback読取りが起きない。Rustのslot-first/forward alphaとの可換、mutable grid転置、
+  DenseMle endpoint由来、補間との接続は未証明。
+- **外側補間の実Gauss消去と全域性**: coefficients.rsの自然node・増順冪・RHS列n・pivot交換なし・
+  対角inverse・pivot..=n正規化・pivot行clone・書込み前factor捕捉・増順列減算・係数順抽出・空入力拒否を
+  添字付きで模し、全accessがn×(n+1)内、nodeのu64適合を証明。証明専用ghost RHSで到達pivot=∏_{j<p}(p−j)を
+  同定し、n≤pで全prefix/全n段が成功、実WhirFinal.inverseが実行され、非空入力で全域。degree<pで
+  0..degreeのsampleから正確な係数と省略定数message、実Verifier.evaluateRoundがf(r)を返す。
+  norm次数5とchecked gate q+2（q>0、q+2≤10）へ特殊化する。
+- **添字付きDenseMle bind**: ext3.rsのbind loopで各iが2i/2i+1を書込み前に読み、増順に書き、最後に
+  truncateすること、未書込suffix不変、Valid長=2^numVars、source numVars>0 guard、全bindMany実行と
+  Packed.layer/foldの一致、affine Normへの橋を証明。constructor/from_base/usize/memory refinementは残る。
+- **外側初期transcriptとadapter**: 16frameの実順序（circuit digest、raw PI、15語u64-LE metadata、
+  bytes32-BE config digest、64/32byte識別子、preprocessed/witness root）、eta→beta/gamma後の
+  norm-inverse root吸収→xi→lambda/rho/kappa→log tau→gate alpha→gate tauの正確なcounter、d≤13で
+  全checked squeeze成功、識別子長guard、toInitial往復、40byte内部snapshotの無損失性を証明。
+  OuterAdapterは実coupledRoundの6limb/counter、5claim+空第6cell→index domain→log/gate index列
+  （既存constituentIndicesと全limb一致）、Verifier.roundStepと定義的に同じchecked loop、
+  初期→coupled rounds→claim/index→packed fold→whirContextのOption prefixを接続し、
+  envelope/shape/InputSizesからの成功と任意Hashでの非空例を持つ。malformed decodeをzero/defaultへ
+  全域化しない。既存total Engineとの一致はCommitAgrees/SamplesAgree/初期/fold一致を明示した条件付き。
+  PI hash再計算・config digest・VK/config意味論・Hash安全性・完全受理・PCS/WHIR接続は未証明。
+
+追加10モデルは候補段階でrootと別担当の独立read-onlyレビューをPASS（OuterInterpolation/Totalと
+OuterAdapterのsource対照レビューは本更新で実施し、必須修正なし）。
+採用namespaceでの直接buildと全統合guardはPASS。全2038名の実定理/型/推移的公理、420 reviewed hashes、
+18表1147語、7依存5601fileを検査した。
+source inventoryは290file中31部分対応/259未対応（sumcheck/ext3.rsの部分対応を追加）。
+guard33件・dependency34件・provision20件、CI YAML、空白差分とruntime無変更もPASS。
+実装・main・親pinは変更せず、全実装/PCS健全性を完了したとはしない。
+
+この73モデル・2038定理の状態について、40モデル時点と同じ一時runner
+（`/private/tmp/wire3-fresh-source-runner.iXATos/fresh_audit.py`、SHA256
+`9128f90b80becc4a43cae970567362887ce42da1970debad150e196fea0b46ed`）で
+全非toolchain依存を空の新規出力先へsourceから再生成し、その出力だけで全定理を検査した。
+
+- 1403非toolchainモジュール: audit/root 74、Mathlib 1091、Batteries 99、Aesop 108、
+  Qq 11、ProofWidgets 18、ImportGraph 2。全て新規出力先へsourceから再生成。
+- 全2038定理の`.thmInfo`、型、推移的公理をfresh出力だけで再検査。errorなし、
+  許容は標準3公理のみ。経過1072.292秒。
+- 開始/終了時に420 reviewed hashes、全source inventory、18表1147語、
+  7依存5601file/64,398,270byteを照合し、一致。
+- 保存先 `/private/tmp/wire3-fresh-source-build.g45kkble/`。receipt SHA256
+  `d7404564544658ad1a1958ca2530eaa540e376976139bc6a90c2cf1b9bdcd437`、graph SHA256
+  `8ef2043045aa89602b5e84ffbe2cbffeca9d4f49a8a46841f8cd455d3b4b2c89`。実行時のmanifest SHA256は
+  `1522e8c7afe3e7e43706fd4a073b2e275ab32c474886c218c016243f9d8b5fbe`で、その後の差分は
+  この記録の追記に伴うREPORT/manifest hashのみ。
+- 11個のProofWidgets JSは固定既存bytes。Lean toolchain/core、Python/Git、固定metaprogram、
+  非adversarialなFSは信頼境界に残る。この一時パスの保持を別環境での再現可能性の代用にせず、
+  fresh PASSを実装refinementやPCS健全性の証明に読み替えない。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。
