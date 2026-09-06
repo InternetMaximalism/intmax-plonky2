@@ -25,7 +25,8 @@ HEX64 = re.compile(r"[0-9a-f]{64}\Z")
 KERNEL_AXIOMS = frozenset({"propext", "Classical.choice", "Quot.sound"})
 REQUIRED_MODULES = {"Audit.Wire3." + name for name in (
     "Arithmetic", "Packed", "Transcript", "Compact", "Sumcheck", "Verifier",
-    "Connections", "WhirTerminal",
+    "Connections", "WhirTerminal", "WhirFinal", "Merkle", "Norm", "Gates",
+    "Algebra", "Integrated",
 )}
 REQUIRED = {
     PROJECT + "/check-wire3.py", PROJECT + "/test-check-wire3.py",

@@ -184,8 +184,18 @@
       "kind": "implementation"
     },
     {
+      "path": "mle/Cargo.toml",
+      "sha256": "5818fdd36402f0775d265506bf777e42ab5e3e1ba68f9a58f9c82a8dd42cc168",
+      "kind": "tooling"
+    },
+    {
+      "path": "mle/README.md",
+      "sha256": "0026328bd82c48c23c2db46e0bbaaf68e93cb76d32e50ea966a3703d583d2419",
+      "kind": "spec"
+    },
+    {
       "path": "mle/audit/Audit.lean",
-      "sha256": "bdbf2ab62b3ebd778f4147ac1468ef73537735d552275226925c45d126c977ef",
+      "sha256": "a4dad9975a17b5edda45c297796a51ca226d7316d9943a19c4846433484d8137",
       "kind": "current-model"
     },
     {
@@ -304,6 +314,11 @@
       "kind": "historical"
     },
     {
+      "path": "mle/audit/Audit/Wire3/Algebra.lean",
+      "sha256": "1d4fd4782f8f9cbd7d1fc8d046eb3b66a0327427b82555ddb6665525359b13d0",
+      "kind": "current-model"
+    },
+    {
       "path": "mle/audit/Audit/Wire3/Arithmetic.lean",
       "sha256": "8330549633390967830b3df0acf48ecb8618a45a32b7b5adf5def8756145345f",
       "kind": "current-model"
@@ -316,6 +331,26 @@
     {
       "path": "mle/audit/Audit/Wire3/Connections.lean",
       "sha256": "85d703e3a06b24a7505356cc2f7467e8fe4cff3f4f54ca0545497c2bdae87f87",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/Gates.lean",
+      "sha256": "3c4e762d28468b62aee0861634e07901320f853d689f84e42cac2cf0115f93de",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/Integrated.lean",
+      "sha256": "f1d2a28701119c61d6b0d8e32c3ba5f1f08719a35f3b23f9b4e340341ebabffc",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/Merkle.lean",
+      "sha256": "32a7bbbe386837d03cee8c1791ab41805b69a704c860c32de8ac6a62d4d2b97d",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/Norm.lean",
+      "sha256": "f5ebb62f8acf1bdc82c6ad7b02e981154b0cd468e11b4d3b7b59ec9c506f76de",
       "kind": "current-model"
     },
     {
@@ -339,14 +374,14 @@
       "kind": "current-model"
     },
     {
-      "path": "mle/audit/Audit/Wire3/WhirTerminal.lean",
-      "sha256": "53b25dcff1d98bedd69fd51882f15038cf433e01315259989faf98bd2ff7760b",
+      "path": "mle/audit/Audit/Wire3/WhirFinal.lean",
+      "sha256": "6bf55121920cee2d0b85e112d49105386430a76105377074821c3114782ea1c3",
       "kind": "current-model"
     },
     {
-      "path": "mle/audit/check-wire3.py",
-      "sha256": "5824720f781b9ef66c693b51c96e2c2e321c1b1f10e0d21cef0d93ff035a0335",
-      "kind": "tooling"
+      "path": "mle/audit/Audit/Wire3/WhirTerminal.lean",
+      "sha256": "53b25dcff1d98bedd69fd51882f15038cf433e01315259989faf98bd2ff7760b",
+      "kind": "current-model"
     },
     {
       "path": "mle/audit/HISTORICAL-README.md",
@@ -369,6 +404,26 @@
       "kind": "historical"
     },
     {
+      "path": "mle/audit/README.md",
+      "sha256": "3a516f5eebc60d12167b17ef694e92edf9571fd44a2ac20551a9dc13ab3a1f8d",
+      "kind": "spec"
+    },
+    {
+      "path": "mle/audit/REPORT.md",
+      "sha256": "8a6a413edbda3a4290e13ca8a343ed3e97d1adab4b1fa2dd04a014df0578e34b",
+      "kind": "spec"
+    },
+    {
+      "path": "mle/audit/SCOPE.md",
+      "sha256": "6efcf741d4c37d15afd1450e00cc0e4d837fb5a592b63cb5977b0536a28fb472",
+      "kind": "spec"
+    },
+    {
+      "path": "mle/audit/check-wire3.py",
+      "sha256": "205c0f566d28294615391d51c7df78dc7aba85fc973dc8d65f15bb4d770d3261",
+      "kind": "tooling"
+    },
+    {
       "path": "mle/audit/lake-manifest.json",
       "sha256": "0f8ecd3218144c8aff75f77478663e57c4d05bf2931eeb5c9d094feefcf53752",
       "kind": "tooling"
@@ -384,28 +439,8 @@
       "kind": "tooling"
     },
     {
-      "path": "mle/audit/README.md",
-      "sha256": "2a4dd27d1fa4a2663ddf7da12508a83d23bc53204e4f42714cbc420e8a9a8d77",
-      "kind": "spec"
-    },
-    {
-      "path": "mle/audit/REPORT.md",
-      "sha256": "31c926658c83f1b9907d52b58f2f3ab8e928811d45177a5ef05d4caf3f3c919b",
-      "kind": "spec"
-    },
-    {
-      "path": "mle/audit/SCOPE.md",
-      "sha256": "65567806cad70fef73a63b0f90345a156b97b0277444c916a62a690c36c74e99",
-      "kind": "spec"
-    },
-    {
       "path": "mle/audit/test-check-wire3.py",
       "sha256": "b723c2079a4fede4298393c2b7047e93f1e2fb76d81752b8aecd95bbd5d5a5d1",
-      "kind": "tooling"
-    },
-    {
-      "path": "mle/Cargo.toml",
-      "sha256": "5818fdd36402f0775d265506bf777e42ab5e3e1ba68f9a58f9c82a8dd42cc168",
       "kind": "tooling"
     },
     {
@@ -441,21 +476,6 @@
     {
       "path": "mle/contracts/src/EqPolyLib.sol",
       "sha256": "3c7e03ac405328891922886a0da4b823a9cf9a2c5b6df2513369962e4abdaf31",
-      "kind": "implementation"
-    },
-    {
-      "path": "mle/contracts/src/generated/MleWhirV1.sol",
-      "sha256": "44fdc5e9cbe870ebbd88c48ffe3ab3031827a0a7bd033c9b321f67dc61905620",
-      "kind": "implementation"
-    },
-    {
-      "path": "mle/contracts/src/generated/MleWhirV2.sol",
-      "sha256": "43b5ade1faad8247d19583eb6b5122b59db30d25173641293cd30823198fe2eb",
-      "kind": "implementation"
-    },
-    {
-      "path": "mle/contracts/src/generated/WhirProfilesV2.sol",
-      "sha256": "e55b387d0cef720bbb0e22d7b95bb281e6837d5b3b41fd37c73c02366b2126d1",
       "kind": "implementation"
     },
     {
@@ -529,6 +549,36 @@
       "kind": "implementation"
     },
     {
+      "path": "mle/contracts/src/SumcheckVerifier.sol",
+      "sha256": "7029a9341f38e370067d2b59c4a1c5468c7ba897b2543a4f7e71782a9d3eb702",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/TranscriptLib.sol",
+      "sha256": "d8b9b49c3002844ad9f5e4994188075e89e4cee503726aa75d48d03bec0bfe6b",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/TranscriptV2.sol",
+      "sha256": "0278cc068908c27d166a88e018fe3a79c179d79b51b8cd9be4a7ea04d0c0132e",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/generated/MleWhirV1.sol",
+      "sha256": "44fdc5e9cbe870ebbd88c48ffe3ab3031827a0a7bd033c9b321f67dc61905620",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/generated/MleWhirV2.sol",
+      "sha256": "43b5ade1faad8247d19583eb6b5122b59db30d25173641293cd30823198fe2eb",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/generated/WhirProfilesV2.sol",
+      "sha256": "e55b387d0cef720bbb0e22d7b95bb281e6837d5b3b41fd37c73c02366b2126d1",
+      "kind": "implementation"
+    },
+    {
       "path": "mle/contracts/src/spongefish/GoldilocksExt3.sol",
       "sha256": "e1df25e395e5136c3247f591f764187b284c448da2b251b11708715ea4d1f7e6",
       "kind": "implementation"
@@ -556,21 +606,6 @@
     {
       "path": "mle/contracts/src/spongefish/WhirLinearAlgebra.sol",
       "sha256": "f3da8dc815df70b8463ee3d70076d3c05f1b3879341e9c82e71d9af4b0e34424",
-      "kind": "implementation"
-    },
-    {
-      "path": "mle/contracts/src/SumcheckVerifier.sol",
-      "sha256": "7029a9341f38e370067d2b59c4a1c5468c7ba897b2543a4f7e71782a9d3eb702",
-      "kind": "implementation"
-    },
-    {
-      "path": "mle/contracts/src/TranscriptLib.sol",
-      "sha256": "d8b9b49c3002844ad9f5e4994188075e89e4cee503726aa75d48d03bec0bfe6b",
-      "kind": "implementation"
-    },
-    {
-      "path": "mle/contracts/src/TranscriptV2.sol",
-      "sha256": "0278cc068908c27d166a88e018fe3a79c179d79b51b8cd9be4a7ea04d0c0132e",
       "kind": "implementation"
     },
     {
@@ -739,11 +774,6 @@
       "kind": "spec"
     },
     {
-      "path": "mle/README.md",
-      "sha256": "0026328bd82c48c23c2db46e0bbaaf68e93cb76d32e50ea966a3703d583d2419",
-      "kind": "spec"
-    },
-    {
       "path": "mle/src/commitment/merkle_pcs.rs",
       "sha256": "35bb8910ac1fbbe793482935f7c0f2072fd4e2be8619f5e3afe6a0d14ffccd5f",
       "kind": "implementation"
@@ -789,13 +819,13 @@
       "kind": "implementation"
     },
     {
-      "path": "mle/src/fixture_v2.rs",
-      "sha256": "30461b43d533fac1604450cbff9907fb7d71ee52029358644ea4f6f0418fdca3",
+      "path": "mle/src/fixture.rs",
+      "sha256": "34f272781c692cc6c0e39b6aa2e4724add6a48d5b31458a2d8f3b5b8f2351d93",
       "kind": "implementation"
     },
     {
-      "path": "mle/src/fixture.rs",
-      "sha256": "34f272781c692cc6c0e39b6aa2e4724add6a48d5b31458a2d8f3b5b8f2351d93",
+      "path": "mle/src/fixture_v2.rs",
+      "sha256": "30461b43d533fac1604450cbff9907fb7d71ee52029358644ea4f6f0418fdca3",
       "kind": "implementation"
     },
     {
@@ -839,23 +869,23 @@
       "kind": "implementation"
     },
     {
-      "path": "mle/src/proof_v2.rs",
-      "sha256": "cb6249c58a608342d00c12509bc67ab9e569902453c0e18fd6254569d00ea8cd",
-      "kind": "implementation"
-    },
-    {
       "path": "mle/src/proof.rs",
       "sha256": "138b9c518bea9c60f1239780c4ddb6a8ce35843a4cfac8966455785038b2b11b",
       "kind": "implementation"
     },
     {
-      "path": "mle/src/prover_v2.rs",
-      "sha256": "55dcf226e6a693c4a561cf388bb4741da8e7b59972b39c6c5e8f5e7f7f0176d8",
+      "path": "mle/src/proof_v2.rs",
+      "sha256": "cb6249c58a608342d00c12509bc67ab9e569902453c0e18fd6254569d00ea8cd",
       "kind": "implementation"
     },
     {
       "path": "mle/src/prover.rs",
       "sha256": "e816469317597876419625560edaaed30b80c087beb47d20e36eddfef2b2d6ce",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/prover_v2.rs",
+      "sha256": "55dcf226e6a693c4a561cf388bb4741da8e7b59972b39c6c5e8f5e7f7f0176d8",
       "kind": "implementation"
     },
     {
@@ -894,23 +924,23 @@
       "kind": "implementation"
     },
     {
-      "path": "mle/src/transcript_v2.rs",
-      "sha256": "0ce3f8bed6b7db90a590770fc9cd67c899fa6feacf8c536ee7cf97cc18cb2764",
-      "kind": "implementation"
-    },
-    {
       "path": "mle/src/transcript.rs",
       "sha256": "652d94367b7064815da87cdacb9c25a95f67bd089af96ff8539246865fd75560",
       "kind": "implementation"
     },
     {
-      "path": "mle/src/verifier_v2.rs",
-      "sha256": "340f59dbc6f2761de4e052ebbb80d11aea58e66fd331ab10a9574b0b3ed057d9",
+      "path": "mle/src/transcript_v2.rs",
+      "sha256": "0ce3f8bed6b7db90a590770fc9cd67c899fa6feacf8c536ee7cf97cc18cb2764",
       "kind": "implementation"
     },
     {
       "path": "mle/src/verifier.rs",
       "sha256": "aeec9b86b7e2a3425d58c0320bcf16a2759d667c8f60a86043265c5c9fc7a57c",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/verifier_v2.rs",
+      "sha256": "340f59dbc6f2761de4e052ebbb80d11aea58e66fd331ab10a9574b0b3ed057d9",
       "kind": "implementation"
     },
     {
@@ -1034,6 +1064,11 @@
       "kind": "implementation"
     },
     {
+      "path": "plonky2/Cargo.toml",
+      "sha256": "d19e0c9a581bfe6b788407057df28c341cd1877070690e4dc1829816f6f154e2",
+      "kind": "tooling"
+    },
+    {
       "path": "plonky2/benches/allocator/mod.rs",
       "sha256": "201a283c3def9adfe6f1996c01856c660ebdefc47878c8f1d59fbabeb8323ad0",
       "kind": "implementation"
@@ -1069,11 +1104,6 @@
       "kind": "implementation"
     },
     {
-      "path": "plonky2/Cargo.toml",
-      "sha256": "d19e0c9a581bfe6b788407057df28c341cd1877070690e4dc1829816f6f154e2",
-      "kind": "tooling"
-    },
-    {
       "path": "plonky2/examples/bench_recursion.rs",
       "sha256": "256a2ddc1a460ba34eab51b2089ef1ffadd9d186692ac274ce8e8921a836a4f7",
       "kind": "implementation"
@@ -1084,13 +1114,13 @@
       "kind": "implementation"
     },
     {
-      "path": "plonky2/examples/fibonacci_serialization.rs",
-      "sha256": "fef3077e3b01ff3df276a1ad38036d3c0f4afaccba7dc369e37695b5110eaaa3",
+      "path": "plonky2/examples/fibonacci.rs",
+      "sha256": "3041258959b902b98a2703cd3707682202c79cb87be8851e7bc2a0bbd7279f3e",
       "kind": "implementation"
     },
     {
-      "path": "plonky2/examples/fibonacci.rs",
-      "sha256": "3041258959b902b98a2703cd3707682202c79cb87be8851e7bc2a0bbd7279f3e",
+      "path": "plonky2/examples/fibonacci_serialization.rs",
+      "sha256": "fef3077e3b01ff3df276a1ad38036d3c0f4afaccba7dc369e37695b5110eaaa3",
       "kind": "implementation"
     },
     {
@@ -1189,13 +1219,13 @@
       "kind": "implementation"
     },
     {
-      "path": "plonky2/src/gadgets/arithmetic_extension.rs",
-      "sha256": "6673ad309410723e14c8feccf14cf07683323c932875bad5daf1e7752ef66bf5",
+      "path": "plonky2/src/gadgets/arithmetic.rs",
+      "sha256": "3f99cf368577baa99ec78614fbd023cc22350c59874effad29420277c21b6d80",
       "kind": "implementation"
     },
     {
-      "path": "plonky2/src/gadgets/arithmetic.rs",
-      "sha256": "3f99cf368577baa99ec78614fbd023cc22350c59874effad29420277c21b6d80",
+      "path": "plonky2/src/gadgets/arithmetic_extension.rs",
+      "sha256": "6673ad309410723e14c8feccf14cf07683323c932875bad5daf1e7752ef66bf5",
       "kind": "implementation"
     },
     {
@@ -1279,23 +1309,23 @@
       "kind": "implementation"
     },
     {
-      "path": "plonky2/src/gates/gate_testing.rs",
-      "sha256": "f844d4b15a165d01ed95ac27a6eaace2f40d788663693a68c54f7d89fc0f78ed",
-      "kind": "implementation"
-    },
-    {
       "path": "plonky2/src/gates/gate.rs",
       "sha256": "9dc79c3209f16cff8d234e071d430641a94d853fdff033e989f4e19e645fef61",
       "kind": "implementation"
     },
     {
-      "path": "plonky2/src/gates/lookup_table.rs",
-      "sha256": "ce0f92bd8d56b1b5b7cc33f9eff879baf8bb9a9ebab0c8621c843a02b9d9aaaf",
+      "path": "plonky2/src/gates/gate_testing.rs",
+      "sha256": "f844d4b15a165d01ed95ac27a6eaace2f40d788663693a68c54f7d89fc0f78ed",
       "kind": "implementation"
     },
     {
       "path": "plonky2/src/gates/lookup.rs",
       "sha256": "bec04139495d71b9d70b50d0d22faf79097aae86fb56e7f4e70409bb014feb41",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gates/lookup_table.rs",
+      "sha256": "ce0f92bd8d56b1b5b7cc33f9eff879baf8bb9a9ebab0c8621c843a02b9d9aaaf",
       "kind": "implementation"
     },
     {
@@ -1319,13 +1349,13 @@
       "kind": "implementation"
     },
     {
-      "path": "plonky2/src/gates/poseidon_mds.rs",
-      "sha256": "b26c3a1f752f0b364d2158099fbf484fd53d3e87e5f998437f5ec5e73b3364bf",
+      "path": "plonky2/src/gates/poseidon.rs",
+      "sha256": "960d7fa257ae2b2ae1b854d6dde4c247143dc109118da4eabe8e4d9ab6ba7a87",
       "kind": "implementation"
     },
     {
-      "path": "plonky2/src/gates/poseidon.rs",
-      "sha256": "960d7fa257ae2b2ae1b854d6dde4c247143dc109118da4eabe8e4d9ab6ba7a87",
+      "path": "plonky2/src/gates/poseidon_mds.rs",
+      "sha256": "b26c3a1f752f0b364d2158099fbf484fd53d3e87e5f998437f5ec5e73b3364bf",
       "kind": "implementation"
     },
     {
@@ -1339,13 +1369,13 @@
       "kind": "implementation"
     },
     {
-      "path": "plonky2/src/gates/reducing_extension.rs",
-      "sha256": "43e38d9d29881f5a1753c0167f3769cf004930c368cbf49c7876aa11a866cbe8",
+      "path": "plonky2/src/gates/reducing.rs",
+      "sha256": "34f4693ae2479e1ae3d5ca8d812d8d350ae3248def486c93e48f24358697f4f8",
       "kind": "implementation"
     },
     {
-      "path": "plonky2/src/gates/reducing.rs",
-      "sha256": "34f4693ae2479e1ae3d5ca8d812d8d350ae3248def486c93e48f24358697f4f8",
+      "path": "plonky2/src/gates/reducing_extension.rs",
+      "sha256": "43e38d9d29881f5a1753c0167f3769cf004930c368cbf49c7876aa11a866cbe8",
       "kind": "implementation"
     },
     {
@@ -1409,13 +1439,13 @@
       "kind": "implementation"
     },
     {
-      "path": "plonky2/src/hash/merkle_tree_gpu.rs",
-      "sha256": "9eb12e7becf69e780ea1c0b172ba4788218b539afc5c7df65562d04a8ca53637",
+      "path": "plonky2/src/hash/merkle_tree.rs",
+      "sha256": "4671d3fabeee9fe7a0d9c836323113646ef6808f02e9df9ea8accb3410ded2b8",
       "kind": "implementation"
     },
     {
-      "path": "plonky2/src/hash/merkle_tree.rs",
-      "sha256": "4671d3fabeee9fe7a0d9c836323113646ef6808f02e9df9ea8accb3410ded2b8",
+      "path": "plonky2/src/hash/merkle_tree_gpu.rs",
+      "sha256": "9eb12e7becf69e780ea1c0b172ba4788218b539afc5c7df65562d04a8ca53637",
       "kind": "implementation"
     },
     {
@@ -1429,6 +1459,11 @@
       "kind": "implementation"
     },
     {
+      "path": "plonky2/src/hash/poseidon.rs",
+      "sha256": "f90ec69dcc376382730b41d60e0364f940ddaff1476e27dc393b3f44c37975ca",
+      "kind": "implementation"
+    },
+    {
       "path": "plonky2/src/hash/poseidon_crandall.rs",
       "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
       "kind": "implementation"
@@ -1436,11 +1471,6 @@
     {
       "path": "plonky2/src/hash/poseidon_goldilocks.rs",
       "sha256": "e4543257d4e615c8c99218ab07aaf3d22151a6437584d435acc5c2c1d95c7895",
-      "kind": "implementation"
-    },
-    {
-      "path": "plonky2/src/hash/poseidon.rs",
-      "sha256": "f90ec69dcc376382730b41d60e0364f940ddaff1476e27dc393b3f44c37975ca",
       "kind": "implementation"
     },
     {
@@ -1709,13 +1739,13 @@
       "kind": "implementation"
     },
     {
-      "path": "starky/src/stark_testing.rs",
-      "sha256": "b88da1120dbe9482c7973d2efe5c9f25dd586a8727368ce5c03d7f9feacd57d2",
+      "path": "starky/src/stark.rs",
+      "sha256": "244e067e40689936a64a3c2ce1010b141eb9e8198a2aefb4e24b97f6d60fd9fd",
       "kind": "implementation"
     },
     {
-      "path": "starky/src/stark.rs",
-      "sha256": "244e067e40689936a64a3c2ce1010b141eb9e8198a2aefb4e24b97f6d60fd9fd",
+      "path": "starky/src/stark_testing.rs",
+      "sha256": "b88da1120dbe9482c7973d2efe5c9f25dd586a8727368ce5c03d7f9feacd57d2",
       "kind": "implementation"
     },
     {
@@ -2016,6 +2046,277 @@
         "mle/src/commitment/whir_pcs.rs"
       ],
       "scope": "Final-row query equality slice with explicit authentication and validated plan observations; not all WHIR rounds, finalClaim, Merkle/FS/PoW/OOD security or split distributivity refinement."
+    },
+    {
+      "module": "Audit.Wire3.WhirFinal",
+      "theorems": [
+        "Audit.Wire3.WhirFinal.inverse_zero_rejected",
+        "Audit.Wire3.WhirFinal.inverse_one_computes_one",
+        "Audit.Wire3.WhirFinal.mod_pow_terminates_with_sufficient_bits",
+        "Audit.Wire3.WhirFinal.inverse_nonzero_norm_does_not_exhaust_fuel",
+        "Audit.Wire3.WhirFinal.sum_layer_length",
+        "Audit.Wire3.WhirFinal.full_final_fold_has_one_value",
+        "Audit.Wire3.WhirFinal.final_fold_uses_reverse_order",
+        "Audit.Wire3.WhirFinal.quadratic_reconstructs_linear_coefficient",
+        "Audit.Wire3.WhirFinal.round_step_success",
+        "Audit.Wire3.WhirFinal.round_step_adds_one_challenge",
+        "Audit.Wire3.WhirFinal.completed_round_count_exact",
+        "Audit.Wire3.WhirFinal.final_claim_requires_nonzero_and_full_equation",
+        "Audit.Wire3.WhirFinal.subtract_entry_preserves_canonical",
+        "Audit.Wire3.WhirFinal.subtract_all_constraints_preserves_canonical",
+        "Audit.Wire3.WhirFinal.expected_linear_form_is_canonical",
+        "Audit.Wire3.WhirFinal.final_claim_requires_exact_full_equation",
+        "Audit.Wire3.WhirFinal.end_success_same_vector_and_all_checks",
+        "Audit.Wire3.WhirFinal.end_success_preserves_every_authenticated_row_equation",
+        "Audit.Wire3.WhirFinal.end_success_has_nonzero_same_vector_fold_and_exact_eof",
+        "Audit.Wire3.WhirFinal.end_success_final_fold_is_singleton",
+        "Audit.Wire3.WhirFinal.end_success_linear_forms_have_exact_dimension",
+        "Audit.Wire3.WhirFinal.end_success_constraint_pair_shapes_exact",
+        "Audit.Wire3.WhirFinal.nonzero_check_rejects_zero_final_fold",
+        "Audit.Wire3.WhirFinal.eof_rejects_transcript_tail",
+        "Audit.Wire3.WhirFinal.eof_rejects_hint_tail",
+        "Audit.Wire3.WhirFinal.subtract_constraints_preserves_full_list_order",
+        "Audit.Wire3.WhirFinal.positive_suffix_with_one_final_round"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol",
+        "mle/contracts/src/spongefish/WhirLinearAlgebra.sol",
+        "mle/contracts/src/spongefish/GoldilocksExt3.sol",
+        "mle/src/commitment/whir_pcs.rs"
+      ],
+      "scope": "Concrete final quadratic recurrence, reverse final-vector fold, norm/adjugate inverse computation, all round constraints and linear forms, and cursor EOF; uses the SAME WhirTerminal final vector. Post-row Context, decoder/PoW/challenges/authentication remain observations. No full WHIR, inverse identity, source refinement or cryptographic soundness."
+    },
+    {
+      "module": "Audit.Wire3.Merkle",
+      "theorems": [
+        "Audit.Wire3.Merkle.parent_input_length",
+        "Audit.Wire3.Merkle.parent_input_binds_current",
+        "Audit.Wire3.Merkle.parent_input_binds_sibling",
+        "Audit.Wire3.Merkle.read_success_exact",
+        "Audit.Wire3.Merkle.insufficient_hint_rejected",
+        "Audit.Wire3.Merkle.mismatched_lengths_rejected",
+        "Audit.Wire3.Merkle.empty_opening_preserves_offset",
+        "Audit.Wire3.Merkle.adjacent_nonascending_rejected",
+        "Audit.Wire3.Merkle.paired_nodes_read_no_hint",
+        "Audit.Wire3.Merkle.lone_node_reads_exact_digest",
+        "Audit.Wire3.Merkle.zero_layers_unchanged",
+        "Audit.Wire3.Merkle.cursor_progress_trans",
+        "Audit.Wire3.Merkle.read_cursor_progress",
+        "Audit.Wire3.Merkle.layer_cursor_progress",
+        "Audit.Wire3.Merkle.all_layers_cursor_progress",
+        "Audit.Wire3.Merkle.nonempty_acceptance_requires_computed_root",
+        "Audit.Wire3.Merkle.accepted_opening_cursor_progress",
+        "Audit.Wire3.Merkle.accepted_opening_stays_in_slice",
+        "Audit.Wire3.Merkle.same_root_same_leaf_or_path_collision",
+        "Audit.Wire3.Merkle.no_path_collision_forces_same_leaf",
+        "Audit.Wire3.Merkle.path_collision_exposes_hash_collision",
+        "Audit.Wire3.Merkle.positive_adjacent_pair",
+        "Audit.Wire3.Merkle.positive_lone_node"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/SpongefishMerkle.sol"
+      ],
+      "scope": "Actual bounded hint bytes, ordered 64-byte compression, strict index order, paired/lone layered decommitment, empty-opening exception and cursor progress. Same-index/same-depth path leaf-hash disagreement reduces to an actual compression-input collision. No multiproof path extraction, raw-row/leaf binding, WhirTerminal adapter, hash probability or Yul/word refinement."
+    },
+    {
+      "module": "Audit.Wire3.Norm",
+      "theorems": [
+        "Audit.Wire3.Norm.denominator_terms_share_formal_coordinates",
+        "Audit.Wire3.Norm.formal_norm_canonical",
+        "Audit.Wire3.Norm.denominator_terms_canonical",
+        "Audit.Wire3.Norm.theta_rotation_exact",
+        "Audit.Wire3.Norm.product_loop_append",
+        "Audit.Wire3.Norm.eq_loop_exact",
+        "Audit.Wire3.Norm.subgroup_loop_exact",
+        "Audit.Wire3.Norm.eq_loop_no_truncated_coordinates",
+        "Audit.Wire3.Norm.subgroup_loop_no_truncated_coordinates",
+        "Audit.Wire3.Norm.boolean_factor_lsb_zero",
+        "Audit.Wire3.Norm.challenges_roundtrip",
+        "Audit.Wire3.Norm.challenge_layout_length",
+        "Audit.Wire3.Norm.wire_step_processed",
+        "Audit.Wire3.Norm.wire_step_lambda",
+        "Audit.Wire3.Norm.run_wires_exact_count",
+        "Audit.Wire3.Norm.run_wires_append",
+        "Audit.Wire3.Norm.run_wires_lambda_power",
+        "Audit.Wire3.Norm.target_bytes_in_bounds",
+        "Audit.Wire3.Norm.pi_fold_count",
+        "Audit.Wire3.Norm.public_inputs_all_processed",
+        "Audit.Wire3.Norm.pi_fold_eta_power",
+        "Audit.Wire3.Norm.public_input_power_matches_count",
+        "Audit.Wire3.Norm.public_input_empty_is_zero",
+        "Audit.Wire3.Norm.checked_evaluate_success",
+        "Audit.Wire3.Norm.checked_evaluation_index_bounds",
+        "Audit.Wire3.Norm.checked_pi_index_bounds",
+        "Audit.Wire3.Norm.checked_adapter_success",
+        "Audit.Wire3.Norm.checked_adapter_rejects_wrong_challenge_count",
+        "Audit.Wire3.Norm.engine_uses_complete_terminal",
+        "Audit.Wire3.Norm.terminal_result_canonical",
+        "Audit.Wire3.Norm.engine_uses_same_statement_inputs",
+        "Audit.Wire3.Norm.acceptance_requires_computed_terminal"
+      ],
+      "sources": [
+        "mle/contracts/src/OuterLogupExt3Verifier.sol",
+        "mle/contracts/src/spongefish/GoldilocksExt3.sol",
+        "mle/src/permutation/norm_logup.rs",
+        "mle/src/verifier_v2.rs"
+      ],
+      "scope": "Concrete formal-coordinate denominator/adjugate/norm, helper/logUp loop, fixed Config kIs/subgroup/public-input map, ordered direct Rust PI accumulation and Engine norm hook. Checked adapter requires shape and the seven challenge layout. No PI-cache optimization refinement, formal norm identity, FS generation, witness/PCS soundness; optimized eq/subgroup/square model identities are proved separately by Algebra."
+    },
+    {
+      "module": "Audit.Wire3.Gates",
+      "theorems": [
+        "Audit.Wire3.Gates.validate_gate_success",
+        "Audit.Wire3.Gates.unknown_gate_rejected_before_filter",
+        "Audit.Wire3.Gates.validate_configuration_success",
+        "Audit.Wire3.Gates.validated_rows_have_bounded_requirements",
+        "Audit.Wire3.Gates.every_configured_gate_checked",
+        "Audit.Wire3.Gates.validated_rows_exact_maximum",
+        "Audit.Wire3.Gates.configuration_declares_exact_maximum",
+        "Audit.Wire3.Gates.lookup_tables_rejected",
+        "Audit.Wire3.Gates.zero_mul",
+        "Audit.Wire3.Gates.mul_zero",
+        "Audit.Wire3.Gates.add_zero",
+        "Audit.Wire3.Gates.zero_add",
+        "Audit.Wire3.Gates.scalar_sub_zero_iff",
+        "Audit.Wire3.Gates.sub_zero_iff",
+        "Audit.Wire3.Gates.sub_self",
+        "Audit.Wire3.Gates.horner_cons",
+        "Audit.Wire3.Gates.horner_all_zero",
+        "Audit.Wire3.Gates.zero_product_absorbing",
+        "Audit.Wire3.Gates.product_with_zero_factor",
+        "Audit.Wire3.Gates.range_loop_append",
+        "Audit.Wire3.Gates.range_successor",
+        "Audit.Wire3.Gates.range_membership",
+        "Audit.Wire3.Gates.unused_selector_zero_filter",
+        "Audit.Wire3.Gates.other_row_zero_filter",
+        "Audit.Wire3.Gates.range_length",
+        "Audit.Wire3.Gates.constant_constraints_exact",
+        "Audit.Wire3.Gates.public_input_constraints_exact",
+        "Audit.Wire3.Gates.arithmetic_constraint_exact",
+        "Audit.Wire3.Gates.arithmetic_constraints_exact",
+        "Audit.Wire3.Gates.ext2_constraints_exact",
+        "Audit.Wire3.Gates.concrete_constraint_lengths",
+        "Audit.Wire3.Gates.bind_pairs_length",
+        "Audit.Wire3.Gates.extension_constraint_lengths",
+        "Audit.Wire3.Gates.arithmetic_accesses_bounded",
+        "Audit.Wire3.Gates.constant_accesses_bounded",
+        "Audit.Wire3.Gates.public_input_accesses_bounded",
+        "Audit.Wire3.Gates.arithmetic_extension_accesses_bounded",
+        "Audit.Wire3.Gates.mul_extension_accesses_bounded",
+        "Audit.Wire3.Gates.inactive_contribution_zero",
+        "Audit.Wire3.Gates.satisfied_contribution_zero",
+        "Audit.Wire3.Gates.all_satisfied_combination_zero",
+        "Audit.Wire3.Gates.combined_success_requires_all_configuration",
+        "Audit.Wire3.Gates.unknown_gate_rejected_even_when_inactive",
+        "Audit.Wire3.Gates.horner_zero_challenge",
+        "Audit.Wire3.Gates.horner_two_terms",
+        "Audit.Wire3.Gates.all_fourteen_families_have_valid_configuration_examples",
+        "Audit.Wire3.Gates.arithmetic_full_path_positive",
+        "Audit.Wire3.Gates.quadratic_extension_nonresidue_seven_positive",
+        "Audit.Wire3.Gates.arithmetic_preserves_nonbase_extension_information"
+      ],
+      "sources": [
+        "mle/contracts/src/Plonky2GateEvaluatorExt3.sol",
+        "mle/contracts/src/spongefish/GoldilocksExt3.sol",
+        "mle/src/verifier_v2.rs"
+      ],
+      "scope": "All 14 gate-family metadata/degree-budget checks; selector and reverse-Horner loops; concrete evaluation for ids 0,1,2,3,6,7 only. Other valid ACTIVE families return none as a model-coverage limit; zero-filter skips remain. Exact Ext3 zero-constraint equivalences, access bounds and standalone Rust lookup admission. No complete gate suite, polynomial-degree theorem, probabilistic aggregation, hash/decoder or bytecode refinement."
+    },
+    {
+      "module": "Audit.Wire3.Algebra",
+      "theorems": [
+        "Audit.Wire3.Algebra.nat_mod_mul_left",
+        "Audit.Wire3.Algebra.nat_mod_mul_right",
+        "Audit.Wire3.Algebra.base_add_comm",
+        "Audit.Wire3.Algebra.base_add_assoc",
+        "Audit.Wire3.Algebra.base_mul_comm",
+        "Audit.Wire3.Algebra.base_mul_assoc",
+        "Audit.Wire3.Algebra.base_mul_add",
+        "Audit.Wire3.Algebra.base_add_mul",
+        "Audit.Wire3.Algebra.eadd_comm",
+        "Audit.Wire3.Algebra.eadd_assoc",
+        "Audit.Wire3.Algebra.emul_comm",
+        "Audit.Wire3.Algebra.emul_add",
+        "Audit.Wire3.Algebra.eadd_mul",
+        "Audit.Wire3.Algebra.emul_assoc",
+        "Audit.Wire3.Algebra.emul_one_normalizes",
+        "Audit.Wire3.Algebra.one_emul_normalizes",
+        "Audit.Wire3.Algebra.emul_one_of_canonical",
+        "Audit.Wire3.Algebra.one_emul_of_canonical",
+        "Audit.Wire3.Algebra.nat_four_mul",
+        "Audit.Wire3.Algebra.norm_square_is_multiplication",
+        "Audit.Wire3.Algebra.base_sub_self",
+        "Audit.Wire3.Algebra.base_sub_as_add_neg",
+        "Audit.Wire3.Algebra.base_sub_add_cancel",
+        "Audit.Wire3.Algebra.esub_self",
+        "Audit.Wire3.Algebra.esub_as_add_neg",
+        "Audit.Wire3.Algebra.esub_add_cancel",
+        "Audit.Wire3.Algebra.vadd_comm",
+        "Audit.Wire3.Algebra.vadd_assoc",
+        "Audit.Wire3.Algebra.vadd_left_comm",
+        "Audit.Wire3.Algebra.vmul_comm",
+        "Audit.Wire3.Algebra.vmul_assoc",
+        "Audit.Wire3.Algebra.vmul_add",
+        "Audit.Wire3.Algebra.vadd_mul",
+        "Audit.Wire3.Algebra.vadd_zero",
+        "Audit.Wire3.Algebra.vzero_add",
+        "Audit.Wire3.Algebra.vmul_zero",
+        "Audit.Wire3.Algebra.vzero_mul",
+        "Audit.Wire3.Algebra.vmul_one",
+        "Audit.Wire3.Algebra.vone_mul",
+        "Audit.Wire3.Algebra.vsub_self",
+        "Audit.Wire3.Algebra.vsub_as_add_neg",
+        "Audit.Wire3.Algebra.vadd_neg_cancel",
+        "Audit.Wire3.Algebra.vneg_add_cancel",
+        "Audit.Wire3.Algebra.vsub_add_cancel",
+        "Audit.Wire3.Algebra.vadd_left_cancel",
+        "Audit.Wire3.Algebra.vmul_neg",
+        "Audit.Wire3.Algebra.vneg_mul",
+        "Audit.Wire3.Algebra.vneg_neg",
+        "Audit.Wire3.Algebra.vmul_sub",
+        "Audit.Wire3.Algebra.vsub_mul",
+        "Audit.Wire3.Algebra.vneg_zero",
+        "Audit.Wire3.Algebra.vsub_zero",
+        "Audit.Wire3.Algebra.vneg_add",
+        "Audit.Wire3.Algebra.norm_eq_factor_matches_product_form",
+        "Audit.Wire3.Algebra.scalar_as_embedded_mul",
+        "Audit.Wire3.Algebra.embed_base_sub_one",
+        "Audit.Wire3.Algebra.norm_subgroup_factor_matches_rust",
+        "Audit.Wire3.Algebra.norm_eq_loop_matches_rust",
+        "Audit.Wire3.Algebra.norm_subgroup_loop_matches_rust",
+        "Audit.Wire3.Algebra.vmul_fold_sum",
+        "Audit.Wire3.Algebra.vsub_eq_zero_iff"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/GoldilocksExt3.sol",
+        "mle/contracts/src/GoldilocksField.sol",
+        "mle/contracts/src/OuterLogupExt3Verifier.sol",
+        "mle/src/permutation/norm_logup.rs"
+      ],
+      "scope": "Concrete Nat.mod Ext3 addition/multiplication commutativity, associativity, distribution, units and additive inverses/cancellation; no assumed ring structure. Proves Norm.square and alternate Rust/Solidity eq/subgroup factors and complete functional loops equal. No primality, cubic irreducibility, multiplicative inverse, full PI cache/split-dot rearrangement, source semantics or probability proof."
+    },
+    {
+      "module": "Audit.Wire3.Integrated",
+      "theorems": [
+        "Audit.Wire3.Integrated.concrete_engine_keeps_transcript",
+        "Audit.Wire3.Integrated.concrete_engine_uses_packed_fold",
+        "Audit.Wire3.Integrated.gate_evaluation_uses_fixed_config_bytes",
+        "Audit.Wire3.Integrated.accepted_preflights_and_original_verifier",
+        "Audit.Wire3.Integrated.unavailable_gate_never_uses_zero_fallback",
+        "Audit.Wire3.Integrated.malformed_norm_adapter_rejected",
+        "Audit.Wire3.Integrated.accepted_norm_shape_and_challenge_layout",
+        "Audit.Wire3.Integrated.accepted_concrete_terminal_equations",
+        "Audit.Wire3.Integrated.accepted_retains_whir_root_claim_binding",
+        "Audit.Wire3.Integrated.positive_integrated_norm_helper_path"
+      ],
+      "sources": [
+        "mle/contracts/src/MleVerifierV2.sol",
+        "mle/contracts/src/OuterLogupExt3Verifier.sol",
+        "mle/contracts/src/Plonky2GateEvaluatorExt3.sol",
+        "mle/contracts/src/PackedClaimExt3.sol",
+        "mle/src/verifier_v2.rs"
+      ],
+      "scope": "Checked partial integration of concrete packed/norm/eq/gate hooks into Verifier.verify. Requires norm shape/seven-challenge layout and Some from the same-input partial gate evaluator, so unavailable ACTIVE gates cannot accept via zero fallback. Fixed config metadata decoding, initial FS/hash/deployment and WHIR remain observations. Extra preflight/error ordering is model-only; standalone lookup admission is not integrated. No full implementation or cryptographic soundness."
     }
   ]
 }

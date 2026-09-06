@@ -22,6 +22,8 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
 - ArithmeticはNatによるmod演算。uint64/uint256のwrap、addmod/mulmod、メモリ、
   Rust fieldの非canonical内部表現、コンパイル結果との対応は別課題。
   Goldilocks素数性、X^3-2の既約性、inverse/exp/evalL0はここで証明しない。
+  Algebraでは実際のc0/c1/c2式から加法・乗法の交換/結合/分配、加法逆元と取消を証明。
+  ring法則を仮定するレコードは使わない。これだけでは乗法逆元や有限体性は導かない。
 - Packedは関数的なloopモデル。paddingとの結果一致を証明するが、実in-placeメモリ操作
   の安全性は含まない。Rustの配列実装への適用には入力長・width・次の2冪・point長の接続が必要。
 - Transcriptのhashは任意の決定的関数。同一の旧digestの下でのhash前tag/payloadの
@@ -48,18 +50,47 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
 - 6個のclaimのうち外側terminalで使う5個を拘束する。第6セルは外側では未拘束で、
   WHIR内の処理対象であることと外側期待値との一致を混同しない。
 - WhirTerminalは終端比較のslice。Merkle/hash/FS/OOD/前段sumcheck/PoW/全bytes消費を
-  含むWHIR verifier全体の証明ではない。全query数ゼロを独自に禁止するモデルにはしない。
+  含むWHIR verifier全体の証明ではない。WhirFinalでは同じfinalVectorを後続の最終
+  sumcheck・逆順fold・非零・逆元計算・全constraint差引き・全linear-form・両EOFへ接続。
+  Contextは前段で生成される信頼された状態で、decoder/PoW/challengeは観測。
+  EOFはその観測下のcursor等式であり、実byte消費の独立証明ではない。
+  全query数ゼロを独自に禁止するモデルにはしない。
+- Merkleはraw32byte digest、左右64byte圧縮、厳密昇順と層別sibling処理を具体化。
+  読取りがある場合のcursor境界と、same-index/same-depthの2本のpathが異なるleaf hashを
+  同じrootへ送るなら圧縮入力の衝突があることを証明。hashの単射性は仮定しない。
+  多重開示から個々のpathを抽出する証明、row serialization/hashとの接続、
+  WhirTerminal.authenticateの置換、衝突確率、Yulの配列操作は未完了。
+- Normはformal-coordinate式とhelper/logUp集計を具体化。PIはRustの順序付き直接和で、
+  Solidityのrow-cache/shared-bit最適化との全再結合は未証明。
+  Algebraによりeq/subgroupのSolidity最適化式とRust式、およびsquare=mulはモデル内で証明済み。
+  formal adjugate/normの代数的恒等式、helperの正しさやPI個別一致への確率的還元は残る。
+- Gatesは14familyの設定検証を具体化したが、評価式はNoop/Constant/PublicInput/
+  Arithmetic/ArithmeticExtension/MulExtensionの6familyのみ。
+  残る8familyがactiveなら部分モデルは未対応としてnone。zero-filterのskipは保持する。
+  これは実装の拒否ではない。degree budget検査から式の多項式次数証明は導かず、
+  集約値0から全制約0への逆方向も主張しない。
+- Integrated.verifyはchecked norm形状と7challenge layout、同じ入力での部分gate計算の
+  Someを検査後、packed/norm/eq/gateを具体化したVerifier.verifyへ進む。
+  modelEngineだけの利用にはこの保証がなく、getD zeroは旧interfaceへの全域化にすぎない。
+  metadata decoderは固定Config.gatesEncodingだけを受ける観測であり、初期FSや
+  public-input hash、configuration hash、WHIR tailを具体化したわけではない。
+  追加preflightの失敗分類/順序はモデル上のもの。実装の例外・slashing証拠とは未接続。
+  Gates.rustAdmissionのlookup拒否もこの入口には未接続。
 - ConnectionsはLeanモデル間の具体的な型・foldの接続。全Engineを具体的に実装したわけではない。
 
 ## 未完了の全体証明（優先順）
 
-1. WHIR全round・Merkle path・OOD・PoW・終端・EOFを具体化し、固定VK/root/pointへの
-   認証を全経路で接続。native dependencyの対象revisionも形式化する。
-2. norm/logUp、public-input wire map、全14 gate families、selector/lookup拒否、
-   degree boundsを具体化し、意味的sumcheck定理に接続。
-3. setup/VK/config生成、immutable store、全compact decoder、初期transcript、
-   真のchallenge計算・packed foldを一つの実行可能なverifierに接続。
-4. 有限体の数学的基礎とRust/Yulの実行意味論を検証し、手動対照を形式的refinementへ置換。
+1. WHIR前段のinitial/intermediate rounds・OOD・PoW・samplingを具体化し、
+   Plan/ContextとfixedVK/root/pointへの認証を接続。raw row bytes→leaf hash→multiproof→
+   各queryの開示path→終端比較を一つの実行経路として証明。native依存revisionも対象に含める。
+2. 残る8 gate families（Poseidon/MDS、exponentiation、base-sum、reducing/
+   reducing-extension、random-access、coset-interpolation）の評価式を具体化。
+   PI cacheの再結合、selector/lookupの入口接続、実多項式次数とsumcheck意味論への接続を証明。
+3. setup/VK/config生成、immutable store、全compact decoder、metadata decoder、
+   初期transcript・真のchallenge・public-input hashをIntegratedへ接続。
+   現在別モジュールのWhirFinal/Merkleを、全whirTailの代替と誤認しない。
+4. 素数性・既約性・formal norm/adjugate・乗法逆元とRust/Yulの実行意味論を検証し、
+   手動対照を形式的refinementへ置換。
 5. honest proverの全段階、completeness、再帰回路/親statementとのcompositionを証明。
 6. 暗号仮定を明記したPCS/Fiat–Shamir/grindingの定量的健全性を証明。
    全てのhashに無条件の数学的安全性があると仮定しない。

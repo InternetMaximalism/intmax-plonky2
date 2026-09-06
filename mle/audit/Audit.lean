@@ -13,3 +13,9 @@ import Audit.Wire3.Sumcheck
 import Audit.Wire3.Verifier
 import Audit.Wire3.Connections
 import Audit.Wire3.WhirTerminal
+import Audit.Wire3.WhirFinal
+import Audit.Wire3.Merkle
+import Audit.Wire3.Norm
+import Audit.Wire3.Gates
+import Audit.Wire3.Algebra
+import Audit.Wire3.Integrated
