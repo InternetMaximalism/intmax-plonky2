@@ -180,10 +180,10 @@ raw認証成功とcanonical decode成功は別条件。final splitのdecode/集�
 
 | このcheckout内のRust/Solidityファイル | 合計 | 部分的なモデル対応あり | モデル対応なし |
 |---|---:|---:|---:|
-| MLE Rust (`mle/src/`、旧実装を含む) | 35 | 8 | 27 |
+| MLE Rust (`mle/src/`、旧実装を含む) | 35 | 9 | 26 |
 | MLE Solidity (`mle/contracts/src/`、旧実装を含む) | 33 | 18 | 15 |
 | その他（テスト・example・別crateを含む） | 222 | 2 | 220 |
-| 合計 | 290 | 28 | 262 |
+| 合計 | 290 | 29 | 261 |
 
 「部分的なモデル対応あり」はファイル全体の翻訳・証明を意味しない。
 行数ベースのcoverageや安全性の達成率でもない。
@@ -393,9 +393,80 @@ main guard33件、CI YAML/空白差分、実行コード無変更も再確認し
 単なる形状検査を原始根の証明へ読み替えない。これは攻撃の実証や、全固定configの
 安全/不安全の判定ではなく、今後の健全性証明で閉じるべき設定生成の境界である。
 
+## 第6継続更新（88d8a135以降）
+
+5モデル・172定理を追加し、45モデル・1191名付き定理へ拡張した。
+以下はモデル内の決定論的証明であり、全実装の健全性の完了ではない。
+
+- **終端までの同一実行**: WhirTail.runがinit/実prefix/実中間列の結果を保持し、
+  final vectorの一回の読取り、PoW/reference sampling、終端両分岐、Horner比較、
+  同vectorの最終fold、同じ導出Contextでのsumcheck/全claim/両EOFを接続する。
+  final splitはhash→canonical dot→vector RLC加算→cursor→各root Merkle、
+  standardはraw認証→各row decode/Hornerというsource順を保持する。
+  rootの32byte射影は無損失。全初期claimをcheckedにした通常toy例は336/72、488/128bytes。
+  任意のrunTail Stateを前段由来とみなさず、run成功のprovenance定理を使う。
+- **実重複除去**: 現在のbuffer[i]/[i−1]を比較し、write位置へ上書きする実loopを形式化。
+  全read/write境界、n−1回の終了、未読suffix保存、最終write長と基準dedupの一致を証明。
+  sorted入力の仮定はこの同値には不要で、strictnessの系だけで使う。quicksortは未証明。
+- **固定評価点の位数**: 6素因子の具体証明書からorder(7)=p−1を導き、k≤32で
+  7^((p−1)/2^k)の位数2^kと冪の単射性を証明。transpose指数の範囲・逆変換・単射と合成する。
+  任意のshape-valid generatorやdigest-accepted configへ無条件に適用しない。
+- **実sumcheckの次数**: 実c1復元、Horner、実端点和=claim、次数≤2を具体体上で証明。
+  異なる固定canonical claimを持つ2つの実quadraticの一致点は高々2点。
+  成功roundの同じmessage/challenge/stateを保存し、既存の二本のchainの条件付き不一致にも接続。
+  比較側chainの真の回路意味論、固定性/FS/query分布/確率は未証明。
+- **全typed設定検査**: 全source scalarとraw評価点を保持し、初期fold/domain、各round、
+  final remainder/size、single/multi-pointの順に検査。canonical確認後も元のlimbを変えない。
+  bound/deployment入口を区別し、成功から既存Schedule・全domain・全点・正確な件数と
+  WhirInitial.validatedParamsを導く。sourceが検査しないsamples/threshold/mask末尾bitsを追加制約しない。
+  ABI/uint幅/overflow・固定VKからの完全投影・3×1 profileは引き続き別境界。
+
+追加5モデルは実装者と異なるrootが全文・source・明示前提を確認した。
+WhirDedup/WhirTail/WhirParametersはさらに別担当の独立read-onlyレビューもPASS。
+期待評価値はtyped callerが既にcanonicalな入力を渡す境界であり、設定点のraw検査から
+期待値自体のcanonical性も導いたとはしないことを、該当定理のdocにも明記した。
+採用名へ置換した5モデルの直接buildと全統合guardはPASS。
+全1191名の実定理/型/推移的公理、392 reviewed hashes、18表1147語、7依存5601fileを検査した。
+現行source inventoryは290file中29部分対応/261未対応で、全fileの形式的対応は認定しない。
+guard33件・dependency34件・provision20件、CI YAML、空白差分、runtime無変更の検査もPASS。
+ここでの45モデル検査は通常Lake出力であり、次節の40モデルfresh検査とは範囲を区別する。
+
+## 40モデルcheckpointのfresh Leanソース再生成検査
+
+45モデルの追加前、`88d8a1356eb1a83eda1b7fa8784e5570eca9a507`を凍結し、
+既存の非toolchain `.olean` を参照しない別検査を実施した。結果はPASS（777.405秒）。
+
+- manifest SHA256: `f11c4729b3bb077bf11b333fd95e70e6adcddc1fcc9e7e923e87fc0be9b3e6c9`。
+- 1370非toolchainモジュール: audit/root 41、Mathlib 1091、Batteries 99、Aesop 108、
+  Qq 11、ProofWidgets 18、ImportGraph 2。全て新規出力先へsourceから再生成。
+- 全1019定理について、fresh出力だけの検索パスで`.thmInfo`、型、推移的公理を再検査。
+  独自公理/未証明穴なし、許容は標準3公理のみ。新規5モデルをこの件数へ混ぜない。
+- 開始/終了時に387 reviewed hashes、全source inventory、18表1147語、7依存5601ファイルを照合。
+  実compileごとにimport解決が既存source graphと一致し、全生成artifact/source/JSを再hash。
+- Lean 4.10 commit `c375e19f6b656fcd594cdca3a38b8578634df8cd`、binary SHA256
+  `2af8d3dec15cf5a79a9521cbdf692fa3fdf3110704c4fac2e7fe3c92b36d415b`。
+  `--trust=0`だけで古いimported artifactのsource再検証ができるとは主張しない。
+
+当該ローカル検査の保存先は `/private/tmp/wire3-fresh-source-build.497h73wc/`。
+receipt SHA256は`bfa4ec60d782fc0de20d6ff9f3462e353801eb2d8b1e09021390aae13648299f`、
+graph SHA256は`edb9a9d17980ae0d298e7a48d1ad6d58b3c75c58373f71c6268c914a3c152cb1`。
+使用した一時runnerは `/private/tmp/wire3-fresh-source-runner.iXATos/fresh_audit.py`、
+SHA256は`9128f90b80becc4a43cae970567362887ce42da1970debad150e196fea0b46ed`。
+この一時パスの保持を別環境での再現可能性の代用にしない。
+
+runnerは全sourceと失敗経路を独立レビューし、補助self-check12件もPASS。
+ただし無効`.pyc` fixtureの検査は通常importへの退行を検出できないという弱点を記録する。
+現loaderは実source bytesをcompile/execし、既存bytecode cacheは読まない。
+途中失敗時も終了時source検査を試行する。ネットワーク、Lake、release取得、既存成果物への書込みは行わない。
+
+**主張は「固定JSデータを使ったLeanソース再生成と全定理検査」に限定する。**
+11個のProofWidgets表示用JSは既存bytesを固定して用い、そのsourceから再生成していない。
+Lean toolchain/core artifact・Python/Git・固定metaprogramと競合する悪意あるFS変更がないことは
+信頼境界に残る。実装refinement、暗号健全性、後続モデルのfresh検査を証明したことにはしない。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。
-特にWHIR中間round・samplingの実quicksort・raw opening/Plan/Contextを接続し、全gateの意味論・次数、
+特にsamplingの実quicksort・typed設定から全phase/外側入口への接続を進め、全gateの意味論・次数、
 実行意味論・有限体証明の全体接続・確率的健全性を証明することが必要。
 この更新のみを根拠に本番利用や「criticalな健全性問題なし」を宣言しない。

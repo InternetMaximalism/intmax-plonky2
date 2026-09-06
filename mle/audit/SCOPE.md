@@ -54,13 +54,19 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   in-place quicksortそのものではない。sortedness・membership・件数・非空性を証明しても、
   source quicksortのswap/partition/termination/メモリとの同値を得たことにはしない。
   原始query集合からこの基準出力へ移る差は、全WHIR接続時にも可視の未証明境界とする。
+  WhirDedupはquicksort後の実indexed compactionをモデル化し、現在のbuffer[i]/[i−1]比較、
+  条件付き上書き、全read/write境界、n−1回の終了、最終長と基準dedupの同値を証明する。
+  その同値にsortednessは不要で、strict ascendingの系だけがsorted入力を要求する。
 - Compactはtyped Proofを返す完全decoderではなく、byte grammarを走査してchunksを返す。
   trusted Shapeの全検証、Rustのより厳しい可変cap、debug WHIR pattern再構成、
   opaque WHIR bytes内部、EVM構造体メモリ配置は未対応。
   strict canonicalityは外側field chunkのみ。deferred canonical mode単独では保証しない。
 - Sumcheckのcollision reductionは意味的なmessage/truth関数を対象とする。
   honest truth chainとの対応が前提で、production verifierがtruthを検査するわけではない。
-  coefficient復元・gate/norm多項式との完全な接続、次数・根の個数・確率・FS変換は残る。
+  WhirQuadraticは実WhirFinal.quadraticのc1復元とHornerを具体体上多項式へ接続し、
+  実端点和=claim、次数≤2、不同canonical claimを持つ固定二組の一致点数≤2を証明する。
+  成功roundの実message/challenge/stateを保ち、明示的な二本のchainの不一致にも接続するが、
+  比較側chainが実回路の真値であること、gate/norm多項式との全接続、確率・FS変換は残る。
   WhirPolynomialは終端の実constant-first Hornerだけを具体Ext3体上Polynomialへ接続し、
   同長・不同の固定canonical最終vectorの一致する相異点数≤長さ−1を証明する。
   Finsetは重複のない点集合であり、query listやsource domain mapの単射性を仮定せず代入しない。
@@ -96,7 +102,11 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   実RLC index、根の32byte slice、読取り量、constraint数を成功実行から導出する。
   ProfileShapeはvalidated callerのprevious-round設定投影であり追加runtime guardではない。
   source quicksort、domainPowのbinary loop、decode/算術の命令順の形式的対応は残る。
-  最終Contextまでの全接続、外側WHIR引数との型変換も引き続き別課題。
+  WhirTail.runは同じinit/prefix/中間実行を保持し、final vectorを一回だけ読み、
+  final splitまたはstandard認証、Horner比較、同vectorの最終fold/claim/両EOFへ接続する。
+  Contextはその実prefixのforms/初期RLCと実中間stateから導出し、独立観測を受け取らない。
+  runTail/finishの任意Stateには前段由来保証はなく、run成功の定理を使う必要がある。
+  3×1 ProfileShapeを完全VK/ABI検証と同一視しない。外側WHIR引数と全設定投影の接続は残る。
 - Merkleはraw32byte digest、左右64byte圧縮、厳密昇順と層別sibling処理を具体化。
   読取りがある場合のcursor境界と、same-index/same-depthの2本のpathが異なるleaf hashを
   同じrootへ送るなら圧縮入力の衝突があることを証明。hashの単射性は仮定しない。
@@ -107,16 +117,26 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   独立leaf hash/pathやserialize単射性を前提として代入しない。
   WhirTerminal.authenticateの全入口での置換、衝突確率、Yulの配列操作は未完了。
 - WhirRows.openGroup/openGroupsはraw phaseのみ。base8/Ext3-24のcanonical decodeは別操作で、
-  raw認証成功だけからcanonical値の存在を導かない。実final splitのrow loop内decode/集計は
-  この順序のまま未実装とし、先読みdecodeへ組み替えて同値としない。
+  raw認証成功だけからcanonical値の存在を導かない。WhirTailの専用final splitは
+  slice/hash→canonical decode/dot→vector RLC加算→hint cursor→各root Merkleの順を保つ。
+  standardはraw認証を先に行い、その後各rowを復号して直ちにHorner比較する。
   空queryも8byteのVec=0 prefixを読み、Merkleの空openingはその後offsetを維持する。
-  Layout/weights/indicesの前段導出とfull tailへの接続は別課題。
+  Layout/weights/indicesとtailはWhirTailの限定3×1経路で接続したが、言語間の命令対応ではない。
 - WhirScheduleは既存_validateParametersのfolding guardのみの投影。初期・中間・終端の
   変数数の完全分割、各roundのremaining/suffix、underflowなし、最終2冪サイズを証明する。
-  domain/generator/coset/点配列/ABIの全検証は未実装。成功を完全設定検証済みとしない。
+  WhirParametersは全source scalarを保持するtyped Paramsから、実順序のfold/domain/点配列guardを
+  具体化し、raw座標を検査後そのままSubtypeへ移す。bound入口の件数/mask/roots検査と
+  deployment入口の正のform件数検査は区別し、後者にnc/nv検査を追加しない。
+  成功から既存Schedule、全domain、全点の長さ/canonical性、正確なevaluation件数、
+  WhirInitial.validatedParamsを導く。expectedの値をbound guardがcanonical検査したとはしない。
+  samples/PoW threshold/末尾mask bitsはsource sliceに検査がないため独自に制約しない。
+  ABI・整数幅/overflow・immutable config由来と3×1 profile・全typed実行への設定投影は未証明。
   sourceの_validateDomain単独はgeneratorの非零/canonical性と形状だけを検査し、位数は検査しない。
   query indexを相異なる評価点へ写すには、固定VKのgenerator生成から必要な位数を別途導出する。
   この条件をshape検査の成功やFinsetの重複なし条件から暗黙に得たことにしない。
+  GoldilocksDomainは6素因子証明書からorder(7)=p−1、k≤32で固定根7^((p−1)/2^k)の
+  位数2^kと相異indexの冪/transpose後のcanonical値の単射性を証明する。
+  この固定生成式へのArk/native WHIR/codegenの形式的対応、digest bindingは別課題。
   値はstored VK/config由来である必要があり、proverが自由に変更できるfieldとはしない。
 - Normはformal-coordinate式とhelper/logUp集計を具体化。PIはRustの順序付き直接和で、
   PiSharedBits/PiCacheでSolidityのrow-cache/shared-bit最適化とのモデル内同値を証明。
@@ -146,8 +166,9 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
 1. 具体化済みWHIR initial/最初のsumcheck・中間round・内側byte/PoWから終端へつなぎ、
    Plan/ContextとfixedVK/root/pointへの認証を接続。raw row bytes→leaf hash→multiproof→
    各queryの開示path→終端比較を一つの実行経路として証明。raw row→multiproof→path→
-   復号/dotのbindingと中間round列は接続済みだが、samplingのquicksort同値と最終Contextは残る。
-   native依存revisionとgeneratorの生成/位数保証も対象に含める。
+   復号/dotのbinding、中間round列、限定3×1 tailのderived Contextは接続済み。
+   samplingのquicksort同値、typed設定から全phaseの投影、外側統合入口への接続は残る。
+   固定generatorの数学的位数は証明済みだが、native依存/codegenからの生成対応も対象に含める。
 2. 全14 gate評価の式から実多項式次数・gate意味論・sumcheckへの接続を証明。
    PI cacheの証明済み同値、selector/lookupの入口接続も全体経路へ反映。
 3. setup/VK/config生成、immutable store、全compact decoder、metadata decoder、
@@ -170,3 +191,8 @@ Mathlib v4.10.0のcommitと公式lockの6依存を監査専用に固定し、直
 依存guardは全tracked sourceの実Git blob・HEAD・origin・固定release tagと追加sourceを検査。
 この検査は生成済み.oleanやProofWidgets release archiveの出自を認証しない。
 通常Lakeビルドにはそれらの成果物とLean toolchainの信頼境界があり、全source-only再現とは呼ばない。
+別途40モデル/1019定理のcheckpointで、固定7依存の非toolchain Lean source全1370モジュールを
+空の新規出力先へ再生成し、その出力だけで全定理を検査した。実行前後のsource/hash/依存/JSを
+照合し、既存の依存.oleanは使わない。ただし11個のProofWidgets JSは固定した既存データで、
+JS source再生成・Lean toolchain/core artifactの再現・全実装/PCS証明を主張しない。
+その記録は後続追加モデルのfresh検査済みという意味でもない。詳細はREPORTを参照する。

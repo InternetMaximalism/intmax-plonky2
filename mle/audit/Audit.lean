@@ -45,3 +45,8 @@ import Audit.Wire3.GoldilocksExt3Field
 import Audit.Wire3.WhirPolynomial
 import Audit.Wire3.GoldilocksLagrange
 import Audit.Wire3.WhirIntermediate
+import Audit.Wire3.WhirDedup
+import Audit.Wire3.WhirTail
+import Audit.Wire3.GoldilocksDomain
+import Audit.Wire3.WhirQuadratic
+import Audit.Wire3.WhirParameters

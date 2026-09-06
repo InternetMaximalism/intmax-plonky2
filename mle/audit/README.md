@@ -52,8 +52,13 @@
 | [WhirPolynomial](Audit/Wire3/WhirPolynomial.lean) | 実constant-first Hornerと具体体上Polynomial.evalの一致。同長・不同の固定canonical vectorの一致点数≤長さ−1。query分布や適応選択の確率ではない |
 | [GoldilocksLagrange](Audit/Wire3/GoldilocksLagrange.lean) | 実反復squareと2冪乗、guardとscalar範囲、実inverseを通るevalL0の有理式一致。x=1はsourceどおり失敗 |
 | [WhirIntermediate](Audit/Wire3/WhirIntermediate.lean) | 初期prefixからnew root/OOD/PoW/前rootのraw Merkle/RLC/dot/constraint/sumcheckまで同じ実状態で接続。3 base roots→単一Ext3 root。設定投影・reference sortの境界は残る |
+| [WhirDedup](Audit/Wire3/WhirDedup.lean) | 実indexed隣接重複除去の上書き・読書き境界・最終長と基準dedupの一致。quicksort自体の証明ではない |
+| [WhirTail](Audit/Wire3/WhirTail.lean) | 同じ初期/中間実行から終端の両分岐、同一final vector、derived Context、最終claim・両EOFまで接続。3×1設定投影とsource refinementの境界は残る |
+| [GoldilocksDomain](Audit/Wire3/GoldilocksDomain.lean) | 固定生成元7の位数p−1、k≤32で派生根の位数2^k、transpose指数と相異点の証明。任意shape-valid generatorや設定生成の証明ではない |
+| [WhirQuadratic](Audit/Wire3/WhirQuadratic.lean) | 実sumcheckのc1復元/Horner、端点和、次数≤2と固定不同claimの一致点数≤2。比較側のtruth/FS/確率は別条件 |
+| [WhirParameters](Audit/Wire3/WhirParameters.lean) | 実順の全typed設定guard、bound/deployment入口の区別、raw点の損失なしcanonical化と既存WhirInitial.validatedParamsへの接続 |
 
-現行rootは40モデル・1019件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
+現行rootは45モデル・1191件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
 件数は暗号安全性の達成率ではありません。
 
 [スコープと未証明事項](SCOPE.md)、[結果・再現手順・次工程](REPORT.md)、
@@ -81,6 +86,9 @@ Mathlib 4.10と公式lockの6依存は全てcommit固定です。provisionのみ
 Git blobと照合し、外部search path、追加Lean/config source、固定タグの不一致を拒否します。
 通常LakeビルドのProofWidgets release成果物・生成済み.oleanの出自は、このsource検査では
 証明しません。ソースのみからの全依存再生成とは区別します。
+別途、40モデル時点の全非toolchain依存1370モジュールをfresh出力へ再生成し、全1019定理を
+その出力だけで検査した記録をREPORTに保存しています。固定した11個の表示用JSデータと
+Lean toolchainはその検査でも信頼境界に残り、後続追加モデルの検査範囲とは区別します。
 `sorry`、`admit`、独自公理、`native_decide` による穴埋めは認めません。
 許容するglobalな論理公理は `propext`、`Classical.choice`、`Quot.sound` のみです。
 Poseidon/Cosetの全18表・1147語をSolidityと逐語比較し、PoseidonはRustとも比較します。
