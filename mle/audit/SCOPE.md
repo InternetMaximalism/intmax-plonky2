@@ -54,6 +54,12 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   quadraticの一致確率は2(ceil(2^320/p)/2^320)³以下。これは実Keccak/FSのuniform性、
   前のmessageからの独立性・適応選択の固定性を導いた定理ではない。
   外側MLEの3回の32byte squeezeと別の係数復元式には、この内側WHIR定理を適用しない。
+  WhirRlcは同じgeometricPowersと実dotRowを具体多項式へ接続し、固定同長不同canonical
+  vectorの一致点数≤n−1、明示uniform120byte lawの偏り込み上界を導く。
+  count0/1はsourceどおり無消費、2以上は同じ120byte/four blocks/counter+4。
+  初期phaseの全claim/cross吸収→vector RLC→次stateのconstraint RLCを接続するが、
+  2つのHash出力の独立性・commitmentからの固定vector抽出・適応的fixednessは未証明。
+  任意rowの式はzero-totalizationであり、実statement rowには別の検証済み境界定理を使う。
 - WhirSampling.challengeRawは1byteにつき1hash/counter更新、BE query、power-of-two maskを具体化。
   count=0/numLeaves=1の無消費分岐、counter上限、raw rangeを証明する。
   challengeIndicesReferenceは実行可能な挿入sortと隣接dedupの基準版であり、sourceの
@@ -180,6 +186,12 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   Algebraによりeq/subgroupのSolidity最適化式とRust式、およびsquare=mulはモデル内で証明済み。
   formal adjugate/normの恒等式はNormIdentityで証明済みだが、helperの正しさや
   PI個別一致への確率的還元は残る。
+  NormPolynomialは実denominator/formal adjugate/norm/recomposition、wireStepの1寄与へ
+  concrete Field上のaffine入力多項式を接続。formal座標もExt3係数なので、canonical
+  Ext3の非零norm定理を使わない。helper≤4、eq重み込み行≤5、logUp≤3、PI≤2、有限和≤5。
+  lambda/etaの実乗算回数への重みbuilderも証明するが、全行builderへの一括適用は未接続。
+  round_evaluation_actualの右辺は捕捉endpoint上の候補内行/PI式であって、Norm.checkedEvaluateや
+  Rust mutable arrays全体への同値ではない。endpoint抽出・PI suffix/column/prefix由来は残る。
 - Gatesは14familyの設定検証、GatesAdditional/CosetとPoseidon/Constantsは残る8familyを具体化。
   GatesCompleteは全14familyを実計算し、valid設定と入力長ならSomeが得られることを証明する。
   Integratedはこのcomplete dispatcherを使う。基礎Gates単独のpartial dispatcherと混同しない。
@@ -193,6 +205,12 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   GateCheckedPolynomialはこの7familyだけで、実validateGate/両入力長/全設定の検査から
   選択行寄与≤q+1、明示affine重み後≤q+2を証明する。残る7familyはsymbolic NONE。
   重みの実eq列由来、全行和、補間/送信係数、各gate真偽・認証endpointは別境界。
+  GateLoopPolynomial/Random/TwelveはIDs8〜12を追加し、Exponentiation≤4、BaseSum≤base、
+  Reducing2種≤2、RandomAccess≤bits+1を実計算から導く。Reducingのaccumulatorは毎回
+  claimed-next wireへresetし、制約成立を次数の前提にしない。RandomAccessのscratchは
+  実際に再計算し、bitごとに次数上界が増える。Boolean性・range truthは仮定しない。
+  実metadata/全設定/両入力長から12familyの寄与≤q+1/affine重み後≤q+2を証明する。
+  前段7family dispatcherとこの12family dispatcherを区別し、Poseidon4/Coset13のNONEは残す。
 - Integrated.verifyはchecked norm形状と7challenge layout、同じ入力での全gate計算の
   Someを検査後、packed/norm/eq/gateを具体化したVerifier.verifyへ進む。
   modelEngineだけの利用にはこの保証がなく、getD zeroは旧interfaceへの全域化にすぎない。
@@ -212,7 +230,7 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    source/compiler refinementと外側統合入口への接続は残る。
    固定generatorの数学的位数は証明済みだが、native依存/codegenからの生成対応も対象に含める。
 2. 全14 gate評価の式から実多項式次数・gate意味論・sumcheckへの接続を証明。
-   7familyの実式/設定済み行次数と外側係数復元は接続済みだが、残7family・全行和・
+   12familyの実式/設定済み行次数と外側係数復元は接続済みだが、残2family・全行和・
    補間/送信係数・回路truth chainへの接続を完成したとはしない。
    PI cacheの証明済み同値、selector/lookupの入口接続も全体経路へ反映。
 3. setup/VK/config生成、immutable store、全compact decoder、metadata decoder、

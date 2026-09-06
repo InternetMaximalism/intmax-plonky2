@@ -63,3 +63,8 @@ import Audit.Wire3.GatePolynomial
 import Audit.Wire3.GateBasicPolynomial
 import Audit.Wire3.GateMdsPolynomial
 import Audit.Wire3.GateCheckedPolynomial
+import Audit.Wire3.NormPolynomial
+import Audit.Wire3.GateLoopPolynomial
+import Audit.Wire3.GateRandomPolynomial
+import Audit.Wire3.GateTwelvePolynomial
+import Audit.Wire3.WhirRlc

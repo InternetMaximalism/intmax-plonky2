@@ -67,8 +67,11 @@
 | [OuterChallenge](Audit/Wire3/OuterChallenge.lean) | 外側の実3×32byte squeezeとcoupled commit後の6counterを接続。明示uniform law下の偏り込み固定多項式上界。実FSや両laneの積増幅は未証明 |
 | [GatePolynomial/Basic/Mds](Audit/Wire3/GatePolynomial.lean) | 全14familyのzero-filter分岐除去と、7familyの実制約式・selector・固定alpha Hornerへの多項式評価一致と次数 |
 | [GateCheckedPolynomial](Audit/Wire3/GateCheckedPolynomial.lean) | 7familyに限定し、実設定検査と両入力長から寄与次数≤q+1、明示affine重み後≤q+2。未対応familyはNONEを保持 |
+| [NormPolynomial](Audit/Wire3/NormPolynomial.lean) | off-cube形式norm/adjugateと実寄与式からhelper≤4、eq重み込み行・有限和≤5、PI≤2。endpoint抽出/PI routing/送信係数は別境界 |
+| [GateLoop/Random/TwelvePolynomial](Audit/Wire3/GateTwelvePolynomial.lean) | Exponentiation・BaseSum・Reducing2種・RandomAccessを追加し12familyの実次数と設定済み行寄与を証明。Poseidon/Cosetのsymbolic NONEは残る |
+| [WhirRlc](Audit/Wire3/WhirRlc.lean) | 実geometric係数とrow dotを同じ多項式へ接続。固定同長不同vectorの一致点数≤n−1、明示uniform120byte上界、2RLCの実順序/別state・無消費分岐 |
 
-現行rootは58モデル・1571件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
+現行rootは63モデル・1716件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
 件数は暗号安全性の達成率ではありません。
 
 [スコープと未証明事項](SCOPE.md)、[結果・再現手順・次工程](REPORT.md)、

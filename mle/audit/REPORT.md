@@ -540,6 +540,34 @@ source inventoryは290file中30部分対応/260未対応（coefficients.rsの部
 guard33件・dependency34件・provision20件、CI YAML、空白差分とruntime無変更もPASS。
 通常Lake検査と40モデルfresh検査の範囲は区別し、全実装/PCS健全性の完了とはしない。
 
+## 第10継続更新（80b63289以降）
+
+5モデル・145定理を追加し、63モデル・1716名付き定理へ拡張した。
+
+- **形式Normの実次数**: denominatorの3座標もExt3係数のaffine多項式として扱い、
+  formal adjugate≤2/norm≤3/helper≤4/logUp≤3、eq重み込み行・有限和≤5、PI≤2を導く。
+  実Norm.wireStepの1寄与と評価一致、実lambda/eta乗算回数に一致する重みbuilderも証明。
+  canonical Ext3非零norm定理をoff-cube形式座標へ流用しない。X^5−Xとなる次数5の代数例も確認。
+  round_evaluation_actualは候補内行/PI式への一致で、mutable arraysからのendpoint抽出、
+  全重みbuilder適用、PI suffix/column/prefix由来、補間/送信係数への完全接続ではない。
+- **12familyまでのgate次数**: Exponentiation≤4、BaseSum≤固定base、Reducing2種≤2、
+  RandomAccess≤bits+1を追加。高位bit順、全range積、可変alpha wireとclaimed-nextへのreset、
+  再帰的scratch折畳み、trailing extra constantsの順序を保持。Boolean性・制約成立を仮定しない。
+  実validateGate/全設定/両列長から実寄与≤q+1、明示affine重み後≤q+2へ接続する。
+  nonlinear Poseidon4/Coset13はsymbolic NONEのまま。全14familyの実評価と次数証明を混同しない。
+- **WHIRの実RLC**: 実geometricPowersと増順row dotを同じ具体Field多項式へ同一化。
+  固定同長不同canonical vectorの一致点数≤n−1、実120byte/3×40LE還元に対する明示uniform lawの
+  偏り込み上界を証明。count0/1は無消費、2以上は同じfour blocksとcounter+4。
+  全claim/cross読取り後vector RLC→次stateのconstraint RLCという実相順序とサイズを保持する。
+  Hash uniform性/2RLC独立性、rootからのvector抽出、適応的fixedness、nested全和の健全性は未証明。
+
+追加全5モデルはrootが全文・source・依存・仮定を対照し、別担当の独立read-onlyレビューもPASS。
+採用namespaceでの直接buildと全統合guardはPASS。全1716名の実定理/型/推移的公理、
+410 reviewed hashes、18表1147語、7依存5601fileを検査した。
+source inventoryは290file中30部分対応/260未対応を維持。
+guard33件・dependency34件・provision20件、CI YAML、空白差分とruntime無変更もPASS。
+実装・main・push・親pinは変更せず、全実装/PCS健全性を完了したとはしない。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。
