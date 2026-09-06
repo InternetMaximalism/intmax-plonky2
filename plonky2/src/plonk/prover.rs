@@ -9,7 +9,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 #[cfg(all(feature = "std", not(target_arch = "wasm32")))]
 use std::time::Instant;
 
-use anyhow::{ensure, Result};
+use anyhow::{anyhow, ensure, Result};
 use hashbrown::HashMap;
 #[cfg(all(feature = "std", target_arch = "wasm32"))]
 use js_sys::Date;
@@ -33,6 +33,7 @@ use crate::hash::hash_types::RichField;
 use crate::iop::challenger::Challenger;
 use crate::iop::generator::generate_partial_witness;
 use crate::iop::target::Target;
+use crate::iop::wire::Wire;
 use crate::iop::witness::{MatrixWitness, PartialWitness, PartitionWitness, Witness, WitnessWrite};
 use crate::plonk::circuit_builder::NUM_COINS_LOOKUP;
 use crate::plonk::circuit_data::{CommonCircuitData, EvaluationTables, ProverOnlyCircuitData};
@@ -216,13 +217,15 @@ where
     let public_inputs = partition_witness.get_targets(&prover_data.public_inputs);
     let public_inputs_hash = C::InnerHasher::hash_no_pad(&public_inputs);
 
+    let degree = common_data.degree();
+    let public_input_wires = canonical_public_input_wires(prover_data, common_data)?;
+
     let witness = timed!(
         timing,
         "compute full witness",
         partition_witness.full_witness()
     );
 
-    let degree = common_data.degree();
     let degree_bits = common_data.degree_bits();
 
     Ok(EvaluationTables {
@@ -230,6 +233,7 @@ where
         constant_values: prover_data.constant_evals.clone(),
         sigma_values: prover_data.sigmas.clone(),
         public_inputs,
+        public_input_wires,
         public_inputs_hash,
         num_wires: common_data.config.num_wires,
         num_routed_wires: common_data.config.num_routed_wires,
@@ -238,6 +242,64 @@ where
         degree,
         degree_bits,
     })
+}
+
+/// Return the row-major canonical routed-wire representative for each public
+/// input target. Public-input order and duplicates are preserved exactly.
+///
+/// Only routed columns are eligible because those are the witness columns
+/// authenticated by the copy-permutation relation. This helper is shared by
+/// table extraction and alternative proving backends so their public-input
+/// binding map cannot drift.
+pub fn canonical_public_input_wires<
+    F: RichField + Extendable<D>,
+    C: GenericConfig<D, F = F>,
+    const D: usize,
+>(
+    prover_data: &ProverOnlyCircuitData<F, C, D>,
+    common_data: &CommonCircuitData<F, D>,
+) -> Result<Vec<Wire>> {
+    let degree = common_data.degree();
+    let num_wires = common_data.config.num_wires;
+    let num_routed_wires = common_data.config.num_routed_wires;
+    if prover_data.public_inputs.len() != common_data.num_public_inputs {
+        return Err(anyhow!(
+            "public-input target count disagrees with common circuit data"
+        ));
+    }
+    let mut canonical_wire_by_representative = vec![None; prover_data.representative_map.len()];
+    for row in 0..degree {
+        for column in 0..num_routed_wires {
+            let target_index = row * num_wires + column;
+            let representative = *prover_data
+                .representative_map
+                .get(target_index)
+                .ok_or_else(|| anyhow!("representative map is shorter than the witness grid"))?;
+            let slot = canonical_wire_by_representative
+                .get_mut(representative)
+                .ok_or_else(|| anyhow!("representative map contains an out-of-range root"))?;
+            if slot.is_none() {
+                *slot = Some(Wire { row, column });
+            }
+        }
+    }
+    prover_data
+        .public_inputs
+        .iter()
+        .map(|&target| {
+            let target_index = target.index(num_wires, degree);
+            let representative = *prover_data
+                .representative_map
+                .get(target_index)
+                .ok_or_else(|| {
+                    anyhow!("public-input target is absent from the representative map")
+                })?;
+            canonical_wire_by_representative
+                .get(representative)
+                .and_then(|wire| *wire)
+                .ok_or_else(|| anyhow!("public-input copy class has no routed witness wire"))
+        })
+        .collect()
 }
 
 pub async fn prove_with_partition_witness_async<

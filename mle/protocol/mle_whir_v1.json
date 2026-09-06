@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "mleProtocolVersion": 1,
+  "outerTranscriptProtocol": "plonky2-mle-v1",
+  "packedSchemaDomain": "pcs-schema-packed-v1",
+  "whirSplitSession": "plonky2-mle-whir-packed-constituents-v1",
+  "extensionFieldLimbs": 3,
+  "packedVectorsPerGroup": 1,
+  "variableOrderCode": 0,
+  "proofAbi": [
+    { "name": "protocolVersion", "jsonName": "protocolVersion", "solidityType": "uint256", "abiType": "uint256" },
+    { "name": "constituentWidth", "jsonName": "constituentWidth", "solidityType": "uint256", "abiType": "uint256" },
+    { "name": "circuitDigest", "jsonName": "circuitDigest", "solidityType": "uint256[]", "abiType": "uint256[]" },
+    { "name": "whirTranscript", "jsonName": "whirTranscript", "solidityType": "bytes", "abiType": "bytes" },
+    { "name": "whirHints", "jsonName": "whirHints", "solidityType": "bytes", "abiType": "bytes" },
+    { "name": "preprocessedRoot", "jsonName": "preprocessedCommitmentRoot", "solidityType": "bytes32", "abiType": "bytes32" },
+    { "name": "witnessRoot", "jsonName": "witnessCommitmentRoot", "solidityType": "bytes32", "abiType": "bytes32" },
+    { "name": "auxCommitmentRoot", "jsonName": "auxCommitmentRoot", "solidityType": "bytes32", "abiType": "bytes32" },
+    { "name": "preprocessedEvalValue", "jsonName": "preprocessedEvalValue", "solidityType": "uint256", "abiType": "uint256" },
+    { "name": "preprocessedBatchR", "jsonName": "preprocessedBatchR", "solidityType": "uint256", "abiType": "uint256" },
+    { "name": "preprocessedIndividualEvals", "jsonName": "preprocessedIndividualEvals", "solidityType": "uint256[]", "abiType": "uint256[]" },
+    { "name": "witnessEvalValue", "jsonName": "witnessEvalValue", "solidityType": "uint256", "abiType": "uint256" },
+    { "name": "witnessBatchR", "jsonName": "witnessBatchR", "solidityType": "uint256", "abiType": "uint256" },
+    { "name": "witnessIndividualEvals", "jsonName": "witnessIndividualEvals", "solidityType": "uint256[]", "abiType": "uint256[]" },
+    { "name": "auxBatchR", "jsonName": "auxBatchR", "solidityType": "uint256", "abiType": "uint256" },
+    { "name": "auxConstraintEval", "jsonName": "auxConstraintEval", "solidityType": "uint256", "abiType": "uint256" },
+    { "name": "auxPermEval", "jsonName": "auxPermEval", "solidityType": "uint256", "abiType": "uint256" },
+    { "name": "auxEvalValue", "jsonName": "auxEvalValue", "solidityType": "uint256", "abiType": "uint256" },
+    { "name": "combinedProof", "jsonName": "combinedProof", "solidityType": "SumcheckVerifier.SumcheckProof", "abiType": "((uint256[])[])" },
+    { "name": "publicInputs", "jsonName": "publicInputs", "solidityType": "uint256[]", "abiType": "uint256[]" },
+    { "name": "alpha", "jsonName": "alpha", "solidityType": "uint256", "abiType": "uint256" },
+    { "name": "beta", "jsonName": "beta", "solidityType": "uint256", "abiType": "uint256" },
+    { "name": "gamma", "jsonName": "gamma", "solidityType": "uint256", "abiType": "uint256" },
+    { "name": "mu", "jsonName": "mu", "solidityType": "uint256", "abiType": "uint256" },
+    { "name": "inverseHelpersCommitmentRoot", "jsonName": "inverseHelpersCommitmentRoot", "solidityType": "bytes32", "abiType": "bytes32" },
+    { "name": "inverseHelpersBatchR", "jsonName": "inverseHelpersBatchR", "solidityType": "uint256", "abiType": "uint256" },
+    { "name": "invSumcheckProof", "jsonName": "invSumcheckProof", "solidityType": "SumcheckVerifier.SumcheckProof", "abiType": "((uint256[])[])" },
+    { "name": "hSumcheckProof", "jsonName": "hSumcheckProof", "solidityType": "SumcheckVerifier.SumcheckProof", "abiType": "((uint256[])[])" },
+    { "name": "lambdaInv", "jsonName": "lambdaInv", "solidityType": "uint256", "abiType": "uint256" },
+    { "name": "muInv", "jsonName": "muInv", "solidityType": "uint256", "abiType": "uint256" },
+    { "name": "witnessIndividualEvalsAtRInv", "jsonName": "witnessIndividualEvalsAtRInv", "solidityType": "uint256[]", "abiType": "uint256[]" },
+    { "name": "preprocessedIndividualEvalsAtRInv", "jsonName": "preprocessedIndividualEvalsAtRInv", "solidityType": "uint256[]", "abiType": "uint256[]" },
+    { "name": "inverseHelpersEvalsAtRInv", "jsonName": "inverseHelpersEvalsAtRInv", "solidityType": "uint256[]", "abiType": "uint256[]" },
+    { "name": "inverseHelpersEvalsAtRH", "jsonName": "inverseHelpersEvalsAtRH", "solidityType": "uint256[]", "abiType": "uint256[]" },
+    { "name": "gSubEvalAtRInv", "jsonName": "gSubEvalAtRInv", "solidityType": "uint256", "abiType": "uint256" },
+    { "name": "witnessEvalValueAtRInv", "jsonName": "witnessEvalValueAtRInv", "solidityType": "uint256", "abiType": "uint256" },
+    { "name": "preprocessedEvalValueAtRInv", "jsonName": "preprocessedEvalValueAtRInv", "solidityType": "uint256", "abiType": "uint256" },
+    { "name": "extChallenge", "jsonName": "extChallenge", "solidityType": "uint256", "abiType": "uint256" },
+    { "name": "gateSumcheckProof", "jsonName": "gateSumcheckProof", "solidityType": "SumcheckVerifier.SumcheckProof", "abiType": "((uint256[])[])" },
+    { "name": "witnessIndividualEvalsAtRGateV2", "jsonName": "witnessIndividualEvalsAtRGateV2", "solidityType": "uint256[]", "abiType": "uint256[]" },
+    { "name": "preprocessedIndividualEvalsAtRGateV2", "jsonName": "preprocessedIndividualEvalsAtRGateV2", "solidityType": "uint256[]", "abiType": "uint256[]" },
+    { "name": "witnessEvalValueAtRGateV2", "jsonName": "witnessEvalValueAtRGateV2", "solidityType": "uint256", "abiType": "uint256" },
+    { "name": "preprocessedEvalValueAtRGateV2", "jsonName": "preprocessedEvalValueAtRGateV2", "solidityType": "uint256", "abiType": "uint256" },
+    { "name": "quotientDegreeFactor", "jsonName": "quotientDegreeFactor", "solidityType": "uint256", "abiType": "uint256" },
+    { "name": "numSelectors", "jsonName": "numSelectors", "solidityType": "uint256", "abiType": "uint256" },
+    { "name": "numGateConstraints", "jsonName": "numGateConstraints", "solidityType": "uint256", "abiType": "uint256" },
+    { "name": "gates", "jsonName": "gates", "solidityType": "Plonky2GateEvaluator.GateInfo[]", "abiType": "(uint8,uint8,uint8,uint8,uint8,uint16,uint16,uint16,uint16)[]" },
+    { "name": "publicInputsHash", "jsonName": "publicInputsHash", "solidityType": "uint256[4]", "abiType": "uint256[4]" }
+  ],
+  "groups": [
+    {
+      "name": "preprocessed",
+      "constant": "GROUP_PREPROCESSED"
+    },
+    {
+      "name": "witness",
+      "constant": "GROUP_WITNESS"
+    },
+    {
+      "name": "inverse_helpers",
+      "constant": "GROUP_INVERSE_HELPERS"
+    },
+    {
+      "name": "auxiliary",
+      "constant": "GROUP_AUXILIARY"
+    }
+  ],
+  "terminalPoints": [
+    {
+      "name": "combined",
+      "constant": "POINT_COMBINED"
+    },
+    {
+      "name": "inverse",
+      "constant": "POINT_INVERSE"
+    },
+    {
+      "name": "h",
+      "constant": "POINT_H"
+    },
+    {
+      "name": "gate",
+      "constant": "POINT_GATE"
+    }
+  ],
+  "boundCells": [
+    { "point": "combined", "group": "preprocessed" },
+    { "point": "combined", "group": "witness" },
+    { "point": "combined", "group": "auxiliary" },
+    { "point": "inverse", "group": "preprocessed" },
+    { "point": "inverse", "group": "witness" },
+    { "point": "inverse", "group": "inverse_helpers" },
+    { "point": "h", "group": "inverse_helpers" },
+    { "point": "gate", "group": "preprocessed" },
+    { "point": "gate", "group": "witness" }
+  ]
+}

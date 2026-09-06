@@ -1,5 +1,8 @@
 # Lean 形式検証スコープ (lean-formal-audit 段階0 成果物)
 
+> Historical scope: the definitions below are retained for the July target and
+> do not model current wire v3. See [current scope](../README.md).
+
 日付: 2026-07-06 / 対象コミット: ee80ee6d (branch claude/gifted-germain-0283dd)
 
 ## モード

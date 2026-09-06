@@ -6,6 +6,7 @@ import {SpongefishMerkle} from "./SpongefishMerkle.sol";
 import {GoldilocksExt3} from "./GoldilocksExt3.sol";
 import {WhirLinearAlgebra} from "./WhirLinearAlgebra.sol";
 import {Keccak256Chain} from "./Keccak256Chain.sol";
+import {InvalidMleProof} from "../MleProofErrors.sol";
 
 /// @title SpongefishWhirVerify
 /// @notice Full WHIR verification matching WizardOfMenlo/whir verifier.rs
@@ -15,6 +16,14 @@ library SpongefishWhirVerify {
     using SpongefishWhir for SpongefishWhir.TranscriptState;
 
     uint64 constant GL_P = 0xFFFFFFFF00000001;
+
+    error DuplicateLeafMismatch();
+    error FinalOpeningMismatch();
+    error FinalClaimMismatch();
+    error InvalidHints();
+    error InvalidParameters();
+    error TranscriptNotConsumed();
+    error ZeroPolynomialEvaluation();
 
     struct RoundParams {
         uint256 codewordLength;
@@ -27,6 +36,8 @@ library SpongefishWhirVerify {
         uint256 cosetSize;
         uint256 numCosets;
         uint256 numVariables;
+        uint64 powThreshold;
+        uint64 sumcheckPowThreshold;
     }
 
     struct WhirParams {
@@ -50,9 +61,11 @@ library SpongefishWhirVerify {
         uint256 initialNumVariables;
         uint256 initialCosetSize;
         uint256 initialNumCosets;
-        // Evaluation point(s) (for FinalClaim).
-        // If empty, uses canonical point (1, 2, ..., numVariables).
-        // With sumcheck bridge, this is the sumcheck-derived point r₁.
+        uint64 initialSumcheckPowThreshold;
+        uint64 finalPowThreshold;
+        uint64 finalSumcheckPowThreshold;
+        // Evaluation point(s) for FinalClaim. Grouped v1 requires every point
+        // explicitly and with exactly `numVariables` canonical Ext3 entries.
         GoldilocksExt3.Ext3[] evaluationPoint;
         // Second evaluation point (for dual-point / gζ bridge).
         // If empty, single-point mode (numLinearForms = 1).
@@ -70,8 +83,8 @@ library SpongefishWhirVerify {
     /// @notice One entry in round_constraints: RLC coefficients + evaluation points for UnivariateEvaluation
     struct RoundConstraintEntry {
         GoldilocksExt3.Ext3[] rlcCoeffs;
-        GoldilocksExt3.Ext3[] univariatePoints;  // OOD points ++ in-domain points (as base-field-embedded Ext3)
-        uint256 numVariables;                      // for eval_point slice
+        GoldilocksExt3.Ext3[] univariatePoints; // OOD points ++ in-domain points (as base-field-embedded Ext3)
+        uint256 numVariables; // for eval_point slice
     }
 
     struct VerifyState {
@@ -96,30 +109,159 @@ library SpongefishWhirVerify {
     // =====================================================================
     // Main entry point
     // =====================================================================
-    function verifyWhirProof(
+    /// @notice Verify the v1 grouped-constituent statement.
+    /// @dev `evaluationMask` is a little-endian bitset. A set bit requires the
+    /// transcript-bound Ext3 claim to equal `evaluations[i]`; unset entries are
+    /// still verified by WHIR but are not consumed by an MLE terminal equation.
+    /// All evaluation claims are read before WHIR samples its vector RLC.
+    function verifyWhirProofBound(
         bytes memory protocolId,
         bytes memory sessionId,
         bytes memory instance,
         bytes memory transcript,
-        bytes memory hints,
+        bytes calldata hints,
         GoldilocksExt3.Ext3[] memory evaluations,
+        bytes memory evaluationMask,
+        bytes32[] memory expectedRoots,
         WhirParams memory params
-    ) internal pure returns (bool) {
+    ) external pure returns (bool) {
+        if (params.numCommitments == 0 || params.numVectors == 0) {
+            revert InvalidParameters();
+        }
+        if (evaluationMask.length != (evaluations.length + 7) / 8) revert InvalidParameters();
+        if (expectedRoots.length != params.numCommitments) revert InvalidParameters();
+        uint256 totalVectors = params.numCommitments * params.numVectors;
+        if (evaluations.length == 0 || evaluations.length % totalVectors != 0) {
+            revert InvalidParameters();
+        }
+        _validateParameters(params, evaluations.length / totalVectors);
+        SpongefishMerkle.CalldataBytes memory hintsView =
+            SpongefishMerkle.CalldataBytes({offset: 0, length: hints.length});
+        assembly ("memory-safe") {
+            mstore(hintsView, hints.offset)
+        }
+        return _verifyWhirProof(
+            protocolId, sessionId, instance, transcript, hintsView, evaluations, evaluationMask, expectedRoots, params
+        );
+    }
+
+    /// @notice Validate a deployment-time WHIR configuration without reading
+    /// any prover bytes. Production MLE v2 deployment uses this before pinning
+    /// the configuration digest, so malformed VK parameters remain
+    /// UNEVALUABLE rather than becoming proof-fraud evidence.
+    function validateParameters(WhirParams memory params, uint256 numLinearForms) external pure {
+        if (numLinearForms == 0) revert InvalidParameters();
+        _validateParameters(params, numLinearForms);
+    }
+
+    /// @dev Reject inconsistent or tailed verifier configuration before any
+    /// proof bytes are consumed. `InvalidParameters` deliberately remains
+    /// distinct from `InvalidMleProof`: WhirParams belongs to the stored VK,
+    /// so a broken deployment must be UNEVALUABLE rather than slashable.
+    function _validateParameters(WhirParams memory params, uint256 numLinearForms) private pure {
+        if (
+            params.numVariables == 0 || params.numVariables >= 256 || params.initialNumVariables != params.numVariables
+                || params.foldingFactor == 0 || params.initialSumcheckRounds == 0
+                || params.initialSumcheckRounds > params.numVariables || params.initialSumcheckRounds >= 256
+                || params.initialInterleavingDepth != (uint256(1) << params.initialSumcheckRounds)
+                || params.rounds.length != params.numRounds
+        ) revert InvalidParameters();
+        _validateDomain(
+            params.initialCodewordLength,
+            params.initialMerkleDepth,
+            params.initialCosetSize,
+            params.initialNumCosets,
+            params.initialDomainGenerator
+        );
+
+        uint256 remainingVariables = params.numVariables - params.initialSumcheckRounds;
+        for (uint256 round = 0; round < params.rounds.length; round++) {
+            RoundParams memory rp = params.rounds[round];
+            if (
+                rp.numVariables != remainingVariables || rp.sumcheckRounds != params.foldingFactor
+                    || rp.sumcheckRounds > remainingVariables || rp.sumcheckRounds >= 256
+                    || rp.interleavingDepth != (uint256(1) << rp.sumcheckRounds)
+            ) revert InvalidParameters();
+            _validateDomain(rp.codewordLength, rp.merkleDepth, rp.cosetSize, rp.numCosets, rp.domainGenerator);
+            remainingVariables -= rp.sumcheckRounds;
+        }
+        if (
+            remainingVariables != params.finalSumcheckRounds || params.finalSumcheckRounds >= 256
+                || params.finalSize != (uint256(1) << params.finalSumcheckRounds)
+        ) revert InvalidParameters();
+
+        // Grouped-v1 supplies every linear-form point explicitly. Exact
+        // lengths avoid the historical optional/ignored point tails.
+        if (params.evaluationPoint.length != params.numVariables) revert InvalidParameters();
+        _validateEvaluationPoint(params.evaluationPoint);
+        if (numLinearForms == 1) {
+            if (params.evaluationPoint2.length != 0 || params.additionalEvaluationPoints.length != 0) {
+                revert InvalidParameters();
+            }
+            return;
+        }
+        if (
+            params.evaluationPoint2.length != params.numVariables
+                || params.additionalEvaluationPoints.length != numLinearForms - 2
+        ) revert InvalidParameters();
+        _validateEvaluationPoint(params.evaluationPoint2);
+        for (uint256 i = 0; i < params.additionalEvaluationPoints.length; i++) {
+            if (params.additionalEvaluationPoints[i].length != params.numVariables) {
+                revert InvalidParameters();
+            }
+            _validateEvaluationPoint(params.additionalEvaluationPoints[i]);
+        }
+    }
+
+    function _validateEvaluationPoint(GoldilocksExt3.Ext3[] memory point) private pure {
+        for (uint256 i = 0; i < point.length; i++) {
+            GoldilocksExt3.Ext3 memory coordinate = point[i];
+            if (coordinate.c0 >= GL_P || coordinate.c1 >= GL_P || coordinate.c2 >= GL_P) {
+                revert InvalidParameters();
+            }
+        }
+    }
+
+    function _validateDomain(
+        uint256 codewordLength,
+        uint256 merkleDepth,
+        uint256 cosetSize,
+        uint256 numCosets,
+        uint64 domainGenerator
+    ) private pure {
+        if (
+            codewordLength == 0 || (codewordLength & (codewordLength - 1)) != 0 || merkleDepth >= 256
+                || codewordLength != (uint256(1) << merkleDepth) || cosetSize == 0 || numCosets == 0
+                || codewordLength % cosetSize != 0 || codewordLength / cosetSize != numCosets || domainGenerator == 0
+                || domainGenerator >= GL_P
+        ) revert InvalidParameters();
+    }
+
+    function _verifyWhirProof(
+        bytes memory protocolId,
+        bytes memory sessionId,
+        bytes memory instance,
+        bytes memory transcript,
+        SpongefishMerkle.CalldataBytes memory hints,
+        GoldilocksExt3.Ext3[] memory evaluations,
+        bytes memory evaluationMask,
+        bytes32[] memory expectedRoots,
+        WhirParams memory params
+    ) private pure returns (bool) {
         SpongefishWhir.TranscriptState memory ts = SpongefishWhir.initTranscript(protocolId, sessionId, instance);
 
         VerifyState memory vs;
-        vs.totalFoldingLen = params.initialSumcheckRounds + params.finalSumcheckRounds;
-        for (uint256 r = 0; r < params.numRounds; r++) {
-            vs.totalFoldingLen += params.rounds[r].sumcheckRounds;
-        }
+        // Parameter validation proves that the initial, intermediate and final
+        // folding rounds partition the original variable count exactly.
+        vs.totalFoldingLen = params.numVariables;
         vs.allFoldingRandomness = new GoldilocksExt3.Ext3[](vs.totalFoldingLen);
         vs.roundConstraints = new RoundConstraintEntry[](1 + params.numRounds);
 
         // Phase 1: Initial commitment + OOD + RLC + compute "the sum"
-        _phaseInitial(ts, transcript, evaluations, params, vs);
+        _phaseInitial(ts, transcript, evaluations, evaluationMask, expectedRoots, params, vs);
 
         // Phase 2: Initial sumcheck
-        _phaseSumcheck(ts, transcript, params.initialSumcheckRounds, vs);
+        _phaseSumcheck(ts, transcript, params.initialSumcheckRounds, params.initialSumcheckPowThreshold, vs);
 
         // Phase 3: Intermediate rounds
         _phaseIntermediateRounds(ts, transcript, hints, params, vs);
@@ -128,12 +270,13 @@ library SpongefishWhirVerify {
         GoldilocksExt3.Ext3[] memory finalVector = _phaseFinalVectorAndMerkle(ts, transcript, hints, params, vs);
 
         // Phase 5: Final sumcheck
-        _phaseSumcheck(ts, transcript, params.finalSumcheckRounds, vs);
+        _phaseSumcheck(ts, transcript, params.finalSumcheckRounds, params.finalSumcheckPowThreshold, vs);
 
         // Phase 6: FinalClaim verification
         _phaseFinalClaim(params, vs, finalVector);
 
-        require(ts.transcriptPos == transcript.length, "transcript not fully consumed");
+        if (ts.transcriptPos != transcript.length) revert InvalidMleProof();
+        if (ts.hintPos != hints.length) revert InvalidMleProof();
         return true;
     }
 
@@ -146,6 +289,8 @@ library SpongefishWhirVerify {
         SpongefishWhir.TranscriptState memory ts,
         bytes memory transcript,
         GoldilocksExt3.Ext3[] memory evaluations,
+        bytes memory evaluationMask,
+        bytes32[] memory expectedRoots,
         WhirParams memory params,
         VerifyState memory vs
     ) private pure {
@@ -155,8 +300,29 @@ library SpongefishWhirVerify {
 
         // Phase 1a: Receive per-commitment roots and OOD data
         GoldilocksExt3.Ext3[] memory allOodPoints = new GoldilocksExt3.Ext3[](totalOodPoints);
-        GoldilocksExt3.Ext3[] memory oodMatrix;
-        (oodMatrix, allOodPoints) = _receiveCommitmentsAndOod(ts, transcript, params, vs);
+        GoldilocksExt3.Ext3[][] memory perCommitOod;
+        (perCommitOod, allOodPoints) = _receiveCommitmentsAndOod(ts, transcript, expectedRoots, params, vs);
+
+        // In v1 the complete public evaluation statement precedes the vector
+        // RLC challenge. Unchecked entries are copied from the transcript into
+        // the matrix; checked entries must match the MLE terminal claims.
+        for (uint256 i = 0; i < evaluations.length; i++) {
+            (uint64 e0, uint64 e1, uint64 e2) = SpongefishWhir.proverMessageField64x3(ts, transcript);
+            bool checked = (uint8(evaluationMask[i >> 3]) & uint8(1 << (i & 7))) != 0;
+            if (checked) {
+                GoldilocksExt3.Ext3 memory expected = evaluations[i];
+                if (expected.c0 != e0 || expected.c1 != e1 || expected.c2 != e2) {
+                    revert InvalidMleProof();
+                }
+            }
+            evaluations[i] = GoldilocksExt3.Ext3(e0, e1, e2);
+        }
+
+        // Cross-commitment OOD terms are emitted by WHIR prove() only after
+        // the v1 bound evaluation statement (legacy proofs reach this point
+        // immediately). Keep this read on the corresponding side of the
+        // pre-RLC statement boundary.
+        GoldilocksExt3.Ext3[] memory oodMatrix = _completeOodMatrix(ts, transcript, perCommitOod, params);
 
         // Phase 1b: RLC and sum computation
         GoldilocksExt3.Ext3[] memory vectorRlc = SpongefishWhir.geometricChallenge(ts, totalVectors);
@@ -170,39 +336,39 @@ library SpongefishWhirVerify {
             oodRlcCoeffs[i] = vs.initialConstraintRlc[vs.numLinearForms + i];
         }
         vs.roundConstraints[0] = RoundConstraintEntry({
-            rlcCoeffs: oodRlcCoeffs,
-            univariatePoints: allOodPoints,
-            numVariables: params.initialNumVariables
+            rlcCoeffs: oodRlcCoeffs, univariatePoints: allOodPoints, numVariables: params.initialNumVariables
         });
 
         // Compute "the sum"
         vs.theSum = GoldilocksExt3.zero();
-        _accumulateTheSum(vs.theSum, evaluations, vectorRlc, vs.initialConstraintRlc, 0, vs.numLinearForms, totalVectors);
-        _accumulateTheSum(vs.theSum, oodMatrix, vectorRlc, vs.initialConstraintRlc, vs.numLinearForms, totalOodPoints, totalVectors);
+        _accumulateTheSum(
+            vs.theSum, evaluations, vectorRlc, vs.initialConstraintRlc, 0, vs.numLinearForms, totalVectors
+        );
+        _accumulateTheSum(
+            vs.theSum, oodMatrix, vectorRlc, vs.initialConstraintRlc, vs.numLinearForms, totalOodPoints, totalVectors
+        );
     }
 
     /// @dev Receive commitment roots and OOD data for split-commit mode.
-    /// Returns (oodMatrix, allOodPoints) for the RLC computation.
+    /// Returns the per-commitment OOD answers and points. Cross terms are read
+    /// separately because v1 inserts its bound evaluation statement first.
     function _receiveCommitmentsAndOod(
         SpongefishWhir.TranscriptState memory ts,
         bytes memory transcript,
+        bytes32[] memory expectedRoots,
         WhirParams memory params,
         VerifyState memory vs
-    ) private pure returns (
-        GoldilocksExt3.Ext3[] memory oodMatrix,
-        GoldilocksExt3.Ext3[] memory allOodPoints
-    ) {
+    ) private pure returns (GoldilocksExt3.Ext3[][] memory perCommitOod, GoldilocksExt3.Ext3[] memory allOodPoints) {
         uint256 nc = params.numCommitments;
         uint256 nv = params.numVectors;
         uint256 K = params.outDomainSamples;
-        uint256 totalVectors = nc * nv;
         uint256 totalOodPoints = nc * K;
 
         vs.initialRoots = new bytes32[](nc);
         allOodPoints = new GoldilocksExt3.Ext3[](totalOodPoints);
 
         // Per-commitment OOD answers (temporary storage)
-        GoldilocksExt3.Ext3[][] memory perCommitOod = new GoldilocksExt3.Ext3[][](nc);
+        perCommitOod = new GoldilocksExt3.Ext3[][](nc);
 
         for (uint256 c = 0; c < nc; c++) {
             vs.initialRoots[c] = SpongefishWhir.proverMessageHash(ts, transcript);
@@ -215,11 +381,26 @@ library SpongefishWhirVerify {
                 (uint64 a0, uint64 a1, uint64 a2) = SpongefishWhir.proverMessageField64x3(ts, transcript);
                 perCommitOod[c][i] = GoldilocksExt3.Ext3(a0, a1, a2);
             }
+            bytes32 boundRoot = SpongefishWhir.proverMessageHash(ts, transcript);
+            if (boundRoot != expectedRoots[c] || boundRoot != vs.initialRoots[c]) {
+                revert InvalidMleProof();
+            }
         }
 
         vs.prevRoot = vs.initialRoots[0];
+    }
 
-        // Build full OOD matrix with cross-terms
+    function _completeOodMatrix(
+        SpongefishWhir.TranscriptState memory ts,
+        bytes memory transcript,
+        GoldilocksExt3.Ext3[][] memory perCommitOod,
+        WhirParams memory params
+    ) private pure returns (GoldilocksExt3.Ext3[] memory oodMatrix) {
+        uint256 nc = params.numCommitments;
+        uint256 nv = params.numVectors;
+        uint256 K = params.outDomainSamples;
+        uint256 totalVectors = nc * nv;
+        uint256 totalOodPoints = nc * K;
         oodMatrix = new GoldilocksExt3.Ext3[](totalOodPoints * totalVectors);
         for (uint256 c = 0; c < nc; c++) {
             uint256 vOff = c * nv;
@@ -244,16 +425,21 @@ library SpongefishWhirVerify {
         SpongefishWhir.TranscriptState memory ts,
         bytes memory transcript,
         uint256 numRounds,
+        uint64 powThreshold,
         VerifyState memory vs
     ) private pure {
         for (uint256 i = 0; i < numRounds; i++) {
             (uint64 c0a, uint64 c0b, uint64 c0c) = SpongefishWhir.proverMessageField64x3(ts, transcript);
             (uint64 c2a, uint64 c2b, uint64 c2c) = SpongefishWhir.proverMessageField64x3(ts, transcript);
 
+            _verifyPow(ts, transcript, powThreshold);
+
             (uint64 ra, uint64 rb, uint64 rc) = SpongefishWhir.verifierMessageField64x3(ts);
             // Store r into allFoldingRandomness
             GoldilocksExt3.Ext3 memory rElem = vs.allFoldingRandomness[vs.foldIdx++];
-            rElem.c0 = ra; rElem.c1 = rb; rElem.c2 = rc;
+            rElem.c0 = ra;
+            rElem.c1 = rb;
+            rElem.c2 = rc;
 
             // Compute c1 = theSum - 2*c0 - c2, then theSum = ((c2 * r) + c1) * r + c0
             // All on stack to avoid intermediate Ext3 allocs
@@ -272,7 +458,8 @@ library SpongefishWhirVerify {
                 // tmp = c2 * r (Ext3 mul)
                 let t1 := addmod(mulmod(c2b, rc, p), mulmod(c2c, rb, p), p)
                 let tmp0 := addmod(mulmod(c2a, ra, p), mulmod(2, t1, p), p)
-                let tmp1 := addmod(addmod(mulmod(c2a, rb, p), mulmod(c2b, ra, p), p), mulmod(2, mulmod(c2c, rc, p), p), p)
+                let tmp1 :=
+                    addmod(addmod(mulmod(c2a, rb, p), mulmod(c2b, ra, p), p), mulmod(2, mulmod(c2c, rc, p), p), p)
                 let tmp2 := addmod(addmod(mulmod(c2a, rc, p), mulmod(c2b, rb, p), p), mulmod(c2c, ra, p), p)
 
                 // tmp = tmp + c1
@@ -283,7 +470,8 @@ library SpongefishWhirVerify {
                 // tmp = tmp * r (Ext3 mul)
                 let t2 := addmod(mulmod(tmp1, rc, p), mulmod(tmp2, rb, p), p)
                 let new0 := addmod(mulmod(tmp0, ra, p), mulmod(2, t2, p), p)
-                let new1 := addmod(addmod(mulmod(tmp0, rb, p), mulmod(tmp1, ra, p), p), mulmod(2, mulmod(tmp2, rc, p), p), p)
+                let new1 :=
+                    addmod(addmod(mulmod(tmp0, rb, p), mulmod(tmp1, ra, p), p), mulmod(2, mulmod(tmp2, rc, p), p), p)
                 let new2 := addmod(addmod(mulmod(tmp0, rc, p), mulmod(tmp1, rb, p), p), mulmod(tmp2, ra, p), p)
 
                 // theSum = tmp + c0
@@ -300,7 +488,7 @@ library SpongefishWhirVerify {
     function _phaseIntermediateRounds(
         SpongefishWhir.TranscriptState memory ts,
         bytes memory transcript,
-        bytes memory hints,
+        SpongefishMerkle.CalldataBytes memory hints,
         WhirParams memory params,
         VerifyState memory vs
     ) private pure {
@@ -312,7 +500,7 @@ library SpongefishWhirVerify {
     function _doIntermediateRound(
         SpongefishWhir.TranscriptState memory ts,
         bytes memory transcript,
-        bytes memory hints,
+        SpongefishMerkle.CalldataBytes memory hints,
         WhirParams memory params,
         VerifyState memory vs,
         uint256 round
@@ -335,11 +523,13 @@ library SpongefishWhirVerify {
             roundOodAnswers[i] = GoldilocksExt3.Ext3(a0, a1, a2);
         }
 
+        _verifyPow(ts, transcript, rp.powThreshold);
+
         // Open previous commitment with Merkle verification
         _openAndVerifyCommitment(ts, hints, params, vs, round, roundOodAnswers, roundOodPoints);
 
         // Sumcheck
-        _phaseSumcheck(ts, transcript, rp.sumcheckRounds, vs);
+        _phaseSumcheck(ts, transcript, rp.sumcheckRounds, rp.sumcheckPowThreshold, vs);
 
         vs.prevRoot = roundRoot;
     }
@@ -350,99 +540,130 @@ library SpongefishWhirVerify {
     function _phaseFinalVectorAndMerkle(
         SpongefishWhir.TranscriptState memory ts,
         bytes memory transcript,
-        bytes memory hints,
+        SpongefishMerkle.CalldataBytes memory hints,
         WhirParams memory params,
         VerifyState memory vs
     ) private pure returns (GoldilocksExt3.Ext3[] memory finalVector) {
-        // SECURITY: Validate that finalSize == 2^finalSumcheckRounds.
-        // If not, _foldEval silently discards trailing elements (finalSize too large) or
-        // reads past the allocated array (finalSize too small). Either case means the prover
-        // can embed extra codeword elements that shift the Merkle root without affecting
-        // the final claim check, weakening commitment binding.
-        require(
-            params.finalSize == (uint256(1) << params.finalSumcheckRounds),
-            "SpongefishWhirVerify: finalSize must equal 2^finalSumcheckRounds"
-        );
+        // `_validateParameters` has already bound finalSize exactly to the
+        // final sumcheck-round count before any proof bytes are consumed.
         finalVector = new GoldilocksExt3.Ext3[](params.finalSize);
         for (uint256 i = 0; i < params.finalSize; i++) {
             (uint64 c0, uint64 c1, uint64 c2) = SpongefishWhir.proverMessageField64x3(ts, transcript);
             finalVector[i] = GoldilocksExt3.Ext3(c0, c1, c2);
         }
 
-        uint256 finalCL;
-        uint256 finalMD;
-        uint256 finalRowBytes;
-        uint256 finalInDomainSamples;
-        bool isSplitInitial = false;
-        if (params.numRounds == 0) {
-            finalCL = params.initialCodewordLength;
-            finalMD = params.initialMerkleDepth;
-            // Per-commitment row bytes (numVectors per commit, typically 1)
-            finalRowBytes = params.initialInterleavingDepth * params.numVectors * 8;
-            finalInDomainSamples = params.inDomainSamples;
-            isSplitInitial = params.numCommitments > 1;
-        } else {
-            RoundParams memory lastRound = params.rounds[params.numRounds - 1];
-            finalCL = lastRound.codewordLength;
-            finalMD = lastRound.merkleDepth;
-            finalRowBytes = lastRound.interleavingDepth * 24;
-            finalInDomainSamples = lastRound.inDomainSamples;
-        }
-        uint256[] memory rawFinalIndices = _challengeIndicesUnsorted(ts, finalCL, finalInDomainSamples);
+        _verifyPow(ts, transcript, params.finalPowThreshold);
+
+        // The final opening is the same IRS commitment that the next intermediate round would
+        // open: the initial commitment when numRounds == 0, otherwise the last round commitment.
+        OpenParams memory o = _getOpenParams(params, params.numRounds);
+        bool isSplitInitial = params.numRounds == 0 && params.numCommitments > 1;
+        uint256[] memory rawFinalIndices = _challengeIndices(ts, o.cl, o.inDomainSamples);
 
         if (isSplitInitial) {
-            // Split-commit mode: verify each commitment's Merkle tree separately
-            for (uint256 c = 0; c < params.numCommitments; c++) {
-                ts.hintPos += 8; // skip Vec<T> length prefix per commitment
-
-                bytes32[] memory rawFinalHashes = new bytes32[](rawFinalIndices.length);
-                for (uint256 i = 0; i < rawFinalIndices.length; i++) {
-                    rawFinalHashes[i] = _keccak256At(hints, ts.hintPos, finalRowBytes);
-                    ts.hintPos += finalRowBytes;
-                }
-
-                uint256[] memory idxCopy = new uint256[](rawFinalIndices.length);
-                for (uint256 i = 0; i < rawFinalIndices.length; i++) {
-                    idxCopy[i] = rawFinalIndices[i];
-                }
-                (uint256[] memory sortedIndices, bytes32[] memory sortedHashes) =
-                    _sortAndDedupWithHashes(idxCopy, rawFinalHashes);
-
-                ts.hintPos = SpongefishMerkle.verify(
-                    vs.initialRoots[c], finalMD, sortedIndices, sortedHashes, hints, ts.hintPos
-                );
-            }
+            _verifyFinalSplit(ts, hints, params, vs, o, rawFinalIndices, finalVector);
         } else {
             // Standard mode
-            ts.hintPos += 8; // skip Vec<T> length prefix (zero-copy)
+            uint256 foldingRounds = params.numRounds == 0
+                ? params.initialSumcheckRounds
+                : params.rounds[params.numRounds - 1].sumcheckRounds;
+            GoldilocksExt3.Ext3[] memory finalWeights =
+                WhirLinearAlgebra.eqWeightsFrom(vs.allFoldingRandomness, vs.foldIdx - foldingRounds, foldingRounds);
+            if (params.numRounds == 0) {
+                finalWeights = WhirLinearAlgebra.tensorProduct(vs.vectorRlc, finalWeights);
+            }
+            GoldilocksExt3.Ext3[] memory finalEvalPoints =
+                _computeEvalPoints(rawFinalIndices, rawFinalIndices.length, o.domainGen, o.numCosets, o.cosetSize);
+            _consumeVecPrefix(ts, hints, rawFinalIndices.length * o.numCols);
+            uint256 rowsStart = ts.hintPos;
             bytes32[] memory rawFinalHashes = new bytes32[](rawFinalIndices.length);
             for (uint256 i = 0; i < rawFinalIndices.length; i++) {
-                rawFinalHashes[i] = _keccak256At(hints, ts.hintPos, finalRowBytes);
-                ts.hintPos += finalRowBytes;
+                rawFinalHashes[i] = _keccak256At(hints, ts.hintPos, o.rowBytes);
+                ts.hintPos += o.rowBytes;
             }
 
-            (uint256[] memory sortedFinalIndices, bytes32[] memory sortedFinalHashes) =
-                _sortAndDedupWithHashes(rawFinalIndices, rawFinalHashes);
+            ts.hintPos = SpongefishMerkle.verify(vs.prevRoot, o.md, rawFinalIndices, rawFinalHashes, hints, ts.hintPos);
+            for (uint256 i = 0; i < finalEvalPoints.length; i++) {
+                _requireFinalOpening(
+                    finalVector,
+                    finalEvalPoints[i],
+                    _dotEqWithRow(finalWeights, hints, rowsStart + i * o.rowBytes, o.numCols, o.isBaseField)
+                );
+            }
+        }
+    }
 
-            ts.hintPos = SpongefishMerkle.verify(
-                vs.prevRoot, finalMD, sortedFinalIndices, sortedFinalHashes, hints, ts.hintPos
-            );
+    function _verifyFinalSplit(
+        SpongefishWhir.TranscriptState memory ts,
+        SpongefishMerkle.CalldataBytes memory hints,
+        WhirParams memory params,
+        VerifyState memory vs,
+        OpenParams memory o,
+        uint256[] memory rawFinalIndices,
+        GoldilocksExt3.Ext3[] memory finalVector
+    ) private pure {
+        GoldilocksExt3.Ext3[] memory finalWeights = WhirLinearAlgebra.eqWeightsFrom(
+            vs.allFoldingRandomness, vs.foldIdx - params.initialSumcheckRounds, params.initialSumcheckRounds
+        );
+        GoldilocksExt3.Ext3[] memory finalEvalPoints =
+            _computeEvalPoints(rawFinalIndices, rawFinalIndices.length, o.domainGen, o.numCosets, o.cosetSize);
+        GoldilocksExt3.Ext3[] memory openedValues = new GoldilocksExt3.Ext3[](rawFinalIndices.length);
+        for (uint256 i = 0; i < rawFinalIndices.length; i++) {
+            openedValues[i] = GoldilocksExt3.zero();
+        }
+
+        // Split-commit mode: verify each commitment's Merkle tree separately while combining
+        // the opened rows with the same vector RLC that Rust applies before its final check.
+        for (uint256 c = 0; c < params.numCommitments; c++) {
+            _consumeVecPrefix(ts, hints, rawFinalIndices.length * o.numCols);
+
+            bytes32[] memory rawFinalHashes = new bytes32[](rawFinalIndices.length);
+            for (uint256 i = 0; i < rawFinalIndices.length; i++) {
+                uint256 rowOff = ts.hintPos;
+                rawFinalHashes[i] = _keccak256At(hints, rowOff, o.rowBytes);
+                GoldilocksExt3.Ext3 memory rowValue = _dotGroupedRow(
+                    finalWeights, vs.vectorRlc, c * params.numVectors, params.numVectors, hints, rowOff, o.isBaseField
+                );
+                _addToExt3(openedValues[i], rowValue);
+                ts.hintPos += o.rowBytes;
+            }
+
+            uint256[] memory idxCopy = new uint256[](rawFinalIndices.length);
+            for (uint256 i = 0; i < rawFinalIndices.length; i++) {
+                idxCopy[i] = rawFinalIndices[i];
+            }
+            ts.hintPos = SpongefishMerkle.verify(vs.initialRoots[c], o.md, idxCopy, rawFinalHashes, hints, ts.hintPos);
+        }
+        for (uint256 i = 0; i < rawFinalIndices.length; i++) {
+            _requireFinalOpening(finalVector, finalEvalPoints[i], openedValues[i]);
+        }
+    }
+
+    /// @dev Rust WHIR's final round checks every opened row against the explicit final vector.
+    ///      Omitting this equality leaves the last commitment disconnected from finalVector.
+    function _requireFinalOpening(
+        GoldilocksExt3.Ext3[] memory finalVector,
+        GoldilocksExt3.Ext3 memory evaluationPoint,
+        GoldilocksExt3.Ext3 memory openedValue
+    ) private pure {
+        if (!GoldilocksExt3.eq(GoldilocksExt3.reduceWithPowers(finalVector, evaluationPoint), openedValue)) {
+            revert InvalidMleProof();
         }
     }
 
     // =====================================================================
     // Phase 6: FinalClaim verification
     // =====================================================================
-    function _phaseFinalClaim(
-        WhirParams memory params,
-        VerifyState memory vs,
-        GoldilocksExt3.Ext3[] memory finalVector
-    ) private pure {
+    function _phaseFinalClaim(WhirParams memory params, VerifyState memory vs, GoldilocksExt3.Ext3[] memory finalVector)
+        private
+        pure
+    {
         // poly_eval = dot(eq_weights(final_sumcheck_r), finalVector)
         // Use in-place fold: v'[i] = v[2i]*(1-r) + v[2i+1]*r, repeated for each randomness
         uint256 foldStart = vs.foldIdx - params.finalSumcheckRounds;
-        GoldilocksExt3.Ext3 memory polyEval = _foldEval(finalVector, vs.allFoldingRandomness, foldStart, params.finalSumcheckRounds);
-        require(!GoldilocksExt3.isZero(polyEval), "polyEval is zero");
+        GoldilocksExt3.Ext3 memory polyEval =
+            _foldEval(finalVector, vs.allFoldingRandomness, foldStart, params.finalSumcheckRounds);
+        if (GoldilocksExt3.isZero(polyEval)) revert InvalidMleProof();
 
         // linear_form_rlc = theSum / polyEval
         GoldilocksExt3.Ext3 memory linearFormRlc = vs.theSum.mul(GoldilocksExt3.inv(polyEval));
@@ -453,7 +674,7 @@ library SpongefishWhirVerify {
             if (entry.rlcCoeffs.length == 0) continue;
 
             uint256 nv = entry.numVariables;
-            uint256 start = vs.totalFoldingLen > nv ? vs.totalFoldingLen - nv : 0;
+            uint256 start = vs.totalFoldingLen - nv;
 
             for (uint256 i = 0; i < entry.rlcCoeffs.length; i++) {
                 GoldilocksExt3.Ext3 memory mleVal = WhirLinearAlgebra.mleEvaluateUnivariateFrom(
@@ -472,7 +693,8 @@ library SpongefishWhirVerify {
                     // term = mleVal * coeff
                     let t := addmod(mulmod(m1, co2, p), mulmod(m2, co1, p), p)
                     let t0 := addmod(mulmod(m0, co0, p), mulmod(2, t, p), p)
-                    let t1 := addmod(addmod(mulmod(m0, co1, p), mulmod(m1, co0, p), p), mulmod(2, mulmod(m2, co2, p), p), p)
+                    let t1 :=
+                        addmod(addmod(mulmod(m0, co1, p), mulmod(m1, co0, p), p), mulmod(2, mulmod(m2, co2, p), p), p)
                     let t2 := addmod(addmod(mulmod(m0, co2, p), mulmod(m1, co1, p), p), mulmod(m2, co0, p), p)
                     // linearFormRlc -= term
                     mstore(linearFormRlc, addmod(mload(linearFormRlc), sub(p, t0), p))
@@ -488,168 +710,122 @@ library SpongefishWhirVerify {
         GoldilocksExt3.Ext3 memory expectedRlc = GoldilocksExt3.zero();
 
         if (vs.numLinearForms == 1) {
-            // Single-point mode (original behavior)
-            GoldilocksExt3.Ext3 memory eqVal;
-            if (params.evaluationPoint.length > 0) {
-                eqVal = WhirLinearAlgebra.mleEvaluateEq(
-                    params.evaluationPoint, vs.allFoldingRandomness
-                );
-            } else {
-                eqVal = WhirLinearAlgebra.mleEvaluateEqCanonical(
-                    params.numVariables, vs.allFoldingRandomness
-                );
-            }
-            expectedRlc = vs.initialConstraintRlc[0].mul(eqVal);
+            expectedRlc = vs.initialConstraintRlc[0].mul(
+                WhirLinearAlgebra.mleEvaluateEq(params.evaluationPoint, vs.allFoldingRandomness)
+            );
         } else {
             // Multi-point mode: each linear form has its own evaluation point
             // point 1: evaluationPoint, point 2: evaluationPoint2
-            GoldilocksExt3.Ext3 memory eqVal1;
-            if (params.evaluationPoint.length > 0) {
-                eqVal1 = WhirLinearAlgebra.mleEvaluateEq(
-                    params.evaluationPoint, vs.allFoldingRandomness
-                );
-            } else {
-                eqVal1 = WhirLinearAlgebra.mleEvaluateEqCanonical(
-                    params.numVariables, vs.allFoldingRandomness
-                );
-            }
-            expectedRlc = vs.initialConstraintRlc[0].mul(eqVal1);
+            expectedRlc = vs.initialConstraintRlc[0].mul(
+                WhirLinearAlgebra.mleEvaluateEq(params.evaluationPoint, vs.allFoldingRandomness)
+            );
 
             // Add contribution from second evaluation point
-            if (vs.numLinearForms >= 2 && params.evaluationPoint2.length > 0) {
-                GoldilocksExt3.Ext3 memory eqVal2 = WhirLinearAlgebra.mleEvaluateEq(
-                    params.evaluationPoint2, vs.allFoldingRandomness
-                );
-                expectedRlc = expectedRlc.add(vs.initialConstraintRlc[1].mul(eqVal2));
-            }
+            GoldilocksExt3.Ext3 memory eqVal2 =
+                WhirLinearAlgebra.mleEvaluateEq(params.evaluationPoint2, vs.allFoldingRandomness);
+            expectedRlc = expectedRlc.add(vs.initialConstraintRlc[1].mul(eqVal2));
 
             // Multi-point linear forms beyond 2 — used by v2 logUp fix
             // (r_gate, r_inv, r_h ⇒ numLinearForms = 3, additional point at index 0).
             for (uint256 i = 2; i < vs.numLinearForms; i++) {
-                require(
-                    params.additionalEvaluationPoints.length >= i - 1,
-                    "FinalClaim: missing additional evaluation point"
-                );
                 GoldilocksExt3.Ext3[] memory ptI = params.additionalEvaluationPoints[i - 2];
-                require(ptI.length > 0, "FinalClaim: empty additional evaluation point");
-                GoldilocksExt3.Ext3 memory eqValI = WhirLinearAlgebra.mleEvaluateEq(
-                    ptI, vs.allFoldingRandomness
-                );
+                GoldilocksExt3.Ext3 memory eqValI = WhirLinearAlgebra.mleEvaluateEq(ptI, vs.allFoldingRandomness);
                 expectedRlc = expectedRlc.add(vs.initialConstraintRlc[i].mul(eqValI));
             }
         }
 
-        require(GoldilocksExt3.eq(linearFormRlc, expectedRlc), "FinalClaim: linear form mismatch");
+        if (!GoldilocksExt3.eq(linearFormRlc, expectedRlc)) revert InvalidMleProof();
     }
 
     // =====================================================================
     // Helpers
     // =====================================================================
 
-    function _challengeIndicesUnsorted(
-        SpongefishWhir.TranscriptState memory ts,
-        uint256 numLeaves,
-        uint256 count
-    ) private pure returns (uint256[] memory indices) {
+    function _challengeIndices(SpongefishWhir.TranscriptState memory ts, uint256 numLeaves, uint256 count)
+        internal
+        pure
+        returns (uint256[] memory indices)
+    {
         if (count == 0) return new uint256[](0);
         if (numLeaves == 1) {
-            indices = new uint256[](count);
+            indices = new uint256[](1);
             return indices;
         }
 
-        // SECURITY: WHIR codeword lengths must be a power of 2 for uniform index sampling.
-        // If numLeaves is not a power of 2, val % numLeaves is biased toward lower indices,
-        // weakening the soundness proof which assumes uniformly random query positions.
-        require(numLeaves & (numLeaves - 1) == 0, "SpongefishWhirVerify: numLeaves must be a power of 2");
+        // `_validateDomain` has already established that every codeword length
+        // is a nonzero power of two, so this mask samples uniformly.
         uint256 mask = numLeaves - 1; // safe bitmask for power-of-2
 
         uint256 sizeBytes = _ceilDiv(_log2(numLeaves), 8);
         uint256 totalBytes = count * sizeBytes;
-
-        bytes memory entropy = new bytes(totalBytes);
-        for (uint256 i = 0; i < totalBytes; i++) {
-            entropy[i] = bytes1(ts.sponge.squeezeByte());
-        }
-
         indices = new uint256[](count);
-        for (uint256 i = 0; i < count; i++) {
-            uint256 val = 0;
-            for (uint256 j = 0; j < sizeBytes; j++) {
-                val = (val << 8) | uint256(uint8(entropy[i * sizeBytes + j]));
-            }
-            indices[i] = val & mask; // bitmask is unbiased for power-of-2 numLeaves
-        }
-    }
-
-    /// @dev Verify that every original (pre-dedup) leaf hash matches the Merkle-verified
-    ///      hash for its index. Call after Merkle verification with the pre-sort originals.
-    ///      Prevents a malicious prover from injecting arbitrary data at duplicate indices:
-    ///      the dedup keeps the first occurrence's hash for Merkle proof, but without this
-    ///      check the second occurrence's data is used unverified in rowOffset computations.
-    function _verifyLeafHashConsistency(
-        uint256[] memory origIndices,
-        bytes32[] memory origHashes,
-        uint256[] memory sortedIndices,
-        bytes32[] memory sortedHashes,
-        uint256 count
-    ) private pure {
-        uint256 dedupLen = sortedIndices.length;
-        for (uint256 i = 0; i < count; i++) {
-            uint256 idx = origIndices[i];
-            for (uint256 k = 0; k < dedupLen; k++) {
-                if (sortedIndices[k] == idx) {
-                    require(
-                        origHashes[i] == sortedHashes[k],
-                        "SpongefishWhirVerify: leaf hash mismatch for duplicate index"
-                    );
-                    break;
+        uint256 counter = uint256(ts.sponge.squeezeCounter);
+        if (totalBytes > type(uint64).max - counter) revert InvalidMleProof();
+        bytes32 spongeState = ts.sponge.state;
+        uint256 nextCounter;
+        assembly ("memory-safe") {
+            let out := add(indices, 0x20)
+            nextCounter := counter
+            // One Rust `verifier_message::<u8>()` hashes
+            // state || "squeeze" || counter_be and consumes its first byte.
+            // Generate each query directly instead of allocating an entropy
+            // byte string and crossing a Solidity helper for every byte.
+            mstore(0x00, spongeState)
+            for { let i := 0 } lt(i, count) { i := add(i, 1) } {
+                let value := 0
+                for { let j := 0 } lt(j, sizeBytes) { j := add(j, 1) } {
+                    mstore(0x20, or(shl(200, 0x73717565657a65), shl(136, nextCounter)))
+                    value := or(shl(8, value), shr(248, keccak256(0x00, 47)))
+                    nextCounter := add(nextCounter, 1)
                 }
+                mstore(add(out, mul(i, 0x20)), and(value, mask))
             }
         }
+        ts.sponge.squeezeCounter = uint64(nextCounter);
+
+        _sortAndDedupIndices(indices);
     }
 
-    function _sortAndDedupWithHashes(
-        uint256[] memory indices,
-        bytes32[] memory hashes
-    ) private pure returns (uint256[] memory, bytes32[] memory) {
+    /// @dev Rust's `challenge_indices(..., deduplicate=true)` sorts and
+    /// compacts before any row is serialized. All later callers therefore
+    /// receive strict ascending indices and must keep their row hashes in this
+    /// exact order; re-sorting both arrays after reading was redundant.
+    function _sortAndDedupIndices(uint256[] memory indices) private pure {
         uint256 n = indices.length;
-        if (n > 1) _quicksortWithHashes(indices, hashes, 0, n - 1);
-        if (n <= 1) return (indices, hashes);
+        if (n > 1) _quicksortIndices(indices, 0, n - 1);
+        if (n <= 1) return;
         uint256 write = 1;
         for (uint256 i = 1; i < n; i++) {
             if (indices[i] != indices[i - 1]) {
                 indices[write] = indices[i];
-                hashes[write] = hashes[i];
                 write++;
             }
         }
-        assembly { mstore(indices, write) mstore(hashes, write) }
-        return (indices, hashes);
+        assembly ("memory-safe") {
+            mstore(indices, write)
+        }
     }
 
-    function _quicksortWithHashes(
-        uint256[] memory idx,
-        bytes32[] memory hsh,
-        uint256 lo,
-        uint256 hi
-    ) private pure {
+    function _quicksortIndices(uint256[] memory idx, uint256 lo, uint256 hi) private pure {
         if (lo >= hi) return;
         uint256 pivot = idx[(lo + hi) / 2];
         uint256 i = lo;
         uint256 j = hi;
         while (i <= j) {
             while (idx[i] < pivot) i++;
-            while (idx[j] > pivot) { if (j == 0) break; j--; }
+            while (idx[j] > pivot) {
+                if (j == 0) break;
+                j--;
+            }
             if (i <= j) {
                 (idx[i], idx[j]) = (idx[j], idx[i]);
-                (hsh[i], hsh[j]) = (hsh[j], hsh[i]);
                 i++;
                 if (j == 0) break;
                 j--;
             }
         }
-        if (lo < j) _quicksortWithHashes(idx, hsh, lo, j);
-        if (i < hi) _quicksortWithHashes(idx, hsh, i, hi);
+        if (lo < j) _quicksortIndices(idx, lo, j);
+        if (i < hi) _quicksortIndices(idx, i, hi);
     }
 
     /// @dev Add OOD + in-domain constraint values to theSum. Extracted to avoid stack-too-deep.
@@ -659,7 +835,7 @@ library SpongefishWhirVerify {
         GoldilocksExt3.Ext3[] memory roundRlc,
         uint256 oodSamples,
         GoldilocksExt3.Ext3[] memory eqW,
-        bytes memory hints,
+        SpongefishMerkle.CalldataBytes memory hints,
         uint256[] memory rowOffsets,
         uint256 rawCount,
         uint256 numCols,
@@ -677,11 +853,10 @@ library SpongefishWhirVerify {
     }
 
     /// @dev theSum += a * b (inline assembly, no intermediate allocs)
-    function _mulAddToSum(
-        GoldilocksExt3.Ext3 memory s,
-        GoldilocksExt3.Ext3 memory a,
-        GoldilocksExt3.Ext3 memory b
-    ) private pure {
+    function _mulAddToSum(GoldilocksExt3.Ext3 memory s, GoldilocksExt3.Ext3 memory a, GoldilocksExt3.Ext3 memory b)
+        private
+        pure
+    {
         assembly {
             let p := 0xFFFFFFFF00000001
             let a0 := mload(a)
@@ -692,8 +867,22 @@ library SpongefishWhirVerify {
             let b2 := mload(add(b, 0x40))
             let t := addmod(mulmod(a1, b2, p), mulmod(a2, b1, p), p)
             mstore(s, addmod(mload(s), addmod(mulmod(a0, b0, p), mulmod(2, t, p), p), p))
-            mstore(add(s, 0x20), addmod(mload(add(s, 0x20)), addmod(addmod(mulmod(a0, b1, p), mulmod(a1, b0, p), p), mulmod(2, mulmod(a2, b2, p), p), p), p))
-            mstore(add(s, 0x40), addmod(mload(add(s, 0x40)), addmod(addmod(mulmod(a0, b2, p), mulmod(a1, b1, p), p), mulmod(a2, b0, p), p), p))
+            mstore(
+                add(s, 0x20),
+                addmod(
+                    mload(add(s, 0x20)),
+                    addmod(addmod(mulmod(a0, b1, p), mulmod(a1, b0, p), p), mulmod(2, mulmod(a2, b2, p), p), p),
+                    p
+                )
+            )
+            mstore(
+                add(s, 0x40),
+                addmod(
+                    mload(add(s, 0x40)),
+                    addmod(addmod(mulmod(a0, b2, p), mulmod(a1, b1, p), p), mulmod(a2, b0, p), p),
+                    p
+                )
+            )
         }
     }
 
@@ -729,7 +918,11 @@ library SpongefishWhirVerify {
                     let b2 := mload(add(vPtr, 0x40))
                     let t := addmod(mulmod(a1, b2, p), mulmod(a2, b1, p), p)
                     d0 := addmod(d0, addmod(mulmod(a0, b0, p), mulmod(2, t, p), p), p)
-                    d1 := addmod(d1, addmod(addmod(mulmod(a0, b1, p), mulmod(a1, b0, p), p), mulmod(2, mulmod(a2, b2, p), p), p), p)
+                    d1 := addmod(
+                        d1,
+                        addmod(addmod(mulmod(a0, b1, p), mulmod(a1, b0, p), p), mulmod(2, mulmod(a2, b2, p), p), p),
+                        p
+                    )
                     d2 := addmod(d2, addmod(addmod(mulmod(a0, b2, p), mulmod(a1, b1, p), p), mulmod(a2, b0, p), p), p)
                 }
                 // term = dot * constraintRlc[rlcOffset + i]
@@ -749,19 +942,31 @@ library SpongefishWhirVerify {
         }
     }
 
-    /// @dev keccak256 of a slice within a bytes buffer (zero-copy, no allocation).
-    function _keccak256At(bytes memory buf, uint256 offset, uint256 len) private pure returns (bytes32 result) {
-        assembly {
-            result := keccak256(add(add(buf, 0x20), offset), len)
+    /// @dev keccak256 of a slice within a calldata bytes buffer.
+    function _keccak256At(SpongefishMerkle.CalldataBytes memory buf, uint256 offset, uint256 len)
+        private
+        pure
+        returns (bytes32 result)
+    {
+        if (offset > buf.length || len > buf.length - offset) revert InvalidMleProof();
+        assembly ("memory-safe") {
+            // KECCAK256 only reads memory. Use ephemeral free-memory scratch;
+            // no Solidity allocation can occur between the copy and hash.
+            let scratch := mload(0x40)
+            calldatacopy(scratch, add(mload(buf), offset), len)
+            result := keccak256(scratch, len)
         }
     }
 
     /// @dev Read a u64 LE from a bytes buffer at a given offset (zero-copy).
     ///      Uses efficient byte-swap: load BE word, extract top 8 bytes, reverse.
-    function _readU64LEAt(bytes memory buf, uint256 baseOff, uint256 fieldOff) private pure returns (uint64 val) {
+    function _readU64LEAt(SpongefishMerkle.CalldataBytes memory buf, uint256 baseOff)
+        private
+        pure
+        returns (uint64 val)
+    {
         assembly {
-            let ptr := add(add(buf, 0x20), add(baseOff, fieldOff))
-            let w := shr(192, mload(ptr)) // top 8 bytes as BE u64
+            let w := shr(192, calldataload(add(mload(buf), baseOff))) // top 8 bytes as BE u64
 
             // Byte-swap 64-bit BE → LE using parallel swap
             // Swap bytes in pairs of 1, then 2, then 4
@@ -770,6 +975,52 @@ library SpongefishWhirVerify {
             w := or(shr(32, w), shl(32, w))
             val := and(w, 0xFFFFFFFFFFFFFFFF)
         }
+    }
+
+    /// @dev Verify WHIR's optional Keccak proof of work. Rust first squeezes a
+    /// 32-byte challenge, then absorbs an LE u64 nonce. The PoW input is
+    /// challenge || nonce_le || 24 zero bytes, and the first digest limb is
+    /// interpreted as LE u64.
+    function _verifyPow(SpongefishWhir.TranscriptState memory ts, bytes memory transcript, uint64 threshold)
+        private
+        pure
+    {
+        if (threshold == type(uint64).max) return;
+        bytes memory challenge = SpongefishWhir.verifierMessage(ts, 32);
+        bytes memory nonceBytes = SpongefishWhir.proverMessage(ts, transcript, 8);
+        bytes32 digest;
+        assembly {
+            mstore(0x00, mload(add(challenge, 0x20)))
+            // Keep exactly the leading eight nonce bytes and explicitly zero
+            // the remainder; Solidity does not promise clean padding in a
+            // freshly sliced bytes allocation.
+            mstore(0x20, shl(192, shr(192, mload(add(nonceBytes, 0x20)))))
+            digest := keccak256(0x00, 0x40)
+        }
+        uint64 value;
+        assembly {
+            let w := shr(192, digest)
+            w := or(and(shr(8, w), 0x00FF00FF00FF00FF), and(shl(8, w), 0xFF00FF00FF00FF00))
+            w := or(and(shr(16, w), 0x0000FFFF0000FFFF), and(shl(16, w), 0xFFFF0000FFFF0000))
+            w := or(shr(32, w), shl(32, w))
+            value := and(w, 0xFFFFFFFFFFFFFFFF)
+        }
+        if (value > threshold) revert InvalidMleProof();
+    }
+
+    /// @dev Consume Arkworks' compressed Vec length and bind the serialized shape to the
+    ///      transcript-derived query count. Blindly skipping this prefix accepts encodings the
+    ///      pinned Rust verifier rejects and can shift all later Merkle hints.
+    function _consumeVecPrefix(
+        SpongefishWhir.TranscriptState memory ts,
+        SpongefishMerkle.CalldataBytes memory hints,
+        uint256 expectedElements
+    ) private pure {
+        if (ts.hintPos > hints.length || hints.length - ts.hintPos < 8) {
+            revert InvalidMleProof();
+        }
+        if (uint256(_readU64LEAt(hints, ts.hintPos)) != expectedElements) revert InvalidMleProof();
+        ts.hintPos += 8;
     }
 
     /// @dev Goldilocks modular exponentiation: base^exp mod GL_P — full assembly
@@ -830,7 +1081,7 @@ library SpongefishWhirVerify {
 
     function _openAndVerifyCommitment(
         SpongefishWhir.TranscriptState memory ts,
-        bytes memory hints,
+        SpongefishMerkle.CalldataBytes memory hints,
         WhirParams memory params,
         VerifyState memory vs,
         uint256 round,
@@ -839,14 +1090,14 @@ library SpongefishWhirVerify {
     ) private pure {
         OpenParams memory o = _getOpenParams(params, round);
 
-        uint256[] memory rawIndices = _challengeIndicesUnsorted(ts, o.cl, o.inDomainSamples);
+        uint256[] memory rawIndices = _challengeIndices(ts, o.cl, o.inDomainSamples);
         uint256 rawCount = rawIndices.length;
 
         if (round == 0 && params.numCommitments > 1) {
             _openSplitCommitments(ts, hints, params, vs, o, rawIndices, rawCount, roundOodAnswers, roundOodPoints);
         } else {
             // Standard mode (single commitment or round > 0)
-            ts.hintPos += 8; // skip Vec<T> length prefix (zero-copy)
+            _consumeVecPrefix(ts, hints, rawCount * o.numCols);
 
             bytes32[] memory rawLeafHashes = new bytes32[](rawCount);
             uint256[] memory rowOffsets = new uint256[](rawCount);
@@ -858,36 +1109,25 @@ library SpongefishWhirVerify {
                 ts.hintPos += o.rowBytes;
             }
 
-            // SECURITY: Save original indices and hashes before _sortAndDedupWithHashes
-            // mutates rawIndices and rawLeafHashes in-place. This is needed to verify
-            // that duplicate indices (after dedup) have consistent leaf data — without
-            // this check a malicious prover can inject arbitrary bytes at duplicate positions.
-            uint256[] memory origIndices = new uint256[](rawCount);
-            bytes32[] memory origHashes  = new bytes32[](rawCount);
-            for (uint256 i = 0; i < rawCount; i++) {
-                origIndices[i] = rawIndices[i];
-                origHashes[i]  = rawLeafHashes[i];
-            }
+            GoldilocksExt3.Ext3[] memory inDomainEvalPoints =
+                _computeEvalPoints(rawIndices, rawCount, o.domainGen, o.numCosets, o.cosetSize);
 
-            GoldilocksExt3.Ext3[] memory inDomainEvalPoints = _computeEvalPoints(
-                rawIndices, rawCount, o.domainGen, o.numCosets, o.cosetSize
+            ts.hintPos = SpongefishMerkle.verify(vs.prevRoot, o.md, rawIndices, rawLeafHashes, hints, ts.hintPos);
+
+            _addConstraintValues(
+                ts,
+                hints,
+                params,
+                vs,
+                round,
+                rawCount,
+                roundOodAnswers,
+                roundOodPoints,
+                rowOffsets,
+                inDomainEvalPoints,
+                o.numCols,
+                o.isBaseField
             );
-
-            (uint256[] memory sortedIndices, bytes32[] memory sortedHashes) =
-                _sortAndDedupWithHashes(rawIndices, rawLeafHashes);
-
-            ts.hintPos = SpongefishMerkle.verify(
-                vs.prevRoot, o.md, sortedIndices, sortedHashes, hints, ts.hintPos
-            );
-
-            // SECURITY: For every raw sample, verify its leaf hash matches the
-            // Merkle-verified hash for that index. This prevents a prover from injecting
-            // different data at the second (and later) positions of a colliding index.
-            // Without this check, unverified rowOffset data feeds directly into theSum.
-            _verifyLeafHashConsistency(origIndices, origHashes, sortedIndices, sortedHashes, rawCount);
-
-            _addConstraintValues(ts, hints, params, vs, round, rawCount, roundOodAnswers,
-                roundOodPoints, rowOffsets, inDomainEvalPoints, o.numCols, o.isBaseField);
         }
     }
 
@@ -896,7 +1136,7 @@ library SpongefishWhirVerify {
     ///      using per-commitment rows combined with vector RLC.
     function _openSplitCommitments(
         SpongefishWhir.TranscriptState memory ts,
-        bytes memory hints,
+        SpongefishMerkle.CalldataBytes memory hints,
         WhirParams memory params,
         VerifyState memory vs,
         OpenParams memory o,
@@ -909,7 +1149,7 @@ library SpongefishWhirVerify {
         uint256[][] memory perCommitRowOffsets = new uint256[][](params.numCommitments);
 
         for (uint256 c = 0; c < params.numCommitments; c++) {
-            ts.hintPos += 8; // skip Vec<T> length prefix per commitment
+            _consumeVecPrefix(ts, hints, rawCount * o.numCols);
 
             perCommitRowOffsets[c] = new uint256[](rawCount);
             bytes32[] memory rawLeafHashes = new bytes32[](rawCount);
@@ -919,38 +1159,34 @@ library SpongefishWhirVerify {
                 ts.hintPos += o.rowBytes;
             }
 
-            // Copy indices for Merkle verification (sort mutates the array).
-            // Also keep original hashes for the duplicate-index consistency check.
+            // SpongefishMerkle uses the index array as alternating layer
+            // scratch, so retain the canonical query list for later groups.
             uint256[] memory idxCopy = new uint256[](rawCount);
-            bytes32[] memory hashCopy = new bytes32[](rawCount);
             for (uint256 i = 0; i < rawCount; i++) {
-                idxCopy[i]  = rawIndices[i];
-                hashCopy[i] = rawLeafHashes[i];
+                idxCopy[i] = rawIndices[i];
             }
 
-            (uint256[] memory sortedIndices, bytes32[] memory sortedHashes) =
-                _sortAndDedupWithHashes(idxCopy, rawLeafHashes);
-
-            ts.hintPos = SpongefishMerkle.verify(
-                vs.initialRoots[c], o.md, sortedIndices, sortedHashes, hints, ts.hintPos
-            );
-
-            // SECURITY: Verify leaf hash consistency for duplicate indices.
-            _verifyLeafHashConsistency(rawIndices, hashCopy, sortedIndices, sortedHashes, rawCount);
+            ts.hintPos = SpongefishMerkle.verify(vs.initialRoots[c], o.md, idxCopy, rawLeafHashes, hints, ts.hintPos);
         }
 
-        GoldilocksExt3.Ext3[] memory inDomainEvalPoints = _computeEvalPoints(
-            rawIndices, rawCount, o.domainGen, o.numCosets, o.cosetSize
-        );
+        GoldilocksExt3.Ext3[] memory inDomainEvalPoints =
+            _computeEvalPoints(rawIndices, rawCount, o.domainGen, o.numCosets, o.cosetSize);
 
         // Compute constraint values using per-commitment rows + vector RLC.
-        // The in-domain evaluation for each sample is:
-        //   value = Σ_c vectorRlc[c] * dot(eqWeights, commitment_c_row)
-        // This matches the Rust behavior: tensor_product(vectorRlc, eqWeights) applied
-        // to the concatenated row [commit0_row | commit1_row | ...].
-        _addSplitConstraintValues(ts, params, vs, rawCount,
-            roundOodAnswers, roundOodPoints, perCommitRowOffsets,
-            inDomainEvalPoints, hints, o.numCols, o.isBaseField);
+        // This matches Rust's tensor_product(vectorRlc, eqWeights) over the
+        // concatenated vector-major rows from every commitment.
+        _addSplitConstraintValues(
+            ts,
+            params,
+            vs,
+            rawCount,
+            roundOodAnswers,
+            roundOodPoints,
+            perCommitRowOffsets,
+            inDomainEvalPoints,
+            hints,
+            o.isBaseField
+        );
     }
 
     /// @dev Add constraint values for split-commit round 0.
@@ -963,8 +1199,7 @@ library SpongefishWhirVerify {
         GoldilocksExt3.Ext3[] memory roundOodPoints,
         uint256[][] memory perCommitRowOffsets,
         GoldilocksExt3.Ext3[] memory inDomainEvalPoints,
-        bytes memory hints,
-        uint256 numColsPerCommit,
+        SpongefishMerkle.CalldataBytes memory hints,
         bool isBaseField
     ) private pure {
         RoundParams memory rp = params.rounds[0];
@@ -982,14 +1217,19 @@ library SpongefishWhirVerify {
 
         // In-domain values: combine per-commitment rows with vector RLC
         for (uint256 i = 0; i < rawCount; i++) {
-            // Compute Σ_c vectorRlc[c] * dot(eqW, row_c[i])
+            // Each commitment row contains numVectors consecutive subvectors.
             GoldilocksExt3.Ext3 memory combined = GoldilocksExt3.zero();
             for (uint256 c = 0; c < params.numCommitments; c++) {
-                GoldilocksExt3.Ext3 memory perCommitDot = _dotEqWithRow(
-                    eqW, hints, perCommitRowOffsets[c][i], numColsPerCommit, isBaseField
+                GoldilocksExt3.Ext3 memory perCommitDot = _dotGroupedRow(
+                    eqW,
+                    vs.vectorRlc,
+                    c * params.numVectors,
+                    params.numVectors,
+                    hints,
+                    perCommitRowOffsets[c][i],
+                    isBaseField
                 );
-                // combined += vectorRlc[c] * perCommitDot
-                _mulAddToExt3(combined, vs.vectorRlc[c], perCommitDot);
+                _addToExt3(combined, perCommitDot);
             }
             _mulAddToSum(vs.theSum, combined, roundRlc[rp.outDomainSamples + i]);
         }
@@ -1002,19 +1242,15 @@ library SpongefishWhirVerify {
         for (uint256 i = 0; i < rawCount; i++) {
             allEvalPoints[rp.outDomainSamples + i] = inDomainEvalPoints[i];
         }
-        vs.roundConstraints[1] = RoundConstraintEntry({
-            rlcCoeffs: roundRlc,
-            univariatePoints: allEvalPoints,
-            numVariables: rp.numVariables
-        });
+        vs.roundConstraints[1] =
+            RoundConstraintEntry({rlcCoeffs: roundRlc, univariatePoints: allEvalPoints, numVariables: rp.numVariables});
     }
 
     /// @dev a += b * c (Ext3 multiply and add in-place)
-    function _mulAddToExt3(
-        GoldilocksExt3.Ext3 memory a,
-        GoldilocksExt3.Ext3 memory b,
-        GoldilocksExt3.Ext3 memory c
-    ) private pure {
+    function _mulAddToExt3(GoldilocksExt3.Ext3 memory a, GoldilocksExt3.Ext3 memory b, GoldilocksExt3.Ext3 memory c)
+        private
+        pure
+    {
         assembly {
             let p := 0xFFFFFFFF00000001
             let b0 := mload(b)
@@ -1025,8 +1261,56 @@ library SpongefishWhirVerify {
             let c2 := mload(add(c, 0x40))
             let t := addmod(mulmod(b1, c2, p), mulmod(b2, c1, p), p)
             mstore(a, addmod(mload(a), addmod(mulmod(b0, c0, p), mulmod(2, t, p), p), p))
-            mstore(add(a, 0x20), addmod(mload(add(a, 0x20)), addmod(addmod(mulmod(b0, c1, p), mulmod(b1, c0, p), p), mulmod(2, mulmod(b2, c2, p), p), p), p))
-            mstore(add(a, 0x40), addmod(mload(add(a, 0x40)), addmod(addmod(mulmod(b0, c2, p), mulmod(b1, c1, p), p), mulmod(b2, c0, p), p), p))
+            mstore(
+                add(a, 0x20),
+                addmod(
+                    mload(add(a, 0x20)),
+                    addmod(addmod(mulmod(b0, c1, p), mulmod(b1, c0, p), p), mulmod(2, mulmod(b2, c2, p), p), p),
+                    p
+                )
+            )
+            mstore(
+                add(a, 0x40),
+                addmod(
+                    mload(add(a, 0x40)),
+                    addmod(addmod(mulmod(b0, c2, p), mulmod(b1, c1, p), p), mulmod(b2, c0, p), p),
+                    p
+                )
+            )
+        }
+    }
+
+    /// @dev Add an Ext3 value to an in-memory accumulator.
+    function _addToExt3(GoldilocksExt3.Ext3 memory accumulator, GoldilocksExt3.Ext3 memory value) private pure {
+        assembly {
+            let p := 0xFFFFFFFF00000001
+            mstore(accumulator, addmod(mload(accumulator), mload(value), p))
+            mstore(add(accumulator, 0x20), addmod(mload(add(accumulator, 0x20)), mload(add(value, 0x20)), p))
+            mstore(add(accumulator, 0x40), addmod(mload(add(accumulator, 0x40)), mload(add(value, 0x40)), p))
+        }
+    }
+
+    /// @dev Evaluate one initial commitment row with
+    /// tensor_product(vectorRlc[vectorOffset..], eqW). The serialized row is
+    /// vector-major, so each constituent owns one consecutive eqW-sized block.
+    function _dotGroupedRow(
+        GoldilocksExt3.Ext3[] memory eqW,
+        GoldilocksExt3.Ext3[] memory vectorRlc,
+        uint256 vectorOffset,
+        uint256 numVectors,
+        SpongefishMerkle.CalldataBytes memory hints,
+        uint256 rowOff,
+        bool isBaseField
+    ) private pure returns (GoldilocksExt3.Ext3 memory combined) {
+        // The schema and round validation performed before proof decoding
+        // guarantee that every group slice lies inside the total vector RLC.
+        combined = GoldilocksExt3.zero();
+        uint256 elementBytes = isBaseField ? 8 : 24;
+        uint256 subvectorBytes = eqW.length * elementBytes;
+        for (uint256 v = 0; v < numVectors; v++) {
+            GoldilocksExt3.Ext3 memory subvector =
+                _dotEqWithRow(eqW, hints, rowOff + v * subvectorBytes, eqW.length, isBaseField);
+            _mulAddToExt3(combined, vectorRlc[vectorOffset + v], subvector);
         }
     }
 
@@ -1049,7 +1333,7 @@ library SpongefishWhirVerify {
 
     function _addConstraintValues(
         SpongefishWhir.TranscriptState memory ts,
-        bytes memory hints,
+        SpongefishMerkle.CalldataBytes memory hints,
         WhirParams memory params,
         VerifyState memory vs,
         uint256 round,
@@ -1073,8 +1357,18 @@ library SpongefishWhirVerify {
         GoldilocksExt3.Ext3[] memory roundRlc = SpongefishWhir.geometricChallenge(ts, constraintCount);
 
         // Add OOD + in-domain constraint values to theSum
-        _addOodAndInDomainToSum(vs.theSum, roundOodAnswers, roundRlc, rp.outDomainSamples,
-            eqW, hints, rowOffsets, rawCount, numCols, isBaseField);
+        _addOodAndInDomainToSum(
+            vs.theSum,
+            roundOodAnswers,
+            roundRlc,
+            rp.outDomainSamples,
+            eqW,
+            hints,
+            rowOffsets,
+            rawCount,
+            numCols,
+            isBaseField
+        );
 
         // Build evaluation points for FinalClaim
         GoldilocksExt3.Ext3[] memory allEvalPoints = new GoldilocksExt3.Ext3[](constraintCount);
@@ -1085,11 +1379,8 @@ library SpongefishWhirVerify {
             allEvalPoints[rp.outDomainSamples + i] = inDomainEvalPoints[i];
         }
 
-        vs.roundConstraints[1 + round] = RoundConstraintEntry({
-            rlcCoeffs: roundRlc,
-            univariatePoints: allEvalPoints,
-            numVariables: rp.numVariables
-        });
+        vs.roundConstraints[1 + round] =
+            RoundConstraintEntry({rlcCoeffs: roundRlc, univariatePoints: allEvalPoints, numVariables: rp.numVariables});
     }
 
     /// @dev Evaluate dot(eq_weights(r), vector) by in-place folding (no eqWeights alloc).
@@ -1104,7 +1395,7 @@ library SpongefishWhirVerify {
         assembly {
             let p := 0xFFFFFFFF00000001
             let size := mload(vec)
-            let vecData := add(vec, 0x20)   // pointer to array of Ext3 pointers
+            let vecData := add(vec, 0x20) // pointer to array of Ext3 pointers
             let rData := add(randomness, 0x20)
 
             for { let round := numRounds } gt(round, 0) { round := sub(round, 1) } {
@@ -1114,7 +1405,7 @@ library SpongefishWhirVerify {
                 let rr2 := mload(add(rPtr, 0x40))
                 // oneMinusR
                 let omr0 := addmod(1, sub(p, rr0), p)
-                let omr1 := sub(p, rr1)  // 0 - r1 mod p
+                let omr1 := sub(p, rr1) // 0 - r1 mod p
                 let omr2 := sub(p, rr2)
 
                 let half := shr(1, size)
@@ -1132,13 +1423,19 @@ library SpongefishWhirVerify {
                     // even * oneMinusR (Ext3 mul)
                     let t1a := addmod(mulmod(e1, omr2, p), mulmod(e2, omr1, p), p)
                     let em0 := addmod(mulmod(e0, omr0, p), mulmod(2, t1a, p), p)
-                    let em1 := addmod(addmod(mulmod(e0, omr1, p), mulmod(e1, omr0, p), p), mulmod(2, mulmod(e2, omr2, p), p), p)
+                    let em1 :=
+                        addmod(
+                            addmod(mulmod(e0, omr1, p), mulmod(e1, omr0, p), p),
+                            mulmod(2, mulmod(e2, omr2, p), p),
+                            p
+                        )
                     let em2 := addmod(addmod(mulmod(e0, omr2, p), mulmod(e1, omr1, p), p), mulmod(e2, omr0, p), p)
 
                     // odd * r (Ext3 mul)
                     let t1b := addmod(mulmod(o1, rr2, p), mulmod(o2, rr1, p), p)
                     let om0 := addmod(mulmod(o0, rr0, p), mulmod(2, t1b, p), p)
-                    let om1 := addmod(addmod(mulmod(o0, rr1, p), mulmod(o1, rr0, p), p), mulmod(2, mulmod(o2, rr2, p), p), p)
+                    let om1 :=
+                        addmod(addmod(mulmod(o0, rr1, p), mulmod(o1, rr0, p), p), mulmod(2, mulmod(o2, rr2, p), p), p)
                     let om2 := addmod(addmod(mulmod(o0, rr2, p), mulmod(o1, rr1, p), p), mulmod(o2, rr0, p), p)
 
                     // Store result into vec[i]'s memory (reuse evenPtr)
@@ -1162,18 +1459,22 @@ library SpongefishWhirVerify {
     ///      Full assembly: reads LE u64 fields from hints, accumulates mul+add on stack.
     function _dotEqWithRow(
         GoldilocksExt3.Ext3[] memory eqW,
-        bytes memory hints,
+        SpongefishMerkle.CalldataBytes memory hints,
         uint256 rowOff,
         uint256 numCols,
         bool isBaseField
-    ) private pure returns (GoldilocksExt3.Ext3 memory acc) {
+    ) internal pure returns (GoldilocksExt3.Ext3 memory acc) {
+        uint256 elementBytes = isBaseField ? 8 : 24;
+        if (rowOff > hints.length || numCols > (hints.length - rowOff) / elementBytes) {
+            revert InvalidMleProof();
+        }
         assembly {
             let p := 0xFFFFFFFF00000001
             let r0 := 0
             let r1 := 0
             let r2 := 0
             let eqPtr := add(eqW, 0x20) // pointer to first element pointer
-            let base := add(add(hints, 0x20), rowOff)
+            let base := add(mload(hints), rowOff)
 
             // Helper: byte-swap 64-bit BE→LE inline (repeated via copy)
             // We use a function-like macro via code duplication
@@ -1192,11 +1493,18 @@ library SpongefishWhirVerify {
                 switch isBaseField
                 case 1 {
                     // Base field: 1 u64 LE → (val, 0, 0)
-                    let raw := shr(192, mload(add(base, mul(j, 8))))
+                    let raw := shr(192, calldataload(add(base, mul(j, 8))))
                     raw := or(and(shr(8, raw), 0x00FF00FF00FF00FF), and(shl(8, raw), 0xFF00FF00FF00FF00))
                     raw := or(and(shr(16, raw), 0x0000FFFF0000FFFF), and(shl(16, raw), 0xFFFF0000FFFF0000))
                     raw := or(shr(32, raw), shl(32, raw))
                     b0 := and(raw, 0xFFFFFFFFFFFFFFFF)
+                    // Arkworks CanonicalDeserialize rejects raw >= p. The Merkle tree commits
+                    // the raw bytes, so reducing a non-canonical encoding here would otherwise
+                    // give the same field oracle multiple Fiat-Shamir commitment roots.
+                    if iszero(lt(b0, p)) {
+                        mstore(0x00, shl(224, 0xf0783a66))
+                        revert(0x00, 0x04)
+                    }
                     // b1, b2 stay 0
 
                     // mulScalar: result = (w0*b0, w1*b0, w2*b0) mod p
@@ -1208,30 +1516,37 @@ library SpongefishWhirVerify {
                     // Ext3: 3 u64 LE
                     let off := mul(j, 24)
 
-                    let raw0 := shr(192, mload(add(base, off)))
+                    let raw0 := shr(192, calldataload(add(base, off)))
                     raw0 := or(and(shr(8, raw0), 0x00FF00FF00FF00FF), and(shl(8, raw0), 0xFF00FF00FF00FF00))
                     raw0 := or(and(shr(16, raw0), 0x0000FFFF0000FFFF), and(shl(16, raw0), 0xFFFF0000FFFF0000))
                     raw0 := or(shr(32, raw0), shl(32, raw0))
                     b0 := and(raw0, 0xFFFFFFFFFFFFFFFF)
 
-                    let raw1 := shr(192, mload(add(base, add(off, 8))))
+                    let raw1 := shr(192, calldataload(add(base, add(off, 8))))
                     raw1 := or(and(shr(8, raw1), 0x00FF00FF00FF00FF), and(shl(8, raw1), 0xFF00FF00FF00FF00))
                     raw1 := or(and(shr(16, raw1), 0x0000FFFF0000FFFF), and(shl(16, raw1), 0xFFFF0000FFFF0000))
                     raw1 := or(shr(32, raw1), shl(32, raw1))
                     b1 := and(raw1, 0xFFFFFFFFFFFFFFFF)
 
-                    let raw2 := shr(192, mload(add(base, add(off, 16))))
+                    let raw2 := shr(192, calldataload(add(base, add(off, 16))))
                     raw2 := or(and(shr(8, raw2), 0x00FF00FF00FF00FF), and(shl(8, raw2), 0xFF00FF00FF00FF00))
                     raw2 := or(and(shr(16, raw2), 0x0000FFFF0000FFFF), and(shl(16, raw2), 0xFFFF0000FFFF0000))
                     raw2 := or(shr(32, raw2), shl(32, raw2))
                     b2 := and(raw2, 0xFFFFFFFFFFFFFFFF)
+
+                    // Match Rust's canonical Ext3 hint decoding before field arithmetic.
+                    if iszero(and(and(lt(b0, p), lt(b1, p)), lt(b2, p))) {
+                        mstore(0x00, shl(224, 0xf0783a66))
+                        revert(0x00, 0x04)
+                    }
 
                     // Ext3 mul: eqW[j] * col
                     // mc0 = w0*b0 + 2*(w1*b2 + w2*b1)
                     let t1 := addmod(mulmod(w1, b2, p), mulmod(w2, b1, p), p)
                     let mc0 := addmod(mulmod(w0, b0, p), mulmod(2, t1, p), p)
                     // mc1 = w0*b1 + w1*b0 + 2*w2*b2
-                    let mc1 := addmod(addmod(mulmod(w0, b1, p), mulmod(w1, b0, p), p), mulmod(2, mulmod(w2, b2, p), p), p)
+                    let mc1 :=
+                        addmod(addmod(mulmod(w0, b1, p), mulmod(w1, b0, p), p), mulmod(2, mulmod(w2, b2, p), p), p)
                     // mc2 = w0*b2 + w1*b1 + w2*b0
                     let mc2 := addmod(addmod(mulmod(w0, b2, p), mulmod(w1, b1, p), p), mulmod(w2, b0, p), p)
 
@@ -1252,6 +1567,9 @@ library SpongefishWhirVerify {
     }
 
     function _log2(uint256 x) private pure returns (uint256 n) {
-        while (x > 1) { x >>= 1; n++; }
+        while (x > 1) {
+            x >>= 1;
+            n++;
+        }
     }
 }

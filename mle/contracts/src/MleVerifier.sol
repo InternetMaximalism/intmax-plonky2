@@ -8,13 +8,66 @@ import {EqPolyLib} from "./EqPolyLib.sol";
 import {SpongefishWhirVerify} from "./spongefish/SpongefishWhirVerify.sol";
 import {GoldilocksExt3} from "./spongefish/GoldilocksExt3.sol";
 import {Plonky2GateEvaluator} from "./Plonky2GateEvaluator.sol";
+import {PoseidonPublicInputsHash} from "./PoseidonPublicInputsHash.sol";
+import {PackedClaimLib} from "./PackedClaimLib.sol";
+import {InvalidMleProof, InvalidMleVerifierChainId, MleProofEngineUnavailable} from "./MleProofErrors.sol";
+import {
+    EXTENSION_FIELD_LIMBS,
+    GROUP_AUXILIARY,
+    GROUP_INVERSE_HELPERS,
+    GROUP_PREPROCESSED,
+    GROUP_WITNESS,
+    MLE_PROTOCOL_VERSION,
+    NUM_PACKED_VECTORS_PER_GROUP,
+    NUM_PCS_CLAIMS,
+    NUM_PCS_GROUPS,
+    NUM_PCS_TERMINAL_POINTS,
+    PACKED_BOUND_CLAIM_MASK,
+    PACKED_PCS_SCHEMA_DOMAIN,
+    PACKED_VARIABLE_ORDER_CODE,
+    POINT_COMBINED,
+    POINT_GATE,
+    POINT_H,
+    POINT_INVERSE
+} from "./generated/MleWhirV1.sol";
 
-/// @title MleVerifier — Combined sumcheck + single WHIR (3 vectors)
+/// @title MleVerifier — versioned combined-sumcheck/grouped-WHIR engine
+/// @notice Every terminal constituent is opened directly from an ordered
+/// commitment made before its aggregation/query challenges. The immutable
+/// chain pin remains as release containment pending independent review.
 contract MleVerifier {
     using F for uint256;
     uint256 constant P = 0xFFFFFFFF00000001;
 
+    /// @notice The only chain on which this verifier may execute.
+    /// @dev Immutable by design: a setter would let an already-populated
+    ///      verifier deployment become usable after a cross-chain state/code
+    ///      migration. The constructor also requires this value to equal the
+    ///      deployment chain so a wrong-network deployment fails atomically.
+    uint256 public immutable allowedChainId;
+
+    // Encoded-proof verdicts consumed by IntmaxRollup.  Keep 0..3 aligned
+    // with the rollup's existing typed-verifier tri-state; PI_MISMATCH is a
+    // failed accusation precondition, never proof fraud.
+    uint8 internal constant ENCODED_INVALID = 0;
+    uint8 internal constant ENCODED_VALID = 1;
+    uint8 internal constant ENCODED_UNEVALUABLE = 2;
+    uint8 internal constant ENCODED_STARVED = 3;
+    uint8 internal constant ENCODED_PI_MISMATCH = 4;
+
+    /// @dev Deployment and execution are both guarded.  The runtime check is
+    /// still required because code can be installed by genesis configuration,
+    /// state migration, or test cheatcodes without running this initcode.
+    constructor(uint256 allowedChainId_) {
+        if (allowedChainId_ == 0 || block.chainid != allowedChainId_) {
+            revert InvalidMleVerifierChainId(allowedChainId_, block.chainid);
+        }
+        allowedChainId = allowedChainId_;
+    }
+
     struct MleProof {
+        uint256 protocolVersion;
+        uint256 constituentWidth;
         uint256[] circuitDigest;
         bytes whirTranscript;
         bytes whirHints;
@@ -37,25 +90,14 @@ contract MleVerifier {
         uint256 beta;
         uint256 gamma;
         uint256 mu;
-        // SECURITY note (Issue #5): tau, tauPerm and ext_challenge are NOT carried
+        // SECURITY note (Issue #5): tau and tauPerm are NOT carried
         // in the proof struct — they are deterministically re-derived from the
         // transcript inside verify(). Including a prover-supplied tau would be a
         // dead field at best and a footgun (an unchecked field used as if authoritative).
         //
-        // SECURITY (Issue #3 + #7): WHIR-bound ext3 evaluations are part of the proof.
-        // Previously these were passed as a separate `whirEvals` external parameter,
-        // which allowed an adversarial caller to pass arbitrary values that pass WHIR
-        // but disagree with the proof's other fields. By moving them into MleProof,
-        // they become part of the same atomic object the verifier validates. Their
-        // soundness ↔ *EvalValue chain is enforced by Schwartz-Zippel over batch_r
-        // (see verifier.rs::mle_verify SECURITY NOTE about Ext3 ↔ Goldilocks binding).
-        GoldilocksExt3.Ext3 preprocessedWhirEval;
-        GoldilocksExt3.Ext3 witnessWhirEval;
-        GoldilocksExt3.Ext3 auxWhirEval;
-
         // ── v2 logUp soundness fix (Issue R2-#2, paper §4.2) ────────────
         // Inverse helpers A_j(b) = 1/D_j^id(b), B_j(b) = 1/D_j^σ(b) committed
-        // via WHIR (additional 4th vector in the same split-commit session).
+        // as the third ordered packed group in the grouped WHIR session.
         // Bound by Φ_inv (zero-check) and Φ_h (linear sumcheck), both of
         // which produce their own terminal points r_inv, r_h.
         bytes32 inverseHelpersCommitmentRoot;
@@ -64,7 +106,6 @@ contract MleVerifier {
         SumcheckVerifier.SumcheckProof hSumcheckProof;
         uint256 lambdaInv;
         uint256 muInv;
-        uint256 lambdaH;
         // Goldilocks individual evals at r_inv:
         // - witnessIndividualEvalsAtRInv  : length = numWires
         // - preprocessedIndividualEvalsAtRInv : length = numConstants + numRoutedWires,
@@ -84,25 +125,6 @@ contract MleVerifier {
         // Batched Goldilocks evals at r_inv (for batch consistency vs WHIR)
         uint256 witnessEvalValueAtRInv;
         uint256 preprocessedEvalValueAtRInv;
-        // Inverse-helpers batched Goldilocks evals (audit finding D3): bind the
-        // individual a_j/b_j evals (inverseHelpersEvalsAtRInv / AtRH) to the
-        // inverse-helper WHIR commitment, mirroring witness/preprocessed. Without
-        // this, a_j/b_j are unconstrained and dishonest inverses pass Φ_inv.
-        uint256 inverseHelpersEvalValueAtRInv;
-        uint256 inverseHelpersEvalValueAtRH;
-        // Per-point Ext3 WHIR evals: 4 vectors × 3 points = 12 entries
-        // Layout [point][vector]: point 0 = r_gate, 1 = r_inv, 2 = r_h
-        // Vectors: 0 = preprocessed, 1 = witness, 2 = aux, 3 = inverse_helpers
-        GoldilocksExt3.Ext3 inverseHelpersWhirEvalAtRGate;
-        GoldilocksExt3.Ext3 preprocessedWhirEvalAtRInv;
-        GoldilocksExt3.Ext3 witnessWhirEvalAtRInv;
-        GoldilocksExt3.Ext3 auxWhirEvalAtRInv;
-        GoldilocksExt3.Ext3 inverseHelpersWhirEvalAtRInv;
-        GoldilocksExt3.Ext3 preprocessedWhirEvalAtRH;
-        GoldilocksExt3.Ext3 witnessWhirEvalAtRH;
-        GoldilocksExt3.Ext3 auxWhirEvalAtRH;
-        GoldilocksExt3.Ext3 inverseHelpersWhirEvalAtRH;
-
         // ── v2 gate binding fix (Issue R2-#1, paper §7.3) ─────────────
         // Additional sumcheck Φ_gate whose terminal check runs the actual
         // Plonky2 gate-constraint formula at a random point r_gate_v2,
@@ -116,10 +138,6 @@ contract MleVerifier {
         uint256[] preprocessedIndividualEvalsAtRGateV2;
         uint256 witnessEvalValueAtRGateV2;
         uint256 preprocessedEvalValueAtRGateV2;
-        GoldilocksExt3.Ext3 preprocessedWhirEvalAtRGateV2;
-        GoldilocksExt3.Ext3 witnessWhirEvalAtRGateV2;
-        GoldilocksExt3.Ext3 auxWhirEvalAtRGateV2;
-        GoldilocksExt3.Ext3 inverseHelpersWhirEvalAtRGateV2;
         // Circuit metadata needed by Plonky2GateEvaluator.
         uint256 quotientDegreeFactor;
         uint256 numSelectors;
@@ -146,13 +164,20 @@ contract MleVerifier {
         // SECURITY: kIs and subgroupGenPowers MUST be the values consistent with
         // the circuit's VK (caller-supplied; they are not transcript-bound here
         // because they are public per-circuit constants).
-        uint256[] kIs;                // length = numRoutedWires
-        uint256[] subgroupGenPowers;  // length = degreeBits, [g, g^2, g^4, ..., g^{2^(n-1)}]
+        uint256[] kIs; // length = numRoutedWires
+        uint256[] subgroupGenPowers; // length = degreeBits, [g, g^2, g^4, ..., g^{2^(n-1)}]
+    }
+
+    struct TerminalPoints {
+        uint256[] combined;
+        uint256[] inverse;
+        uint256[] h;
+        uint256[] gate;
     }
 
     /// @dev Version byte for the gatesDigest encoding. Bump when the
     /// GateInfo struct layout or the list of hashed fields changes.
-    uint8 internal constant GATES_DIGEST_VERSION = 1;
+    uint8 internal constant GATES_DIGEST_VERSION = 2;
 
     // NOTE on `gatesDigest`:
     // The VK-bound digest that pins gate-layout metadata was intentionally
@@ -163,6 +188,8 @@ contract MleVerifier {
     // Digest formula (MUST match the off-chain deployer):
     //   keccak256(abi.encode(
     //       uint8(GATES_DIGEST_VERSION),
+    //       proof.circuitDigest,
+    //       proof.publicInputs.length,
     //       proof.witnessIndividualEvalsAtRGateV2.length,   // numWires
     //       proof.numSelectors,
     //       proof.numGateConstraints,
@@ -170,17 +197,186 @@ contract MleVerifier {
     //       proof.gates                                     // Plonky2GateEvaluator.GateInfo[]
     //   ))
 
-    /// @notice External entrypoint. Performs C1 + C2 boundary checks, then
-    /// delegates to `_verifyCore` for the actual proof verification.
+    /// @notice Verify a versioned, VK-bound MLE/WHIR proof on the
+    /// constructor-selected chain.
+    /// @dev The chain guard MUST be the first branch. In particular, malformed
+    /// proof data after a chain-id migration must not be classified as
+    /// `InvalidMleProof` while the verifier is unavailable on that chain.
     function verify(
         MleProof calldata proof,
         VerifyParams memory vp,
         SpongefishWhirVerify.WhirParams memory whirParams,
         bytes32 gatesDigest
-    ) external pure returns (bool) {
+    ) external view returns (bool) {
+        if (block.chainid != allowedChainId) {
+            revert MleProofEngineUnavailable(block.chainid);
+        }
+        // The four packed evaluation points are derived below from the
+        // authenticated sumcheck transcript. Caller-supplied point arrays
+        // would otherwise be silently overwritten, leaving non-canonical
+        // verifier configurations with ignored tails. This is configuration
+        // invalidity (UNEVALUABLE in the fraud path), not proof fraud.
+        require(
+            whirParams.evaluationPoint.length == 0 && whirParams.evaluationPoint2.length == 0
+                && whirParams.additionalEvaluationPoints.length == 0,
+            "WHIR derived point config"
+        );
+        _requireValidVkInputs(vp);
         _requireGatesDigest(proof, gatesDigest);
         _requireCanonicalProofInputs(proof);
+        _requireCanonicalSumchecks(proof);
+        if (proof.protocolVersion != MLE_PROTOCOL_VERSION) revert InvalidMleProof();
+        if (!_canonicalScalars(proof)) revert InvalidMleProof();
+        uint256 numWires = proof.witnessIndividualEvalsAtRGateV2.length;
+        uint256 preLen = vp.numConstants + vp.numRoutedWires;
+        uint256 inverseLen = 2 * vp.numRoutedWires;
+        uint256 expectedWidth = preLen;
+        if (numWires > expectedWidth) expectedWidth = numWires;
+        if (inverseLen > expectedWidth) expectedWidth = inverseLen;
+        if (expectedWidth < 2) expectedWidth = 2;
+        if (proof.constituentWidth != expectedWidth) revert InvalidMleProof();
+        // These values belong to the caller's stored VK/configuration. A stale
+        // deployment is UNEVALUABLE, never authenticated proof fraud.
+        require(whirParams.numCommitments == NUM_PCS_GROUPS, "WHIR commitment config");
+        require(whirParams.numVectors == NUM_PACKED_VECTORS_PER_GROUP, "WHIR vector config");
+        require(
+            whirParams.numVariables == vp.degreeBits + _constituentIndexBits(expectedWidth),
+            "WHIR packed variable config"
+        );
+        // Unlike the witness width, the preprocessed width is not part of
+        // `gatesDigest`: it is fixed by the VK (`numConstants +
+        // numRoutedWires`).  Validate it before `Plonky2GateEvaluator`
+        // indexes selector/constant entries.  Otherwise a prover can submit
+        // an empty/short array and turn an invalid proof into Panic(0x32),
+        // which the rollup correctly classifies as verifier-unevaluable
+        // rather than fraud.
+        if (
+            proof.preprocessedIndividualEvals.length != preLen
+                || proof.preprocessedIndividualEvalsAtRInv.length != preLen
+                || proof.preprocessedIndividualEvalsAtRGateV2.length != preLen
+                || proof.witnessIndividualEvals.length != numWires
+                || proof.witnessIndividualEvalsAtRInv.length != numWires
+                || proof.inverseHelpersEvalsAtRInv.length != inverseLen
+                || proof.inverseHelpersEvalsAtRH.length != inverseLen
+        ) {
+            revert InvalidMleProof();
+        }
         return _verifyCore(proof, vp, whirParams);
+    }
+
+    /// @notice Classify an authenticated raw proof encoding for the rollup fraud path.
+    /// @dev The caller MUST authenticate `rawProof` against the submission's blob commitment
+    /// before consuming an INVALID result.  This function deliberately separates:
+    ///   - malformed/non-canonical ABI or InvalidMleProof(): INVALID;
+    ///   - a public-input preimage mismatch: PI_MISMATCH (failed accusation);
+    ///   - verifier/config/unknown failures: UNEVALUABLE; and
+    ///   - gas exhaustion: STARVED.
+    ///
+    /// Decoding is isolated in an external self-call.  A deterministic empty revert from that
+    /// decode-only routine means the authenticated bytes are not an ABI MleProof; the same empty
+    /// revert after burning the explicit budget is OOG and remains non-convicting.
+    function fraudVerdictEncoded(
+        bytes calldata rawProof,
+        bytes32 expectedPiHash,
+        bytes4 verifierCallback
+    ) external view returns (uint8) {
+        // This MUST precede even canonical decoding. Otherwise malformed bytes
+        // observed after a chain-id migration could return INVALID rather than
+        // making the whole unreleased engine UNEVALUABLE to its caller.
+        if (block.chainid != allowedChainId) return ENCODED_UNEVALUABLE;
+        MleProof memory proof;
+        bool canonical;
+        {
+            uint256 decodeReserve = gasleft() / 64;
+            uint256 decodeBudget = gasleft() - decodeReserve;
+            try this.decodeCanonicalMleProof{gas: decodeBudget}(rawProof) returns (
+                MleProof memory decoded, bool isCanonical
+            ) {
+                proof = decoded;
+                canonical = isCanonical;
+            } catch (bytes memory reason) {
+                if (gasleft() < decodeReserve + decodeBudget / 8) return ENCODED_STARVED;
+                // Solidity's ABI decoder uses an empty revert for malformed offsets/lengths.
+                // Panic(0x41) is its excessive-memory-allocation form (e.g. an authenticated
+                // tiny buffer claiming an impossible dynamic-array length).  No other selector
+                // is proof fraud: an unexpected decoder/compiler failure stays unevaluable.
+                if (reason.length == 0 || _isMemoryAllocationPanic(reason)) {
+                    return ENCODED_INVALID;
+                }
+                return ENCODED_UNEVALUABLE;
+            }
+        }
+
+        if (!canonical) return ENCODED_INVALID;
+        bool piMatches = _publicInputsMatch(proof.publicInputs, expectedPiHash);
+
+        // Re-enter the pinned rollup through its existing typed verification trampoline.  This
+        // deliberately keeps the large VK/WHIR storage-to-memory copy in exactly one rollup
+        // routine instead of duplicating it in the EIP-170-constrained runtime.  The rollup passes
+        // the selector itself; arbitrary callers can only influence their own view result.
+        uint256 verifyReserve = gasleft() / 64;
+        uint256 verifyBudget = gasleft() - verifyReserve;
+        (bool ok, bytes memory result) =
+            msg.sender.staticcall{gas: verifyBudget}(abi.encodeWithSelector(verifierCallback, proof));
+        if (ok) {
+            // The production callback is true-or-revert.  Reject malformed/false return data as
+            // unevaluable; neither is authenticated proof-rejection evidence.
+            if (result.length == 32) {
+                uint256 returned;
+                assembly ("memory-safe") {
+                    returned := mload(add(result, 0x20))
+                }
+                if (returned == 1) {
+                    // An invalid authenticated proof is slashable regardless of whether an
+                    // accuser knows a public-input preimage for its embedded limbs.  The PI
+                    // precondition is consulted only after the proof itself verifies, so a
+                    // malicious producer cannot hide an invalid proof behind arbitrary PIs.
+                    return piMatches ? ENCODED_VALID : ENCODED_PI_MISMATCH;
+                }
+            }
+            return ENCODED_UNEVALUABLE;
+        }
+        if (_isInvalidMleProof(result)) return ENCODED_INVALID;
+        if (gasleft() < verifyReserve + verifyBudget / 8) return ENCODED_STARVED;
+        return ENCODED_UNEVALUABLE;
+    }
+
+    /// @notice Decode a raw ABI MleProof and report whether its encoding is canonical.
+    /// @dev External solely to give `fraudVerdictEncoded` a catchable decode frame.  The routine
+    /// has no verifier/config branches: a non-starved empty/Panic(0x41) revert is attributable to
+    /// the authenticated raw encoding, while every unexpected selector remains unevaluable.
+    function decodeCanonicalMleProof(bytes calldata rawProof)
+        external
+        pure
+        returns (MleProof memory proof, bool canonical)
+    {
+        proof = abi.decode(rawProof, (MleProof));
+        bytes memory encoded = abi.encode(proof);
+        canonical = encoded.length == rawProof.length && keccak256(encoded) == keccak256(rawProof);
+    }
+
+    function _publicInputsMatch(uint256[] memory publicInputs, bytes32 piHash) private pure returns (bool) {
+        if (publicInputs.length != 8) return false;
+        uint256 h = uint256(piHash);
+        for (uint256 i = 0; i < 8; i++) {
+            if (publicInputs[i] != ((h >> (224 - i * 32)) & 0xFFFFFFFF)) return false;
+        }
+        return true;
+    }
+
+    function _isInvalidMleProof(bytes memory reason) private pure returns (bool yes) {
+        assembly ("memory-safe") {
+            yes := and(eq(mload(reason), 4), eq(mload(add(reason, 0x20)), shl(224, 0xf0783a66)))
+        }
+    }
+
+    function _isMemoryAllocationPanic(bytes memory reason) private pure returns (bool yes) {
+        assembly ("memory-safe") {
+            yes := and(
+                eq(mload(reason), 36),
+                and(eq(mload(add(reason, 0x20)), shl(224, 0x4e487b71)), eq(mload(add(reason, 0x24)), 0x41))
+            )
+        }
     }
 
     function _verifyCore(
@@ -188,30 +384,28 @@ contract MleVerifier {
         VerifyParams memory vp,
         SpongefishWhirVerify.WhirParams memory whirParams
     ) internal pure returns (bool) {
-        require(proof.circuitDigest.length == 4, "digest len");
-        require(_derivePreprocessedBatchR(proof.circuitDigest) == proof.preprocessedBatchR, "preBatchR");
-        require(proof.preprocessedRoot == vp.preprocessedCommitmentRoot, "VK binding");
+        if (proof.circuitDigest.length != 4) revert InvalidMleProof();
+        if (proof.preprocessedRoot != vp.preprocessedCommitmentRoot) revert InvalidMleProof();
+        if (_derivePreprocessedBatchR(proof.circuitDigest, proof.preprocessedRoot) != proof.preprocessedBatchR) {
+            revert InvalidMleProof();
+        }
 
         TranscriptLib.Transcript memory ts;
-        (uint256[] memory tau, uint256[] memory tauInv) =
-            _initTranscriptAndChallenges(ts, proof, vp.degreeBits);
+        (uint256[] memory tau, uint256[] memory tauInv) = _initTranscriptAndChallenges(ts, proof, vp);
 
         // Combined sumcheck (eq(τ,b)·C̃(b) + μ·h̃(b)): max round-poly degree = 2.
         SumcheckVerifier.SumcheckProof memory sc = _copySumcheckProof(proof.combinedProof);
-        (uint256[] memory rGate, uint256 gateFinal) =
-            SumcheckVerifier.verify(sc, 0, vp.degreeBits, 2, ts);
+        (uint256[] memory rGate, uint256 gateFinal) = SumcheckVerifier.verify(sc, 0, vp.degreeBits, 2, ts);
 
         // ── v2 logUp: Φ_inv zero-check sumcheck (round-poly degree ≤ 3) ──
         TranscriptLib.domainSeparate(ts, "v2-inv-zerocheck");
         SumcheckVerifier.SumcheckProof memory invSc = _copySumcheckProof(proof.invSumcheckProof);
-        (uint256[] memory rInv, uint256 invFinal) =
-            SumcheckVerifier.verify(invSc, 0, vp.degreeBits, 3, ts);
+        (uint256[] memory rInv, uint256 invFinal) = SumcheckVerifier.verify(invSc, 0, vp.degreeBits, 3, ts);
 
         // ── v2 logUp: Φ_h linear sumcheck (round-poly degree = 1) ──
         TranscriptLib.domainSeparate(ts, "v2-h-linear");
         SumcheckVerifier.SumcheckProof memory hSc = _copySumcheckProof(proof.hSumcheckProof);
-        (uint256[] memory rH, uint256 hFinal) =
-            SumcheckVerifier.verify(hSc, 0, vp.degreeBits, 1, ts);
+        (uint256[] memory rH, uint256 hFinal) = SumcheckVerifier.verify(hSc, 0, vp.degreeBits, 1, ts);
 
         // ── R2-#1: Φ_gate zero-check sumcheck + terminal check. Returns
         // `rGateV2` (needed for the WHIR binding below). `tauGate` and
@@ -221,54 +415,32 @@ contract MleVerifier {
         // optimizer's 16-slot stack limit.
         uint256[] memory rGateV2 = _runGateSumcheckAndTerminal(proof, vp, ts);
 
-        // Bind the WHIR multi-point opening to the four sumcheck-derived points.
-        whirParams.evaluationPoint = _deriveEvalPoint(rGate);
-        whirParams.evaluationPoint2 = _deriveEvalPoint(rInv);
-        whirParams.additionalEvaluationPoints = new GoldilocksExt3.Ext3[][](2);
-        whirParams.additionalEvaluationPoints[0] = _deriveEvalPoint(rH);
-        whirParams.additionalEvaluationPoints[1] = _deriveEvalPoint(rGateV2);
+        TerminalPoints memory terminalPoints = TerminalPoints({combined: rGate, inverse: rInv, h: rH, gate: rGateV2});
+        _runBatchAndWhir(proof, whirParams, vp, ts, terminalPoints);
 
-        _runBatchAndWhir(proof, whirParams, vp, ts);
-
-        // ── Terminal check: legacy combined sumcheck. Issue R2-#2 still
-        //    leaves h̃(r) un-bound (which is exactly why we run Φ_inv + Φ_h
-        //    below); the legacy check is preserved for backwards compatibility
-        //    with the existing C̃ commitment but its h̃ part is no longer the
-        //    soundness anchor for permutation correctness.
-        require(
-            EqPolyLib.eqEval(tau, rGate).mul(proof.auxConstraintEval)
-                .add(proof.mu.mul(proof.auxPermEval)) == gateFinal,
-            "final"
-        );
+        // ── Terminal check: combined sumcheck. Packed v1 PCS-binds both C̃(r)
+        //    and h̃(r). The dedicated Φ_inv + Φ_h checks below remain the
+        //    algebraic soundness anchors for the phased logUp relation; this
+        //    combined equality alone is not a proof of that relation.
+        if (EqPolyLib.eqEval(tau, rGate).mul(proof.auxConstraintEval).add(proof.mu.mul(proof.auxPermEval)) != gateFinal)
+        {
+            revert InvalidMleProof();
+        }
 
         // ── v2 logUp: g_sub(r_inv) consistency (subgroup MLE from VK powers)
-        require(
-            _evalSubgroupMle(rInv, vp.subgroupGenPowers) == proof.gSubEvalAtRInv,
-            "gSub(r_inv)"
-        );
+        // `subgroupGenPowers` is VK/configuration data, not prover data.  A
+        // short table must remain an unevaluable verifier configuration
+        // error; without this guard the assembly evaluator reads adjacent
+        // memory and can misclassify the resulting mismatch as proof fraud.
+        require(vp.subgroupGenPowers.length == rInv.length, "subgroup powers len");
+        if (_evalSubgroupMle(rInv, vp.subgroupGenPowers) != proof.gSubEvalAtRInv) {
+            revert InvalidMleProof();
+        }
 
         // ── v2 logUp: batch consistency at r_inv (witness + preprocessed)
-        require(
-            _computeBatchedEval(proof.witnessIndividualEvalsAtRInv, proof.witnessBatchR)
-                == proof.witnessEvalValueAtRInv,
-            "wit batch r_inv"
-        );
-
-        // ── audit finding D3: inverse-helper batch consistency at r_inv and r_h.
-        // Binds the individual a_j/b_j evals (fed into the Φ_inv / Φ_h terminal
-        // checks below) to the inverse-helper WHIR commitment, exactly as
-        // witness/preprocessed are bound. Without these, a_j/b_j are free and a
-        // dishonest inverse satisfies Φ_inv, breaking the permutation argument.
-        require(
-            _computeBatchedEval(proof.inverseHelpersEvalsAtRInv, proof.inverseHelpersBatchR)
-                == proof.inverseHelpersEvalValueAtRInv,
-            "inv batch r_inv"
-        );
-        require(
-            _computeBatchedEval(proof.inverseHelpersEvalsAtRH, proof.inverseHelpersBatchR)
-                == proof.inverseHelpersEvalValueAtRH,
-            "inv batch r_h"
-        );
+        if (
+            _computeBatchedEval(proof.witnessIndividualEvalsAtRInv, proof.witnessBatchR) != proof.witnessEvalValueAtRInv
+        ) revert InvalidMleProof();
 
         // ── v2 logUp: terminal checks for Φ_inv and Φ_h
         _checkInvTerminal(proof, vp, tauInv, rInv, invFinal);
@@ -289,17 +461,18 @@ contract MleVerifier {
         uint256 invFinal
     ) private pure {
         uint256 nr = vp.numRoutedWires;
-        require(proof.witnessIndividualEvalsAtRInv.length >= nr, "wit r_inv len");
-        require(
-            proof.preprocessedIndividualEvalsAtRInv.length == vp.numConstants + nr,
-            "pre r_inv len"
-        );
-        require(proof.inverseHelpersEvalsAtRInv.length == 2 * nr, "inv r_inv len");
-        require(vp.kIs.length >= nr, "kIs len");
+        if (proof.witnessIndividualEvalsAtRInv.length != proof.witnessIndividualEvals.length) {
+            revert InvalidMleProof();
+        }
+        if (proof.preprocessedIndividualEvalsAtRInv.length != vp.numConstants + nr) {
+            revert InvalidMleProof();
+        }
+        if (proof.inverseHelpersEvalsAtRInv.length != 2 * nr) revert InvalidMleProof();
+        require(vp.kIs.length == nr, "kIs len");
 
         uint256 inner = _invInner(proof, vp, nr);
         uint256 eqAtRInv = EqPolyLib.eqEval(tauInv, rInv);
-        require(eqAtRInv.mul(inner) == invFinal, "Phi_inv terminal");
+        if (eqAtRInv.mul(inner) != invFinal) revert InvalidMleProof();
     }
 
     /// @dev Φ_gate terminal check (Issue R2-#1, paper §7.3):
@@ -331,17 +504,17 @@ contract MleVerifier {
             proof.numGateConstraints
         );
         uint256 eqAtRGateV2 = EqPolyLib.eqEval(tauGate, rGateV2);
-        require(eqAtRGateV2.mul(flat) == gateFinal, "Phi_gate terminal");
+        if (eqAtRGateV2.mul(flat) != gateFinal) revert InvalidMleProof();
     }
 
     /// @dev Inner sum of the Φ_inv terminal predicate. Extracted so we can
     /// use the direct calldata arrays as typed parameters (allowing `.offset`
     /// access inside assembly).
-    function _invInner(
-        MleProof calldata proof,
-        VerifyParams memory vp,
-        uint256 nr
-    ) private pure returns (uint256 inner) {
+    function _invInner(MleProof calldata proof, VerifyParams memory vp, uint256 nr)
+        private
+        pure
+        returns (uint256 inner)
+    {
         uint256[] calldata w_ = proof.witnessIndividualEvalsAtRInv;
         uint256[] calldata pre_ = proof.preprocessedIndividualEvalsAtRInv;
         uint256[] calldata ih_ = proof.inverseHelpersEvalsAtRInv;
@@ -394,13 +567,9 @@ contract MleVerifier {
     /// @dev Φ_h terminal check (paper §4.2.3):
     /// h_final ?= Σ_j (a_j(r_h) − b_j(r_h))
     /// (unweighted — only the unweighted Σ_j (A_j − B_j) telescopes via logUp).
-    function _checkHTerminal(
-        MleProof calldata proof,
-        VerifyParams memory vp,
-        uint256 hFinal
-    ) private pure {
+    function _checkHTerminal(MleProof calldata proof, VerifyParams memory vp, uint256 hFinal) private pure {
         uint256 nr = vp.numRoutedWires;
-        require(proof.inverseHelpersEvalsAtRH.length == 2 * nr, "inv r_h len");
+        if (proof.inverseHelpersEvalsAtRH.length != 2 * nr) revert InvalidMleProof();
         uint256 acc;
         {
             uint256[] calldata ih_ = proof.inverseHelpersEvalsAtRH;
@@ -422,14 +591,12 @@ contract MleVerifier {
                 acc := sum
             }
         }
-        require(acc == hFinal, "Phi_h terminal");
+        if (acc != hFinal) revert InvalidMleProof();
     }
 
     /// @dev Evaluate g_sub MLE at r using VK-bound subgroup generator powers.
     /// result = Π_i ((1-r_i) + r_i·g^{2^i}).
-    function _evalSubgroupMle(uint256[] memory r, uint256[] memory gPow)
-        internal pure returns (uint256 result)
-    {
+    function _evalSubgroupMle(uint256[] memory r, uint256[] memory gPow) internal pure returns (uint256 result) {
         assembly {
             let p := 0xFFFFFFFF00000001
             result := 1
@@ -454,138 +621,253 @@ contract MleVerifier {
     function _initTranscriptAndChallenges(
         TranscriptLib.Transcript memory ts,
         MleProof calldata proof,
-        uint256 degreeBits
+        VerifyParams memory vp
     ) private pure returns (uint256[] memory tau, uint256[] memory tauInv) {
         TranscriptLib.init(ts);
         TranscriptLib.domainSeparate(ts, "circuit");
         TranscriptLib.absorbFieldVec(ts, proof.circuitDigest);
         TranscriptLib.absorbFieldVec(ts, proof.publicInputs);
+        TranscriptLib.domainSeparate(ts, PACKED_PCS_SCHEMA_DOMAIN);
+        TranscriptLib.absorbU64Bytes(ts, proof.protocolVersion);
+        TranscriptLib.absorbU64Bytes(ts, NUM_PCS_GROUPS);
+        TranscriptLib.absorbU64Bytes(ts, vp.numConstants);
+        TranscriptLib.absorbU64Bytes(ts, vp.numRoutedWires);
+        TranscriptLib.absorbU64Bytes(ts, proof.witnessIndividualEvals.length);
+        TranscriptLib.absorbU64Bytes(ts, proof.constituentWidth);
+        TranscriptLib.absorbU64Bytes(ts, _constituentIndexBits(proof.constituentWidth));
+        TranscriptLib.absorbU64Bytes(ts, NUM_PACKED_VECTORS_PER_GROUP);
+        TranscriptLib.absorbU64Bytes(ts, EXTENSION_FIELD_LIMBS);
+        TranscriptLib.absorbU64Bytes(ts, PACKED_VARIABLE_ORDER_CODE);
+        TranscriptLib.domainSeparate(ts, "pcs-group-preprocessed");
         TranscriptLib.absorbBytes(ts, abi.encodePacked(proof.preprocessedRoot));
-
-        TranscriptLib.domainSeparate(ts, "batch-commit-witness");
-        require(TranscriptLib.squeezeChallenge(ts) == proof.witnessBatchR, "witBatchR");
+        TranscriptLib.domainSeparate(ts, "pcs-group-witness");
         TranscriptLib.absorbBytes(ts, abi.encodePacked(proof.witnessRoot));
 
+        TranscriptLib.domainSeparate(ts, "batch-commit-witness");
+        if (TranscriptLib.squeezeChallenge(ts) != proof.witnessBatchR) revert InvalidMleProof();
+
         TranscriptLib.domainSeparate(ts, "challenges");
-        require(TranscriptLib.squeezeChallenge(ts) == proof.beta, "beta");
-        require(TranscriptLib.squeezeChallenge(ts) == proof.gamma, "gamma");
+        if (TranscriptLib.squeezeChallenge(ts) != proof.beta) revert InvalidMleProof();
+        if (TranscriptLib.squeezeChallenge(ts) != proof.gamma) revert InvalidMleProof();
 
         // ── v2 logUp: inverse-helpers commit absorbed AFTER β,γ. ─────────
-        TranscriptLib.domainSeparate(ts, "inverse-helpers-batch-r");
-        require(
-            TranscriptLib.squeezeChallenge(ts) == proof.inverseHelpersBatchR,
-            "invBatchR"
-        );
+        TranscriptLib.domainSeparate(ts, "pcs-group-inverse-helpers");
         TranscriptLib.absorbBytes(ts, abi.encodePacked(proof.inverseHelpersCommitmentRoot));
+        TranscriptLib.domainSeparate(ts, "inverse-helpers-batch-r");
+        if (TranscriptLib.squeezeChallenge(ts) != proof.inverseHelpersBatchR) {
+            revert InvalidMleProof();
+        }
 
-        require(TranscriptLib.squeezeChallenge(ts) == proof.alpha, "alpha");
-        tau = TranscriptLib.squeezeChallenges(ts, degreeBits);
-        TranscriptLib.squeezeChallenges(ts, degreeBits); // tauPerm sync (unused)
-
-        TranscriptLib.domainSeparate(ts, "v2-logup-challenges");
-        require(TranscriptLib.squeezeChallenge(ts) == proof.lambdaInv, "lambdaInv");
-        require(TranscriptLib.squeezeChallenge(ts) == proof.muInv, "muInv");
-        require(TranscriptLib.squeezeChallenge(ts) == proof.lambdaH, "lambdaH");
-        tauInv = TranscriptLib.squeezeChallenges(ts, degreeBits);
-
+        if (TranscriptLib.squeezeChallenge(ts) != proof.alpha) revert InvalidMleProof();
         TranscriptLib.domainSeparate(ts, "extension-combine");
-        require(TranscriptLib.squeezeChallenge(ts) == proof.extChallenge, "extChallenge");
+        if (TranscriptLib.squeezeChallenge(ts) != proof.extChallenge) revert InvalidMleProof();
 
         // Aux commit
-        TranscriptLib.domainSeparate(ts, "aux-commit");
-        require(TranscriptLib.squeezeChallenge(ts) == proof.auxBatchR, "auxBatchR");
+        TranscriptLib.domainSeparate(ts, "pcs-group-auxiliary");
         TranscriptLib.absorbBytes(ts, abi.encodePacked(proof.auxCommitmentRoot));
-        require(
-            proof.auxConstraintEval.add(proof.auxBatchR.mul(proof.auxPermEval)) == proof.auxEvalValue,
-            "aux decomp"
-        );
+        TranscriptLib.domainSeparate(ts, "aux-batch-r");
+        if (TranscriptLib.squeezeChallenge(ts) != proof.auxBatchR) revert InvalidMleProof();
+        if (proof.auxConstraintEval.add(proof.auxBatchR.mul(proof.auxPermEval)) != proof.auxEvalValue) {
+            revert InvalidMleProof();
+        }
+
+        TranscriptLib.domainSeparate(ts, "post-auxiliary-challenges-v1");
+        tau = TranscriptLib.squeezeChallenges(ts, vp.degreeBits);
+        TranscriptLib.squeezeChallenges(ts, vp.degreeBits); // tauPerm sync (unused)
+        TranscriptLib.domainSeparate(ts, "v2-logup-challenges");
+        if (TranscriptLib.squeezeChallenge(ts) != proof.lambdaInv) revert InvalidMleProof();
+        if (TranscriptLib.squeezeChallenge(ts) != proof.muInv) revert InvalidMleProof();
+        tauInv = TranscriptLib.squeezeChallenges(ts, vp.degreeBits);
 
         // Combined sumcheck
         TranscriptLib.domainSeparate(ts, "combined-sumcheck");
-        require(TranscriptLib.squeezeChallenge(ts) == proof.mu, "mu");
+        if (TranscriptLib.squeezeChallenge(ts) != proof.mu) revert InvalidMleProof();
     }
 
-    /// @dev Run batch-eval consistency and invoke WHIR verification using the
-    /// proof's own ext3 eval fields. Extracted to keep verify() stack frame small.
+    /// @dev Run redundant batch-evaluation consistency checks, build the exact
+    /// constituent opening matrix, and invoke WHIR with every terminal value
+    /// fixed before WHIR samples its vector-RLC challenge.
     function _runBatchAndWhir(
         MleProof calldata proof,
         SpongefishWhirVerify.WhirParams memory whirParams,
         VerifyParams memory vp,
-        TranscriptLib.Transcript memory ts
+        TranscriptLib.Transcript memory ts,
+        TerminalPoints memory terminalPoints
     ) private pure {
         TranscriptLib.domainSeparate(ts, "pcs-eval");
-        require(
-            _computeBatchedEval(proof.preprocessedIndividualEvals, proof.preprocessedBatchR) ==
-                proof.preprocessedEvalValue,
-            "pre batch"
-        );
-        require(
-            proof.preprocessedIndividualEvals.length == vp.numConstants + vp.numRoutedWires,
-            "pre len"
-        );
-        require(
-            _computeBatchedEval(proof.witnessIndividualEvals, proof.witnessBatchR) ==
-                proof.witnessEvalValue,
-            "wit batch"
-        );
+        if (
+            _computeBatchedEval(proof.preprocessedIndividualEvals, proof.preprocessedBatchR)
+                != proof.preprocessedEvalValue
+        ) revert InvalidMleProof();
+        if (proof.preprocessedIndividualEvals.length != vp.numConstants + vp.numRoutedWires) {
+            revert InvalidMleProof();
+        }
+        if (_computeBatchedEval(proof.witnessIndividualEvals, proof.witnessBatchR) != proof.witnessEvalValue) {
+            revert InvalidMleProof();
+        }
 
         // ── v2 logUp: also bind preprocessed batch eval at r_inv. ────────
-        require(
+        if (
             _computeBatchedEval(proof.preprocessedIndividualEvalsAtRInv, proof.preprocessedBatchR)
-                == proof.preprocessedEvalValueAtRInv,
-            "pre batch r_inv"
+                != proof.preprocessedEvalValueAtRInv
+        ) revert InvalidMleProof();
+
+        uint256 indexBits = _constituentIndexBits(proof.constituentWidth);
+        GoldilocksExt3.Ext3[][] memory indexPoints = _absorbClaimsAndSampleIndexPoints(ts, proof, indexBits);
+        // WHIR consumes the reverse of the full dense-LSB point
+        // `[row_0..row_n-1,index_0..index_l-1]`.
+        whirParams.evaluationPoint = _derivePackedEvalPoint(terminalPoints.combined, indexPoints[POINT_COMBINED]);
+        whirParams.evaluationPoint2 = _derivePackedEvalPoint(terminalPoints.inverse, indexPoints[POINT_INVERSE]);
+        whirParams.additionalEvaluationPoints = new GoldilocksExt3.Ext3[][](2);
+        whirParams.additionalEvaluationPoints[0] = _derivePackedEvalPoint(terminalPoints.h, indexPoints[POINT_H]);
+        whirParams.additionalEvaluationPoints[1] = _derivePackedEvalPoint(terminalPoints.gate, indexPoints[POINT_GATE]);
+
+        // One packed scalar opening per point/group. The mask fixes precisely
+        // the nine pairs consumed by terminal equations; WHIR authenticates the
+        // remaining Cartesian openings against the same four roots as well.
+        uint256 width = proof.constituentWidth;
+        GoldilocksExt3.Ext3[] memory whirEvals = new GoldilocksExt3.Ext3[](NUM_PCS_CLAIMS);
+        bytes memory evalMask = abi.encodePacked(PACKED_BOUND_CLAIM_MASK);
+
+        _bindPackedClaim(
+            whirEvals,
+            proof.preprocessedIndividualEvals,
+            POINT_COMBINED,
+            GROUP_PREPROCESSED,
+            width,
+            indexPoints[POINT_COMBINED]
+        );
+        _bindPackedClaim(
+            whirEvals, proof.witnessIndividualEvals, POINT_COMBINED, GROUP_WITNESS, width, indexPoints[POINT_COMBINED]
+        );
+        uint256[] memory auxClaims = new uint256[](2);
+        auxClaims[0] = proof.auxConstraintEval;
+        auxClaims[1] = proof.auxPermEval;
+        _bindPackedClaim(whirEvals, auxClaims, POINT_COMBINED, GROUP_AUXILIARY, width, indexPoints[POINT_COMBINED]);
+
+        _bindPackedClaim(
+            whirEvals,
+            proof.preprocessedIndividualEvalsAtRInv,
+            POINT_INVERSE,
+            GROUP_PREPROCESSED,
+            width,
+            indexPoints[POINT_INVERSE]
+        );
+        _bindPackedClaim(
+            whirEvals,
+            proof.witnessIndividualEvalsAtRInv,
+            POINT_INVERSE,
+            GROUP_WITNESS,
+            width,
+            indexPoints[POINT_INVERSE]
+        );
+        _bindPackedClaim(
+            whirEvals,
+            proof.inverseHelpersEvalsAtRInv,
+            POINT_INVERSE,
+            GROUP_INVERSE_HELPERS,
+            width,
+            indexPoints[POINT_INVERSE]
         );
 
-        // SECURITY (Issue #3 + #7 + v2 logUp + R2-#1): Pull whirEvals from
-        // the proof itself. Layout: [point][vector], 4 points × 4 vectors.
-        GoldilocksExt3.Ext3[] memory whirEvals = new GoldilocksExt3.Ext3[](16);
-        // Point 0: r_gate (combined sumcheck output)
-        whirEvals[0] = proof.preprocessedWhirEval;
-        whirEvals[1] = proof.witnessWhirEval;
-        whirEvals[2] = proof.auxWhirEval;
-        whirEvals[3] = proof.inverseHelpersWhirEvalAtRGate;
-        // Point 1: r_inv
-        whirEvals[4] = proof.preprocessedWhirEvalAtRInv;
-        whirEvals[5] = proof.witnessWhirEvalAtRInv;
-        whirEvals[6] = proof.auxWhirEvalAtRInv;
-        whirEvals[7] = proof.inverseHelpersWhirEvalAtRInv;
-        // Point 2: r_h
-        whirEvals[8] = proof.preprocessedWhirEvalAtRH;
-        whirEvals[9] = proof.witnessWhirEvalAtRH;
-        whirEvals[10] = proof.auxWhirEvalAtRH;
-        whirEvals[11] = proof.inverseHelpersWhirEvalAtRH;
-        // Point 3: r_gate_v2 (Φ_gate sumcheck output — Issue R2-#1)
-        whirEvals[12] = proof.preprocessedWhirEvalAtRGateV2;
-        whirEvals[13] = proof.witnessWhirEvalAtRGateV2;
-        whirEvals[14] = proof.auxWhirEvalAtRGateV2;
-        whirEvals[15] = proof.inverseHelpersWhirEvalAtRGateV2;
+        _bindPackedClaim(
+            whirEvals, proof.inverseHelpersEvalsAtRH, POINT_H, GROUP_INVERSE_HELPERS, width, indexPoints[POINT_H]
+        );
+
+        _bindPackedClaim(
+            whirEvals,
+            proof.preprocessedIndividualEvalsAtRGateV2,
+            POINT_GATE,
+            GROUP_PREPROCESSED,
+            width,
+            indexPoints[POINT_GATE]
+        );
+        _bindPackedClaim(
+            whirEvals, proof.witnessIndividualEvalsAtRGateV2, POINT_GATE, GROUP_WITNESS, width, indexPoints[POINT_GATE]
+        );
+        bytes32[] memory expectedRoots = new bytes32[](NUM_PCS_GROUPS);
+        expectedRoots[GROUP_PREPROCESSED] = proof.preprocessedRoot;
+        expectedRoots[GROUP_WITNESS] = proof.witnessRoot;
+        expectedRoots[GROUP_INVERSE_HELPERS] = proof.inverseHelpersCommitmentRoot;
+        expectedRoots[GROUP_AUXILIARY] = proof.auxCommitmentRoot;
 
         // Batch consistency at r_gate_v2 (witness + full preprocessed)
-        require(
+        if (
             _computeBatchedEval(proof.witnessIndividualEvalsAtRGateV2, proof.witnessBatchR)
-                == proof.witnessEvalValueAtRGateV2,
-            "wit batch r_gate_v2"
-        );
-        require(
+                != proof.witnessEvalValueAtRGateV2
+        ) revert InvalidMleProof();
+        if (
             _computeBatchedEval(proof.preprocessedIndividualEvalsAtRGateV2, proof.preprocessedBatchR)
-                == proof.preprocessedEvalValueAtRGateV2,
-            "pre batch r_gate_v2"
-        );
+                != proof.preprocessedEvalValueAtRGateV2
+        ) revert InvalidMleProof();
 
-        require(
-            SpongefishWhirVerify.verifyWhirProof(
+        if (!SpongefishWhirVerify.verifyWhirProofBound(
                 vp.protocolId,
                 vp.sessionId,
                 "",
                 proof.whirTranscript,
                 proof.whirHints,
                 whirEvals,
+                evalMask,
+                expectedRoots,
                 whirParams
-            ),
-            "WHIR"
-        );
+            )) revert InvalidMleProof();
     }
 
+    function _bindPackedClaim(
+        GoldilocksExt3.Ext3[] memory evals,
+        uint256[] memory values,
+        uint256 point,
+        uint256 group,
+        uint256 width,
+        GoldilocksExt3.Ext3[] memory indexPoint
+    ) private pure {
+        uint256 slot = point * NUM_PCS_GROUPS + group;
+        evals[slot] = PackedClaimLib.fold(values, width, indexPoint);
+    }
+
+    function _absorbClaimsAndSampleIndexPoints(
+        TranscriptLib.Transcript memory ts,
+        MleProof calldata proof,
+        uint256 indexBits
+    ) private pure returns (GoldilocksExt3.Ext3[][] memory points) {
+        uint256[] memory empty = new uint256[](0);
+        uint256[] memory aux = new uint256[](2);
+        aux[0] = proof.auxConstraintEval;
+        aux[1] = proof.auxPermEval;
+        TranscriptLib.domainSeparate(ts, "pcs-constituent-claims-v1");
+        // Exact point-major, group-major layout. Empty vectors are explicit
+        // length-zero messages, not omitted transcript entries.
+        TranscriptLib.absorbFieldVec(ts, proof.preprocessedIndividualEvals);
+        TranscriptLib.absorbFieldVec(ts, proof.witnessIndividualEvals);
+        TranscriptLib.absorbFieldVec(ts, empty);
+        TranscriptLib.absorbFieldVec(ts, aux);
+        TranscriptLib.absorbFieldVec(ts, proof.preprocessedIndividualEvalsAtRInv);
+        TranscriptLib.absorbFieldVec(ts, proof.witnessIndividualEvalsAtRInv);
+        TranscriptLib.absorbFieldVec(ts, proof.inverseHelpersEvalsAtRInv);
+        TranscriptLib.absorbFieldVec(ts, empty);
+        TranscriptLib.absorbFieldVec(ts, empty);
+        TranscriptLib.absorbFieldVec(ts, empty);
+        TranscriptLib.absorbFieldVec(ts, proof.inverseHelpersEvalsAtRH);
+        TranscriptLib.absorbFieldVec(ts, empty);
+        TranscriptLib.absorbFieldVec(ts, proof.preprocessedIndividualEvalsAtRGateV2);
+        TranscriptLib.absorbFieldVec(ts, proof.witnessIndividualEvalsAtRGateV2);
+        TranscriptLib.absorbFieldVec(ts, empty);
+        TranscriptLib.absorbFieldVec(ts, empty);
+
+        TranscriptLib.domainSeparate(ts, "pcs-constituent-index-v1");
+        points = new GoldilocksExt3.Ext3[][](NUM_PCS_TERMINAL_POINTS);
+        for (uint256 point = 0; point < NUM_PCS_TERMINAL_POINTS; point++) {
+            points[point] = new GoldilocksExt3.Ext3[](indexBits);
+            for (uint256 bit = 0; bit < indexBits; bit++) {
+                points[point][bit] = GoldilocksExt3.Ext3(
+                    uint64(TranscriptLib.squeezeChallenge(ts)),
+                    uint64(TranscriptLib.squeezeChallenge(ts)),
+                    uint64(TranscriptLib.squeezeChallenge(ts))
+                );
+            }
+        }
+    }
 
     /// @dev Run the Φ_gate sumcheck and its terminal check in a single scope
     /// so that `tauGate` and `gateFinalV2` don't live in `_verifyCore`'s stack
@@ -601,15 +883,9 @@ contract MleVerifier {
         TranscriptLib.domainSeparate(ts, "v2-gate-zerocheck");
         SumcheckVerifier.SumcheckProof memory gateSc = _copySumcheckProof(proof.gateSumcheckProof);
         uint256 gateFinalV2;
-        (rGateV2, gateFinalV2) = SumcheckVerifier.verify(
-            gateSc,
-            0,
-            vp.degreeBits,
-            2 + proof.quotientDegreeFactor,
-            ts
-        );
+        (rGateV2, gateFinalV2) = SumcheckVerifier.verify(gateSc, 0, vp.degreeBits, 2 + proof.quotientDegreeFactor, ts);
         // Terminal check uses proof.gates / wire+const evals at r_gate_v2 —
-        // all now C1+C2 bound at the verify() entry.
+        // all bound directly by the grouped WHIR opening statement.
         _checkGateTerminal(proof, tauGate, rGateV2, gateFinalV2);
     }
 
@@ -626,35 +902,45 @@ contract MleVerifier {
     ///
     /// Hashed layout (deterministic):
     ///   [0x00] version       (32 bytes)
-    ///   [0x20] numWires      (32 bytes)
-    ///   [0x40] numSelectors  (32 bytes)
-    ///   [0x60] numGateConstr (32 bytes)
-    ///   [0x80] qdf           (32 bytes)
-    ///   [0xa0] gatesLen      (32 bytes)
-    ///   [0xc0] gates data    (gatesLen × 288 bytes, raw calldata copy)
+    ///   [0x20] piLength      (32 bytes)
+    ///   [0x40] circuitDigest[0]
+    ///   [0x60] circuitDigest[1]
+    ///   [0x80] circuitDigest[2]
+    ///   [0xa0] circuitDigest[3]
+    ///   [0xc0] numWires      (32 bytes)
+    ///   [0xe0] numSelectors  (32 bytes)
+    ///   [0x100] numGateConstr (32 bytes)
+    ///   [0x120] qdf           (32 bytes)
+    ///   [0x140] gatesLen      (32 bytes)
+    ///   [0x160] gates data    (gatesLen × 288 bytes, raw calldata copy)
     ///
     /// Each GateInfo element occupies 9 × 32 = 288 bytes in calldata because
     /// uint8/uint16 fields are individually padded to the 32-byte word
     /// boundary; this matches the layout `calldatacopy` would produce.
     function computeGatesDigest(
         Plonky2GateEvaluator.GateInfo[] calldata gates,
+        uint256[] calldata circuitDigest,
+        uint256 numPublicInputs,
         uint256 numWires,
         uint256 numSelectors,
         uint256 numGateConstraints,
         uint256 quotientDegreeFactor
     ) public pure returns (bytes32 computed) {
+        if (circuitDigest.length != 4) revert InvalidMleProof();
         assembly {
             let ptr := mload(0x40)
-            mstore(ptr,            GATES_DIGEST_VERSION)
-            mstore(add(ptr, 0x20), numWires)
-            mstore(add(ptr, 0x40), numSelectors)
-            mstore(add(ptr, 0x60), numGateConstraints)
-            mstore(add(ptr, 0x80), quotientDegreeFactor)
+            mstore(ptr, GATES_DIGEST_VERSION)
+            mstore(add(ptr, 0x20), numPublicInputs)
+            calldatacopy(add(ptr, 0x40), circuitDigest.offset, 0x80)
+            mstore(add(ptr, 0xc0), numWires)
+            mstore(add(ptr, 0xe0), numSelectors)
+            mstore(add(ptr, 0x100), numGateConstraints)
+            mstore(add(ptr, 0x120), quotientDegreeFactor)
             let gatesLen := gates.length
-            mstore(add(ptr, 0xa0), gatesLen)
+            mstore(add(ptr, 0x140), gatesLen)
             let gatesBytes := mul(gatesLen, 288)
-            calldatacopy(add(ptr, 0xc0), gates.offset, gatesBytes)
-            computed := keccak256(ptr, add(0xc0, gatesBytes))
+            calldatacopy(add(ptr, 0x160), gates.offset, gatesBytes)
+            computed := keccak256(ptr, add(0x160, gatesBytes))
         }
     }
 
@@ -663,12 +949,14 @@ contract MleVerifier {
     function _requireGatesDigest(MleProof calldata proof, bytes32 expected) private pure {
         bytes32 computed = computeGatesDigest(
             proof.gates,
+            proof.circuitDigest,
+            proof.publicInputs.length,
             proof.witnessIndividualEvalsAtRGateV2.length,
             proof.numSelectors,
             proof.numGateConstraints,
             proof.quotientDegreeFactor
         );
-        require(computed == expected, "gatesDigest");
+        if (computed != expected) revert InvalidMleProof();
     }
 
     /// @dev C2 boundary canonicalization — fully Yul-ified.
@@ -701,6 +989,56 @@ contract MleVerifier {
             proof.publicInputs
         );
         _canonPih(proof.publicInputsHash);
+        uint256[4] memory expectedPublicInputsHash = PoseidonPublicInputsHash.hashNoPad(proof.publicInputs);
+        for (uint256 i = 0; i < 4; i++) {
+            if (proof.publicInputsHash[i] != expectedPublicInputsHash[i]) {
+                revert InvalidMleProof();
+            }
+        }
+    }
+
+    function _requireValidVkInputs(VerifyParams memory vp) private pure {
+        require(vp.kIs.length == vp.numRoutedWires, "kIs len");
+        require(vp.subgroupGenPowers.length == vp.degreeBits, "subgroup powers len");
+        for (uint256 i = 0; i < vp.kIs.length; i++) {
+            require(vp.kIs[i] < P, "kIs canonical");
+        }
+        for (uint256 i = 0; i < vp.subgroupGenPowers.length; i++) {
+            require(vp.subgroupGenPowers[i] < P, "subgroup powers canonical");
+        }
+    }
+
+    function _canonicalScalars(MleProof calldata proof) private pure returns (bool) {
+        if (
+            proof.preprocessedEvalValue >= P || proof.preprocessedBatchR >= P || proof.witnessEvalValue >= P
+                || proof.witnessBatchR >= P || proof.auxBatchR >= P || proof.auxConstraintEval >= P
+        ) return false;
+        if (
+            proof.auxPermEval >= P || proof.auxEvalValue >= P || proof.alpha >= P || proof.beta >= P || proof.gamma >= P
+                || proof.mu >= P
+        ) return false;
+        if (
+            proof.inverseHelpersBatchR >= P || proof.lambdaInv >= P || proof.muInv >= P || proof.gSubEvalAtRInv >= P
+                || proof.witnessEvalValueAtRInv >= P
+        ) return false;
+        return proof.preprocessedEvalValueAtRInv < P && proof.extChallenge < P && proof.witnessEvalValueAtRGateV2 < P
+            && proof.preprocessedEvalValueAtRGateV2 < P;
+    }
+
+    function _requireCanonicalSumchecks(MleProof calldata proof) private pure {
+        _requireCanonicalSumcheck(proof.combinedProof);
+        _requireCanonicalSumcheck(proof.invSumcheckProof);
+        _requireCanonicalSumcheck(proof.hSumcheckProof);
+        _requireCanonicalSumcheck(proof.gateSumcheckProof);
+    }
+
+    function _requireCanonicalSumcheck(SumcheckVerifier.SumcheckProof calldata proof) private pure {
+        for (uint256 i = 0; i < proof.roundPolys.length; i++) {
+            uint256[] calldata evals = proof.roundPolys[i].evals;
+            for (uint256 j = 0; j < evals.length; j++) {
+                if (evals[j] >= P) revert InvalidMleProof();
+            }
+        }
     }
 
     /// @dev Five-array canonicalization — first half. Single Yul block,
@@ -717,11 +1055,8 @@ contract MleVerifier {
                 for { let i := 0 } lt(i, n) { i := add(i, 1) } {
                     let v := calldataload(add(off, mul(i, 0x20)))
                     if iszero(lt(v, p)) {
-                        mstore(0x00, 0x08c379a000000000000000000000000000000000000000000000000000000000)
-                        mstore(0x04, 0x20)
-                        mstore(0x24, 9)
-                        mstore(0x44, "canonical")
-                        revert(0x00, 0x64)
+                        mstore(0x00, shl(224, 0xf0783a66))
+                        revert(0x00, 0x04)
                     }
                 }
             }
@@ -746,11 +1081,8 @@ contract MleVerifier {
                 for { let i := 0 } lt(i, n) { i := add(i, 1) } {
                     let v := calldataload(add(off, mul(i, 0x20)))
                     if iszero(lt(v, p)) {
-                        mstore(0x00, 0x08c379a000000000000000000000000000000000000000000000000000000000)
-                        mstore(0x04, 0x20)
-                        mstore(0x24, 9)
-                        mstore(0x44, "canonical")
-                        revert(0x00, 0x64)
+                        mstore(0x00, shl(224, 0xf0783a66))
+                        revert(0x00, 0x04)
                     }
                 }
             }
@@ -771,22 +1103,16 @@ contract MleVerifier {
             let h1 := calldataload(add(pih, 0x20))
             let h2 := calldataload(add(pih, 0x40))
             let h3 := calldataload(add(pih, 0x60))
-            if or(
-                or(iszero(lt(h0, P_)), iszero(lt(h1, P_))),
-                or(iszero(lt(h2, P_)), iszero(lt(h3, P_)))
-            ) {
-                mstore(0x00, 0x08c379a000000000000000000000000000000000000000000000000000000000)
-                mstore(0x04, 0x20)
-                mstore(0x24, 13)
-                mstore(0x44, "canonical pih")
-                revert(0x00, 0x64)
+            if or(or(iszero(lt(h0, P_)), iszero(lt(h1, P_))), or(iszero(lt(h2, P_)), iszero(lt(h3, P_)))) {
+                mstore(0x00, shl(224, 0xf0783a66))
+                revert(0x00, 0x04)
             }
         }
     }
 
     /// @dev Yul-optimized: replaces the per-element calldata→memory loop with
     /// a single `calldatacopy`.
-    function _derivePreprocessedBatchR(uint256[] calldata cd) private pure returns (uint256) {
+    function _derivePreprocessedBatchR(uint256[] calldata cd, bytes32 preprocessedRoot) private pure returns (uint256) {
         TranscriptLib.Transcript memory t;
         TranscriptLib.init(t);
         TranscriptLib.domainSeparate(t, "preprocessed-batch-r");
@@ -796,6 +1122,7 @@ contract MleVerifier {
             calldatacopy(add(m, 0x20), cd.offset, mul(n, 0x20))
         }
         TranscriptLib.absorbFieldVec(t, m);
+        TranscriptLib.absorbBytes(t, abi.encodePacked(preprocessedRoot));
         return TranscriptLib.squeezeChallenge(t);
     }
 
@@ -814,40 +1141,29 @@ contract MleVerifier {
         }
     }
 
-    /// @dev Derive WHIR evaluationPoint from sumcheck output r.
-    /// Each r[i] (Goldilocks base field) is embedded as Ext3(r[i], 0, 0).
-    /// SECURITY: The PCS evaluation point MUST be the sumcheck output point,
-    /// not an external parameter — this is the binding described in paper §4.4.
-    ///
-    /// Yul-optimized: avoids per-element struct allocation. We allocate one
-    /// contiguous memory region for the full `Ext3[]` (header + n×96 bytes
-    /// since Ext3 is 3×32 = 96 bytes in memory) and fill it from the `r` array
-    /// in one loop, pointer-patching the array element pointers at the same
-    /// time. Note that in memory, `Ext3[] memory arr` stores `arr[i]` as a
-    /// pointer at `arr + 0x20 + 32·i`, with each Ext3 struct body following
-    /// after the pointer table.
-    function _deriveEvalPoint(uint256[] memory r)
-        private pure returns (GoldilocksExt3.Ext3[] memory pt)
+    /// @dev Reverse the complete dense-LSB packed point
+    /// `[row_0..row_n-1,index_0..index_l-1]` into WHIR order.
+    function _derivePackedEvalPoint(uint256[] memory rowPoint, GoldilocksExt3.Ext3[] memory indexPoint)
+        private
+        pure
+        returns (GoldilocksExt3.Ext3[] memory pt)
     {
-        uint256 n = r.length;
-        pt = new GoldilocksExt3.Ext3[](n);
-        assembly {
-            // Payload of r: word i at add(r, 0x20 + 32·i).
-            // Each Ext3 struct has 3 uint64 fields, laid out in memory as
-            // 3 × 32-byte words (Solidity pads uint64 to word). With Solidity
-            // allocating each Ext3 separately, `pt[i]` contains a pointer.
-            let rPtr := add(r, 0x20)
-            let ptPtr := add(pt, 0x20)
-            for { let i := 0 } lt(i, n) { i := add(i, 1) } {
-                let ri := mload(add(rPtr, mul(i, 0x20)))
-                // Allocate Ext3 struct body: 3 words.
-                let structPtr := mload(0x40)
-                mstore(0x40, add(structPtr, 0x60))
-                mstore(structPtr, ri)              // c0 = r[i] (uint64 fits in word)
-                mstore(add(structPtr, 0x20), 0)    // c1 = 0
-                mstore(add(structPtr, 0x40), 0)    // c2 = 0
-                mstore(add(ptPtr, mul(i, 0x20)), structPtr)
-            }
+        pt = new GoldilocksExt3.Ext3[](rowPoint.length + indexPoint.length);
+        for (uint256 i = 0; i < indexPoint.length; i++) {
+            GoldilocksExt3.Ext3 memory value = indexPoint[indexPoint.length - 1 - i];
+            pt[i] = GoldilocksExt3.Ext3(value.c0, value.c1, value.c2);
+        }
+        for (uint256 i = 0; i < rowPoint.length; i++) {
+            pt[indexPoint.length + i] = GoldilocksExt3.Ext3(uint64(rowPoint[rowPoint.length - 1 - i]), 0, 0);
+        }
+    }
+
+    function _constituentIndexBits(uint256 width) private pure returns (uint256 bits) {
+        if (width == 0) revert InvalidMleProof();
+        uint256 capacity = 1;
+        while (capacity < width) {
+            capacity <<= 1;
+            bits++;
         }
     }
 
@@ -856,7 +1172,9 @@ contract MleVerifier {
     /// Solidity loop). Called 4× per verify — on a 16-round fixture this
     /// saves ~5 × 16 × #rounds gas vs the naïve loop.
     function _copySumcheckProof(SumcheckVerifier.SumcheckProof calldata src)
-        private pure returns (SumcheckVerifier.SumcheckProof memory dst)
+        private
+        pure
+        returns (SumcheckVerifier.SumcheckProof memory dst)
     {
         uint256 nRounds = src.roundPolys.length;
         dst.roundPolys = new SumcheckVerifier.RoundPoly[](nRounds);

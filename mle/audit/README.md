@@ -1,5 +1,9 @@
 # mle/audit — Lean 4 形式検証 (lean-formal-audit)
 
+> **Historical scope, retained during main integration (2026-09-06).** These models
+> target the July `ee80ee6d` lineage, not current wire v3. Their theorems are not a
+> soundness certificate for `*_v2` / `MLEWHIR3`. See [current scope](../README.md).
+
 `mle/paper/plonky2_mle_paper_v2.md` の WHIR ベース多重線形証明システムの
 Lean 4 形式化。スコープ・仮定・脅威モデルは [SCOPE.md](SCOPE.md)。
 

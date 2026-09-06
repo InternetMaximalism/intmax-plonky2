@@ -2,6 +2,10 @@
 
 **Draft v2 — April 2026**
 
+> Historical paper: the title's v2 is not the current `V2` API / wire-v3 protocol.
+> This text and its July corrections are retained as history, not a current
+> implementation specification. See [the current MLE specification](../README.md).
+
 ## Abstract
 
 We present a multilinear-native proving system that reuses Plonky2's circuit

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.25;
 
 import {GoldilocksExt3} from "./GoldilocksExt3.sol";
+import {InvalidMleProof} from "../MleProofErrors.sol";
 
 /// @title WhirLinearAlgebra
 /// @notice Linear algebra utilities for WHIR verification.
@@ -64,11 +65,24 @@ library WhirLinearAlgebra {
                 let omr1 := sub(p, r1)
                 let omr2 := sub(p, r2)
 
-                // r * x2i (Ext3 mul)
-                let t1 := addmod(mulmod(r1, x2, p), mulmod(r2, x1, p), p)
-                let rx0 := addmod(mulmod(r0, x0, p), mulmod(2, t1, p), p)
-                let rx1 := addmod(addmod(mulmod(r0, x1, p), mulmod(r1, x0, p), p), mulmod(2, mulmod(r2, x2, p), p), p)
-                let rx2 := addmod(addmod(mulmod(r0, x2, p), mulmod(r1, x1, p), p), mulmod(r2, x0, p), p)
+                // r * x2i (Ext3 mul). In-domain evaluation points are base-field elements
+                // (x1 = x2 = 0 for every square), so the scalar product is used whenever the
+                // extension limbs are zero; the two formulas agree exactly in that case.
+                let rx0 := 0
+                let rx1 := 0
+                let rx2 := 0
+                switch or(x1, x2)
+                case 0 {
+                    rx0 := mulmod(r0, x0, p)
+                    rx1 := mulmod(r1, x0, p)
+                    rx2 := mulmod(r2, x0, p)
+                }
+                default {
+                    let t1 := addmod(mulmod(r1, x2, p), mulmod(r2, x1, p), p)
+                    rx0 := addmod(mulmod(r0, x0, p), mulmod(2, t1, p), p)
+                    rx1 := addmod(addmod(mulmod(r0, x1, p), mulmod(r1, x0, p), p), mulmod(2, mulmod(r2, x2, p), p), p)
+                    rx2 := addmod(addmod(mulmod(r0, x2, p), mulmod(r1, x1, p), p), mulmod(r2, x0, p), p)
+                }
 
                 // term = oneMinusR + rx
                 let term0 := addmod(omr0, rx0, p)
@@ -84,14 +98,18 @@ library WhirLinearAlgebra {
                 res1 := nr1
                 res2 := nr2
 
-                // x2i = x2i^2 (Ext3 square = mul(x2i, x2i))
-                let st1 := addmod(mulmod(x1, x2, p), mulmod(x2, x1, p), p)
-                let sx0 := addmod(mulmod(x0, x0, p), mulmod(2, st1, p), p)
-                let sx1 := addmod(addmod(mulmod(x0, x1, p), mulmod(x1, x0, p), p), mulmod(2, mulmod(x2, x2, p), p), p)
-                let sx2 := addmod(addmod(mulmod(x0, x2, p), mulmod(x1, x1, p), p), mulmod(x2, x0, p), p)
-                x0 := sx0
-                x1 := sx1
-                x2 := sx2
+                // x2i = x2i^2 (Ext3 square = mul(x2i, x2i)); a base-field point stays base-field.
+                switch or(x1, x2)
+                case 0 { x0 := mulmod(x0, x0, p) }
+                default {
+                    let st1 := addmod(mulmod(x1, x2, p), mulmod(x2, x1, p), p)
+                    let sx0 := addmod(mulmod(x0, x0, p), mulmod(2, st1, p), p)
+                    let sx1 := addmod(addmod(mulmod(x0, x1, p), mulmod(x1, x0, p), p), mulmod(2, mulmod(x2, x2, p), p), p)
+                    let sx2 := addmod(addmod(mulmod(x0, x2, p), mulmod(x1, x1, p), p), mulmod(x2, x0, p), p)
+                    x0 := sx0
+                    x1 := sx1
+                    x2 := sx2
+                }
             }
 
             mstore(result, res0)
@@ -118,7 +136,7 @@ library WhirLinearAlgebra {
         // SECURITY: require length equality — silent truncation allows a prover to supply
         // a shorter evalPoint, making the verifier evaluate over fewer variables and
         // accepting constraints that only hold on a proper subset of the required domain.
-        require(numVariables == evalPoint.length, "WhirLinearAlgebra: length mismatch");
+        if (numVariables != evalPoint.length) revert InvalidMleProof();
         assembly {
             let p := P
             let res0 := 1
@@ -191,7 +209,7 @@ library WhirLinearAlgebra {
         // SECURITY: require length equality — silent truncation allows a prover to supply
         // a shorter array, causing the verifier to evaluate over fewer variables and
         // potentially accepting constraints that only hold on a subset of the domain.
-        require(point.length == evalPoint.length, "WhirLinearAlgebra: length mismatch");
+        if (point.length != evalPoint.length) revert InvalidMleProof();
         assembly {
             let p := P
             let res0 := 1
@@ -279,7 +297,7 @@ library WhirLinearAlgebra {
         // for idx in [0, count), which accesses beyond arr.length when start+count > arr.length.
         // Out-of-bounds reads return garbage from adjacent EVM memory, corrupting eq_weights
         // and thus the polynomial commitment check: dotProduct(eqWeights, evaluations).
-        require(start + count <= arr.length, "WhirLinearAlgebra: eqWeightsFrom out of bounds");
+        if (start > arr.length || count > arr.length - start) revert InvalidMleProof();
         uint256 size = 1 << count;
         weights = new GoldilocksExt3.Ext3[](size);
         // Allocate all Ext3 structs upfront
@@ -398,7 +416,7 @@ library WhirLinearAlgebra {
         // SECURITY: require length equality. Silent truncation to min(len_a, len_b) allows a
         // prover to supply a shorter evaluations array, making the verifier sum fewer terms and
         // treating the missing ones as zero. This breaks the polynomial commitment check.
-        require(a.length == b.length, "WhirLinearAlgebra: dotProduct length mismatch");
+        if (a.length != b.length) revert InvalidMleProof();
         assembly {
             let p := P
             let aLen := mload(a)

@@ -4,6 +4,7 @@ pragma solidity ^0.8.25;
 import {Keccak256Chain} from "./Keccak256Chain.sol";
 import {GoldilocksExt3} from "./GoldilocksExt3.sol";
 import {SpongefishMerkle} from "./SpongefishMerkle.sol";
+import {InvalidMleProof} from "../MleProofErrors.sol";
 
 /// @title SpongefishWhir
 /// @notice WHIR polynomial commitment verifier for WizardOfMenlo/whir (spongefish transcript).
@@ -58,7 +59,9 @@ library SpongefishWhir {
         bytes memory transcript,
         uint256 numBytes
     ) internal pure returns (bytes memory data) {
-        require(ts.transcriptPos + numBytes <= transcript.length, "transcript underflow");
+        if (ts.transcriptPos > transcript.length || numBytes > transcript.length - ts.transcriptPos) {
+            revert InvalidMleProof();
+        }
         data = _memSlice(transcript, ts.transcriptPos, numBytes);
         ts.transcriptPos += numBytes;
         ts.sponge.absorb(data);
@@ -94,7 +97,10 @@ library SpongefishWhir {
             // GL_P (which encodes as 0 in the field) but uses a different byte pattern
             // can steer challenge derivation, because the transcript hash is over bytes,
             // not over field values. Canonical encoding requires raw < GL_P.
-            if iszero(lt(raw, 0xFFFFFFFF00000001)) { revert(0, 0) }
+            if iszero(lt(raw, 0xFFFFFFFF00000001)) {
+                mstore(0x00, shl(224, 0xf0783a66))
+                revert(0x00, 0x04)
+            }
             val := raw // already canonical; no mod needed
         }
     }
@@ -149,7 +155,7 @@ library SpongefishWhir {
         // The sponge already absorbed the raw bytes via proverMessage above; if any
         // raw >= GL_P, the prover is using a non-canonical byte pattern to steer
         // Fiat-Shamir challenge derivation while still claiming an in-field value.
-        require(raw0 < GL_P && raw1 < GL_P && raw2 < GL_P, "SpongefishWhir: non-canonical field element");
+        if (raw0 >= GL_P || raw1 >= GL_P || raw2 >= GL_P) revert InvalidMleProof();
         c0 = uint64(raw0);
         c1 = uint64(raw1);
         c2 = uint64(raw2);
@@ -173,7 +179,9 @@ library SpongefishWhir {
         bytes memory hints,
         uint256 numBytes
     ) internal pure returns (bytes memory data) {
-        require(ts.hintPos + numBytes <= hints.length, "hints underflow");
+        if (ts.hintPos > hints.length || numBytes > hints.length - ts.hintPos) {
+            revert InvalidMleProof();
+        }
         data = _memSlice(hints, ts.hintPos, numBytes);
         ts.hintPos += numBytes;
     }
@@ -321,28 +329,41 @@ library SpongefishWhir {
     // -----------------------------------------------------------------------
 
     /// @dev Interpret `len` LE bytes from `data[offset..]` as a big integer, reduce mod GL_P.
-    function _leModReduce64(bytes memory data, uint256 offset, uint256 len) private pure returns (uint64) {
-        // For len <= 32, we can use a single uint256
-        // For len > 32 (e.g., 40 bytes), we need to handle carefully
-        uint256 acc = 0;
-        // Read in chunks of up to 32 bytes
-        for (uint256 i = 0; i < len && i < 32; i++) {
-            acc |= uint256(uint8(data[offset + i])) << (i * 8);
-        }
-        if (len > 32) {
-            // Handle remaining bytes (e.g., bytes 32-39 for 40-byte input)
-            uint256 hi = 0;
-            for (uint256 i = 32; i < len; i++) {
-                hi |= uint256(uint8(data[offset + i])) << ((i - 32) * 8);
+    function _leModReduce64(bytes memory data, uint256 offset, uint256 len) private pure returns (uint64 result) {
+        // Interpret `len` little-endian bytes (len <= 40) as an integer and reduce it mod GL_P.
+        // Byte-for-byte identical to the previous per-byte accumulation; the words are read
+        // once and byte-swapped in assembly instead of assembling the integer bytewise.
+        if (len == 0 || len > 40 || offset > data.length || len > data.length - offset) revert InvalidMleProof();
+        assembly ("memory-safe") {
+            function bswap(x) -> y {
+                y := or(shr(8, and(x, 0xFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00)), shl(8, and(x, 0x00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF)))
+                y := or(shr(16, and(y, 0xFFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000)), shl(16, and(y, 0x0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF)))
+                y := or(shr(32, and(y, 0xFFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000)), shl(32, and(y, 0x00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF)))
+                y := or(shr(64, and(y, 0xFFFFFFFFFFFFFFFF0000000000000000FFFFFFFFFFFFFFFF0000000000000000)), shl(64, and(y, 0x0000000000000000FFFFFFFFFFFFFFFF0000000000000000FFFFFFFFFFFFFFFF)))
+                y := or(shr(128, y), shl(128, y))
             }
-            // acc = lo + hi * 2^256
-            // result = (lo + hi * 2^256) mod GL_P
-            // Since GL_P is 64-bit, 2^256 mod GL_P = 2^32 - 1 (see _pow256ModP()).
-            // (The formerly-present dead variable `pow256modP = 2**64` was wrong and removed.)
-            acc = addmod(acc % uint256(GL_P), mulmod(hi, _pow256ModP(), uint256(GL_P)), uint256(GL_P));
-            return uint64(acc);
+            let p := 0xFFFFFFFF00000001
+            let src := add(add(data, 0x20), offset)
+            let low := 0
+            let high := 0
+            switch gt(len, 32)
+            case 1 {
+                // bytes [0, 32) form the low word, bytes [32, len) the high word
+                low := bswap(mload(src))
+                let rest := sub(len, 32)
+                // load the tail word and keep only its first `rest` bytes (little-endian => low bytes)
+                high := and(bswap(mload(add(src, 32))), sub(shl(mul(8, rest), 1), 1))
+            }
+            default {
+                // keep only the first `len` bytes of the loaded word
+                let w := bswap(mload(src))
+                switch eq(len, 32)
+                case 1 { low := w }
+                default { low := and(w, sub(shl(mul(8, len), 1), 1)) }
+            }
+            // value = low + high * 2^256; 2^256 mod p = 2^32 - 1
+            result := addmod(mod(low, p), mulmod(high, 0xFFFFFFFF, p), p)
         }
-        return uint64(acc % uint256(GL_P));
     }
 
     /// @dev Compute 2^256 mod GL_P (precomputed constant).

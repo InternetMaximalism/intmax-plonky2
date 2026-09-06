@@ -1,5 +1,8 @@
 # 検証レポート — WHIR ベース多重線形証明システムの Lean 4 形式監査
 
+> Historical report: this is not a wire-v3 audit or production approval.
+> Current implementation scope and release limitations: [mle/README.md](../README.md).
+
 日付: 2026-07-06 / 対象コミット: ee80ee6d / ブランチ: claude/gifted-germain-0283dd
 成果物: `mle/audit/`(Lean 4.10.0、Mathlib 非依存、`lake build` 警告0、
 **46 定理・`sorry` 0・明示公理 1**)
