@@ -10,7 +10,7 @@
     },
     {
       "path": ".github/workflows/continuous-integration-workflow.yml",
-      "sha256": "7ebc81deb3c7ee2da6d2bb12a821faf30a3abde22540f8e7391d9c0a1b67e41e",
+      "sha256": "6df9ae237fbc301514e881e1152f35147af04ef7a7c2b2a126df7ddd08f4bc41",
       "kind": "tooling"
     },
     {
@@ -184,18 +184,13 @@
       "kind": "implementation"
     },
     {
-      "path": "mle/Cargo.toml",
-      "sha256": "5818fdd36402f0775d265506bf777e42ab5e3e1ba68f9a58f9c82a8dd42cc168",
+      "path": "mle/audit/.gitignore",
+      "sha256": "4ee0767347b2c1efcab81a0f3e8ee61acaf41256ff6cd906aa3f9520303f0f03",
       "kind": "tooling"
     },
     {
-      "path": "mle/README.md",
-      "sha256": "0026328bd82c48c23c2db46e0bbaaf68e93cb76d32e50ea966a3703d583d2419",
-      "kind": "spec"
-    },
-    {
       "path": "mle/audit/Audit.lean",
-      "sha256": "eae41ade8f03eb59b01db2a052b4034304d93bb3d13f290a6faa369ed61f59e2",
+      "sha256": "a3110189bae85e8237616b6d3845be41a24cf960e9de6b415b758a4854a3b112",
       "kind": "current-model"
     },
     {
@@ -335,7 +330,7 @@
     },
     {
       "path": "mle/audit/Audit/Wire3/FermatBridge.lean",
-      "sha256": "7111cbe39578836be9a18b237fffdf6bcb91a472aa3a5ec21356e81062da4837",
+      "sha256": "2b8521af541db1b6a0b36b50b54d8950f513c7cd7b17b5855f55c3f7e6f6d5c8",
       "kind": "current-model"
     },
     {
@@ -360,7 +355,22 @@
     },
     {
       "path": "mle/audit/Audit/Wire3/GoldilocksCertificate.lean",
-      "sha256": "d2375a31b2a1354dd5a77038b32e563c06cbd2c6774a1aeb362ebfc6de34c95d",
+      "sha256": "02f13d97acc41a188db8eb22fcac47e2f94dbb8e51cf3e1b26ef241deba1da59",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/GoldilocksExt3Field.lean",
+      "sha256": "4e886861b59cc5f5d3a4a9c320a68bc81fe2cbca446c77d5727ddad61f5994b3",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/GoldilocksFoundation.lean",
+      "sha256": "95a029140b5a6d9c52b05ddb0aa7587cf5518b3297bed77156a5c502a123d7ab",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/GoldilocksNorm.lean",
+      "sha256": "bdcd5d9e9a2533ed533eab4a647bfb3d71155c9d9236d33c428bd770b8991137",
       "kind": "current-model"
     },
     {
@@ -380,7 +390,7 @@
     },
     {
       "path": "mle/audit/Audit/Wire3/ModularPower.lean",
-      "sha256": "691c08f3aaa4c049dfce07deb1f8673540dfecb9903adb1e5e555f588066daef",
+      "sha256": "9f2e5af521d966c3d26701476e1327944fd4c07d4c54bb7fbbe6a8e3e7925fb2",
       "kind": "current-model"
     },
     {
@@ -440,7 +450,7 @@
     },
     {
       "path": "mle/audit/Audit/Wire3/WhirFinal.lean",
-      "sha256": "24e495d7ab4138d2c20828904dcb02d1f2c11cc64a7f570dd79aab86ebe21b61",
+      "sha256": "7152687b27777d61534dda026d3fa5e4b250e2a5980261473a47bd6ec7fd22e7",
       "kind": "current-model"
     },
     {
@@ -484,6 +494,16 @@
       "kind": "current-model"
     },
     {
+      "path": "mle/audit/check-proof-dependencies.py",
+      "sha256": "89297279289d9c63fda5e7827559cfbe1484ec9d1caaea529ef6f5a2a4dac288",
+      "kind": "tooling"
+    },
+    {
+      "path": "mle/audit/check-wire3.py",
+      "sha256": "3fa98a2274c40cc1a0afb29c97877e8dd8c9acc47dbed35ad3c5289fb4d39b40",
+      "kind": "tooling"
+    },
+    {
       "path": "mle/audit/HISTORICAL-README.md",
       "sha256": "dc418b21632bca2c1b9dc6d45803aa84a93eed10facf9b40d5de9e9c666c631c",
       "kind": "historical"
@@ -504,33 +524,13 @@
       "kind": "historical"
     },
     {
-      "path": "mle/audit/README.md",
-      "sha256": "5418ad4d1e3bcff47726c716df846b41293600c878ff49dac7038737342a67ed",
-      "kind": "spec"
-    },
-    {
-      "path": "mle/audit/REPORT.md",
-      "sha256": "a7d5c0efb908afc9002b9ee5ae56272b9e58b358811fd02e0e9ff0ee164c3894",
-      "kind": "spec"
-    },
-    {
-      "path": "mle/audit/SCOPE.md",
-      "sha256": "f263304c0c4d222a2528687f1245d258c4199584d4c893098e2656a205bfc2fd",
-      "kind": "spec"
-    },
-    {
-      "path": "mle/audit/check-wire3.py",
-      "sha256": "ebd7c310b4fb86eca38de35ff72f7a75e84f97cf60a668fa7ef2c649e502911b",
-      "kind": "tooling"
-    },
-    {
       "path": "mle/audit/lake-manifest.json",
-      "sha256": "0f8ecd3218144c8aff75f77478663e57c4d05bf2931eeb5c9d094feefcf53752",
+      "sha256": "c88ac7a5b25e85e48784e94b78a62c33b77dac588632a510954e2a047342791f",
       "kind": "tooling"
     },
     {
       "path": "mle/audit/lakefile.lean",
-      "sha256": "dc4514c5f6940ec74d4103566be75738d7da5401278898fe20fb306442b47f18",
+      "sha256": "4a373411443f9b48648d9ebd7edf8d545959151bac1fc1f8ef59f7de82e5fd14",
       "kind": "tooling"
     },
     {
@@ -539,8 +539,43 @@
       "kind": "tooling"
     },
     {
+      "path": "mle/audit/provision-proof-dependencies.py",
+      "sha256": "d6ff3448a6511fd2e46c496cbb2838ab2d0ba55339face68dd92929fc716643e",
+      "kind": "tooling"
+    },
+    {
+      "path": "mle/audit/README.md",
+      "sha256": "2ed228884e0bc61c5d7b5738cfbb7f682922a1b3941e195c032a5ccd68d42bf5",
+      "kind": "spec"
+    },
+    {
+      "path": "mle/audit/REPORT.md",
+      "sha256": "5d2f343e7b2aa389041d75b2bfdf5750a53cb4a7feacd942215a3f7719849464",
+      "kind": "spec"
+    },
+    {
+      "path": "mle/audit/SCOPE.md",
+      "sha256": "0225d2d8180f30740e3db43249f9477ad9f4eb960a94863a93764ece6cf36e38",
+      "kind": "spec"
+    },
+    {
       "path": "mle/audit/test-check-wire3.py",
-      "sha256": "66aacc3996a432342aff343f6f60c83f24fd244dd967c3911250ca07f2b899f7",
+      "sha256": "ef79832447593b9ebcea4e4aed4a68d4602a9a7c66e1dbf1495703bf38d7ae26",
+      "kind": "tooling"
+    },
+    {
+      "path": "mle/audit/test-proof-dependencies.py",
+      "sha256": "57a91323eb22b3f5e9349294690b63027f1b012542fe6bc5c4f58e780476ed57",
+      "kind": "tooling"
+    },
+    {
+      "path": "mle/audit/test-provision-proof-dependencies.py",
+      "sha256": "aff9875772ce44cf5d8ac77790c74b7aa149e15e575cb877bcb5699923adc6af",
+      "kind": "tooling"
+    },
+    {
+      "path": "mle/Cargo.toml",
+      "sha256": "5818fdd36402f0775d265506bf777e42ab5e3e1ba68f9a58f9c82a8dd42cc168",
       "kind": "tooling"
     },
     {
@@ -576,6 +611,21 @@
     {
       "path": "mle/contracts/src/EqPolyLib.sol",
       "sha256": "3c7e03ac405328891922886a0da4b823a9cf9a2c5b6df2513369962e4abdaf31",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/generated/MleWhirV1.sol",
+      "sha256": "44fdc5e9cbe870ebbd88c48ffe3ab3031827a0a7bd033c9b321f67dc61905620",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/generated/MleWhirV2.sol",
+      "sha256": "43b5ade1faad8247d19583eb6b5122b59db30d25173641293cd30823198fe2eb",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/generated/WhirProfilesV2.sol",
+      "sha256": "e55b387d0cef720bbb0e22d7b95bb281e6837d5b3b41fd37c73c02366b2126d1",
       "kind": "implementation"
     },
     {
@@ -649,36 +699,6 @@
       "kind": "implementation"
     },
     {
-      "path": "mle/contracts/src/SumcheckVerifier.sol",
-      "sha256": "7029a9341f38e370067d2b59c4a1c5468c7ba897b2543a4f7e71782a9d3eb702",
-      "kind": "implementation"
-    },
-    {
-      "path": "mle/contracts/src/TranscriptLib.sol",
-      "sha256": "d8b9b49c3002844ad9f5e4994188075e89e4cee503726aa75d48d03bec0bfe6b",
-      "kind": "implementation"
-    },
-    {
-      "path": "mle/contracts/src/TranscriptV2.sol",
-      "sha256": "0278cc068908c27d166a88e018fe3a79c179d79b51b8cd9be4a7ea04d0c0132e",
-      "kind": "implementation"
-    },
-    {
-      "path": "mle/contracts/src/generated/MleWhirV1.sol",
-      "sha256": "44fdc5e9cbe870ebbd88c48ffe3ab3031827a0a7bd033c9b321f67dc61905620",
-      "kind": "implementation"
-    },
-    {
-      "path": "mle/contracts/src/generated/MleWhirV2.sol",
-      "sha256": "43b5ade1faad8247d19583eb6b5122b59db30d25173641293cd30823198fe2eb",
-      "kind": "implementation"
-    },
-    {
-      "path": "mle/contracts/src/generated/WhirProfilesV2.sol",
-      "sha256": "e55b387d0cef720bbb0e22d7b95bb281e6837d5b3b41fd37c73c02366b2126d1",
-      "kind": "implementation"
-    },
-    {
       "path": "mle/contracts/src/spongefish/GoldilocksExt3.sol",
       "sha256": "e1df25e395e5136c3247f591f764187b284c448da2b251b11708715ea4d1f7e6",
       "kind": "implementation"
@@ -706,6 +726,21 @@
     {
       "path": "mle/contracts/src/spongefish/WhirLinearAlgebra.sol",
       "sha256": "f3da8dc815df70b8463ee3d70076d3c05f1b3879341e9c82e71d9af4b0e34424",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/SumcheckVerifier.sol",
+      "sha256": "7029a9341f38e370067d2b59c4a1c5468c7ba897b2543a4f7e71782a9d3eb702",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/TranscriptLib.sol",
+      "sha256": "d8b9b49c3002844ad9f5e4994188075e89e4cee503726aa75d48d03bec0bfe6b",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/src/TranscriptV2.sol",
+      "sha256": "0278cc068908c27d166a88e018fe3a79c179d79b51b8cd9be4a7ea04d0c0132e",
       "kind": "implementation"
     },
     {
@@ -874,6 +909,11 @@
       "kind": "spec"
     },
     {
+      "path": "mle/README.md",
+      "sha256": "0026328bd82c48c23c2db46e0bbaaf68e93cb76d32e50ea966a3703d583d2419",
+      "kind": "spec"
+    },
+    {
       "path": "mle/src/commitment/merkle_pcs.rs",
       "sha256": "35bb8910ac1fbbe793482935f7c0f2072fd4e2be8619f5e3afe6a0d14ffccd5f",
       "kind": "implementation"
@@ -919,13 +959,13 @@
       "kind": "implementation"
     },
     {
-      "path": "mle/src/fixture.rs",
-      "sha256": "34f272781c692cc6c0e39b6aa2e4724add6a48d5b31458a2d8f3b5b8f2351d93",
+      "path": "mle/src/fixture_v2.rs",
+      "sha256": "30461b43d533fac1604450cbff9907fb7d71ee52029358644ea4f6f0418fdca3",
       "kind": "implementation"
     },
     {
-      "path": "mle/src/fixture_v2.rs",
-      "sha256": "30461b43d533fac1604450cbff9907fb7d71ee52029358644ea4f6f0418fdca3",
+      "path": "mle/src/fixture.rs",
+      "sha256": "34f272781c692cc6c0e39b6aa2e4724add6a48d5b31458a2d8f3b5b8f2351d93",
       "kind": "implementation"
     },
     {
@@ -969,23 +1009,23 @@
       "kind": "implementation"
     },
     {
-      "path": "mle/src/proof.rs",
-      "sha256": "138b9c518bea9c60f1239780c4ddb6a8ce35843a4cfac8966455785038b2b11b",
-      "kind": "implementation"
-    },
-    {
       "path": "mle/src/proof_v2.rs",
       "sha256": "cb6249c58a608342d00c12509bc67ab9e569902453c0e18fd6254569d00ea8cd",
       "kind": "implementation"
     },
     {
-      "path": "mle/src/prover.rs",
-      "sha256": "e816469317597876419625560edaaed30b80c087beb47d20e36eddfef2b2d6ce",
+      "path": "mle/src/proof.rs",
+      "sha256": "138b9c518bea9c60f1239780c4ddb6a8ce35843a4cfac8966455785038b2b11b",
       "kind": "implementation"
     },
     {
       "path": "mle/src/prover_v2.rs",
       "sha256": "55dcf226e6a693c4a561cf388bb4741da8e7b59972b39c6c5e8f5e7f7f0176d8",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/prover.rs",
+      "sha256": "e816469317597876419625560edaaed30b80c087beb47d20e36eddfef2b2d6ce",
       "kind": "implementation"
     },
     {
@@ -1024,23 +1064,23 @@
       "kind": "implementation"
     },
     {
-      "path": "mle/src/transcript.rs",
-      "sha256": "652d94367b7064815da87cdacb9c25a95f67bd089af96ff8539246865fd75560",
-      "kind": "implementation"
-    },
-    {
       "path": "mle/src/transcript_v2.rs",
       "sha256": "0ce3f8bed6b7db90a590770fc9cd67c899fa6feacf8c536ee7cf97cc18cb2764",
       "kind": "implementation"
     },
     {
-      "path": "mle/src/verifier.rs",
-      "sha256": "aeec9b86b7e2a3425d58c0320bcf16a2759d667c8f60a86043265c5c9fc7a57c",
+      "path": "mle/src/transcript.rs",
+      "sha256": "652d94367b7064815da87cdacb9c25a95f67bd089af96ff8539246865fd75560",
       "kind": "implementation"
     },
     {
       "path": "mle/src/verifier_v2.rs",
       "sha256": "340f59dbc6f2761de4e052ebbb80d11aea58e66fd331ab10a9574b0b3ed057d9",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/src/verifier.rs",
+      "sha256": "aeec9b86b7e2a3425d58c0320bcf16a2759d667c8f60a86043265c5c9fc7a57c",
       "kind": "implementation"
     },
     {
@@ -1164,11 +1204,6 @@
       "kind": "implementation"
     },
     {
-      "path": "plonky2/Cargo.toml",
-      "sha256": "d19e0c9a581bfe6b788407057df28c341cd1877070690e4dc1829816f6f154e2",
-      "kind": "tooling"
-    },
-    {
       "path": "plonky2/benches/allocator/mod.rs",
       "sha256": "201a283c3def9adfe6f1996c01856c660ebdefc47878c8f1d59fbabeb8323ad0",
       "kind": "implementation"
@@ -1204,6 +1239,11 @@
       "kind": "implementation"
     },
     {
+      "path": "plonky2/Cargo.toml",
+      "sha256": "d19e0c9a581bfe6b788407057df28c341cd1877070690e4dc1829816f6f154e2",
+      "kind": "tooling"
+    },
+    {
       "path": "plonky2/examples/bench_recursion.rs",
       "sha256": "256a2ddc1a460ba34eab51b2089ef1ffadd9d186692ac274ce8e8921a836a4f7",
       "kind": "implementation"
@@ -1214,13 +1254,13 @@
       "kind": "implementation"
     },
     {
-      "path": "plonky2/examples/fibonacci.rs",
-      "sha256": "3041258959b902b98a2703cd3707682202c79cb87be8851e7bc2a0bbd7279f3e",
+      "path": "plonky2/examples/fibonacci_serialization.rs",
+      "sha256": "fef3077e3b01ff3df276a1ad38036d3c0f4afaccba7dc369e37695b5110eaaa3",
       "kind": "implementation"
     },
     {
-      "path": "plonky2/examples/fibonacci_serialization.rs",
-      "sha256": "fef3077e3b01ff3df276a1ad38036d3c0f4afaccba7dc369e37695b5110eaaa3",
+      "path": "plonky2/examples/fibonacci.rs",
+      "sha256": "3041258959b902b98a2703cd3707682202c79cb87be8851e7bc2a0bbd7279f3e",
       "kind": "implementation"
     },
     {
@@ -1319,13 +1359,13 @@
       "kind": "implementation"
     },
     {
-      "path": "plonky2/src/gadgets/arithmetic.rs",
-      "sha256": "3f99cf368577baa99ec78614fbd023cc22350c59874effad29420277c21b6d80",
+      "path": "plonky2/src/gadgets/arithmetic_extension.rs",
+      "sha256": "6673ad309410723e14c8feccf14cf07683323c932875bad5daf1e7752ef66bf5",
       "kind": "implementation"
     },
     {
-      "path": "plonky2/src/gadgets/arithmetic_extension.rs",
-      "sha256": "6673ad309410723e14c8feccf14cf07683323c932875bad5daf1e7752ef66bf5",
+      "path": "plonky2/src/gadgets/arithmetic.rs",
+      "sha256": "3f99cf368577baa99ec78614fbd023cc22350c59874effad29420277c21b6d80",
       "kind": "implementation"
     },
     {
@@ -1409,23 +1449,23 @@
       "kind": "implementation"
     },
     {
-      "path": "plonky2/src/gates/gate.rs",
-      "sha256": "9dc79c3209f16cff8d234e071d430641a94d853fdff033e989f4e19e645fef61",
-      "kind": "implementation"
-    },
-    {
       "path": "plonky2/src/gates/gate_testing.rs",
       "sha256": "f844d4b15a165d01ed95ac27a6eaace2f40d788663693a68c54f7d89fc0f78ed",
       "kind": "implementation"
     },
     {
-      "path": "plonky2/src/gates/lookup.rs",
-      "sha256": "bec04139495d71b9d70b50d0d22faf79097aae86fb56e7f4e70409bb014feb41",
+      "path": "plonky2/src/gates/gate.rs",
+      "sha256": "9dc79c3209f16cff8d234e071d430641a94d853fdff033e989f4e19e645fef61",
       "kind": "implementation"
     },
     {
       "path": "plonky2/src/gates/lookup_table.rs",
       "sha256": "ce0f92bd8d56b1b5b7cc33f9eff879baf8bb9a9ebab0c8621c843a02b9d9aaaf",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/gates/lookup.rs",
+      "sha256": "bec04139495d71b9d70b50d0d22faf79097aae86fb56e7f4e70409bb014feb41",
       "kind": "implementation"
     },
     {
@@ -1449,13 +1489,13 @@
       "kind": "implementation"
     },
     {
-      "path": "plonky2/src/gates/poseidon.rs",
-      "sha256": "960d7fa257ae2b2ae1b854d6dde4c247143dc109118da4eabe8e4d9ab6ba7a87",
+      "path": "plonky2/src/gates/poseidon_mds.rs",
+      "sha256": "b26c3a1f752f0b364d2158099fbf484fd53d3e87e5f998437f5ec5e73b3364bf",
       "kind": "implementation"
     },
     {
-      "path": "plonky2/src/gates/poseidon_mds.rs",
-      "sha256": "b26c3a1f752f0b364d2158099fbf484fd53d3e87e5f998437f5ec5e73b3364bf",
+      "path": "plonky2/src/gates/poseidon.rs",
+      "sha256": "960d7fa257ae2b2ae1b854d6dde4c247143dc109118da4eabe8e4d9ab6ba7a87",
       "kind": "implementation"
     },
     {
@@ -1469,13 +1509,13 @@
       "kind": "implementation"
     },
     {
-      "path": "plonky2/src/gates/reducing.rs",
-      "sha256": "34f4693ae2479e1ae3d5ca8d812d8d350ae3248def486c93e48f24358697f4f8",
+      "path": "plonky2/src/gates/reducing_extension.rs",
+      "sha256": "43e38d9d29881f5a1753c0167f3769cf004930c368cbf49c7876aa11a866cbe8",
       "kind": "implementation"
     },
     {
-      "path": "plonky2/src/gates/reducing_extension.rs",
-      "sha256": "43e38d9d29881f5a1753c0167f3769cf004930c368cbf49c7876aa11a866cbe8",
+      "path": "plonky2/src/gates/reducing.rs",
+      "sha256": "34f4693ae2479e1ae3d5ca8d812d8d350ae3248def486c93e48f24358697f4f8",
       "kind": "implementation"
     },
     {
@@ -1539,13 +1579,13 @@
       "kind": "implementation"
     },
     {
-      "path": "plonky2/src/hash/merkle_tree.rs",
-      "sha256": "4671d3fabeee9fe7a0d9c836323113646ef6808f02e9df9ea8accb3410ded2b8",
+      "path": "plonky2/src/hash/merkle_tree_gpu.rs",
+      "sha256": "9eb12e7becf69e780ea1c0b172ba4788218b539afc5c7df65562d04a8ca53637",
       "kind": "implementation"
     },
     {
-      "path": "plonky2/src/hash/merkle_tree_gpu.rs",
-      "sha256": "9eb12e7becf69e780ea1c0b172ba4788218b539afc5c7df65562d04a8ca53637",
+      "path": "plonky2/src/hash/merkle_tree.rs",
+      "sha256": "4671d3fabeee9fe7a0d9c836323113646ef6808f02e9df9ea8accb3410ded2b8",
       "kind": "implementation"
     },
     {
@@ -1559,11 +1599,6 @@
       "kind": "implementation"
     },
     {
-      "path": "plonky2/src/hash/poseidon.rs",
-      "sha256": "f90ec69dcc376382730b41d60e0364f940ddaff1476e27dc393b3f44c37975ca",
-      "kind": "implementation"
-    },
-    {
       "path": "plonky2/src/hash/poseidon_crandall.rs",
       "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
       "kind": "implementation"
@@ -1571,6 +1606,11 @@
     {
       "path": "plonky2/src/hash/poseidon_goldilocks.rs",
       "sha256": "e4543257d4e615c8c99218ab07aaf3d22151a6437584d435acc5c2c1d95c7895",
+      "kind": "implementation"
+    },
+    {
+      "path": "plonky2/src/hash/poseidon.rs",
+      "sha256": "f90ec69dcc376382730b41d60e0364f940ddaff1476e27dc393b3f44c37975ca",
       "kind": "implementation"
     },
     {
@@ -1839,13 +1879,13 @@
       "kind": "implementation"
     },
     {
-      "path": "starky/src/stark.rs",
-      "sha256": "244e067e40689936a64a3c2ce1010b141eb9e8198a2aefb4e24b97f6d60fd9fd",
+      "path": "starky/src/stark_testing.rs",
+      "sha256": "b88da1120dbe9482c7973d2efe5c9f25dd586a8727368ce5c03d7f9feacd57d2",
       "kind": "implementation"
     },
     {
-      "path": "starky/src/stark_testing.rs",
-      "sha256": "b88da1120dbe9482c7973d2efe5c9f25dd586a8727368ce5c03d7f9feacd57d2",
+      "path": "starky/src/stark.rs",
+      "sha256": "244e067e40689936a64a3c2ce1010b141eb9e8198a2aefb4e24b97f6d60fd9fd",
       "kind": "implementation"
     },
     {
@@ -3135,6 +3175,91 @@
         "mle/contracts/src/spongefish/SpongefishWhirVerify.sol"
       ],
       "scope": "Projection of the actual folding schedule guards only: checked remaining-variable subtraction, exact initial/intermediate/final partition, per-round suffix annotations, interleaving and final powers of two. Domain/generator/coset/evaluation points/ABI checks and caller VK derivation are not implemented; true is NOT complete parameter validation or a source-execution/soundness theorem."
+    },
+    {
+      "module": "Audit.Wire3.GoldilocksFoundation",
+      "theorems": [
+        "Audit.Wire3.GoldilocksFoundation.small_factors_prime",
+        "Audit.Wire3.GoldilocksFoundation.prime_divisor_cases",
+        "Audit.Wire3.GoldilocksFoundation.nat_mod_power_to_zmod",
+        "Audit.Wire3.GoldilocksFoundation.certificate_factor_power_ne_one",
+        "Audit.Wire3.GoldilocksFoundation.modulus_prime",
+        "Audit.Wire3.GoldilocksFoundation.general_fermat_zmod",
+        "Audit.Wire3.GoldilocksFoundation.general_fermat_nat",
+        "Audit.Wire3.GoldilocksFoundation.general_fermat_canonical",
+        "Audit.Wire3.GoldilocksFoundation.no_cubic_root_of_two",
+        "Audit.Wire3.GoldilocksFoundation.successful_actual_inverse_is_two_sided"
+      ],
+      "sources": [
+        "mle/contracts/src/GoldilocksField.sol",
+        "mle/contracts/src/spongefish/GoldilocksExt3.sol"
+      ],
+      "scope": "Concrete p primality from the executable certificate and proved Lucas criterion covering all prime divisors; general Fermat in Nat.mod, no cubic root of two, actual inverse-success two-sidedness. Exact pinned Mathlib imports, no assumed primality/Fermat/extension field. Not source/Yul refinement or PCS probability."
+    },
+    {
+      "module": "Audit.Wire3.GoldilocksNorm",
+      "theorems": [
+        "Audit.Wire3.GoldilocksNorm.norm_expansion",
+        "Audit.Wire3.GoldilocksNorm.adjugate_adjugate_0",
+        "Audit.Wire3.GoldilocksNorm.adjugate_adjugate_1",
+        "Audit.Wire3.GoldilocksNorm.adjugate_adjugate_2",
+        "Audit.Wire3.GoldilocksNorm.no_cubic_root_in_zmod",
+        "Audit.Wire3.GoldilocksNorm.homogeneous_adjugate_equations_force_zero",
+        "Audit.Wire3.GoldilocksNorm.zero_norm_forces_zero_adjugate",
+        "Audit.Wire3.GoldilocksNorm.zero_adjugate_forces_zero_coordinates",
+        "Audit.Wire3.GoldilocksNorm.norm_zero_iff_coordinates_zero",
+        "Audit.Wire3.GoldilocksNorm.cast_reduce",
+        "Audit.Wire3.GoldilocksNorm.cast_add",
+        "Audit.Wire3.GoldilocksNorm.cast_mul",
+        "Audit.Wire3.GoldilocksNorm.cast_sub",
+        "Audit.Wire3.GoldilocksNorm.cast_actual_norm",
+        "Audit.Wire3.GoldilocksNorm.canonical_cast_zero_iff",
+        "Audit.Wire3.GoldilocksNorm.actual_norm_zero_iff",
+        "Audit.Wire3.GoldilocksNorm.nonzero_actual_norm",
+        "Audit.Wire3.GoldilocksNorm.actual_inverse_has_output_iff_nonzero",
+        "Audit.Wire3.GoldilocksNorm.nonzero_actual_inverse_exists",
+        "Audit.Wire3.GoldilocksNorm.theta_actual_inverse_executes",
+        "Audit.Wire3.GoldilocksNorm.theta_inverse_is_two_sided"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/GoldilocksExt3.sol",
+        "mle/src/permutation/norm_logup.rs"
+      ],
+      "scope": "Double-adjugate identities over the proved base field and no cube root of two imply the exact actual norm is zero iff canonical raw Ext3 is zero. Every nonzero canonical input makes actual WhirFinal.inverse return a canonical two-sided inverse. Canonical raw representation remains explicit; not off-cube Ext3-coefficient formal-norm nonvanishing, compiler refinement or PCS soundness."
+    },
+    {
+      "module": "Audit.Wire3.GoldilocksExt3Field",
+      "theorems": [
+        "Audit.Wire3.GoldilocksExt3Field.element_eq",
+        "Audit.Wire3.GoldilocksExt3Field.zero_exact",
+        "Audit.Wire3.GoldilocksExt3Field.one_exact",
+        "Audit.Wire3.GoldilocksExt3Field.add_exact",
+        "Audit.Wire3.GoldilocksExt3Field.sub_exact",
+        "Audit.Wire3.GoldilocksExt3Field.neg_exact",
+        "Audit.Wire3.GoldilocksExt3Field.mul_exact",
+        "Audit.Wire3.GoldilocksExt3Field.embed_succ",
+        "Audit.Wire3.GoldilocksExt3Field.nat_cast_exact",
+        "Audit.Wire3.GoldilocksExt3Field.raw_zero_iff",
+        "Audit.Wire3.GoldilocksExt3Field.inverse_success_exact",
+        "Audit.Wire3.GoldilocksExt3Field.inverse_failure_exact",
+        "Audit.Wire3.GoldilocksExt3Field.actual_inverse_zero",
+        "Audit.Wire3.GoldilocksExt3Field.actual_mul_inverse",
+        "Audit.Wire3.GoldilocksExt3Field.field_inverse_executes_when_nonzero",
+        "Audit.Wire3.GoldilocksExt3Field.field_division_exact",
+        "Audit.Wire3.GoldilocksExt3Field.field_nat_cast_zero_iff",
+        "Audit.Wire3.GoldilocksExt3Field.coordinates_roundtrip",
+        "Audit.Wire3.GoldilocksExt3Field.from_coordinates_roundtrip",
+        "Audit.Wire3.GoldilocksExt3Field.cardinality_exact",
+        "Audit.Wire3.GoldilocksExt3Field.field_frobenius_cube",
+        "Audit.Wire3.GoldilocksExt3Field.field_fermat",
+        "Audit.Wire3.GoldilocksExt3Field.theta_cubed_is_two",
+        "Audit.Wire3.GoldilocksExt3Field.theta_field_inverse_exact"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/GoldilocksExt3.sol",
+        "mle/contracts/src/GoldilocksField.sol"
+      ],
+      "scope": "Fresh wrapper around actual canonical Verifier.Ext3 with existing Nat.mod arithmetic and actual Option-returning WhirFinal.inverse totalized at zero. CommRing/Field built from proved concrete laws, not assumed. Actual inverse/division correspondence, characteristic p, explicit three-coordinate equivalence, cardinality p^3, finite-field Fermat/Frobenius. Not compiled source/memory refinement or probabilistic WHIR/FS."
     }
   ]
 }

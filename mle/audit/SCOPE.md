@@ -21,15 +21,19 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
 
 - ArithmeticはNatによるmod演算。uint64/uint256のwrap、addmod/mulmod、メモリ、
   Rust fieldの非canonical内部表現、コンパイル結果との対応は別課題。
-  Goldilocks素数性、X^3-2の既約性、全非零値に対するinverse/evalL0はまだ証明しない。
+  GoldilocksFoundationは具体pの素数性・一般Fermat・立方根2の不存在を証明する。
+  GoldilocksNormは全非零canonical Ext3で実inverseの成功・左右逆元性を証明する。
+  GoldilocksExt3Fieldは実演算/実inverseのwrapperにFieldを構成し、標数pと要素数p³を証明。
+  X^3-2のPolynomial.Irreducibleとしての明示定理やevalL0の完全接続はまだ別課題。
   Algebraでは実際のc0/c1/c2式から加法・乗法の交換/結合/分配、加法逆元と取消を証明。
   ring法則を仮定するレコードは使わない。NormIdentityはformal adjugate/norm恒等式、
   ModularPowerは具体binary exponentiationの値と成功fuel条件を証明する。
-  inverse成功時の積はnorm^(p−1) mod pへ還元できるが、これが1であるFermat証明と
-  非零Ext3のnormが非零である証明は残る。有限体性を前提レコードへ隠さない。
+  inverse成功時の積をnorm^(p−1) mod pへ還元し、Foundation/Normがこれを1へ接続する。
+  有限体性を前提レコードへ隠さず、実Algebraのring法則と実inverseから構成する。
   FermatBridgeはFermatAt(norm)を可視の定理引数として、実inverseの左右逆元・
   canonical消去・除算を接続する。基数7の実例は数値証明書からこの仮説を解消するが、
-  一般Fermatや全非零Ext3のnorm非零を証明したわけではない。
+  それ以外の入力の条件は後段Foundation/Normが解消する。canonical性は引き続き明示条件。
+  raw Nat値の非零や、Ext3係数を持つoff-cube formal normへの同じ非零主張は導かない。
 - Packedは関数的なloopモデル。paddingとの結果一致を証明するが、実in-placeメモリ操作
   の安全性は含まない。Rustの配列実装への適用には入力長・width・次の2冪・point長の接続が必要。
 - Transcriptのhashは任意の決定的関数。同一の旧digestの下でのhash前tag/payloadの
@@ -132,8 +136,8 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
 3. setup/VK/config生成、immutable store、全compact decoder、metadata decoder、
    初期transcript・真のchallenge・public-input hashをIntegratedへ接続。
    現在別モジュールのWhirFinal/Merkleを、全whirTailの代替と誤認しない。
-4. 具体代数/adjugate/冪乗証明を基に素数性・既約性・乗法逆元とRust/Yulの実行意味論を検証し、
-   手動対照を形式的refinementへ置換。
+4. 証明済みの素数性・具体Ext3有限体/逆元を、Rust/Yulの実行意味論へ接続し、
+   手動対照を形式的refinementへ置換。evalL0等の残る演算にも適用する。
 5. honest proverの全段階、completeness、再帰回路/親statementとのcompositionを証明。
 6. 暗号仮定を明記したPCS/Fiat–Shamir/grindingの定量的健全性を証明。
    全てのhashに無条件の数学的安全性があると仮定しない。
@@ -141,9 +145,10 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
 現target105の約101.5-bit値はリポジトリのgeneric-work見積もりで、Leanが証明した
 128-bit/end-to-end安全性ではありません。実装変更・デプロイ承認もこの更新には含みません。
 
-GoldilocksCertificateはp−1の因数積・基数7の6組のべき乗/gcd・三乗非剰余候補値を
-kernelで確認した数値証明書にすぎない。素数性判定基準の健全性、小因子の素数性、
-一般Fermatをまだ証明していないので、これをGoldilocks素数性の証明として使わない。
-現依存はLean4.10/Stdのみ。互換性を確認できない既存Mathlibバイナリcacheは採用しない。
-Mathlibを導入する場合は対応版・全推移依存を固定し、import/hash検査を限定拡張したうえで
-標準3公理allowlistと全定理の検査を維持する必要がある。
+GoldilocksCertificate単独は数値証明書であり、素数性の根拠はGoldilocksFoundationの
+Lucas適用・全prime-divisor列挙・小因子の素数性の証明と組み合わせたものに限る。
+Mathlib v4.10.0のcommitと公式lockの6依存を監査専用に固定し、直接importは特定の
+モジュール/名称だけ許可する。標準3公理allowlistと全名付き定理の検査は維持する。
+依存guardは全tracked sourceの実Git blob・HEAD・origin・固定release tagと追加sourceを検査。
+この検査は生成済み.oleanやProofWidgets release archiveの出自を認証しない。
+通常Lakeビルドにはそれらの成果物とLean toolchainの信頼境界があり、全source-only再現とは呼ばない。

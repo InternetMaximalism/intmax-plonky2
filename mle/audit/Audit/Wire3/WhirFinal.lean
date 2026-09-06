@@ -26,8 +26,10 @@ points, transcript cursor, and hint cursor must be derived from those phases.
 new Solidity runtime guards. No proof connects byte parsing/Merkle to Context.
 
 Concrete modular inverse follows norm/adjugate and 64-step binary exponentiation.
-Its multiplicative-inverse identity, prime/irreducible field laws, assembly
-arithmetic/memory semantics, and exception/refinement equivalence remain open.
+Its multiplicative-inverse identity for all nonzero canonical inputs and the
+actual-operation finite-field structure are proved later in GoldilocksNorm and
+GoldilocksExt3Field, using GoldilocksFoundation's concrete primality proof.
+Assembly arithmetic/memory semantics and exception/refinement equivalence remain open.
 This module's EOF proves cursor equality under decoder observations;
 WhirFinalSpongefish proves the concrete engine's exact byte consumption.
 WhirInitial/WhirPrefix model the initial phases but do not derive this final

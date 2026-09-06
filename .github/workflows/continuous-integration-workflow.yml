@@ -165,7 +165,7 @@ jobs:
   lean_current_audit:
     name: Current wire-v3 Lean models (partial scope)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
@@ -176,10 +176,17 @@ jobs:
           ./elan-init -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
       - name: Test fail-closed audit guard
-        run: python3 -B mle/audit/test-check-wire3.py
+        run: |
+          python3 -B mle/audit/test-check-wire3.py
+          python3 -B mle/audit/test-proof-dependencies.py
+          python3 -B mle/audit/test-provision-proof-dependencies.py
+      - name: Provision exact pinned audit-only mathematics sources
+        run: python3 -B mle/audit/provision-proof-dependencies.py
       - name: Verify current Lean models, all theorem dependencies, and source inventory
         # Model proofs plus source drift detection, NOT implementation refinement
         # or full cryptographic/Fiat-Shamir/WHIR soundness certification.
+        env:
+          MATHLIB_NO_CACHE_ON_UPDATE: "1"
         run: python3 -B mle/audit/check-wire3.py
       - name: Assert verification did not modify tracked sources
         run: git diff --exit-code

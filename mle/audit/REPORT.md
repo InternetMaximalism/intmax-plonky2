@@ -99,14 +99,14 @@ WhirPrefix・PI cache/shared bits・代数/冪乗/数値証明書・統合入口
 定数抽出器はコメントを除去して文字列を保持する限定lexerであり、コンパイラではない。
 PI cacheの正常例はPI集計部分の計算例で、完全なNorm terminal/verifierの受理例ではない。
 
-本ターンは実装本体・依存設定・main・親pinを変更していない。公開/pushも行わない。
+このチェックポイントでは実装本体・依存設定・main・親pinを変更していない。公開/pushも行わない。
 成果は専用ローカルブランチ `codex/lean-wire3-audit-20260906` にチェックポイント保存する。
 全体目標は引き続き進行中であり、この段階で完了としない。
 
-## 第3継続更新（4422b4c7以降）
+## 第3チェックポイント（f7236217）
 
 現行のraw hint/Merkle処理を接続し、6モデル・184定理を追加した。
-現行rootは34モデル・882定理。全体目標は引き続き未完了。
+この時点のrootは34モデル・882定理。全体目標は引き続き未完了。
 
 - **実multiproofからのpath抽出**: paired/lone双方の実層処理をたどり、全入力leafから
   実チェックrootまでのdepth長pathを導出。独立した認証pathの正しさを仮定しない。
@@ -263,9 +263,8 @@ Lucasから具体pの素数性、一般Fermat、立方根2の排除、実inverse
 採用前に完全pin/実ファイル内容/未追跡source/import/search path/公理の検査と、
 release artifactの信頼境界またはソース再生成手順を明確にする。
 
-次は素数性判定基準と小因子の証明→Fermat→成功時inverse正当性を閉じる。
-三次式の既約性は、その後に非零Ext3のnorm非零と体全体の構成へ接続する。
-Mathlib採用なら対応版・全推移依存を固定し、guardの許可対象を限定して標準公理検査を維持する。
+この時点で残っていた素数性・Fermat・全非零canonical Ext3の逆元と体構成は、
+次の第4継続更新で取り組む。上記は候補調査時点の記録であり、後段の検査結果と区別する。
 
 ### 第3チェックポイントの検査
 
@@ -280,12 +279,78 @@ Mathlib採用なら対応版・全推移依存を固定し、guardの許可対�
 | CI YAML構文・差分の空白検査 | PASS |
 | 対象baseからのRust/Solidity/実行依存差分 | なし |
 
-Mathlib候補・採用準備中の依存checkerはこの結果に含めない。current rootは引き続きStd-only。
+Mathlib候補・採用準備中の依存checkerはこの結果に含めない。この時点のrootはStd-only。
 リモートCI・全Rust/Solidity試験は再実行していない。main/push/親pinも変更しない。
+
+## 第4継続更新（f7236217以降）
+
+3モデル・55定理を追加し、37モデル・937定理へ拡張した。
+本番のRust/Solidity依存には触れず、監査専用のLean数学依存を導入した。
+
+- **具体的な素数性とFermat**: p−1の全prime-divisorを6小素因子へ分解し、
+  既存の実binary冪乗証明書を証明済みLucas基準へ渡してpの素数性を導出。
+  Fact instanceはその定理から構成し、素数性を仮定へ移していない。
+  全非零residueのFermatと立方根2の不存在も具体Nat.modへ接続した。
+- **全非零Ext3の実inverse**: 基底ZMod上のdouble-adjugate恒等式からnormの非退化を導き、
+  実norm式・canonical座標の同値へ戻した。実WhirFinal.inverseの成功 iff 非零と、
+  canonical出力・左右の積=1を証明。形式normのoff-cube Ext3係数へ一般化していない。
+- **実演算による有限体**: Verifier.Ext3のwrapper上に実add/sub/neg/mulと実inverseを使う
+  Fieldを構成。別の抽象体から演算を置換せず、失敗時inverse=0という全域化も明示。
+  三座標との全単射、標数p、要素数p³、有限体Fermat/Frobeniusを証明した。
+  θ³=2および実θ逆元の正の計算例も含む。
+
+主要入口は `GoldilocksFoundation.modulus_prime`、`general_fermat_nat`、
+`GoldilocksNorm.actual_inverse_has_output_iff_nonzero`、`nonzero_actual_inverse_exists`、
+`GoldilocksExt3Field.field_inverse_executes_when_nonzero`、`cardinality_exact`。
+共通prefixは `Audit.Wire3.`。全体のWHIR/回路/言語refinement/暗号確率は未完了。
+
+### 固定した監査依存と再現手順
+
+Mathlib v4.10.0 `a719ba5c3115d47b68bf0497a9dd1bcbb21ea663` と、その公式lockの
+6依存を全てcommit固定した。正確なURL/SHAは追跡する `lake-manifest.json` と
+`check-proof-dependencies.py` の独立policyで照合する。直接外部importはFoundationの3名称、
+NormのRingだけに限定し、無制限なMathlib importや歴史資料の公理は許可しない。
+
+```sh
+python3 -B mle/audit/test-check-wire3.py
+python3 -B mle/audit/test-proof-dependencies.py
+python3 -B mle/audit/test-provision-proof-dependencies.py
+python3 -B mle/audit/provision-proof-dependencies.py
+python3 -B mle/audit/check-wire3.py
+```
+
+provisionは既存全依存の検査後に未存在分だけを固定origin/SHAから取得し、
+既存の変更・不完全repoをreset/削除/修復しない。検査器は全5601 tracked files・
+64,398,270 bytesの実Git blob、HEAD/origin/indexを検査する。通常statusが隠す
+assume-unchanged/skip-worktreeの変更、追加Lean/config source、symlink、外部search pathも拒否。
+
+初回fresh buildでは `--no-tags` によりProofWidgetsのrelease選択に必要なタグがなく失敗した。
+公開元で `v0.0.40` が固定commitを指すことを確認し、新規取得にそのタグ1件だけを追加。
+既存repoはタグ集合とpeeled targetも検査し、別release名への変更は受け入れない。
+この修正でsource/HEADのpinを緩めていない。
+
+**依存のsource照合は生成済み.oleanやrelease archiveの出自認証ではない。**
+通常LakeビルドはProofWidgets releaseを使うため、全依存source-only再生成とは呼ばない。
+Mathlib cache getや互換性不明の既存バイナリcacheは使っていない。
+標準3公理と全定理検査は維持するが、Lean toolchain・imported object・実行環境の信頼は別境界。
+別途fresh出力でのsource再生成手順を調査しており、この調査結果を現行PASSへ混ぜない。
+
+### 第4継続の検査状態
+
+依存guardの34件、provisionの20件、main guardの33件の単体テストはPASS。
+7依存の実source pin照合とCI YAML/空白差分・実行コード無変更も確認した。
+採用した37モデル・全937定理の統合検査もPASS。全定理を実環境で解決し、
+`.thmInfo` と推移的公理依存を確認した。独自公理・未証明穴はなく、許容した標準3公理のみ。
+384 reviewed hashes、290 runtime sourceの完全inventory、18表1147語の定数逐語照合、
+build前後の7依存5601 tracked fileの照合もPASS。これらは言語refinementやPCS確率の証明ではない。
+独立レビューでPythonの `-B` は既存pycの読み込みを禁止しない点も確認し、
+helperは検査済みsource bytesを明示compileして読み込む形へ変更した。
+cache loaderを使わないことを単体検査する。依存source pinやLeanの公理条件は緩めていない。
+リモートCI・全Rust/Solidity試験は未実行。main/push/親pinを変更していない。
 
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。
 特にWHIR中間round・samplingの実quicksort・raw opening/Plan/Contextを接続し、全gateの意味論・次数、
-実行意味論・有限体の基礎・確率的健全性を証明することが必要。
+実行意味論・有限体証明の全体接続・確率的健全性を証明することが必要。
 この更新のみを根拠に本番利用や「criticalな健全性問題なし」を宣言しない。

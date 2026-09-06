@@ -5,6 +5,7 @@ Checksums detect review drift, NOT source-to-model semantic equivalence.
 The allowlist checks global axioms, NOT explicit theorem/Engine hypotheses.
 """
 import hashlib
+import importlib.util
 import json
 from pathlib import Path, PurePosixPath
 import re
@@ -23,6 +24,14 @@ QUALIFIED = re.compile(rf"{IDENT}(?:\.{IDENT})*\Z")
 HEX40 = re.compile(r"[0-9a-f]{40}\Z")
 HEX64 = re.compile(r"[0-9a-f]{64}\Z")
 KERNEL_AXIOMS = frozenset({"propext", "Classical.choice", "Quot.sound"})
+# Only these direct external imports were reviewed. In particular this is NOT
+# an unrestricted Mathlib.* allowance, including for the import-only Audit root.
+EXTERNAL_IMPORTS = {
+    "Audit.Wire3.GoldilocksFoundation": frozenset({
+        "Mathlib.NumberTheory.LucasPrimality", "Mathlib.FieldTheory.Finite.Basic",
+        "Mathlib.Tactic.NormNum.Prime"}),
+    "Audit.Wire3.GoldilocksNorm": frozenset({"Mathlib.Tactic.Ring"}),
+}
 REQUIRED_MODULES = {"Audit.Wire3." + name for name in (
     "Arithmetic", "Packed", "Transcript", "Compact", "Sumcheck", "Verifier",
     "Connections", "WhirTerminal", "WhirFinal", "Merkle", "Norm", "Gates",
@@ -31,11 +40,14 @@ REQUIRED_MODULES = {"Audit.Wire3." + name for name in (
     "ModularPower", "Spongefish", "WhirInitial", "WhirFinalSpongefish", "WhirPrefix",
     "PiSharedBits", "PiCache", "GoldilocksCertificate",
     "MerkleExtraction", "WhirSampling", "WhirRows", "WhirRowBinding", "FermatBridge",
-    "WhirSchedule",
+    "WhirSchedule", "GoldilocksFoundation", "GoldilocksNorm", "GoldilocksExt3Field",
 )}
 REQUIRED = {
     PROJECT + "/check-wire3.py", PROJECT + "/test-check-wire3.py",
     PROJECT + "/lakefile.lean", PROJECT + "/lean-toolchain",
+    PROJECT + "/lake-manifest.json", PROJECT + "/.gitignore",
+    PROJECT + "/check-proof-dependencies.py", PROJECT + "/test-proof-dependencies.py",
+    PROJECT + "/provision-proof-dependencies.py", PROJECT + "/test-provision-proof-dependencies.py",
     PROJECT + "/Audit.lean", PROJECT + "/README.md", PROJECT + "/SCOPE.md",
     PROJECT + "/REPORT.md", "mle/protocol/mle_whir_v2.json",
     "mle/Cargo.toml", "Cargo.toml", "Cargo.lock", "rust-toolchain",
@@ -51,11 +63,11 @@ def require(condition, message):
         raise GuardFailure(message)
 
 
-def command(args, cwd=ROOT, capture=True):
+def command(args, cwd=ROOT, capture=True, timeout=600):
     try:
         result = subprocess.run(args, cwd=cwd, check=True, text=True,
                                 stdout=subprocess.PIPE if capture else None,
-                                stderr=subprocess.STDOUT, timeout=600)
+                                stderr=subprocess.STDOUT, timeout=timeout)
     except (OSError, subprocess.SubprocessError) as error:
         output = getattr(error, "stdout", "") or ""
         raise GuardFailure(f"command failed: {args!r}\n{output}\n{error}") from error
@@ -181,7 +193,8 @@ def check_current_imports(root, modules):
                 f"admission/non-kernel proof/axiom in current module: {module}")
         for imported in imports_of(source):
             standard = imported in {"Init", "Std", "Lean"} or imported.startswith(("Init.", "Std.", "Lean."))
-            require(standard or imported in modules, f"historical/unreviewed import: {module} -> {imported}")
+            require(standard or imported in modules or imported in EXTERNAL_IMPORTS.get(module, ()),
+                    f"historical/unreviewed import: {module} -> {imported}")
     reached = set()
     pending = ["Audit"]
     while pending:
@@ -275,7 +288,7 @@ def parse_axioms(output, theorem):
 def audit_theorems(root, records):
     lake = shutil.which("lake")
     require(lake is not None, "lake not on PATH")
-    command([lake, "build"], cwd=root / PROJECT, capture=False)
+    command([lake, "build"], cwd=root / PROJECT, capture=False, timeout=1200)
     with tempfile.TemporaryDirectory(prefix="wire3-axioms-") as temp:
         for index, record in enumerate(records):
             lines = ["import Lean", "import " + record["module"]]
@@ -420,15 +433,40 @@ def check_constant_tables(root):
     print("[wire3-audit] constant literals PASS: 18 tables, 1147 words; Poseidon also matches Rust")
 
 
+def load_source_module(path, name):
+    # -B prevents cache writes, not reads. Compile the reviewed source bytes
+    # explicitly so an existing __pycache__ cannot replace the inspected helper.
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    exec(compile(path.read_bytes(), str(path), "exec"), module.__dict__)
+    return module
+
+
+def check_proof_dependencies(root):
+    # Load only after validate_manifest checked this helper's reviewed source hash.
+    # No Lake invocation, package hook, provisioning or network is permitted here.
+    module = load_source_module(root / PROJECT / "check-proof-dependencies.py", "wire3_proof_dependencies")
+    try:
+        result = module.check_project(root / PROJECT)
+    except module.GuardFailure as error:
+        raise GuardFailure(f"proof dependency inspection failed: {error}") from error
+    print(f"[wire3-audit] dependency source integrity PASS: {result['packages']} pinned packages, "
+          f"{result['tracked_files']} tracked files, {result['tracked_bytes']} bytes", flush=True)
+    return result
+
+
 def main():
     require(len(sys.argv) == 1, "no skip/refresh options")
     manifest = json.loads(checked_path(ROOT, MANIFEST).read_text(), object_pairs_hook=unique_json_object)
     records = validate_manifest(ROOT, manifest)
     check_constant_tables(ROOT)
+    check_proof_dependencies(ROOT)
     audit_theorems(ROOT, records)
     validate_manifest(ROOT, manifest)
+    check_proof_dependencies(ROOT)
     print("[wire3-audit] PASS: current model build, complete inventory, reviewed hashes, all named theorem dependencies")
-    print("[wire3-audit] NOT PROVED: complete implementation/refinement, field/PCS/FS soundness, witness existence")
+    print("[wire3-audit] NOT PROVED: complete implementation/refinement, PCS/FS soundness, witness existence")
+    print("[wire3-audit] Dependency sources checked; generated .olean/release provenance is NOT certified by this guard")
 
 
 if __name__ == "__main__":

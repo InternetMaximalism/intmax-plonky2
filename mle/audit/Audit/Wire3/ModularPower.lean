@@ -16,6 +16,9 @@ The successful inverse product is reduced to the explicit base-field expression
 norm^(p-1) mod p. We do NOT assume or prove primality, Fermat's theorem, extension
 irreducibility, or that a nonzero Ext3 necessarily has nonzero norm. Thus the
 final expression is not silently replaced by one and is not PCS soundness.
+GoldilocksFoundation later discharges Fermat, and GoldilocksNorm proves norm
+nonvanishing for all nonzero canonical Ext3 values. Those results depend on
+this module's executable inverse, not on an extra inverse/field axiom.
 -/
 namespace Audit.Wire3.ModularPower
 open Arithmetic Algebra

@@ -9,13 +9,16 @@ modular exponentiation uses the existing 64-bit-iteration WhirFinal.modPowLoop,
 whose Nat.mod meaning is proved in ModularPower. No external checker, native
 evaluation axiom, or imported primality/field assumption is used.
 
-These are INPUT DATA for a future sound Lucas/Pratt-style argument. This module
+These are INPUT DATA for the Lucas argument in GoldilocksFoundation. This module
 does NOT prove that such a criterion is sound, that the six candidate factors
 are prime, that p is prime, general Fermat, or irreducibility of X^3 - 2. In
 particular, one base satisfying Fermat's numerical congruence is not silently
 generalized to every nonzero residue. The cubic nonresidue calculation likewise
 does not by itself rule out a root without the missing general field argument.
 No theorem here is named Prime or presented as a primality theorem.
+GoldilocksFoundation subsequently proves the criterion's concrete application
+and general Fermat; GoldilocksNorm/GoldilocksExt3Field establish the actual
+canonical Ext3 inverse and finite-field structure. None is an assumption here.
 -/
 namespace Audit.Wire3.GoldilocksCertificate
 open Arithmetic

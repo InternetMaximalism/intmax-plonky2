@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Isolated guard unit tests; never mutate implementation or construct proofs."""
 import copy
+import builtins
 import hashlib
 import importlib.util
 import json
@@ -14,7 +15,7 @@ from unittest.mock import patch
 sys.dont_write_bytecode = True
 SPEC = importlib.util.spec_from_file_location("wire3guard", Path(__file__).with_name("check-wire3.py"))
 G = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(G)
+exec(compile(Path(SPEC.origin).read_bytes(), SPEC.origin, "exec"), G.__dict__)
 REAL_COMMAND = G.command
 
 
@@ -125,6 +126,66 @@ class GuardTests(unittest.TestCase):
         self.replace_file(self.model_path, "import Audit.Poly\n")
         with self.assertRaisesRegex(G.GuardFailure, "historical/unreviewed import"):
             self.validate()
+
+    def test_external_mathlib_import_requires_specific_module_allowlist(self):
+        allowed = "Mathlib.Tactic.Ring"
+        content = "import " + allowed + "\nnamespace Audit.Wire3.Example\ntheorem checked : True := True.intro\nend Audit.Wire3.Example\n"
+        self.replace_file(self.model_path, content)
+        with self.assertRaisesRegex(G.GuardFailure, "historical/unreviewed import"):
+            self.validate()
+        with patch.object(G, "EXTERNAL_IMPORTS", {self.model: {allowed}}):
+            self.assertEqual(len(self.validate()), 1)
+            self.replace_file(self.model_path, content.replace(allowed, "Mathlib.Tactic"))
+            with self.assertRaisesRegex(G.GuardFailure, "historical/unreviewed import"):
+                self.validate()
+
+    def test_audit_root_cannot_import_external_mathlib(self):
+        self.replace_file(G.PROJECT + "/Audit.lean",
+                          "import Audit.Wire3.Example\nimport Mathlib.Tactic.Ring\n")
+        with self.assertRaisesRegex(G.GuardFailure, "historical/unreviewed import"):
+            self.validate()
+
+    def test_dependency_tools_and_lock_must_be_hashed(self):
+        for relative in ("lake-manifest.json", ".gitignore", "check-proof-dependencies.py",
+                         "test-proof-dependencies.py", "provision-proof-dependencies.py",
+                         "test-provision-proof-dependencies.py"):
+            m = copy.deepcopy(self.manifest)
+            m["files"] = [f for f in m["files"] if f["path"] != G.PROJECT + "/" + relative]
+            with self.subTest(relative=relative), self.assertRaisesRegex(G.GuardFailure, "unhashed required"):
+                self.validate(m)
+
+    def test_main_checks_dependencies_before_and_after_build(self):
+        (self.root / G.MANIFEST).write_text(json.dumps(self.manifest))
+        events = []
+        with patch.object(G, "ROOT", self.root), patch.object(sys, "argv", ["check-wire3.py"]), \
+             patch.object(G, "validate_manifest", side_effect=lambda *args: events.append("sources")), \
+             patch.object(G, "check_constant_tables", side_effect=lambda *args: events.append("constants")), \
+             patch.object(G, "check_proof_dependencies", side_effect=lambda *args: events.append("dependencies")), \
+             patch.object(G, "audit_theorems", side_effect=lambda *args: events.append("theorems")):
+            G.main()
+        self.assertEqual(events, ["sources", "constants", "dependencies", "theorems", "sources", "dependencies"])
+
+    def test_dependency_failure_prevents_any_lake_build(self):
+        (self.root / G.MANIFEST).write_text(json.dumps(self.manifest))
+        with patch.object(G, "ROOT", self.root), patch.object(sys, "argv", ["check-wire3.py"]), \
+             patch.object(G, "validate_manifest"), patch.object(G, "check_constant_tables"), \
+             patch.object(G, "check_proof_dependencies", side_effect=G.GuardFailure("dependency")), \
+             patch.object(G, "audit_theorems") as build:
+            with self.assertRaisesRegex(G.GuardFailure, "dependency"):
+                G.main()
+            build.assert_not_called()
+
+    def test_helper_is_compiled_from_source_without_cached_loader_execution(self):
+        path = self.root / "Helper.py"
+        source = b"VALUE = 37\n"
+        path.write_bytes(source)
+        with patch.object(G, "compile", wraps=builtins.compile, create=True) as compiler, \
+             patch("importlib.machinery.SourceFileLoader.exec_module",
+                   side_effect=AssertionError("cached loader execution is not allowed")):
+            helper = G.load_source_module(path, "isolated_helper")
+        compiler.assert_called_once_with(source, str(path), "exec")
+        self.assertEqual(helper.VALUE, 37)
+        self.assertEqual(helper.__file__, str(path))
 
     def test_admission_and_non_kernel_evaluation_fail(self):
         for keyword in ("sorry", "admit", "axiom", "native_decide"):

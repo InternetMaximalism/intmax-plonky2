@@ -33,21 +33,24 @@
 | [GatesComplete](Audit/Wire3/GatesComplete.lean) | 全14familyの具体dispatcher。valid設定・入力長なら全familyが実計算結果を返すことを証明 |
 | [Integrated](Audit/Wire3/Integrated.lean) | packed/norm/eq/全gateの4観測を具体化。checked preflightで不正設定やdecoder失敗のzero fallback受理を防ぐ部分統合入口 |
 | [NormIdentity](Audit/Wire3/NormIdentity.lean) | 実Ext3係数上のformal adjugate恒等式、逆元candidateとの積、WHIR sum-formとPacked difference-formの同値 |
-| [ModularPower](Audit/Wire3/ModularPower.lean) | 実binary冪乗の正確値とfuel条件、inverse成功時の積をnorm^(p−1)へ還元。Fermat・素数性は未証明 |
+| [ModularPower](Audit/Wire3/ModularPower.lean) | 実binary冪乗の正確値とfuel条件、inverse成功時の積をnorm^(p−1)へ還元。一般Fermatは後段GoldilocksFoundationで解消 |
 | [Spongefish](Audit/Wire3/Spongefish.lean) | 内側WHIRのraw byte hash chain、BE counter、120byte challenge、canonical read、PoW、hint Vec長。Hashの安全性は仮定しない |
 | [WhirInitial](Audit/Wire3/WhirInitial.lean) | 実root/own-OOD/全claim/cross-OOD読取りから2種のRLCと初期sumを生成し、同一データ・読取り量・checked maskを証明 |
 | [WhirFinalSpongefish](Audit/Wire3/WhirFinalSpongefish.lean) | 最終sumcheckの3観測を実byte処理へ置換。1roundあたり48/56byte、120byte challenge、受理時の正確なsuffix長とhint EOF |
 | [WhirPrefix](Audit/Wire3/WhirPrefix.lean) | 初期処理→最初のsumcheckを同一source・初期sum・spongeで接続。中間以降の全WHIR接続ではない |
 | [PiSharedBits/PiCache](Audit/Wire3/PiCache.lean) | 実OR/XOR共通bit分離・逆順検索・重複行合算・eta末尾更新省略を含むキャッシュと直接PI和の同値 |
-| [GoldilocksCertificate](Audit/Wire3/GoldilocksCertificate.lean) | 今後の体証明で使う具体べき乗/gcd証明書。判定法の健全性や素数性そのものは未証明 |
+| [GoldilocksCertificate](Audit/Wire3/GoldilocksCertificate.lean) | 体証明で使う具体べき乗/gcd証明書。単独では素数性を結論せず、GoldilocksFoundationのLucas証明に渡す |
 | [MerkleExtraction](Audit/Wire3/MerkleExtraction.lean) | 実multiproof成功から全leafの深さ付きpathを抽出。同root/index/depthの開示を一致または具体的hash衝突へ還元 |
 | [WhirSampling](Audit/Wire3/WhirSampling.lean) | byteごとの実hash/counter・BE query・mask。挿入sort基準版の順序/集合を証明するがsource quicksortとの同値は未証明 |
 | [WhirRows](Audit/Wire3/WhirRows.lean) | Vec要素数→元の連続hint行→raw hash→既存Merkleのcursor接続。canonical decoderは実行順を保つため別操作 |
 | [WhirRowBinding](Audit/Wire3/WhirRowBinding.lean) | 実openGroupの同root/depth/index行についてraw bytes・同Layoutの復号値・同weightsの内積が一致するか、具体的hash衝突があることを証明 |
-| [FermatBridge](Audit/Wire3/FermatBridge.lean) | 明示したFermat等式から実inverseの左右逆元・消去・除算を証明。基数7の例は無条件、一般Fermat/素数性は未解消 |
+| [FermatBridge](Audit/Wire3/FermatBridge.lean) | 明示したFermat等式から実inverseの左右逆元・消去・除算を証明。後段Foundation/Normが一般Fermatと非零norm条件を解消 |
 | [WhirSchedule](Audit/Wire3/WhirSchedule.lean) | 実folding検査の投影から全変数の分割・各roundの残suffix・underflowなし・最終サイズを証明。domain/点を含む完全設定検査ではない |
+| [GoldilocksFoundation](Audit/Wire3/GoldilocksFoundation.lean) | 具体証明書と証明済みLucas基準からpの素数性、一般Fermat、立方根2の不存在を導出。新しい体公理を置かない |
+| [GoldilocksNorm](Audit/Wire3/GoldilocksNorm.lean) | 実normが0 iff canonical Ext3が0。全非零入力で実WhirFinal.inverseが成功し、左右の積が1になることを証明 |
+| [GoldilocksExt3Field](Audit/Wire3/GoldilocksExt3Field.lean) | 実演算・実inverseを包む型にFieldを構成。標数p、三座標との全単射、要素数p³、Fermat/Frobeniusを証明 |
 
-現行rootは34モデル・882件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
+現行rootは37モデル・937件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
 件数は暗号安全性の達成率ではありません。
 
 [スコープと未証明事項](SCOPE.md)、[結果・再現手順・次工程](REPORT.md)、
@@ -62,11 +65,19 @@ Lean 4.10.0の `lake` をPATHに入れ、リポジトリrootから実行しま�
 
 ```sh
 python3 -B mle/audit/test-check-wire3.py
+python3 -B mle/audit/test-proof-dependencies.py
+python3 -B mle/audit/test-provision-proof-dependencies.py
+python3 -B mle/audit/provision-proof-dependencies.py
 python3 -B mle/audit/check-wire3.py
 ```
 
 検査は全current moduleのbuild、全名付き定理の実Lean環境での解決、推移的公理依存、
 ソース/モデル/文書のhash、列挙漏れを確認します。空の検査リストは失敗です。
+Mathlib 4.10と公式lockの6依存は全てcommit固定です。provisionのみが公開元から取得し、
+既存依存の変更・不完全な取得は自動修復しません。guardはビルド前後に全5601 tracked fileを
+Git blobと照合し、外部search path、追加Lean/config source、固定タグの不一致を拒否します。
+通常LakeビルドのProofWidgets release成果物・生成済み.oleanの出自は、このsource検査では
+証明しません。ソースのみからの全依存再生成とは区別します。
 `sorry`、`admit`、独自公理、`native_decide` による穴埋めは認めません。
 許容するglobalな論理公理は `propext`、`Classical.choice`、`Quot.sound` のみです。
 Poseidon/Cosetの全18表・1147語をSolidityと逐語比較し、PoseidonはRustとも比較します。

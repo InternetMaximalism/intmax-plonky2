@@ -15,6 +15,9 @@ x that satisfies the explicit FermatAt hypothesis. This does not prove p prime,
 general Fermat, X^3 - 2 irreducible, or norm(a) nonzero for every nonzero a.
 Solidity/Rust instruction refinement and probabilistic PCS soundness remain
 outside this deterministic algebraic bridge.
+GoldilocksFoundation/GoldilocksNorm subsequently prove the general Fermat and
+nonzero-norm facts needed to discharge these visible hypotheses; the conditional
+theorems here remain useful independently of that pinned-Mathlib extension.
 -/
 namespace Audit.Wire3.FermatBridge
 open Arithmetic

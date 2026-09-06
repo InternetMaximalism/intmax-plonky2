@@ -39,3 +39,6 @@ import Audit.Wire3.WhirRows
 import Audit.Wire3.WhirRowBinding
 import Audit.Wire3.FermatBridge
 import Audit.Wire3.WhirSchedule
+import Audit.Wire3.GoldilocksFoundation
+import Audit.Wire3.GoldilocksNorm
+import Audit.Wire3.GoldilocksExt3Field
