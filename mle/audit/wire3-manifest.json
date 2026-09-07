@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "cf9b22531e1e38873878d0aa5ecabc108c592c7b066c17e6eae7b1384d10ae87",
+      "sha256": "08ca29239f0bdec999189334d14975cc6b0bee3d69f61075437a285ca8df8abe",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "1d0456cfb9076ac75eb0bd1aa8f08d6c935e59d47942af87e96fbf31e8ed990e",
+      "sha256": "8da2bd0f8ebe8fd0b7f64adfc0ca52ffbfcd7f8970cb55891fbb03adc6bb63d3",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "21eafb839e7f1d61225d8c986380c256904a994d8adb5497e0b5f8dfeeea3608",
+      "sha256": "acaeca74284e73ea19350c03ea66825ff56c3f60ad287ac499de9a26aa088192",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "41bcf34ef853982a7c430b57220baeca444dd1dd16d45dc6d5c715e181f5d6cb",
+      "sha256": "6c82b3d623b3aa9573c20aa8a6415b9fff87c537c98f920c69a5670419f75929",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "d837168d6dcb989064319408d290d96a7def7ed68d838d218ebd38390030a24e",
+      "sha256": "ae68f82732e94882145dc5a98bcd0109d51f0a222b2b2d1a86ed02aab10d69a0",
       "kind": "spec"
     },
     {
@@ -2151,6 +2151,11 @@
     {
       "path": "mle/audit/Audit/Wire3/OuterClaimChain.lean",
       "sha256": "e7a5ebc76863a78afe51451bb84f5b1beb47bc8f91743f7695e2d3539fea5c67",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/IntegratedTerminalChain.lean",
+      "sha256": "efba7b1f8437464e4a7e179d2cd634f09cf24c263df71945212b66b344ac4758",
       "kind": "current-model"
     }
   ],
@@ -5410,6 +5415,60 @@
         "mle/src/permutation/norm_logup.rs"
       ],
       "scope": "Honest-prover log-lane chain driven through the adopted Verifier.roundStep / runRounds with the same commit arguments as the prover's currentRound then bindChallenge: after every round logClaim_i = roundValue of the previous tables at r_i, the final claim is roundValue of the last tables on which round_sum_at ran, the next tables' f'(0)+f'(1) equals the previous roundValue at r (2<=remaining, all adjacent and PI reads proved in range), zero initial claim iff zero endpoint sum (zero-ness never assumed), intoProofAndPoint returns exactly the consumed messages and log challenges, agreement with Verifier.derivedRounds and OuterAdapter.runChecked, and an n=1 example. The gate lane is parameterised by an explicit grid-agreement hypothesis (no adopted gate prover has bind_challenge); nothing about arbitrary messages, soundness or Fiat-Shamir."
+    },
+    {
+      "module": "Audit.Wire3.IntegratedTerminalChain",
+      "theorems": [
+        "Audit.Wire3.IntegratedTerminalChain.honest_run_binds_tables",
+        "Audit.Wire3.IntegratedTerminalChain.honest_norm_run_exists",
+        "Audit.Wire3.IntegratedTerminalChain.honest_log_terminal_matches_chain",
+        "Audit.Wire3.IntegratedTerminalChain.derived_rounds_last_step",
+        "Audit.Wire3.IntegratedTerminalChain.honest_gate_terminal_matches_claim",
+        "Audit.Wire3.IntegratedTerminalChain.concrete_engine_context",
+        "Audit.Wire3.IntegratedTerminalChain.honest_expected_claims_are_table_evaluations",
+        "Audit.Wire3.IntegratedTerminalChain.claims_match_bound_entry",
+        "Audit.Wire3.IntegratedTerminalChain.accepted_whir_claims_are_table_evaluations",
+        "Audit.Wire3.IntegratedTerminalChain.verify_of_checks",
+        "Audit.Wire3.IntegratedTerminalChain.verify_iff_solidity_order",
+        "Audit.Wire3.IntegratedTerminalChain.verify_order_swap",
+        "Audit.Wire3.IntegratedTerminalChain.rust_order_accepts_iff",
+        "Audit.Wire3.IntegratedTerminalChain.honest_prover_passes_deterministic_checks",
+        "Audit.Wire3.IntegratedTerminalChain.Example.tables_shape",
+        "Audit.Wire3.IntegratedTerminalChain.Example.zero_sum",
+        "Audit.Wire3.IntegratedTerminalChain.Example.round_message",
+        "Audit.Wire3.IntegratedTerminalChain.Example.compatible",
+        "Audit.Wire3.IntegratedTerminalChain.Example.wire_map",
+        "Audit.Wire3.IntegratedTerminalChain.Example.honest_norm_prover",
+        "Audit.Wire3.IntegratedTerminalChain.Example.run",
+        "Audit.Wire3.IntegratedTerminalChain.Example.eq_cell",
+        "Audit.Wire3.IntegratedTerminalChain.Example.subgroup_cell",
+        "Audit.Wire3.IntegratedTerminalChain.Example.log_rounds",
+        "Audit.Wire3.IntegratedTerminalChain.Example.claims",
+        "Audit.Wire3.IntegratedTerminalChain.Example.norm_hypotheses",
+        "Audit.Wire3.IntegratedTerminalChain.Example.log_terminal_instance",
+        "Audit.Wire3.IntegratedTerminalChain.Example.gate_shape",
+        "Audit.Wire3.IntegratedTerminalChain.Example.gate_valid",
+        "Audit.Wire3.IntegratedTerminalChain.Example.gate_challenge",
+        "Audit.Wire3.IntegratedTerminalChain.Example.gate_bind",
+        "Audit.Wire3.IntegratedTerminalChain.Example.gate_cells",
+        "Audit.Wire3.IntegratedTerminalChain.Example.gate_claims",
+        "Audit.Wire3.IntegratedTerminalChain.Example.gate_point",
+        "Audit.Wire3.IntegratedTerminalChain.Example.gate_eq_cell",
+        "Audit.Wire3.IntegratedTerminalChain.Example.gate_round_value",
+        "Audit.Wire3.IntegratedTerminalChain.Example.gate_reconstruction",
+        "Audit.Wire3.IntegratedTerminalChain.Example.gate_hypotheses",
+        "Audit.Wire3.IntegratedTerminalChain.Example.gate_terminal_instance",
+        "Audit.Wire3.IntegratedTerminalChain.Example.openings",
+        "Audit.Wire3.IntegratedTerminalChain.Example.observation",
+        "Audit.Wire3.IntegratedTerminalChain.Example.integrated_accepts",
+        "Audit.Wire3.IntegratedTerminalChain.Example.agrees_with_adopted_positive_path"
+      ],
+      "sources": [
+        "mle/src/verifier_v2.rs",
+        "mle/contracts/src/MleVerifierV2.sol",
+        "mle/contracts/src/OuterLogupExt3Verifier.sol"
+      ],
+      "scope": "Glue of the adopted OuterClaimChain, NormTerminalBinding, GateTerminalBinding and OpenedClaimFold into the adopted Verifier.verify / Integrated.verify without re-implementation: under named hypothesis structures (honest norm prover with zero cube sum, norm terminal provenance for eq/subgroup cells and challenges, gate chain hypotheses carrying OuterClaimChain's grid agreement, honest openings) the honest prover's Engine.logTerminal equals the final derivedRounds logClaim, gateTerminal equals the final gateClaim, the five WHIR expected claims are dense evaluations of the padded tables with the sixth cell none, and via the converse verify_of_checks both verifiers accept, leaving exactly the enumerated ObservationOnly conjuncts (chain, config hash, envelope, deployment, shape, four lengths, verifyWhir, seven challenges, normShape); the Rust WHIR-before-norm and Solidity/Lean orders accept the same proofs at the Prop level; every structure is inhabited on the adopted example engine/config/proof by an actual honest prover run. Honest-prover statements only; eq/subgroup provenance from tau, claimed values = prover cells and PCS/WHIR soundness remain hypotheses."
     }
   ]
 }

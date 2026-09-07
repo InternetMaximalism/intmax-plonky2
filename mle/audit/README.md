@@ -82,8 +82,9 @@
 | [GateTerminalBinding](Audit/Wire3/GateTerminalBinding.lean) | gate proverのbind_challenge（degree ensure→eq/全wire/全constantのbindBuffer→rounds/point push）とinto_proof_and_pointを模し、全変数bind後の各列=採用済みpacked fold、最終roundのeq·aggregateがGatesComplete.evalCombinedとVerifier.gateTerminalに一致（eq cell=eqEvaluation(gateTau,gatePoint)は明示仮定）。honest prover限定の受理claim一致も証明。回路truth/PCSは別 |
 | [NormTerminalBinding](Audit/Wire3/NormTerminalBinding.lean) | 全変数bind後のnorm prover表（単一cell列）をNormTerminalInput（constants++sigma、routed wire cells++非routed tail、identity/sigma helper、PI値）へ対応させ、prover targetとVerifier側Norm.evaluate/checkedEvaluate/Engine.logTerminalの項ごとの一致を証明。各bound cell=採用済みpacked fold。eq/subgroup cellのtau由来・lambda/eta/wire-map由来は明示仮定、honest prover定理は表示 |
 | [OuterClaimChain](Audit/Wire3/OuterClaimChain.lean) | honest proverのlog laneを実Verifier.roundStep/runRoundsで駆動し、各round後のlogClaim=直前表のroundValue(r_i)、次表のf'(0)+f'(1)=roundValue(r)（2≤remaining、読取り境界証明済み）、初期零claim⇔端点和零、intoProofAndPoint=verifierが消費したmessage/challenge、OuterAdapterとの一致。gate laneは明示仮定でparameterise。健全性は主張しない |
+| [IntegratedTerminalChain](Audit/Wire3/IntegratedTerminalChain.lean) | OuterClaimChain/NormTerminalBinding/GateTerminalBinding/OpenedClaimFoldを採用済みIntegrated.verify/verify_success_checksへ接続。honest proverではlogTerminal=derivedRoundsの最終logClaim、gateTerminal=gateClaim、WHIR期待claim=padded table評価となり、決定論的検査は全て成立、残りは名前付き観測（config hash/envelope/deployment/shape/長さ/verifyWhir/7 challenge/normShape）のみ。Rust順（WHIR→norm）とSolidity順の受理同値。健全性は主張しない |
 
-現行rootは81モデル・2402件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
+現行rootは82モデル・2445件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
 件数は暗号安全性の達成率ではありません。
 
 [スコープと未証明事項](SCOPE.md)、[結果・再現手順・次工程](REPORT.md)、

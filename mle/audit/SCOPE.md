@@ -307,6 +307,18 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   public-input hash、configuration hash、WHIR tailを具体化したわけではない。
   追加preflightの失敗分類/順序はモデル上のもの。実装の例外・slashing証拠とは未接続。
   Gates.rustAdmissionのlookup拒否もこの入口には未接続。
+  IntegratedTerminalChainは採用済みのOuterClaimChain/NormTerminalBinding/GateTerminalBinding/
+  OpenedClaimFoldを再実装せずにVerifier.verify/Integrated.verifyへ接続する。名前付き仮定構造
+  （HonestNormProver: shape/fresh/positive/bindings/rounds/零cube和、NormTerminalProvenance: eq/subgroup
+  cell・challenges・rounds・claimed cell=prover cell、GateChainHypotheses: gate表のshape/bind/cellsと
+  OuterClaimChainのgrid一致仮定、HonestOpenings: claimed cell=各列row fold）の下で、honest proverの
+  logTerminal=derivedRoundsの最終logClaim、gateTerminal=最終gateClaim、5 WHIR期待claim=padded tableの
+  dense評価・第6 cellはnoneを導き、verify_success_checksの逆向き補題verify_of_checksで
+  Verifier.verify/Integrated.verifyが受理することを示す。残る前提はObservationOnlyとして列挙した
+  観測（chain/config hash/envelope/deployment/shape/4長さ/verifyWhir/7 challenge/normShape）だけである。
+  Rust順（WHIR→norm terminal）とSolidity/Lean順の受理はProp水準の同値で、revert理由やgasは扱わない。
+  grid仮定はgate running claimの端点和一致を含意するhonest prover仮定であり、eq/subgroup cellの
+  tau由来・claimed値とprover cellの一致・PCS/WHIR健全性は依然として仮定である。
 - ConnectionsはLeanモデル間の具体的な型・foldの接続。全Engineを具体的に実装したわけではない。
 
 ## 未完了の全体証明（優先順）

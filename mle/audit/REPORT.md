@@ -761,6 +761,33 @@ NormTerminalBindingは上記必須修正後の再レビュー、OuterClaimChain�
 guard33件・dependency34件・provision20件・fresh runner self-check29件、CI YAML、空白差分と
 runtime無変更もPASS。実装・main・親pinは変更せず、全実装/PCS健全性を完了したとはしない。
 
+## 第15継続更新（f9ada18b以降）
+
+追跡版runnerでコミット`f9ada18b`の81モデル・2402定理を再検査し、PASS（771.879秒）。1411非toolchain
+モジュール（audit/root 82、Mathlib 1091、Batteries 99、Aesop 108、Qq 11、ProofWidgets 18、ImportGraph 2）を
+sourceから再生成し、公理分布は919/729/482/269/2/1。実行時manifest SHA256は当該コミットと同一の
+`5b772df15b2273893cde7e77841ebc41059d6b378ac68b5e6c80301fc4d3f113`、receipt
+`39367c53af192fd1bcc648a4aeb1ca44a50194cbfad499e4a057f1ff0a0b01f7`、graph
+`0ca3fba58ae89cd0a3526cb0933a0ad70bcf2e8e30c07ebeae1d6a68071e848f`、保存先
+`/Users/andropov/.local/share/wire3-fresh-source/wire3-fresh-source-build.vvt12tjv/`。
+
+- **終端連鎖の統合**: IntegratedTerminalChainは採用済み4モジュールを再実装せずにVerifier.verify/
+  Integrated.verifyへ接続する。名前付き仮定構造（honest norm prover、norm terminal provenance、
+  gate chain仮定、honest openings）の下でhonest proverのlogTerminal=derivedRoundsの最終logClaim、
+  gateTerminal=最終gateClaim、5 WHIR期待claim=padded tableのdense評価・第6はnoneを導き、
+  verify_success_checksの逆向き補題でVerifier.verify/Integrated.verifyの受理を示す。残る前提は
+  ObservationOnly（chain/config hash/envelope/deployment/shape/4長さ/verifyWhir/7 challenge/normShape）
+  として列挙する。Rust順（WHIR→norm）とSolidity/Lean順の受理同値をProp水準で証明。
+  採用済みInteger例（exampleEngine/Config/Proof）上で全仮定構造を実際のhonest prover実行から充足し、
+  既存のpositive経路を接続経由で再導出した。gridはgate running claimの端点和一致を含意するhonest
+  prover仮定で、eq/subgroup cellのtau由来・claimed値=prover cell・PCS/WHIR健全性は仮定のまま。
+
+追加1モデルは別担当の独立read-onlyレビューで必須修正なし（gridの含意をdocstringに追記）。
+採用namespaceでの直接buildと全統合guardはPASS。全2445名の実定理/型/推移的公理、431 reviewed hashes、
+18表1147語、7依存5601fileを検査した。source inventoryは290file中31部分対応/259未対応を維持。
+guard33件・dependency34件・provision20件・fresh runner self-check29件、CI YAML、空白差分と
+runtime無変更もPASS。実装・main・親pinは変更せず、全実装/PCS健全性を完了したとはしない。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

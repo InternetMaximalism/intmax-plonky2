@@ -86,3 +86,4 @@ import Audit.Wire3.OpenedClaimFold
 import Audit.Wire3.GateTerminalBinding
 import Audit.Wire3.NormTerminalBinding
 import Audit.Wire3.OuterClaimChain
+import Audit.Wire3.IntegratedTerminalChain
