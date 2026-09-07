@@ -304,7 +304,18 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   Someを検査後、packed/norm/eq/gateを具体化したVerifier.verifyへ進む。
   modelEngineだけの利用にはこの保証がなく、getD zeroは旧interfaceへの全域化にすぎない。
   metadata decoderは固定Config.gatesEncodingだけを受ける観測であり、初期FSや
-  public-input hash、configuration hash、WHIR tailを具体化したわけではない。
+  configuration hash、WHIR tailを具体化したわけではない。
+  public input hashはPublicInputHashBindingで具体化した。採用済みPoseidon置換の上に
+  実hash-no-padスポンジ（rate8/capacity4/width12、overwrite mode、⌈len/8⌉ chunk、
+  末尾短chunkは占有slotのみ上書き、4要素digest、空入力は置換0回）を構築し、全30roundで
+  c1=c2=0が保たれること、c0読出しが状態を失わないことを証明する。raw public inputsの
+  preflight（256語上限と各語<p、拒否時にreductionを行わない）も模し、受理語では恒等であることを
+  示す。これによりgate terminalのhash観測を具体関数へ置換し、GateChainHypothesesのhashLength仮定を
+  除去した系を与える。Solidityは`MleVerifierV2.sol:382`でcalldataをhashするため、
+  `PoseidonGate.sol:77`の検査は外部library入口を守るものであり、verify内では
+  `_copyCanonicalBase`が先に同じcalldataを走査するため多重防御である。2つの走査の順序は未モデル化。
+  Rustは型でcanonicalなため範囲検査を持たず、256語上限もSolidityのみである。
+  置換の値としての正しさは採用済みPoseidonConstantsの主張と外部test vector 1行に依存する。
   追加preflightの失敗分類/順序はモデル上のもの。実装の例外・slashing証拠とは未接続。
   Gates.rustAdmissionのlookup拒否もこの入口には未接続。
   IntegratedTerminalChainは採用済みのOuterClaimChain/NormTerminalBinding/GateTerminalBinding/

@@ -816,6 +816,33 @@ sourceから再生成し、公理分布は936/735/490/281/2/1。実行時manifes
 guard33件・dependency34件・provision20件・fresh runner self-check29件、CI YAML、空白差分と
 runtime無変更もPASS。実装・main・親pinは変更せず、全実装/PCS健全性を完了したとはしない。
 
+## 第17継続更新（c3719e61以降）
+
+追跡版runnerでコミット`c3719e61`の83モデル・2500定理を再検査し、PASS（727.034秒）。1413非toolchain
+モジュールをsourceから再生成し、公理分布は971/744/500/282/2/1。実行時manifest SHA256は当該コミットと
+同一の`cc7b67fbcf0b2969aa2099146ee36acb9627e0e4db33797b8f31d489b8823ea5`、receipt
+`05760f64b72b2529ef93bea6b4df3a45cbe19fbee45dea19b0a1255707bae119`、graph
+`24ced6ff907622b015cc3dee2b1ccc175a05e5555090da8c37696d125f4c83ba`、保存先
+`/Users/andropov/.local/share/wire3-fresh-source/wire3-fresh-source-build.5imen0_t/`。
+
+- **public input hashの具体化**: PublicInputHashBindingは採用済みPoseidon置換の上に実hash-no-pad
+  スポンジを構築し、absorb順・overwrite mode・chunk数・末尾短chunk・4要素digest・空入力の
+  置換0回を実装と対照する。Ext3モデル上で全30roundにわたりc1=c2=0が保たれること、
+  c0読出しが無損失であることを層ごとに証明した（採用済みzeroInputWitnessとの一致はrfl、
+  外部test vectorのzero入力行も再現）。raw public inputsのpreflight（256語上限、各語<p、
+  拒否時に無言のreductionをしない）も新たに模した。これによりgate terminal定理から
+  hash長仮定を除き、GateChainHypothesesのhashLengthフィールドを埋める系を与える。
+  Solidity/Rustの差（Rustは型でcanonicalなため範囲検査なし、256語上限はSolidityのみ、
+  hashはcalldataを読むため`PoseidonGate.sol:77`が外部library入口を守り、verify内では
+  多重防御）はheaderに明記した。
+
+追加1モデルは別担当の独立read-onlyレビューでLean側に欠陥なし。指摘された必須修正2件
+（calldata読取りの正確な言い換え、採用済みLean/Solidityの引用行番号）を適用した。
+採用namespaceでの直接buildと全統合guardはPASS。全2579名の実定理/型/推移的公理、433 reviewed hashes、
+18表1147語、7依存5601fileを検査した。source inventoryは290file中31部分対応/259未対応を維持。
+guard33件・dependency34件・provision20件・fresh runner self-check29件、CI YAML、空白差分と
+runtime無変更もPASS。実装・main・親pinは変更せず、全実装/PCS健全性を完了したとはしない。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "6a1279a29d816b13b500fec936eba1bc111ec962ef85cd55a5c3cc246dc2e8c5",
+      "sha256": "847a51fc7d428b427814301b2aa2670f04a115ee4af9733c4eb9dc8a2516b89c",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "ece69f79e3b7b0d8afb5260d11ddb47f14ef07459e63301907cde16e4ee02497",
+      "sha256": "f772e3ae250a6490f7301156ffbae43433b11e3d0ea8cbf08aef6547d7d716e2",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "8ebf4d0779d0aa2a0bab8944dcd26e122be800d904821d1276d168475a361a40",
+      "sha256": "bd9aa8461122aba81528b0a93ff63a40b9fe50c29aa3665d96bc1d9a6bd34f77",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "d9ebaf977e8445d83281d0ddda32a5490bd31b373803e2137de283e1903133c1",
+      "sha256": "c90afa16db0743575a4125419f6a47c5cd33243fa0f955682ccb85457dc29737",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "6255013213f6669976bce590edf8ff392ce0219bd12a92d3615bb35355bff8d2",
+      "sha256": "dc380e4756e8eb553e67e9f5ae10e76f4377747feb409f1e0ff0cc8163a7e81b",
       "kind": "spec"
     },
     {
@@ -2161,6 +2161,11 @@
     {
       "path": "mle/audit/Audit/Wire3/EqTableProvenance.lean",
       "sha256": "661697783b5d143e7d7f62925c9a130087625056d8f005451b2f85bbf847f5e1",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/PublicInputHashBinding.lean",
+      "sha256": "684d3f29ea5a9cb3d618c82671d4a709018774437aa5f008eb774a9e684c33df",
       "kind": "current-model"
     }
   ],
@@ -5541,6 +5546,98 @@
         "mle/src/sumcheck/ext3.rs"
       ],
       "scope": "The actual Ext3 eq-table builder (same loop nest in gate_ext3_v2.rs 26-39 and norm_logup.rs 360-374, renamed binders, not byte-identical; eq_poly.rs is the older base-field path): outer loop over tau in order, inner index loop, accumulator on the left, factor chosen by (i>>j)&1. Every entry is the adopted Norm.booleanRowEq of its row, and the low bit binds first, derived from the adopted bindBuffer's 2i/2i+1 pairing. Binding a full point yields an eq cell equal to Norm.eqEvaluation tau point; the subgroup column is the geometric power list, which the verifier does not fold but multiplies as (1-r_j) + r_j*g^(2^j), and that product equals the fully bound cell / Packed.fold. Corollaries restate the adopted norm and gate terminal theorems with the eq/subgroup provenance hypotheses removed. That the VK's subgroup_gen_powers are the repeated squares of the table generator is stated but not discharged (the adopted model has no two_adic_subgroup or VK generator derivation), and transcript-derived tau/point correspondence remains a hypothesis."
+    },
+    {
+      "module": "Audit.Wire3.PublicInputHashBinding",
+      "theorems": [
+        "Audit.Wire3.PublicInputHashBinding.sponge_rate_capacity_split",
+        "Audit.Wire3.PublicInputHashBinding.outputs_fit_in_first_squeeze",
+        "Audit.Wire3.PublicInputHashBinding.permute_zero_is_adopted_witness_output",
+        "Audit.Wire3.PublicInputHashBinding.permute_zero_matches_plonky2_test_vector",
+        "Audit.Wire3.PublicInputHashBinding.isBase_zero",
+        "Audit.Wire3.PublicInputHashBinding.isBase_add",
+        "Audit.Wire3.PublicInputHashBinding.isBase_mul",
+        "Audit.Wire3.PublicInputHashBinding.isBase_scalar",
+        "Audit.Wire3.PublicInputHashBinding.isBase_addBase",
+        "Audit.Wire3.PublicInputHashBinding.isBase_square",
+        "Audit.Wire3.PublicInputHashBinding.isBase_sbox",
+        "Audit.Wire3.PublicInputHashBinding.isBase_foldl",
+        "Audit.Wire3.PublicInputHashBinding.isBase_addConstantLayer",
+        "Audit.Wire3.PublicInputHashBinding.isBase_partialFirstConstantLayer",
+        "Audit.Wire3.PublicInputHashBinding.isBase_sboxLayer",
+        "Audit.Wire3.PublicInputHashBinding.isBase_mdsCirculantRow",
+        "Audit.Wire3.PublicInputHashBinding.isBase_mdsLayer",
+        "Audit.Wire3.PublicInputHashBinding.isBase_mdsPartialInit",
+        "Audit.Wire3.PublicInputHashBinding.isBase_mdsPartialFast",
+        "Audit.Wire3.PublicInputHashBinding.isBase_partialSboxValue",
+        "Audit.Wire3.PublicInputHashBinding.isBase_fullWitnessStep",
+        "Audit.Wire3.PublicInputHashBinding.isBase_partialWitnessStep",
+        "Audit.Wire3.PublicInputHashBinding.isBase_runWitness",
+        "Audit.Wire3.PublicInputHashBinding.isBase_permuteFirstFullRounds",
+        "Audit.Wire3.PublicInputHashBinding.isBase_permutePartialRounds",
+        "Audit.Wire3.PublicInputHashBinding.isBase_permuteSecondFullRounds",
+        "Audit.Wire3.PublicInputHashBinding.permute_preserves_base",
+        "Audit.Wire3.PublicInputHashBinding.zeroState_isBase",
+        "Audit.Wire3.PublicInputHashBinding.isBase_embedBase",
+        "Audit.Wire3.PublicInputHashBinding.baseOf_embedBase",
+        "Audit.Wire3.PublicInputHashBinding.baseOf_embed",
+        "Audit.Wire3.PublicInputHashBinding.digest_limbs_determine_state",
+        "Audit.Wire3.PublicInputHashBinding.set_from_slice_absorbs",
+        "Audit.Wire3.PublicInputHashBinding.set_from_slice_keeps",
+        "Audit.Wire3.PublicInputHashBinding.set_from_slice_keeps_capacity",
+        "Audit.Wire3.PublicInputHashBinding.isBase_setFromSlice",
+        "Audit.Wire3.PublicInputHashBinding.numChunks_zero",
+        "Audit.Wire3.PublicInputHashBinding.numChunks_covers",
+        "Audit.Wire3.PublicInputHashBinding.absorb_empty",
+        "Audit.Wire3.PublicInputHashBinding.chunk_length_le_rate",
+        "Audit.Wire3.PublicInputHashBinding.isBase_absorbFrom",
+        "Audit.Wire3.PublicInputHashBinding.isBase_absorb",
+        "Audit.Wire3.PublicInputHashBinding.absorbedInputs_eq",
+        "Audit.Wire3.PublicInputHashBinding.absorb_consumes_all_inputs",
+        "Audit.Wire3.PublicInputHashBinding.digest_length",
+        "Audit.Wire3.PublicInputHashBinding.digest_is_first_four_state_elements",
+        "Audit.Wire3.PublicInputHashBinding.hash_no_pad_length",
+        "Audit.Wire3.PublicInputHashBinding.hash_no_pad_canonical",
+        "Audit.Wire3.PublicInputHashBinding.map_eq_self_of_mem",
+        "Audit.Wire3.PublicInputHashBinding.embedBase_baseOf",
+        "Audit.Wire3.PublicInputHashBinding.final_state_isBase",
+        "Audit.Wire3.PublicInputHashBinding.hash_no_pad_reads_final_state",
+        "Audit.Wire3.PublicInputHashBinding.raw_rejects_noncanonical_word",
+        "Audit.Wire3.PublicInputHashBinding.raw_rejects_overlong",
+        "Audit.Wire3.PublicInputHashBinding.raw_success_exact",
+        "Audit.Wire3.PublicInputHashBinding.raw_canonical_is_defined",
+        "Audit.Wire3.PublicInputHashBinding.raw_hash_of_typed",
+        "Audit.Wire3.PublicInputHashBinding.engine_hash_is_concrete",
+        "Audit.Wire3.PublicInputHashBinding.model_engine_keeps_concrete_hash",
+        "Audit.Wire3.PublicInputHashBinding.with_public_inputs_hash_substitution",
+        "Audit.Wire3.PublicInputHashBinding.hash_length_discharged",
+        "Audit.Wire3.PublicInputHashBinding.gate_terminal_uses_concrete_hash",
+        "Audit.Wire3.PublicInputHashBinding.gate_terminal_of_with_public_inputs_hash",
+        "Audit.Wire3.PublicInputHashBinding.bound_terminal_is_engine_gate_terminal_concrete_hash",
+        "Audit.Wire3.PublicInputHashBinding.honest_last_round_is_engine_gate_terminal_concrete_hash",
+        "Audit.Wire3.PublicInputHashBinding.gate_chain_hypotheses_of_concrete_hash",
+        "Audit.Wire3.PublicInputHashBinding.eight_zero_is_one_chunk",
+        "Audit.Wire3.PublicInputHashBinding.eight_zero_absorb",
+        "Audit.Wire3.PublicInputHashBinding.eight_zero_public_inputs_digest",
+        "Audit.Wire3.PublicInputHashBinding.eight_zero_digest_value",
+        "Audit.Wire3.PublicInputHashBinding.empty_public_inputs_digest",
+        "Audit.Wire3.PublicInputHashBinding.nine_public_inputs_two_permutations",
+        "Audit.Wire3.PublicInputHashBinding.nine_public_inputs_short_final_chunk",
+        "Audit.Wire3.PublicInputHashBinding.raw_eight_zero_accepted",
+        "Audit.Wire3.PublicInputHashBinding.raw_modulus_word_rejected",
+        "Audit.Wire3.PublicInputHashBinding.raw_u64_max_word_rejected",
+        "Audit.Wire3.PublicInputHashBinding.raw_overlong_rejected",
+        "Audit.Wire3.PublicInputHashBinding.checked_rejects_wrong_count",
+        "Audit.Wire3.PublicInputHashBinding.checked_success_exact"
+      ],
+      "sources": [
+        "mle/contracts/src/PoseidonGate.sol",
+        "mle/contracts/src/PoseidonPublicInputsHash.sol",
+        "mle/contracts/src/MleVerifierV2.sol",
+        "plonky2/src/hash/poseidon.rs",
+        "plonky2/src/hash/hashing.rs"
+      ],
+      "scope": "The actual hash-no-pad sponge on top of the adopted Poseidon permutation (rate 8, capacity 4, width 12, overwrite-mode set_from_slice, ceil(len/8) chunks, short final chunk overwriting only its occupied rate slots, four-element digest, empty input with zero permutations); permute is the adopted zeroInputWitness pipeline (rfl) and reproduces the external all-zero test vector. Every layer of all thirty rounds preserves the base subfield (c1 = c2 = 0) and the c0 readout is lossless. The raw public-input preflight is modelled as the source performs it (256-word cap, per-word < p, no silent reduction, identity on accepted words). Corollaries restate the gate terminal theorems with the engine's publicInputsHash replaced by this concrete function, discharging the hashLength hypothesis of GateChainHypotheses. Rust has no range check and no cap; Solidity hashes calldata, so PoseidonGate's own check guards the library entry and is defence in depth inside verify, whose scan order is not modelled. Value-level correctness rests on the adopted PoseidonConstants claim plus one external fixture row; no cryptographic, EVM/Yul or endianness claim."
     }
   ]
 }

@@ -88,3 +88,4 @@ import Audit.Wire3.NormTerminalBinding
 import Audit.Wire3.OuterClaimChain
 import Audit.Wire3.IntegratedTerminalChain
 import Audit.Wire3.EqTableProvenance
+import Audit.Wire3.PublicInputHashBinding
