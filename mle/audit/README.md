@@ -79,8 +79,11 @@
 | [GateSlotAlgebra/Commutation/Round](Audit/Wire3/GateSlotRound.lean) | Rustのslot-first累積（accumulated[slot]+=filter·value、範囲外writeはnone）とforward alpha powersが実combineRows/evalCombinedと可換。current_roundのsuffix外側・integer内側のmutable累積がGateSuffixの整数ごとのsuffix和に一致し、Valid eq表でhalf=2^(numVars−1)。補間/DenseMle構成は別 |
 | [NormDenseRound](Audit/Wire3/NormDenseRound.lean) | norm_logup.rsのround_sum_at（4 scratch vector・suffix loop・shift/mask PI loop）、evaluate_target_from_valuesの幅assert、current_roundの0..=5 sample→採用済み補間→定数省略、bindのprefix更新順とbindBuffer、prover stateのErr/panic/cache/Consistentを模し、送信5係数を実evaluateRoundが復元することを証明。構成データの由来・不正proverは別 |
 | [OpenedClaimFold](Audit/Wire3/OpenedClaimFold.lean) | 採用済みPacked.fold/packedFold/bindManyのrow++index分割、pack_mlesの列優先padded table、Solidity cell/Rust slot対応（0-2はlog点、3-4はgate点、第6はnone）、native点=dense点の反転。明示的honest-prover仮定（claimed cell=各列のrow fold）下でexpectedClaimsの各cellがpadded tableのWHIR点での評価に一致。PCS binding/WHIR受理は別 |
+| [GateTerminalBinding](Audit/Wire3/GateTerminalBinding.lean) | gate proverのbind_challenge（degree ensure→eq/全wire/全constantのbindBuffer→rounds/point push）とinto_proof_and_pointを模し、全変数bind後の各列=採用済みpacked fold、最終roundのeq·aggregateがGatesComplete.evalCombinedとVerifier.gateTerminalに一致（eq cell=eqEvaluation(gateTau,gatePoint)は明示仮定）。honest prover限定の受理claim一致も証明。回路truth/PCSは別 |
+| [NormTerminalBinding](Audit/Wire3/NormTerminalBinding.lean) | 全変数bind後のnorm prover表（単一cell列）をNormTerminalInput（constants++sigma、routed wire cells++非routed tail、identity/sigma helper、PI値）へ対応させ、prover targetとVerifier側Norm.evaluate/checkedEvaluate/Engine.logTerminalの項ごとの一致を証明。各bound cell=採用済みpacked fold。eq/subgroup cellのtau由来・lambda/eta/wire-map由来は明示仮定、honest prover定理は表示 |
+| [OuterClaimChain](Audit/Wire3/OuterClaimChain.lean) | honest proverのlog laneを実Verifier.roundStep/runRoundsで駆動し、各round後のlogClaim=直前表のroundValue(r_i)、次表のf'(0)+f'(1)=roundValue(r)（2≤remaining、読取り境界証明済み）、初期零claim⇔端点和零、intoProofAndPoint=verifierが消費したmessage/challenge、OuterAdapterとの一致。gate laneは明示仮定でparameterise。健全性は主張しない |
 
-現行rootは78モデル・2214件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
+現行rootは81モデル・2402件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
 件数は暗号安全性の達成率ではありません。
 
 [スコープと未証明事項](SCOPE.md)、[結果・再現手順・次工程](REPORT.md)、

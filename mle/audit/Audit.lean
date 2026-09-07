@@ -83,3 +83,6 @@ import Audit.Wire3.GateSlotCommutation
 import Audit.Wire3.GateSlotRound
 import Audit.Wire3.NormDenseRound
 import Audit.Wire3.OpenedClaimFold
+import Audit.Wire3.GateTerminalBinding
+import Audit.Wire3.NormTerminalBinding
+import Audit.Wire3.OuterClaimChain

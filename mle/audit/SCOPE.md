@@ -238,6 +238,23 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   scratch書込みのinterleave順、不正prover/transcript/round連鎖、PCSは未証明。roundSumAt自体は
   totalized読取りなので、Shape下の各round定理は0<remainingを前提にして境界定理の範囲に留め、
   state定理はConsistent∧¬isCompleteからこれを導く。
+  NormTerminalBindingは全変数bind後（remaining=0）の表をNormTerminalInput（constants++sigma cells、
+  routed wire cells++非routed tail extra、identity helper cells++sigma helper cells、bindingsのPI値）へ
+  明示的に対応させ、proverのtargetValueとverifier側Norm.permutationTerminal/evaluate（eq/subgroup値を
+  引数化したevaluateWithはrflで同じ）の項ごとの一致、各bound cell=採用済みDenseMleIndexed.evaluate/
+  Packed.fold/Connections.packedFold、|point|=remainingでのbind成功と全列単一cell、最終round
+  （remaining=1）のroundValue=bind後表のterminal target、honest proverのend-to-end定理を証明する。
+  eq cell=Norm.eqEvaluation(tau,point)、subgroup cell=subgroupEvaluation、lambda running product、
+  eta冪、wire mapのbyte由来、kIs一致、shapeValid、normTerminalInput proof=対応表、challengesFromInitial=
+  prover challengesは可視の仮定であり、eq_evals_ext3(tau)・from_baseの転置・PCS claimed値=prover cell・
+  不正prover・transcript・Rust/EVM refinementは主張しない。
+  OuterClaimChainはhonest proverのlog laneを、採用済みVerifier.roundStep/runRoundsに同じcommit引数で
+  proverのcurrentRound→bindChallengeを組み合わせて駆動し、各round後のlogClaim_i=roundValue(t_i,p,r_i)、
+  最終claim=最後にround_sum_atが走った表での値、次表のf'(0)+f'(1)=前表のroundValue(r)（2≤remainingと
+  全隣接/PI読取り境界を証明）、初期零claim⇔端点和零（零性は仮定しない）、intoProofAndPoint=verifierが
+  消費したmessage列/challenge列、Verifier.derivedRoundsとの一致、OuterAdapter.runCheckedとの一致を証明する。
+  gate laneは採用済みgate proverにbind_challengeモデルがないため「復元が整数grid上の次数≤d多項式と
+  一致する」明示仮定でparameteriseし、gate proverを偽造しない。任意messageの健全性・FSは主張しない。
 - Gatesは14familyの設定検証、GatesAdditional/CosetとPoseidon/Constantsは残る8familyを具体化。
   GatesCompleteは全14familyを実計算し、valid設定と入力長ならSomeが得られることを証明する。
   Integratedはこのcomplete dispatcherを使う。基礎Gates単独のpartial dispatcherと混同しない。
@@ -273,9 +290,16 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   suffix外側・integer内側のmutable累積、(1−x)·t[2s]+x·t[2s+1]の実読取り）を同じslot評価器で模し、
   実行された累積が整数ごとのsuffix優先和GateSuffixPolynomial.currentRoundValueに一致、
   Valid eq表でhalf=2^(numVars−1)、TableShape下で全cellが1多項式（≤q+2≤10）の値であることを証明。
-  ext3_evaluations_to_coefficients呼出し（136）とdegree構成検査（80-83）、DenseMle構成/bind_challenge、
+  ext3_evaluations_to_coefficients呼出し（136）とdegree構成検査（80-83）、DenseMle構成、
   tau由来のeq表、canonical publicHash preflight、reduced emitter、Rust validate_gate_ext3_context成功から
   Lean validateConfigurationへの橋、回路truth/PCS/FSは未証明。
+  GateTerminalBindingはgate_ext3_v2.rs 142-161のbind_challenge（degree ensure→eq表→全wire→全constantの
+  採用済みbindVariable、rounds/point push、失敗はnone）とinto_proof_and_point（eq.num_vars=0 ensure）を模し、
+  構成子ensure 70-79をProverShapeとして全変数bind後に各列が単一cellで採用済みpacked fold/
+  DenseMleIndexed.evaluateに等しいこと、最終round（half=1）のeq·aggregateがGatesComplete.evalCombinedと
+  一致し、eq cell=Norm.eqEvaluation(gateTau,gatePoint)・claimed cell=prover cell・alpha=gateAlphaを明示仮定
+  したときVerifier.gateTerminal/Integratedの受理式に一致することを証明する。honest prover限定の定理は
+  そのように表示する。degree ensure 80-83、eq表のtau由来、係数補間、transcript、WHIR/PCSは未証明。
 - Integrated.verifyはchecked norm形状と7challenge layout、同じ入力での全gate計算の
   Someを検査後、packed/norm/eq/gateを具体化したVerifier.verifyへ進む。
   modelEngineだけの利用にはこの保証がなく、getD zeroは旧interfaceへの全域化にすぎない。

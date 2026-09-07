@@ -720,6 +720,47 @@ OpenedClaimFoldは別担当の独立read-onlyレビューで必須修正なし�
 guard33件・dependency34件・provision20件・fresh runner self-check29件、CI YAML、空白差分と
 runtime無変更もPASS。実装・main・親pinは変更せず、全実装/PCS健全性を完了したとはしない。
 
+## 第14継続更新（9e960c70以降）
+
+追跡版runner（SHA256 `56237ada14b4a29015199a6b3c9566d72bd3a175921cecb813f9f821fc4c744a`）でコミット`9e960c70`の
+78モデル・2214定理を再検査し、PASS（758.152秒）。1408非toolchainモジュール（audit/root 79、Mathlib 1091、
+Batteries 99、Aesop 108、Qq 11、ProofWidgets 18、ImportGraph 2）をsourceから再生成し、全定理の公理は
+標準3公理の部分集合（818/703/436/254/2/1）。実行時manifest SHA256は当該コミットと同一の
+`f74472f78c43f5facdb42e474bd380055096c5d5599fc4430131ea0d592ac8ec`、receipt
+`5542843f1d9ca96d2542a4077cd1eb877b628cd7162cd4840d70567f9792a2eb`、graph
+`ce4e6ffd93eab565895f80cfa3942c1dccbb8b17e2fa86a5fcd548aa02f62d3f`、保存先
+`/Users/andropov/.local/share/wire3-fresh-source/wire3-fresh-source-build.jvklnsxi/`。
+
+- **gate proverの終端接続**: GateTerminalBindingはbind_challenge（degree ensure→eq/全wire/全constantの
+  採用済みbind→rounds/point push）とinto_proof_and_pointを模し、ProverShape（構成子ensure 70-79）から
+  全変数bind後の各列が単一cellで採用済みpacked foldに等しいこと、最終roundのeq·aggregateが
+  GatesComplete.evalCombinedに一致し、eq cell=eqEvaluation(gateTau,gatePoint)・claimed cell=prover cell・
+  alpha=gateAlphaの明示仮定下でVerifier.gateTerminalとIntegratedの受理式に一致することを証明。
+  Integrated.verify成功から必要なmetadata検査を導くhonest prover限定定理も持つ。
+  eq表のtau由来、係数補間、transcript、WHIR/PCSは未証明。
+- **norm proverの終端接続**: NormTerminalBindingは全変数bind後の表をNormTerminalInput（constants++sigma、
+  routed wire cells++非routed tail、identity/sigma helper、PI値）へ明示的に対応させ、proverのtargetValueと
+  verifier側Norm.evaluate/checkedEvaluate/Engine.logTerminalの項ごとの一致（lambda running product、eta冪、
+  PI eq_row、kappa/xi重み、helper半分の順序を対照）、各bound cell=採用済みpacked fold、bind成功と
+  全列単一cell、最終roundのroundValue=bind後表のterminal target、honest proverのend-to-end定理を証明。
+  独立レビューでwitnessがrouted cellのみでnumWires=numRoutedに限定されていた点（必須）を指摘され、
+  非routed tailを加えて全定理を保ったまま修正、numWires>numRoutedの具体例も追加した。
+  eq/subgroup cellのtau由来、lambda/eta/wire-map/kIsの由来、shapeValid、PCS claimed値=prover cellは
+  可視の仮定。
+- **honest proverのclaim連鎖**: OuterClaimChainは採用済みVerifier.roundStep/runRoundsをproverの
+  currentRound→bindChallengeと同じcommit引数で駆動し、各round後のlogClaim=直前表のroundValue、
+  次表のf'(0)+f'(1)=前表のroundValue(r)（NormDenseRoundが残していたround間恒等式、2≤remainingと
+  全読取り境界を証明）、初期零claim⇔端点和零、intoProofAndPoint=verifierが消費したmessage/challenge、
+  derivedRounds/OuterAdapter.runCheckedとの一致、n=1の具体例を証明。gate laneは明示仮定で
+  parameteriseし偽のgate proverを置かない。任意messageの健全性・FSは主張しない。
+
+追加3モデルは別担当の独立read-onlyレビューをPASS（GateTerminalBindingは引用行番号の修正のみ、
+NormTerminalBindingは上記必須修正後の再レビュー、OuterClaimChainは必須修正なし）。
+採用namespaceでの直接buildと全統合guardはPASS。全2402名の実定理/型/推移的公理、430 reviewed hashes、
+18表1147語、7依存5601fileを検査した。source inventoryは290file中31部分対応/259未対応を維持。
+guard33件・dependency34件・provision20件・fresh runner self-check29件、CI YAML、空白差分と
+runtime無変更もPASS。実装・main・親pinは変更せず、全実装/PCS健全性を完了したとはしない。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。
