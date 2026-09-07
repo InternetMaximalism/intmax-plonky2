@@ -340,7 +340,19 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   VKのsubgroup_gen_powersが表の生成元の反復二乗であること（Rustはverifier_v2.rs 131-146で
   two_adic_subgroupを再計算して検査するが、採用モデルにはtwo_adic_subgroupもVKの生成元導出も
   モデルがない）は述語としては書けるが解消できないため、可視の仮定として残す。
-  transcript由来のtau/point対応も仮定のままである。
+  transcript由来の対応はTranscriptProvenanceで扱う。
+- TranscriptProvenanceは「engineの初期transcriptがOuterInitialの実導出そのものである」という
+  単一前提DerivedInitial（採用済みOuterAdapter.execute_matches_existing_derived_contextが既に取る
+  仮定と同一で、withInitialならrfl）から、Norm.challengesFromInitialが導出した7 challengeを
+  そのまま返すこと、log tau列・gate tau列・gate alphaが導出値であること、各challengeが
+  sourceのdigest/counter位置（eta 0、beta 0、gamma 3、xi 0、lambda 0、rho 3、kappa 6、
+  log tau 9+3i、gate alpha 9+3d、gate tau 12+3d+3i）に載ることを証明する。
+  これによりIntegratedTerminalChainのObservationOnlyは12項から9項へ減り、
+  NormTerminalProvenance・GateChainHypotheses・NormColumnProvenanceの各仮定も1つずつ減る。
+  hashは任意の決定的関数のままで、単射性・uniform性・random oracle性は一切使わない。
+  すなわちこれは順序と受け渡しの同一性であって、Fiat-Shamir健全性ではない。
+  gateのhptは解消ではなく同値な言い換え（hpoint）であり、依然として仮定である。
+  DerivedInitial自体と、prover側のchallenges一致は残る仮定である。
 - ConnectionsはLeanモデル間の具体的な型・foldの接続。全Engineを具体的に実装したわけではない。
 
 ## 未完了の全体証明（優先順）

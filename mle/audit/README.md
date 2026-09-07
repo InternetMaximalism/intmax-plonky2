@@ -85,8 +85,9 @@
 | [IntegratedTerminalChain](Audit/Wire3/IntegratedTerminalChain.lean) | OuterClaimChain/NormTerminalBinding/GateTerminalBinding/OpenedClaimFoldを採用済みIntegrated.verify/verify_success_checksへ接続。honest proverではlogTerminal=derivedRoundsの最終logClaim、gateTerminal=gateClaim、WHIR期待claim=padded table評価となり、決定論的検査は全て成立、残りは名前付き観測（config hash/envelope/deployment/shape/長さ/verifyWhir/7 challenge/normShape）のみ。Rust順（WHIR→norm）とSolidity順の受理同値。健全性は主張しない |
 | [EqTableProvenance](Audit/Wire3/EqTableProvenance.lean) | 実eq表builder（tau順の外側loop・index内側loop・左側累積）を模し、各entry=Norm.booleanRowEq、低位bitが先にbindされることを採用済みbindBufferから証明。全点bind後のeq cell=Norm.eqEvaluation(tau,point)、subgroup cell=verifierの積形subgroupEvaluation。これによりnorm/gateのterminal定理からeq/subgroup由来の仮定を除去した系を与える。VK generator由来は明示仮定のまま |
 | [PublicInputHashBinding](Audit/Wire3/PublicInputHashBinding.lean) | 実hash-no-padスポンジ（rate8/capacity4、overwrite、⌈len/8⌉chunk、4要素digest）を採用済みPoseidon上で具体化し、全30roundで基底体が保たれること・c0読出しが無損失であること、raw canonical preflight（256語上限と各語<P、fallbackなし）を証明。gate terminalのhash観測を具体関数へ置換し、hashLength仮定を除去 |
+| [TranscriptProvenance](Audit/Wire3/TranscriptProvenance.lean) | 「engineの初期transcriptが実導出そのもの」という単一前提から、7 challengeがchallengesFromInitialと一致すること、log/gate tau列とgate alphaが導出値であること、各challengeがsourceのdigest/counter位置に載ることを証明。ObservationOnlyは12→9項へ減る。hashの性質は一切使わず、順序と受け渡しのみ |
 
-現行rootは84モデル・2579件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
+現行rootは85モデル・2617件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
 件数は暗号安全性の達成率ではありません。
 
 [スコープと未証明事項](SCOPE.md)、[結果・再現手順・次工程](REPORT.md)、

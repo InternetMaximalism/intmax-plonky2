@@ -843,6 +843,17 @@ runtime無変更もPASS。実装・main・親pinは変更せず、全実装/PCS�
 guard33件・dependency34件・provision20件・fresh runner self-check29件、CI YAML、空白差分と
 runtime無変更もPASS。実装・main・親pinは変更せず、全実装/PCS健全性を完了したとはしない。
 
+### 第17継続更新の追補（3d5880ed以降）
+
+- **transcript由来の解消**: TranscriptProvenanceは単一前提DerivedInitial（engineの初期transcriptが
+  実導出そのもの。採用済みOuterAdapterが既に取る仮定と同一でwithInitialならrfl）から、
+  challengesFromInitialが導出7 challengeを返すこと、log/gate tau列とgate alphaが導出値であること、
+  各challengeがsourceのdigest/counter位置に載ることを証明する。ObservationOnlyは12項から9項へ、
+  NormTerminalProvenance/GateChainHypotheses/NormColumnProvenanceも各1項減る。
+  hashの性質は一切使わないため、これは順序と受け渡しの同一性でありFiat-Shamir健全性ではない。
+  独立レビューの必須修正2件（gateのhptは解消ではなく同値な言い換えであること、
+  honest prover表示は6件でなく5件）を適用した。DerivedInitial自体とprover側challenges一致は残る。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

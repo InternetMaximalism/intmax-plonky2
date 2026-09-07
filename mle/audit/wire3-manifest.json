@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "847a51fc7d428b427814301b2aa2670f04a115ee4af9733c4eb9dc8a2516b89c",
+      "sha256": "c358d9ce90970d8c83f4e45b64771781d013045e6158810c6c65fbb6eb086a9f",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "f772e3ae250a6490f7301156ffbae43433b11e3d0ea8cbf08aef6547d7d716e2",
+      "sha256": "d76ea7a806faebf1ddfa1a09358cf9e51202b05f9ab86e1f7dfe2f7699b27eb7",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "bd9aa8461122aba81528b0a93ff63a40b9fe50c29aa3665d96bc1d9a6bd34f77",
+      "sha256": "c9a55b6963d9aeb0053360669973ccb4e1eb01375c1cfe0d25d6f315df54aa7e",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "c90afa16db0743575a4125419f6a47c5cd33243fa0f955682ccb85457dc29737",
+      "sha256": "65ee2b2ff4c569c3e2e805fe032e4db2ddc517c21d642c6da4435bc719450aed",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "dc380e4756e8eb553e67e9f5ae10e76f4377747feb409f1e0ff0cc8163a7e81b",
+      "sha256": "92db7fab370d599732ef186a2a3063844a470480e2ac38c106c066a5d8566ede",
       "kind": "spec"
     },
     {
@@ -2166,6 +2166,11 @@
     {
       "path": "mle/audit/Audit/Wire3/PublicInputHashBinding.lean",
       "sha256": "684d3f29ea5a9cb3d618c82671d4a709018774437aa5f008eb774a9e684c33df",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/TranscriptProvenance.lean",
+      "sha256": "57813450dbf8724ffd90eec0c593002cf355c005ce75b6a60c3e465a7458c309",
       "kind": "current-model"
     }
   ],
@@ -5638,6 +5643,57 @@
         "plonky2/src/hash/hashing.rs"
       ],
       "scope": "The actual hash-no-pad sponge on top of the adopted Poseidon permutation (rate 8, capacity 4, width 12, overwrite-mode set_from_slice, ceil(len/8) chunks, short final chunk overwriting only its occupied rate slots, four-element digest, empty input with zero permutations); permute is the adopted zeroInputWitness pipeline (rfl) and reproduces the external all-zero test vector. Every layer of all thirty rounds preserves the base subfield (c1 = c2 = 0) and the c0 readout is lossless. The raw public-input preflight is modelled as the source performs it (256-word cap, per-word < p, no silent reduction, identity on accepted words). Corollaries restate the gate terminal theorems with the engine's publicInputsHash replaced by this concrete function, discharging the hashLength hypothesis of GateChainHypotheses. Rust has no range check and no cap; Solidity hashes calldata, so PoseidonGate's own check guards the library entry and is defence in depth inside verify, whose scan order is not modelled. Value-level correctness rests on the adopted PoseidonConstants claim plus one external fixture row; no cryptographic, EVM/Yul or endianness claim."
+    },
+    {
+      "module": "Audit.Wire3.TranscriptProvenance",
+      "theorems": [
+        "Audit.Wire3.TranscriptProvenance.withInitial_derived",
+        "Audit.Wire3.TranscriptProvenance.derived_initial_withNormEvaluation",
+        "Audit.Wire3.TranscriptProvenance.derived_initial_modelEngine",
+        "Audit.Wire3.TranscriptProvenance.execute_initial_is_derived",
+        "Audit.Wire3.TranscriptProvenance.challenges_from_initial_is_derived",
+        "Audit.Wire3.TranscriptProvenance.derived_challenges_at_source_counters",
+        "Audit.Wire3.TranscriptProvenance.derived_challenges_tau",
+        "Audit.Wire3.TranscriptProvenance.values_liftList",
+        "Audit.Wire3.TranscriptProvenance.liftList_length",
+        "Audit.Wire3.TranscriptProvenance.values_log_tau_column",
+        "Audit.Wire3.TranscriptProvenance.values_gate_tau_column",
+        "Audit.Wire3.TranscriptProvenance.gate_alpha_element_matches",
+        "Audit.Wire3.TranscriptProvenance.values_gate_point_column",
+        "Audit.Wire3.TranscriptProvenance.derived_column_lengths",
+        "Audit.Wire3.TranscriptProvenance.derived_columns_at_source_counters",
+        "Audit.Wire3.TranscriptProvenance.derived_seven_challenges",
+        "Audit.Wire3.TranscriptProvenance.derived_log_tau_length",
+        "Audit.Wire3.TranscriptProvenance.derived_gate_tau_length",
+        "Audit.Wire3.TranscriptProvenance.derived_norm_shape_valid",
+        "Audit.Wire3.TranscriptProvenance.fully_bound_target_is_engine_terminal_derived",
+        "Audit.Wire3.TranscriptProvenance.normColumnProvenance_of_derived",
+        "Audit.Wire3.TranscriptProvenance.fully_bound_target_is_norm_evaluate_of_derived_columns",
+        "Audit.Wire3.TranscriptProvenance.honest_prover_terminal_of_derived_columns",
+        "Audit.Wire3.TranscriptProvenance.bound_terminal_is_engine_gate_terminal_of_derived_transcript",
+        "Audit.Wire3.TranscriptProvenance.honest_last_round_is_engine_gate_terminal_of_derived_transcript",
+        "Audit.Wire3.TranscriptProvenance.normTerminalProvenance_of_derived",
+        "Audit.Wire3.TranscriptProvenance.honest_log_terminal_matches_chain_derived",
+        "Audit.Wire3.TranscriptProvenance.gateChainHypotheses_of_derived",
+        "Audit.Wire3.TranscriptProvenance.gate_eq_cell_of_derived_table",
+        "Audit.Wire3.TranscriptProvenance.honest_gate_terminal_matches_claim_derived",
+        "Audit.Wire3.TranscriptProvenance.observationOnly_of_derived",
+        "Audit.Wire3.TranscriptProvenance.honest_prover_passes_deterministic_checks_derived",
+        "Audit.Wire3.TranscriptProvenance.Example.fixture_derived",
+        "Audit.Wire3.TranscriptProvenance.Example.fixture_execution_matches_engine",
+        "Audit.Wire3.TranscriptProvenance.Example.fixture_challenges",
+        "Audit.Wire3.TranscriptProvenance.Example.fixture_columns",
+        "Audit.Wire3.TranscriptProvenance.Example.fixture_observations",
+        "Audit.Wire3.TranscriptProvenance.Example.fixture_column_widths"
+      ],
+      "sources": [
+        "mle/contracts/src/MleVerifierV2.sol",
+        "mle/contracts/src/TranscriptV2.sol",
+        "mle/src/prover_v2.rs",
+        "mle/src/verifier_v2.rs",
+        "mle/src/transcript_v2.rs"
+      ],
+      "scope": "From the single premise that the engine's initial transcript IS the adopted OuterInitial derivation (the same hypothesis the adopted OuterAdapter context theorem takes; rfl for withInitial), Norm.challengesFromInitial returns exactly the seven derived challenges, the log and gate tau columns and the gate alpha are the derived ones, and each challenge sits at the source's digest and counter offsets (eta 0, beta 0, gamma 3, xi 0, lambda 0, rho 3, kappa 6, log tau 9+3i, gate alpha 9+3d, gate tau 12+3d+3i). IntegratedTerminalChain's ObservationOnly drops from twelve conjuncts to nine and three hypothesis structures each lose a field. Hash stays an arbitrary deterministic function: no injectivity, uniformity or random-oracle property is used, so this is order-and-plumbing identity, not Fiat-Shamir soundness. The gate hpt is re-expressed as the equivalent hpoint, not discharged; DerivedInitial itself and the prover-side challenge equality remain hypotheses."
     }
   ]
 }
