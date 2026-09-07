@@ -337,10 +337,20 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   全点bind後のeq cellはNorm.eqEvaluation(tau,point)に等しく、subgroup列は等比列でverifierは
   これをfoldせず(1-r_j)+r_j·g^(2^j)の積を取るので、その積が全bind後のcell/Packed.foldに等しいことを
   証明する。これによりNormTerminalBinding/GateTerminalBindingのeq/subgroup由来仮定を除いた系を与える。
-  VKのsubgroup_gen_powersが表の生成元の反復二乗であること（Rustはverifier_v2.rs 131-146で
-  two_adic_subgroupを再計算して検査するが、採用モデルにはtwo_adic_subgroupもVKの生成元導出も
-  モデルがない）は述語としては書けるが解消できないため、可視の仮定として残す。
+  VKのsubgroup_gen_powersが表の生成元の反復二乗であることはVkSubgroupProvenanceで解消した。
   transcript由来の対応はTranscriptProvenanceで扱う。
+- VkSubgroupProvenanceはplonky2のtwo_adic_subgroup（TWO_ADICITY=32、固定two-adic生成元、
+  exp_power_of_2による位数2^k根、powers()の列挙順）とVK生成元導出（verifier_v2.rs 134-143、
+  prover_v2.rsの同一loop）を模す。採用済みGoldilocksDomainの生成元7はplonky2のtwo-adic生成元とは
+  別物なので、固定生成元の位数2^32は核が実際に評価した2つの冪証明書から確定した。
+  そのうえでverifier_v2.rs 130-147の再計算検査が「VKのpowersが導出生成元の反復二乗である」ことと
+  同値であること（両方向）を証明し、EqTableProvenanceのSubgroupPowersProvenanceを仮定から定理へ移す。
+  Base側の乗算は新しいinstanceを足さずArithmetic.mulで扱い、canonical limb上の単射性で逆向きを閉じる。
+  verifier_v2.rs 136のunwrap_orは1≤nLogでは到達せず、nLog=0では導出値と一致することも示す。
+  残る仮定はdegreeBitsが норм stateの変数幅と一致すること、およびprover側subgroup列が
+  埋め込まれたtwo_adic_subgroupであることの2つで、いずれも可視のフィールドである。
+  ソースはn_log>32でpanicするがLeanの切詰め減算は受理するため、iffが実装に忠実なのは
+  degreeBits≤32の範囲であり、envelopeがdegreeBits≤13を強制するため到達不能である旨を明記する。
 - TranscriptProvenanceは「engineの初期transcriptがOuterInitialの実導出そのものである」という
   単一前提DerivedInitial（採用済みOuterAdapter.execute_matches_existing_derived_contextが既に取る
   仮定と同一で、withInitialならrfl）から、Norm.challengesFromInitialが導出した7 challengeを

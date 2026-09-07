@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "c358d9ce90970d8c83f4e45b64771781d013045e6158810c6c65fbb6eb086a9f",
+      "sha256": "2d4bf5f55532b28b84b154a447de1d5553cfc279e313b2a7323f0ccd5c4e772f",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "d76ea7a806faebf1ddfa1a09358cf9e51202b05f9ab86e1f7dfe2f7699b27eb7",
+      "sha256": "ddcda62e9772e2320c06e3c85919852f89923223079181ddee9ef4a3c6ae8230",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "c9a55b6963d9aeb0053360669973ccb4e1eb01375c1cfe0d25d6f315df54aa7e",
+      "sha256": "0e61082d120437a01fd89dcd21ad6aff0605f12500fc8aa5ea33ec6f88e82cd0",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "65ee2b2ff4c569c3e2e805fe032e4db2ddc517c21d642c6da4435bc719450aed",
+      "sha256": "3f13a1ada0f0473657aef19d4dfe921aa4b1981359c22310e4173d86c66eca12",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "92db7fab370d599732ef186a2a3063844a470480e2ac38c106c066a5d8566ede",
+      "sha256": "42c7b5e4b2da8ea83904c48c27346ced81c466957407effaa915842cd9275d02",
       "kind": "spec"
     },
     {
@@ -2171,6 +2171,11 @@
     {
       "path": "mle/audit/Audit/Wire3/TranscriptProvenance.lean",
       "sha256": "57813450dbf8724ffd90eec0c593002cf355c005ce75b6a60c3e465a7458c309",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/VkSubgroupProvenance.lean",
+      "sha256": "da6ddb3406c4ffb57ecce1e12dead793fe60f873b311129b4244d4154b833fbf",
       "kind": "current-model"
     }
   ],
@@ -5694,6 +5699,88 @@
         "mle/src/transcript_v2.rs"
       ],
       "scope": "From the single premise that the engine's initial transcript IS the adopted OuterInitial derivation (the same hypothesis the adopted OuterAdapter context theorem takes; rfl for withInitial), Norm.challengesFromInitial returns exactly the seven derived challenges, the log and gate tau columns and the gate alpha are the derived ones, and each challenge sits at the source's digest and counter offsets (eta 0, beta 0, gamma 3, xi 0, lambda 0, rho 3, kappa 6, log tau 9+3i, gate alpha 9+3d, gate tau 12+3d+3i). IntegratedTerminalChain's ObservationOnly drops from twelve conjuncts to nine and three hypothesis structures each lose a field. Hash stays an arbitrary deterministic function: no injectivity, uniformity or random-oracle property is used, so this is order-and-plumbing identity, not Fiat-Shamir soundness. The gate hpt is re-expressed as the equivalent hpoint, not discharged; DerivedInitial itself and the prover-side challenge equality remain hypotheses."
+    },
+    {
+      "module": "Audit.Wire3.VkSubgroupProvenance",
+      "theorems": [
+        "Audit.Wire3.VkSubgroupProvenance.embed_base_exact",
+        "Audit.Wire3.VkSubgroupProvenance.base_element_is_cast",
+        "Audit.Wire3.VkSubgroupProvenance.cast_modulus_zero",
+        "Audit.Wire3.VkSubgroupProvenance.cast_reduce",
+        "Audit.Wire3.VkSubgroupProvenance.cast_mul_base",
+        "Audit.Wire3.VkSubgroupProvenance.embed_base_mul",
+        "Audit.Wire3.VkSubgroupProvenance.embed_base_one",
+        "Audit.Wire3.VkSubgroupProvenance.cast_injective_on_canonical",
+        "Audit.Wire3.VkSubgroupProvenance.canonical_lists_eq_of_cast_eq",
+        "Audit.Wire3.VkSubgroupProvenance.map_base_element",
+        "Audit.Wire3.VkSubgroupProvenance.power_of_two_generator_canonical",
+        "Audit.Wire3.VkSubgroupProvenance.exp_power_of_two_value",
+        "Audit.Wire3.VkSubgroupProvenance.exp_power_of_two_canonical",
+        "Audit.Wire3.VkSubgroupProvenance.primitive_root_canonical",
+        "Audit.Wire3.VkSubgroupProvenance.shifted_powers_length",
+        "Audit.Wire3.VkSubgroupProvenance.two_adic_subgroup_length",
+        "Audit.Wire3.VkSubgroupProvenance.shifted_powers_getD",
+        "Audit.Wire3.VkSubgroupProvenance.two_adic_subgroup_getD",
+        "Audit.Wire3.VkSubgroupProvenance.mod_pow_from_loop",
+        "Audit.Wire3.VkSubgroupProvenance.loop_to_zmod",
+        "Audit.Wire3.VkSubgroupProvenance.power_of_two_generator_full_loop",
+        "Audit.Wire3.VkSubgroupProvenance.power_of_two_generator_half_loop",
+        "Audit.Wire3.VkSubgroupProvenance.power_of_two_generator_full_power",
+        "Audit.Wire3.VkSubgroupProvenance.power_of_two_generator_half_power",
+        "Audit.Wire3.VkSubgroupProvenance.minus_one_cast_ne_one",
+        "Audit.Wire3.VkSubgroupProvenance.power_of_two_generator_order",
+        "Audit.Wire3.VkSubgroupProvenance.primitive_root_cast",
+        "Audit.Wire3.VkSubgroupProvenance.primitive_root_order_exact",
+        "Audit.Wire3.VkSubgroupProvenance.primitive_root_full_power",
+        "Audit.Wire3.VkSubgroupProvenance.primitive_root_no_smaller_power",
+        "Audit.Wire3.VkSubgroupProvenance.two_adic_subgroup_getD_cast",
+        "Audit.Wire3.VkSubgroupProvenance.two_adic_subgroup_entries_distinct",
+        "Audit.Wire3.VkSubgroupProvenance.squaring_loop_length",
+        "Audit.Wire3.VkSubgroupProvenance.expected_powers_length",
+        "Audit.Wire3.VkSubgroupProvenance.squaring_loop_canonical",
+        "Audit.Wire3.VkSubgroupProvenance.primitive_root_zero_bits",
+        "Audit.Wire3.VkSubgroupProvenance.two_adic_subgroup_second",
+        "Audit.Wire3.VkSubgroupProvenance.subgroup_second_is_primitive_root",
+        "Audit.Wire3.VkSubgroupProvenance.expected_powers_canonical",
+        "Audit.Wire3.VkSubgroupProvenance.cast_shifted_powers",
+        "Audit.Wire3.VkSubgroupProvenance.cast_two_adic_subgroup",
+        "Audit.Wire3.VkSubgroupProvenance.cast_squaring_loop",
+        "Audit.Wire3.VkSubgroupProvenance.expected_powers_are_generator_powers",
+        "Audit.Wire3.VkSubgroupProvenance.check_rejects_wrong_length",
+        "Audit.Wire3.VkSubgroupProvenance.check_accepts_iff",
+        "Audit.Wire3.VkSubgroupProvenance.vk_powers_canonical",
+        "Audit.Wire3.VkSubgroupProvenance.check_accepts_iff_provenance",
+        "Audit.Wire3.VkSubgroupProvenance.accepted_vk_has_subgroup_powers_provenance",
+        "Audit.Wire3.VkSubgroupProvenance.vk_norm_column_provenance",
+        "Audit.Wire3.VkSubgroupProvenance.bound_subgroup_table_is_subgroup_evaluation_of_vk",
+        "Audit.Wire3.VkSubgroupProvenance.fully_bound_target_is_norm_evaluate_of_vk",
+        "Audit.Wire3.VkSubgroupProvenance.honest_prover_terminal_of_vk",
+        "Audit.Wire3.VkSubgroupProvenance.primitive_root_one",
+        "Audit.Wire3.VkSubgroupProvenance.primitive_root_two",
+        "Audit.Wire3.VkSubgroupProvenance.primitive_root_three",
+        "Audit.Wire3.VkSubgroupProvenance.two_adic_subgroup_one_example",
+        "Audit.Wire3.VkSubgroupProvenance.expected_powers_one_example",
+        "Audit.Wire3.VkSubgroupProvenance.two_adic_subgroup_two_example",
+        "Audit.Wire3.VkSubgroupProvenance.expected_powers_two_example",
+        "Audit.Wire3.VkSubgroupProvenance.example_root_order_two",
+        "Audit.Wire3.VkSubgroupProvenance.example_vk2_accepted",
+        "Audit.Wire3.VkSubgroupProvenance.example_vk2_provenance",
+        "Audit.Wire3.VkSubgroupProvenance.expected_powers_three_example",
+        "Audit.Wire3.VkSubgroupProvenance.example_root_order_one",
+        "Audit.Wire3.VkSubgroupProvenance.example_root_order_three",
+        "Audit.Wire3.VkSubgroupProvenance.example_vk1_accepted",
+        "Audit.Wire3.VkSubgroupProvenance.example_vk3_accepted",
+        "Audit.Wire3.VkSubgroupProvenance.example_vk1_provenance",
+        "Audit.Wire3.VkSubgroupProvenance.example_vk3_provenance",
+        "Audit.Wire3.VkSubgroupProvenance.example_vk3_perturbed_rejected",
+        "Audit.Wire3.VkSubgroupProvenance.example_vk3_wrong_length_rejected"
+      ],
+      "sources": [
+        "mle/src/verifier_v2.rs",
+        "mle/src/prover_v2.rs",
+        "mle/src/permutation/norm_logup.rs"
+      ],
+      "scope": "plonky2's two_adic_subgroup and the VK generator derivation modelled from the field crate (TWO_ADICITY 32, the fixed two-adic generator, exp_power_of_2 down to order 2^k, the powers() listing order) and from verifier_v2.rs 134-143. The fixed generator's order 2^32 is fixed by two kernel-evaluated power certificates, because the adopted GoldilocksDomain generator 7 is a different value. The source's recomputation check at verifier_v2.rs 130-147 is proved equivalent, in both directions, to the VK powers being the repeated squares of the derived generator, which turns EqTableProvenance's SubgroupPowersProvenance from an assumption into a theorem; the reverse direction closes by injectivity of the cast on canonical limbs, with no new Mul instance on Verifier.Base. The unwrap_or at verifier_v2.rs 136 is unreachable for 1 <= nLog and coincides with the derived value at nLog = 0. Residue is two visible fields: degreeBits equals the norm state width, and the prover's subgroup column is the embedded two_adic_subgroup. The source asserts n_log <= 32 and panics above while Lean's truncated subtraction accepts, so the iff is faithful exactly for degreeBits <= 32, a regime the envelope's degreeBits <= 13 makes unreachable."
     }
   ]
 }

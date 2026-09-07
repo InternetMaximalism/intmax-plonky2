@@ -90,3 +90,4 @@ import Audit.Wire3.IntegratedTerminalChain
 import Audit.Wire3.EqTableProvenance
 import Audit.Wire3.PublicInputHashBinding
 import Audit.Wire3.TranscriptProvenance
+import Audit.Wire3.VkSubgroupProvenance

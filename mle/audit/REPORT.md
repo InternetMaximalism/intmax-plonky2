@@ -854,6 +854,23 @@ runtime無変更もPASS。実装・main・親pinは変更せず、全実装/PCS�
   独立レビューの必須修正2件（gateのhptは解消ではなく同値な言い換えであること、
   honest prover表示は6件でなく5件）を適用した。DerivedInitial自体とprover側challenges一致は残る。
 
+### 第17継続更新の追補その2（5dd688a6以降）
+
+追跡版runnerでコミット`5dd688a6`の85モデル・2617定理を再検査しPASS（873.732秒、1415モジュール、
+manifest `ce2c6d30aa01e8b12716bd0eee1ad4e7940a4f2b7d08d637fe2848104683a802`、receipt
+`ef28bde84e33e38daafa476a610f7f1da76741b75300ae807bada83787657f40`）。
+
+- **VK生成元由来の解消**: VkSubgroupProvenanceはplonky2のtwo_adic_subgroupとVK生成元導出を模し、
+  固定two-adic生成元の位数2^32を核が実際に評価した冪証明書から確定したうえで、
+  verifier_v2.rs 130-147の再計算検査が「VKのpowersが導出生成元の反復二乗である」ことと
+  同値であることを両方向で証明する。これにより、以前のレビューが「採用モデルでは解消できない」と
+  記録していたSubgroupPowersProvenanceが仮定から定理になった。採用済みGoldilocksDomainの生成元7は
+  plonky2のtwo-adic生成元とは別値であるため、位数はここで独立に証明している。
+  残る仮定はdegreeBitsと変数幅の一致、prover側subgroup列の由来の2つで、いずれも可視フィールド。
+  独立レビューは必須修正なし。指摘に従い、n_log>32でsourceがpanicする一方Leanの切詰め減算は
+  受理するためiffが忠実なのはdegreeBits≤32（envelopeがdegreeBits≤13を強制するため到達不能）である旨と、
+  引用行番号を追記した。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。
