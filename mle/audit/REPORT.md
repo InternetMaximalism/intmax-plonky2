@@ -788,6 +788,34 @@ sourceから再生成し、公理分布は919/729/482/269/2/1。実行時manifes
 guard33件・dependency34件・provision20件・fresh runner self-check29件、CI YAML、空白差分と
 runtime無変更もPASS。実装・main・親pinは変更せず、全実装/PCS健全性を完了したとはしない。
 
+## 第16継続更新（03e69a20以降）
+
+追跡版runnerでコミット`03e69a20`の82モデル・2445定理を再検査し、PASS（750.355秒）。1412非toolchain
+モジュール（audit/root 83、Mathlib 1091、Batteries 99、Aesop 108、Qq 11、ProofWidgets 18、ImportGraph 2）を
+sourceから再生成し、公理分布は936/735/490/281/2/1。実行時manifest SHA256は当該コミットと同一の
+`ccafd4b71c310c4f7491662044aa4fb073da8df9048517dc79b6341554bd4fa5`、receipt
+`81e79f8c8a8e3dfe3c959e6340bf5b233bb8fb5581cd7172ced0adac2592c548`、graph
+`501e10c44cc9dfe8ad9e941a6545b2c9286e597a7bc2c7d1ceb8f9a5c2c52d71`、保存先
+`/Users/andropov/.local/share/wire3-fresh-source/wire3-fresh-source-build.jso0ljtj/`。
+
+- **eq/subgroup表の由来**: EqTableProvenanceは実eq表builderのloop nest（tau順の外側loop、index内側loop、
+  左側累積、(i>>j)&1による因子選択）を模し、各entryが採用済みNorm.booleanRowEqであること、
+  採用済みbindBufferの2i/2i+1 pairingから低位bitが先にbindされることを証明する。全点bind後の
+  eq cellはNorm.eqEvaluation(tau,point)に等しい。subgroup列は等比列で、verifierはこれをfoldせず
+  (1-r_j)+r_j·g^(2^j)の積を取るため、その積が全bind後のcell/Packed.foldに等しいという正確な関係を
+  証明した。これによりNormTerminalBinding/GateTerminalBindingの主要定理から、これまで可視の仮定だった
+  eq cell/subgroup cellの由来を取り除いた系（honest prover版を含む）を与える。
+  VKのsubgroup_gen_powersが表の生成元の反復二乗であることは、採用モデルにtwo_adic_subgroupと
+  VK生成元導出のモデルがないため述語として書くのみで解消せず、可視の仮定として残した。
+
+追加1モデルは別担当の独立read-onlyレビューでLean側に欠陥なし。指摘された文書の必須修正2件
+（3つのeq builderはbyte一致ではなく同一loop nest／eq_poly.rsは旧経路、subgroup仮定が解消できない
+本当の理由）と、系の結論から落ちていたPrefixAt連言の復元を適用した。
+採用namespaceでの直接buildと全統合guardはPASS。全2500名の実定理/型/推移的公理、432 reviewed hashes、
+18表1147語、7依存5601fileを検査した。source inventoryは290file中31部分対応/259未対応を維持。
+guard33件・dependency34件・provision20件・fresh runner self-check29件、CI YAML、空白差分と
+runtime無変更もPASS。実装・main・親pinは変更せず、全実装/PCS健全性を完了したとはしない。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

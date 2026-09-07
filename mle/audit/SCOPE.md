@@ -317,8 +317,19 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   Verifier.verify/Integrated.verifyが受理することを示す。残る前提はObservationOnlyとして列挙した
   観測（chain/config hash/envelope/deployment/shape/4長さ/verifyWhir/7 challenge/normShape）だけである。
   Rust順（WHIR→norm terminal）とSolidity/Lean順の受理はProp水準の同値で、revert理由やgasは扱わない。
-  grid仮定はgate running claimの端点和一致を含意するhonest prover仮定であり、eq/subgroup cellの
-  tau由来・claimed値とprover cellの一致・PCS/WHIR健全性は依然として仮定である。
+  grid仮定はgate running claimの端点和一致を含意するhonest prover仮定であり、claimed値とprover cellの
+  一致・PCS/WHIR健全性は依然として仮定である。
+  EqTableProvenanceは実eq表builder（gate_ext3_v2.rs 26-39とnorm_logup.rs 360-374の同一loop nest。
+  byte一致ではなく束縛子名のみ異なる。eq_poly.rsは旧経路の基底体版）を、tau順の外側loop・index内側loop・
+  左側累積・(i>>j)&1による因子選択まで模し、各entryが採用済みNorm.booleanRowEqであること、
+  採用済みbindBufferの2i/2i+1 pairingから低位bitが先にbindされることを証明する。
+  全点bind後のeq cellはNorm.eqEvaluation(tau,point)に等しく、subgroup列は等比列でverifierは
+  これをfoldせず(1-r_j)+r_j·g^(2^j)の積を取るので、その積が全bind後のcell/Packed.foldに等しいことを
+  証明する。これによりNormTerminalBinding/GateTerminalBindingのeq/subgroup由来仮定を除いた系を与える。
+  VKのsubgroup_gen_powersが表の生成元の反復二乗であること（Rustはverifier_v2.rs 131-146で
+  two_adic_subgroupを再計算して検査するが、採用モデルにはtwo_adic_subgroupもVKの生成元導出も
+  モデルがない）は述語としては書けるが解消できないため、可視の仮定として残す。
+  transcript由来のtau/point対応も仮定のままである。
 - ConnectionsはLeanモデル間の具体的な型・foldの接続。全Engineを具体的に実装したわけではない。
 
 ## 未完了の全体証明（優先順）

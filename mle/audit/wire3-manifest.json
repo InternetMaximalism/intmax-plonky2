@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "08ca29239f0bdec999189334d14975cc6b0bee3d69f61075437a285ca8df8abe",
+      "sha256": "6a1279a29d816b13b500fec936eba1bc111ec962ef85cd55a5c3cc246dc2e8c5",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "8da2bd0f8ebe8fd0b7f64adfc0ca52ffbfcd7f8970cb55891fbb03adc6bb63d3",
+      "sha256": "ece69f79e3b7b0d8afb5260d11ddb47f14ef07459e63301907cde16e4ee02497",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "acaeca74284e73ea19350c03ea66825ff56c3f60ad287ac499de9a26aa088192",
+      "sha256": "8ebf4d0779d0aa2a0bab8944dcd26e122be800d904821d1276d168475a361a40",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "6c82b3d623b3aa9573c20aa8a6415b9fff87c537c98f920c69a5670419f75929",
+      "sha256": "d9ebaf977e8445d83281d0ddda32a5490bd31b373803e2137de283e1903133c1",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "ae68f82732e94882145dc5a98bcd0109d51f0a222b2b2d1a86ed02aab10d69a0",
+      "sha256": "6255013213f6669976bce590edf8ff392ce0219bd12a92d3615bb35355bff8d2",
       "kind": "spec"
     },
     {
@@ -2156,6 +2156,11 @@
     {
       "path": "mle/audit/Audit/Wire3/IntegratedTerminalChain.lean",
       "sha256": "efba7b1f8437464e4a7e179d2cd634f09cf24c263df71945212b66b344ac4758",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/EqTableProvenance.lean",
+      "sha256": "661697783b5d143e7d7f62925c9a130087625056d8f005451b2f85bbf847f5e1",
       "kind": "current-model"
     }
   ],
@@ -5469,6 +5474,73 @@
         "mle/contracts/src/OuterLogupExt3Verifier.sol"
       ],
       "scope": "Glue of the adopted OuterClaimChain, NormTerminalBinding, GateTerminalBinding and OpenedClaimFold into the adopted Verifier.verify / Integrated.verify without re-implementation: under named hypothesis structures (honest norm prover with zero cube sum, norm terminal provenance for eq/subgroup cells and challenges, gate chain hypotheses carrying OuterClaimChain's grid agreement, honest openings) the honest prover's Engine.logTerminal equals the final derivedRounds logClaim, gateTerminal equals the final gateClaim, the five WHIR expected claims are dense evaluations of the padded tables with the sixth cell none, and via the converse verify_of_checks both verifiers accept, leaving exactly the enumerated ObservationOnly conjuncts (chain, config hash, envelope, deployment, shape, four lengths, verifyWhir, seven challenges, normShape); the Rust WHIR-before-norm and Solidity/Lean orders accept the same proofs at the Prop level; every structure is inhabited on the adopted example engine/config/proof by an actual honest prover run. Honest-prover statements only; eq/subgroup provenance from tau, claimed values = prover cells and PCS/WHIR soundness remain hypotheses."
+    },
+    {
+      "module": "Audit.Wire3.EqTableProvenance",
+      "theorems": [
+        "Audit.Wire3.EqTableProvenance.eq_pass_length",
+        "Audit.Wire3.EqTableProvenance.eq_pass_getD",
+        "Audit.Wire3.EqTableProvenance.eq_table_from_length",
+        "Audit.Wire3.EqTableProvenance.eq_table_from_getD",
+        "Audit.Wire3.EqTableProvenance.replicate_one_getD",
+        "Audit.Wire3.EqTableProvenance.eq_table_length",
+        "Audit.Wire3.EqTableProvenance.eq_table_getD",
+        "Audit.Wire3.EqTableProvenance.boolean_factor_exact",
+        "Audit.Wire3.EqTableProvenance.row_prod_fold",
+        "Audit.Wire3.EqTableProvenance.eq_table_entry_is_boolean_row_eq",
+        "Audit.Wire3.EqTableProvenance.shift_div",
+        "Audit.Wire3.EqTableProvenance.row_prod_shift",
+        "Audit.Wire3.EqTableProvenance.row_prod_even",
+        "Audit.Wire3.EqTableProvenance.row_prod_odd",
+        "Audit.Wire3.EqTableProvenance.eq_table_pair_split",
+        "Audit.Wire3.EqTableProvenance.bind_buffer_getD",
+        "Audit.Wire3.EqTableProvenance.first_binding_uses_head_coordinate",
+        "Audit.Wire3.EqTableProvenance.bound_column_of_row_products",
+        "Audit.Wire3.EqTableProvenance.bound_eq_table",
+        "Audit.Wire3.EqTableProvenance.eq_factor_exact",
+        "Audit.Wire3.EqTableProvenance.eq_prod_fold",
+        "Audit.Wire3.EqTableProvenance.eq_prod_is_norm_eq_evaluation",
+        "Audit.Wire3.EqTableProvenance.bound_eq_table_is_eq_evaluation",
+        "Audit.Wire3.EqTableProvenance.powers_from_length",
+        "Audit.Wire3.EqTableProvenance.powers_from_getD",
+        "Audit.Wire3.EqTableProvenance.subgroup_table_length",
+        "Audit.Wire3.EqTableProvenance.subgroup_table_getD",
+        "Audit.Wire3.EqTableProvenance.generator_powers_length",
+        "Audit.Wire3.EqTableProvenance.generator_powers_getD",
+        "Audit.Wire3.EqTableProvenance.bound_column_of_geometric",
+        "Audit.Wire3.EqTableProvenance.sub_prod_is_generator_powers",
+        "Audit.Wire3.EqTableProvenance.subgroup_factor_exact",
+        "Audit.Wire3.EqTableProvenance.sub_eval_fold",
+        "Audit.Wire3.EqTableProvenance.sub_eval_is_norm_subgroup_evaluation",
+        "Audit.Wire3.EqTableProvenance.bound_subgroup_table_is_subgroup_evaluation",
+        "Audit.Wire3.EqTableProvenance.eq_table_packed_fold",
+        "Audit.Wire3.EqTableProvenance.subgroup_table_packed_fold",
+        "Audit.Wire3.EqTableProvenance.fully_bound_target_is_norm_evaluate_of_columns",
+        "Audit.Wire3.EqTableProvenance.honest_prover_terminal_of_columns",
+        "Audit.Wire3.EqTableProvenance.bound_gate_eq_cell",
+        "Audit.Wire3.EqTableProvenance.bound_terminal_is_engine_gate_terminal_of_eq_table",
+        "Audit.Wire3.EqTableProvenance.honest_last_round_is_engine_gate_terminal_of_eq_table",
+        "Audit.Wire3.EqTableProvenance.bit_factor_low_even",
+        "Audit.Wire3.EqTableProvenance.bit_factor_low_odd",
+        "Audit.Wire3.EqTableProvenance.eq_table_one",
+        "Audit.Wire3.EqTableProvenance.eq_table_two",
+        "Audit.Wire3.EqTableProvenance.example_bound_one_variable",
+        "Audit.Wire3.EqTableProvenance.example_bound_two_variables",
+        "Audit.Wire3.EqTableProvenance.example_eq_evaluation_one_variable",
+        "Audit.Wire3.EqTableProvenance.example_eq_evaluation_two_variables",
+        "Audit.Wire3.EqTableProvenance.subgroup_table_one",
+        "Audit.Wire3.EqTableProvenance.subgroup_table_two",
+        "Audit.Wire3.EqTableProvenance.generator_powers_two",
+        "Audit.Wire3.EqTableProvenance.example_subgroup_one_variable",
+        "Audit.Wire3.EqTableProvenance.example_subgroup_two_variables"
+      ],
+      "sources": [
+        "mle/src/sumcheck/gate_ext3_v2.rs",
+        "mle/src/permutation/norm_logup.rs",
+        "mle/src/verifier_v2.rs",
+        "mle/src/sumcheck/ext3.rs"
+      ],
+      "scope": "The actual Ext3 eq-table builder (same loop nest in gate_ext3_v2.rs 26-39 and norm_logup.rs 360-374, renamed binders, not byte-identical; eq_poly.rs is the older base-field path): outer loop over tau in order, inner index loop, accumulator on the left, factor chosen by (i>>j)&1. Every entry is the adopted Norm.booleanRowEq of its row, and the low bit binds first, derived from the adopted bindBuffer's 2i/2i+1 pairing. Binding a full point yields an eq cell equal to Norm.eqEvaluation tau point; the subgroup column is the geometric power list, which the verifier does not fold but multiplies as (1-r_j) + r_j*g^(2^j), and that product equals the fully bound cell / Packed.fold. Corollaries restate the adopted norm and gate terminal theorems with the eq/subgroup provenance hypotheses removed. That the VK's subgroup_gen_powers are the repeated squares of the table generator is stated but not discharged (the adopted model has no two_adic_subgroup or VK generator derivation), and transcript-derived tau/point correspondence remains a hypothesis."
     }
   ]
 }
