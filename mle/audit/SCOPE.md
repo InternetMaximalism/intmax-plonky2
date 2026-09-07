@@ -216,7 +216,20 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   Ext3の非零norm定理を使わない。helper≤4、eq重み込み行≤5、logUp≤3、PI≤2、有限和≤5。
   lambda/etaの実乗算回数への重みbuilderも証明するが、全行builderへの一括適用は未接続。
   round_evaluation_actualの右辺は捕捉endpoint上の候補内行/PI式であって、Norm.checkedEvaluateや
-  Rust mutable arrays全体への同値ではない。endpoint抽出・PI suffix/column/prefix由来は残る。
+  Rust mutable arrays全体への同値ではない。
+  NormDenseRoundはnorm_logup.rsのline_value、evaluate_target_from_values（幅assertはnone、単一loopの
+  2累積、xi·ZERO項保持）、round_sum_at（wires.len()幅の4 scratch vectorをindex loopで書き、suffix loop、
+  row>>(bound+1)/(row>>bound)&1のPI loop、sum+xi·binding）、current_round（is_complete→Err、cache、
+  Field64_3::from(0..=5)のsample、採用済みOuterInterpolation.interpolate、coefficients[1..]）、
+  bind（旧bound_variablesでprefix更新→+1→全表のbindBuffer、num_vars=0はnone）、prover stateの
+  Err/panic/Consistent/PrefixProvenanceを添字付きで模す。Shape下でroundSumAt=roundValue、6 sampleが
+  次数5のroundPolynomialのsamplePolynomial、省略定数=coeff 0=verifierの半和復元、送信5係数を実
+  Verifier.evaluateRoundが端点和claimからround値へ復元、全読取り境界、bind後のShape保持、
+  prefix=booleanRowEq(bound point)の保持を証明する。Shapeは構成子assertの呼出し側不変条件で
+  新runtime guardではなく、from_baseのbase→Ext3転置・eq_evals_ext3・PreparedChallengesの重み由来、
+  scratch書込みのinterleave順、不正prover/transcript/round連鎖、PCSは未証明。roundSumAt自体は
+  totalized読取りなので、Shape下の各round定理は0<remainingを前提にして境界定理の範囲に留め、
+  state定理はConsistent∧¬isCompleteからこれを導く。
 - Gatesは14familyの設定検証、GatesAdditional/CosetとPoseidon/Constantsは残る8familyを具体化。
   GatesCompleteは全14familyを実計算し、valid設定と入力長ならSomeが得られることを証明する。
   Integratedはこのcomplete dispatcherを使う。基礎Gates単独のpartial dispatcherと混同しない。
@@ -243,8 +256,18 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   GateAggregate/SuffixPolynomialは実combineRows全行の順序付き集約を1多項式へ接続して次数q+1、実設定包絡
   q≤8から重み後≤10、2s/2s+1の実読取りと同一challenge補間、0..2^remaining−1のBoolean suffix和
   （remaining=0を含む）を同じ多項式で証明する。TableShapeは供給表への明示条件で新runtime guardではない。
-  Rustのslot-first/forward alpha powersとの可換、mutable grid転置、DenseMle endpoint由来、
-  補間/reduced emitter/canonical publicHash preflight、回路truth/PCS/FSは未証明。
+  GateSlotAlgebra/Commutation/RoundはRustのgate_ext3.rs 543-608（各gateをfilter零でも評価し、
+  出力数ensure後にaccumulated[slot]+=filter·valueを固定幅bufferへ書き、forward alpha powersで還元）を
+  添字付きで模し、範囲外writeはsourceのpanicどおりnoneとする（totalizedなList.setをsource挙動と
+  主張しない）。validateRows/validateConfigurationから全writeが範囲内で、slot-first結果が
+  実combineRows/evalCombinedと一致、同じ多項式（≤q+1、重み後≤q+2）を持つことを証明する。
+  gate_ext3_v2.rs 105-134のcurrent_round（numVars>0 ensure、half=len/2、zero初期化のdegree+1 cell、
+  suffix外側・integer内側のmutable累積、(1−x)·t[2s]+x·t[2s+1]の実読取り）を同じslot評価器で模し、
+  実行された累積が整数ごとのsuffix優先和GateSuffixPolynomial.currentRoundValueに一致、
+  Valid eq表でhalf=2^(numVars−1)、TableShape下で全cellが1多項式（≤q+2≤10）の値であることを証明。
+  ext3_evaluations_to_coefficients呼出し（136）とdegree構成検査（80-83）、DenseMle構成/bind_challenge、
+  tau由来のeq表、canonical publicHash preflight、reduced emitter、Rust validate_gate_ext3_context成功から
+  Lean validateConfigurationへの橋、回路truth/PCS/FSは未証明。
 - Integrated.verifyはchecked norm形状と7challenge layout、同じ入力での全gate計算の
   Someを検査後、packed/norm/eq/gateを具体化したVerifier.verifyへ進む。
   modelEngineだけの利用にはこの保証がなく、getD zeroは旧interfaceへの全域化にすぎない。
@@ -265,8 +288,8 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    固定generatorの数学的位数は証明済みだが、native依存/codegenからの生成対応も対象に含める。
 2. 全14 gate評価の式から実多項式次数・gate意味論・sumcheckへの接続を証明。
    全14familyの実式/設定済み行次数、全行和とBoolean suffix和、外側係数復元と補間全域性は
-   接続済みだが、Rust slot-first順序との可換・DenseMle endpoint由来・回路truth chainへの接続を
-   完成したとはしない。
+   接続済みで、Rust slot-first順序との可換とcurrent_roundのgrid転置も接続したが、
+   補間呼出しの一本化・DenseMle endpoint由来・回路truth chainへの接続を完成したとはしない。
    PI cacheの証明済み同値、selector/lookupの入口接続も全体経路へ反映。
 3. setup/VK/config生成、immutable store、全compact decoder、metadata decoder、
    初期transcript・真のchallenge・public-input hashをIntegratedへ接続。

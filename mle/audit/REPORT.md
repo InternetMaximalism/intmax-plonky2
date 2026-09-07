@@ -633,6 +633,57 @@ guard33件・dependency34件・provision20件、CI YAML、空白差分とruntime
   非adversarialなFSは信頼境界に残る。この一時パスの保持を別環境での再現可能性の代用にせず、
   fresh PASSを実装refinementやPCS健全性の証明に読み替えない。
 
+## 第12継続更新（daa945d1以降）
+
+4モデル・137定理を追加し、77モデル・2175名付き定理へ拡張した。
+
+- **Rust slot-first順序との可換**: gate_ext3.rs 543-608の各gate評価（filter零でも評価）、出力数ensure、
+  accumulated[slot]+=filter·valueの固定幅buffer書込み、forward alpha powersによる還元を添字付きで模す。
+  範囲外writeはsourceのpanicどおりnoneとし、totalizedなList.setをsource挙動と主張しない。
+  validateRows/validateConfigurationから全writeが範囲内で、slot-first結果が実combineRows/evalCombinedと
+  一致し、同じ固定多項式（≤q+1、affine重み後≤q+2）を持つことを証明する。
+- **current_roundのgrid転置**: gate_ext3_v2.rs 105-134のnumVars>0 ensure、half=len/2、zero初期化の
+  degree+1 cell、suffix外側・integer内側のmutable累積、(1−x)·t[2s]+x·t[2s+1]の実読取りを同じslot評価器で
+  模し、iteration bodyがGateSuffixPolynomialのslice値、実行されたmutable loopがlockstep形、転置loopが
+  整数ごとのsuffix優先和currentRoundValueに一致、Valid eq表でhalf=2^(numVars−1)、TableShape下で全cellが
+  1多項式（≤q+2≤10）の値であることを証明。補間呼出し（136）とdegree構成検査（80-83）は別。
+- **Norm/logUpのprover round**: 前回compile失敗だった候補を採用済みDenseMleIndexed/OuterInterpolationTotal
+  上で修復し拡張。norm_logup.rsのline_value、evaluate_target_from_values（幅assertはnone、単一loopの2累積、
+  xi·ZERO項保持）、round_sum_at（4 scratch vector、suffix loop、shift/mask PI loop、sum+xi·binding）、
+  current_round（is_complete→Err、cache、Field64_3::from(0..=5)のsample、採用済み補間、coefficients[1..]）、
+  bind（旧bound_variablesでprefix更新→+1→全表bindBuffer、num_vars=0はnone）、prover stateの
+  Err/panic/Consistent/PrefixProvenanceを模す。Shape∧0<remaining下でroundSumAt=roundValue、6 sampleが
+  次数5のroundPolynomialのsample、省略定数=coeff 0=verifierの半和復元、送信5係数を実Verifier.evaluateRoundが
+  端点和claimからround値へ復元、全読取り境界、bind後のShape保持、prefix=booleanRowEq(bound point)保持を
+  証明する。from_baseのbase→Ext3転置・eq_evals_ext3・重み由来、不正prover、round連鎖、PCSは未証明。
+
+GateSlot 2候補は別担当の独立レビューで、totalizedなslot書込みがsourceより全域である点（必須）と
+docstring/行番号を指摘され、修正のうえ新規GateSlotRoundとともに再レビューでPASS。
+NormDenseRoundは修復後の独立レビューで、Shapeのみを前提とする6定理がremaining=0かつbindings非空で
+Rustのpanic入力に到達しうる点を指摘され、0<remainingを前提に加えてPASS。
+採用namespaceでの直接buildと全統合guardはPASS。全2175名の実定理/型/推移的公理、424 reviewed hashes、
+18表1147語、7依存5601fileを検査した。source inventoryは290file中31部分対応/259未対応を維持。
+guard33件・dependency34件・provision20件、CI YAML、空白差分とruntime無変更もPASS。
+実装・main・親pinは変更せず、全実装/PCS健全性を完了したとはしない。
+
+この77モデル・2175定理の状態についても、同じ一時runner（SHA256
+`9128f90b80becc4a43cae970567362887ce42da1970debad150e196fea0b46ed`）で全非toolchain依存を
+空の新規出力先へsourceから再生成し、その出力だけで全定理を検査した。
+
+- 1407非toolchainモジュール: audit/root 78、Mathlib 1091、Batteries 99、Aesop 108、
+  Qq 11、ProofWidgets 18、ImportGraph 2。全て新規出力先へsourceから再生成。
+- 全2175定理の`.thmInfo`、型、推移的公理をfresh出力だけで再検査。errorなし、
+  許容は標準3公理のみ。経過1439.640秒（wall clockは実行中のホストsleepを含むため参照しない）。
+- 開始/終了時に424 reviewed hashes、全source inventory、18表1147語、
+  7依存5601file/64,398,270byteを照合し、一致。
+- 保存先 `/private/tmp/wire3-fresh-source-build.kmfety_9/`。receipt SHA256
+  `3375f2b18dc8202529dc49c1339ccb78c615da78a80acddba15c1d409ad13714`、graph SHA256
+  `2527787b924c4722988e0ad648814e3145e2a0b2968629fe4187f19d303979a7`。実行時のmanifest SHA256は
+  `60b7a4a3879ea565bc3279dae8b80f8863ea3cbf6811e3b513a939a431ee933d`で、その後の差分は
+  この記録の追記に伴うREPORT/manifest hashのみ。
+- 信頼境界（固定ProofWidgets JS、Lean toolchain/core、Python/Git、固定metaprogram、
+  非adversarialなFS）と、fresh PASSを実装refinement/PCS健全性に読み替えない点は前節と同じ。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

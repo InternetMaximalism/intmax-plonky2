@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "717a4008f6524b1042458036a1d3e4bceecfe8eb3af6e827ff9e5de8f4b61cb7",
+      "sha256": "4ea5796c71f7d1a494bdf535cde5dbcf0bea49118e70c2ae6c653bc8a60938be",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "54cfffbc883f322ce838db1bcef1fecef971c27793e1dcd96e06eabd0f46c07e",
+      "sha256": "19e9223894e93863c467ff2f2afa70b6dc66c69c132ac27c88b58b907cb248d4",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "93f311798085f8036f37353ff1640b1248f2f761ccdd4e494eeab931eb6ab6ff",
+      "sha256": "8b050493a065196aa07165a1520e8c3c16e7d23559994ce9f97b7558850a0311",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "6729e9d533b52baac1349f8695b7149324cde2a4a33922acb43f31fe2f081940",
+      "sha256": "3e1892c564b86acaac7746be64e6976a74bbada30aa95f79d8d41b5b8bcdeff9",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "e85842f81e2d15ebfd4f15ce022dacc17ab51380fbdfc01a0d65dddb42ac6471",
+      "sha256": "f32f006433315a498fcf6f48d9298b1b68b086a1df8d53e570baaa1bd404c5d2",
       "kind": "spec"
     },
     {
@@ -2101,6 +2101,26 @@
     {
       "path": "mle/audit/Audit/Wire3/OuterAdapter.lean",
       "sha256": "c6e86df8c7ea23daa83ddb245bbe88e0ec44cb1bef109f9eaf0efc1c9c4e534c",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/GateSlotAlgebra.lean",
+      "sha256": "31a44307293a9a6524f8f242cd2d37bd6658e432de7a28938458d2343f63a902",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/GateSlotCommutation.lean",
+      "sha256": "f1191e3687d829d473fc7ee91da057f3dd44d98f21f303e8ee32525533526b0b",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/GateSlotRound.lean",
+      "sha256": "b373a2fbf388b1eeba94301e2608005e39173da781d55e1749b84532d75d06bb",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/NormDenseRound.lean",
+      "sha256": "c0eb995a987c27ee7bfbf2b7ecee76c2de1a79c0a538467e100bd718b6b041e6",
       "kind": "current-model"
     }
   ],
@@ -4909,6 +4929,184 @@
         "mle/src/verifier_v2.rs"
       ],
       "scope": "Lossless 40-byte internal snapshot decoder (only length 40, none otherwise), checked delegation to the actual Transcript.coupledRound with six limbs at counters 0..5 and result counter 6, five claim vectors plus the empty sixth cell then index domain then log and gate index vectors at counters 3i and 3*bits+3i equal to the flat Transcript.constituentIndices, checked loop definitionally Verifier.roundStep, and an Option prefix from the identifier guard through checked derivation, coupled rounds, claim/index sampling, packed fold and whirContext, with source-sized success from envelope/shape/InputSizes and a non-vacuous example for every Hash. Agreement with the existing total Engine is conditional on explicit CommitAgrees/SamplesAgree/initial/fold hypotheses; no complete acceptance, terminal gate/norm check, WHIR execution, PI hash, hash security, ABI/EVM refinement or PCS soundness."
+    },
+    {
+      "module": "Audit.Wire3.GateSlotAlgebra",
+      "theorems": [
+        "Audit.Wire3.GateSlotAlgebra.unwrap_wrap",
+        "Audit.Wire3.GateSlotAlgebra.wrap_length",
+        "Audit.Wire3.GateSlotAlgebra.horner_actual",
+        "Audit.Wire3.GateSlotAlgebra.horner_wrapped_actual",
+        "Audit.Wire3.GateSlotAlgebra.forward_state",
+        "Audit.Wire3.GateSlotAlgebra.powers_same_indices",
+        "Audit.Wire3.GateSlotAlgebra.forward_same_indices",
+        "Audit.Wire3.GateSlotAlgebra.reduce_horner",
+        "Audit.Wire3.GateSlotAlgebra.reduce_actual_horner",
+        "Audit.Wire3.GateSlotAlgebra.indexed_length",
+        "Audit.Wire3.GateSlotAlgebra.indexed_empty_buffer",
+        "Audit.Wire3.GateSlotAlgebra.indexed_successor_cons",
+        "Audit.Wire3.GateSlotAlgebra.indexed_equals_lockstep",
+        "Audit.Wire3.GateSlotAlgebra.indexed_step_access_bounded",
+        "Audit.Wire3.GateSlotAlgebra.indexed_checked_bounded",
+        "Audit.Wire3.GateSlotAlgebra.indexed_checked_overflow",
+        "Audit.Wire3.GateSlotAlgebra.indexed_checked_exact",
+        "Audit.Wire3.GateSlotAlgebra.slots_length",
+        "Audit.Wire3.GateSlotAlgebra.slots_lookup",
+        "Audit.Wire3.GateSlotAlgebra.slots_preserve_trailing",
+        "Audit.Wire3.GateSlotAlgebra.indexed_lookup",
+        "Audit.Wire3.GateSlotAlgebra.indexed_preserve_trailing",
+        "Audit.Wire3.GateSlotAlgebra.horner_slots",
+        "Audit.Wire3.GateSlotAlgebra.reduce_indexed",
+        "Audit.Wire3.GateSlotAlgebra.zero_filter_keeps_buffer",
+        "Audit.Wire3.GateSlotAlgebra.reduce_zero_padding",
+        "Audit.Wire3.GateSlotAlgebra.ordinary_variable_length_slots",
+        "Audit.Wire3.GateSlotAlgebra.checked_overflow_fails_concretely",
+        "Audit.Wire3.GateSlotAlgebra.zero_alpha_selects_first_slot"
+      ],
+      "sources": [
+        "mle/src/gate_ext3.rs"
+      ],
+      "scope": "Concrete Ext3 algebra of the Rust slot-first accumulation and forward alpha-power aggregate (gate_ext3.rs 543-608): indexed current-buffer writes to increasing slots, the partial per-write loop that fails exactly where accumulated[slot] would panic (index+terms<=buffer), equality of the totalized and checked loops under that bound, lockstep form, in-range lookup and trailing-slot preservation transported to the executed loop, forward powers = Horner, zero-filter and zero-padding facts and concrete examples. No usize/ABI/compiler refinement or cryptographic property."
+    },
+    {
+      "module": "Audit.Wire3.GateSlotCommutation",
+      "theorems": [
+        "Audit.Wire3.GateSlotCommutation.slotRows_all_writes_in_bounds",
+        "Audit.Wire3.GateSlotCommutation.validated_rows_commute",
+        "Audit.Wire3.GateSlotCommutation.configured_slots_equal_complete",
+        "Audit.Wire3.GateSlotCommutation.configured_slots_checked_execute",
+        "Audit.Wire3.GateSlotCommutation.configured_slot_polynomial",
+        "Audit.Wire3.GateSlotCommutation.weighted_slots_equal_rows",
+        "Audit.Wire3.GateSlotCommutation.configured_weighted_slot_polynomial"
+      ],
+      "sources": [
+        "mle/src/gate_ext3.rs",
+        "mle/contracts/src/Plonky2GateEvaluatorExt3.sol"
+      ],
+      "scope": "The validated gate loop evaluates every gate (filter zero included), checks the emitted count, and writes each slot into the fixed-width buffer, returning none on the source's out-of-range panic; slotRows equals the per-write checked loop; under validateRows/validateConfiguration and both width checks every write is in range and the slot-first, forward-alpha result equals GatesComplete.combineRows/evalCombined and therefore the same fixed polynomial of degree<=q+1 (weighted<=q+2). The premise is the Lean validateConfiguration, not Rust validate_gate_ext3_context; reduced Poseidon/MDS emitters, canonical public-hash preflight and compiler refinement remain outside."
+    },
+    {
+      "module": "Audit.Wire3.GateSlotRound",
+      "theorems": [
+        "Audit.Wire3.GateSlotRound.grid_point_exact",
+        "Audit.Wire3.GateSlotRound.grid_term_weighted_slots",
+        "Audit.Wire3.GateSlotRound.slot_slice_equals_complete",
+        "Audit.Wire3.GateSlotRound.grid_term_equals_suffix_slice",
+        "Audit.Wire3.GateSlotRound.integer_loop_shift",
+        "Audit.Wire3.GateSlotRound.integer_loop_length",
+        "Audit.Wire3.GateSlotRound.integer_sweep_shift",
+        "Audit.Wire3.GateSlotRound.inner_loop_lockstep",
+        "Audit.Wire3.GateSlotRound.column_sums_nil",
+        "Audit.Wire3.GateSlotRound.column_sums_step",
+        "Audit.Wire3.GateSlotRound.suffix_loop_transposes",
+        "Audit.Wire3.GateSlotRound.column_sums_lookup",
+        "Audit.Wire3.GateSlotRound.column_sums_total",
+        "Audit.Wire3.GateSlotRound.replicate_getD",
+        "Audit.Wire3.GateSlotRound.suffix_sum_captured",
+        "Audit.Wire3.GateSlotRound.grid_transposes",
+        "Audit.Wire3.GateSlotRound.grid_entries_are_suffix_sums",
+        "Audit.Wire3.GateSlotRound.configured_grid_executes",
+        "Audit.Wire3.GateSlotRound.configured_grid_polynomial",
+        "Audit.Wire3.GateSlotRound.constant_round_rejected",
+        "Audit.Wire3.GateSlotRound.positive_round_exact",
+        "Audit.Wire3.GateSlotRound.source_half_is_shape_half",
+        "Audit.Wire3.GateSlotRound.valid_source_half",
+        "Audit.Wire3.GateSlotRound.valid_round_executes",
+        "Audit.Wire3.GateSlotRound.reviewed_degree_grid"
+      ],
+      "sources": [
+        "mle/src/sumcheck/gate_ext3_v2.rs",
+        "mle/src/gate_ext3.rs",
+        "mle/src/sumcheck/ext3.rs"
+      ],
+      "scope": "current_round (gate_ext3_v2.rs 105-134) with the slot-first evaluator: num_vars>0 ensure, half=len/2, zero-initialised degree+1 accumulator, suffix-outer/integer-inner mutable loop with (1-x)*t[2s]+x*t[2s+1] reads at grid point from(integer); the iteration body equals the GateSuffixPolynomial slice value, the executed mutable loop equals the lockstep form, the transposed loop yields exactly the per-integer suffix-first sums currentRoundValue, Valid eq gives half=2^(numVars-1), and under TableShape the grid executes and is the value list of one polynomial of degree<=q+2<=10. Coefficient interpolation (136), the degree constructor check (80-83), DenseMle construction/bind_challenge, eq provenance from tau, transcript binding and compiler/memory refinement are not modelled."
+    },
+    {
+      "module": "Audit.Wire3.NormDenseRound",
+      "theorems": [
+        "Audit.Wire3.NormDenseRound.line_same_dense",
+        "Audit.Wire3.NormDenseRound.line_same_polynomial",
+        "Audit.Wire3.NormDenseRound.line_same_actual_binding",
+        "Audit.Wire3.NormDenseRound.captured_wire_values",
+        "Audit.Wire3.NormDenseRound.captured_row_value",
+        "Audit.Wire3.NormDenseRound.captured_pi_value",
+        "Audit.Wire3.NormDenseRound.pi_bit_shift_is_same",
+        "Audit.Wire3.NormDenseRound.pi_suffix_shift_is_same",
+        "Audit.Wire3.NormDenseRound.pi_source_is_pi_value",
+        "Audit.Wire3.NormDenseRound.round_polynomial_same_ordered_evaluation",
+        "Audit.Wire3.NormDenseRound.round_polynomial_degree_five",
+        "Audit.Wire3.NormDenseRound.one_fixed_round_polynomial",
+        "Audit.Wire3.NormDenseRound.values_getD",
+        "Audit.Wire3.NormDenseRound.values_length",
+        "Audit.Wire3.NormDenseRound.target_value_width_mismatch",
+        "Audit.Wire3.NormDenseRound.pair_fold_splits",
+        "Audit.Wire3.NormDenseRound.target_loop_splits",
+        "Audit.Wire3.NormDenseRound.add_scaled_zero",
+        "Audit.Wire3.NormDenseRound.set_loop_exact",
+        "Audit.Wire3.NormDenseRound.range_set_loop_exact",
+        "Audit.Wire3.NormDenseRound.map_range_getD",
+        "Audit.Wire3.NormDenseRound.fill_exact",
+        "Audit.Wire3.NormDenseRound.initial_scratch_shape",
+        "Audit.Wire3.NormDenseRound.scratch_at_shape",
+        "Audit.Wire3.NormDenseRound.fill_scratch_exact",
+        "Audit.Wire3.NormDenseRound.scratch_wire_values",
+        "Audit.Wire3.NormDenseRound.foldl_pair_congr",
+        "Audit.Wire3.NormDenseRound.scratch_target_is_row_value",
+        "Audit.Wire3.NormDenseRound.suffix_step_shaped",
+        "Audit.Wire3.NormDenseRound.suffix_loop_shaped",
+        "Audit.Wire3.NormDenseRound.round_sum_at_shaped",
+        "Audit.Wire3.NormDenseRound.collect_all_some",
+        "Audit.Wire3.NormDenseRound.samples_shaped",
+        "Audit.Wire3.NormDenseRound.compute_round_exact",
+        "Audit.Wire3.NormDenseRound.sample_count_is_degree_plus_one",
+        "Audit.Wire3.NormDenseRound.current_round_coefficients_shaped",
+        "Audit.Wire3.NormDenseRound.omitted_constant_coefficient",
+        "Audit.Wire3.NormDenseRound.sent_round_evaluates_as_verifier",
+        "Audit.Wire3.NormDenseRound.prefix_update_is_pi_factor",
+        "Audit.Wire3.NormDenseRound.prefix_update_is_boolean_factor",
+        "Audit.Wire3.NormDenseRound.bind_tables_exhausted",
+        "Audit.Wire3.NormDenseRound.bind_column_is_adopted_binding",
+        "Audit.Wire3.NormDenseRound.bound_cell_is_round_line",
+        "Audit.Wire3.NormDenseRound.half_pow",
+        "Audit.Wire3.NormDenseRound.bound_columns_shape",
+        "Audit.Wire3.NormDenseRound.bind_tables_shaped",
+        "Audit.Wire3.NormDenseRound.boolean_row_eq_append",
+        "Audit.Wire3.NormDenseRound.bound_prefix_is_boolean_row_eq",
+        "Audit.Wire3.NormDenseRound.build_bindings_length",
+        "Audit.Wire3.NormDenseRound.initial_prefix_is_one",
+        "Audit.Wire3.NormDenseRound.build_bindings_row_column",
+        "Audit.Wire3.NormDenseRound.build_bindings_eta_power",
+        "Audit.Wire3.NormDenseRound.initial_prefix_provenance",
+        "Audit.Wire3.NormDenseRound.column_at_shape",
+        "Audit.Wire3.NormDenseRound.even_power_two",
+        "Audit.Wire3.NormDenseRound.adjacent_reads_bounded",
+        "Audit.Wire3.NormDenseRound.routed_reads_bounded",
+        "Audit.Wire3.NormDenseRound.scratch_writes_bounded",
+        "Audit.Wire3.NormDenseRound.pi_suffix_in_range",
+        "Audit.Wire3.NormDenseRound.pi_reads_bounded",
+        "Audit.Wire3.NormDenseRound.pi_source_reads_bounded",
+        "Audit.Wire3.NormDenseRound.initial_consistent",
+        "Audit.Wire3.NormDenseRound.incomplete_means_variables_remain",
+        "Audit.Wire3.NormDenseRound.complete_means_no_variables_remain",
+        "Audit.Wire3.NormDenseRound.current_round_after_completion",
+        "Audit.Wire3.NormDenseRound.current_round_cached",
+        "Audit.Wire3.NormDenseRound.current_round_idempotent",
+        "Audit.Wire3.NormDenseRound.current_round_shaped",
+        "Audit.Wire3.NormDenseRound.current_round_reads_bounded",
+        "Audit.Wire3.NormDenseRound.bind_after_completion",
+        "Audit.Wire3.NormDenseRound.bind_without_round",
+        "Audit.Wire3.NormDenseRound.bind_challenge_consistent",
+        "Audit.Wire3.NormDenseRound.initial_state_prefix_provenance",
+        "Audit.Wire3.NormDenseRound.bind_preserves_prefix_provenance",
+        "Audit.Wire3.NormDenseRound.proof_extraction_requires_completion",
+        "Audit.Wire3.NormDenseRound.proof_extraction_exact"
+      ],
+      "sources": [
+        "mle/src/permutation/norm_logup.rs",
+        "mle/src/sumcheck/ext3.rs",
+        "mle/src/sumcheck/coefficients.rs"
+      ],
+      "scope": "Indexed model of the norm/logUp prover round on DenseMle tables: line_value, evaluate_target_from_values (width asserts none, single two-accumulator loop, xi*ZERO kept), round_sum_at (four width-sized scratch vectors by index loops, suffix loop, shift/mask PI loop, sum+xi*binding), current_round (is_complete Err, cache, samples at from(0..=5), adopted interpolate, coefficients[1..]), bind (prefix update with the old bound count, then +1, then bindBuffer on every table, num_vars=0 none) and the prover state Err/panic/Consistent/PrefixProvenance. Under Shape: roundSumAt = roundValue, the six samples are samplePolynomial of the degree-5 roundPolynomial, the omitted entry is coeff 0 = the verifier half-sum reconstruction, the sent five coefficients evaluate through the actual Verifier.evaluateRound from the endpoint-sum claim, all reads in bounds, Shape preserved by bind and prefix = booleanRowEq of the bound point. Shape is the constructor's caller invariant, not a runtime guard; from_base transposition/eq_evals_ext3/weight provenance, interleaved scratch order, dishonest prover, transcript, round chaining and PCS are not proved; the Tables-level round theorems take 0<remaining so the totalized reads stay within the proved bounds, and state theorems derive it from Consistent and not isComplete."
     }
   ]
 }

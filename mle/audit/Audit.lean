@@ -78,3 +78,7 @@ import Audit.Wire3.OuterInterpolationTotal
 import Audit.Wire3.DenseMleIndexed
 import Audit.Wire3.OuterInitial
 import Audit.Wire3.OuterAdapter
+import Audit.Wire3.GateSlotAlgebra
+import Audit.Wire3.GateSlotCommutation
+import Audit.Wire3.GateSlotRound
+import Audit.Wire3.NormDenseRound
