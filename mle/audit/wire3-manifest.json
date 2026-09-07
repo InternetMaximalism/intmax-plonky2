@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "4ea5796c71f7d1a494bdf535cde5dbcf0bea49118e70c2ae6c653bc8a60938be",
+      "sha256": "9d047218215a2cdcb8c225cc2cadd1f165a447f157f927567f0f68795d23656c",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "19e9223894e93863c467ff2f2afa70b6dc66c69c132ac27c88b58b907cb248d4",
+      "sha256": "dfc92ed0f7ee9fb0f9597c5cff070198650de24c71330757ae601b9c4ab157b5",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "8b050493a065196aa07165a1520e8c3c16e7d23559994ce9f97b7558850a0311",
+      "sha256": "0109b599751d7e100411ade8969ee7764b58a13a8058c0532f632ef22fb86953",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "3e1892c564b86acaac7746be64e6976a74bbada30aa95f79d8d41b5b8bcdeff9",
+      "sha256": "d5b3e42b9ca93b236020bf31944664c6f83fde8aab646a72efd20c1a52f30b68",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "f32f006433315a498fcf6f48d9298b1b68b086a1df8d53e570baaa1bd404c5d2",
+      "sha256": "3357b692ad6b1e8e3c74d9e5e7277abb9cc4697a965b57e37370e1fb387005b2",
       "kind": "spec"
     },
     {
@@ -2122,6 +2122,21 @@
       "path": "mle/audit/Audit/Wire3/NormDenseRound.lean",
       "sha256": "c0eb995a987c27ee7bfbf2b7ecee76c2de1a79c0a538467e100bd718b6b041e6",
       "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/OpenedClaimFold.lean",
+      "sha256": "0c22af90c699a0fa8f7d4899c88cf0d77726e551fa0b0425c9fe4cd8ebb1b08a",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/fresh-source-audit.py",
+      "sha256": "56237ada14b4a29015199a6b3c9566d72bd3a175921cecb813f9f821fc4c744a",
+      "kind": "tooling"
+    },
+    {
+      "path": "mle/audit/test-fresh-source-audit.py",
+      "sha256": "a3f138e049569c7cb92287cdbaf2f16308bdc83c2bf3430d296427280e068533",
+      "kind": "tooling"
     }
   ],
   "models": [
@@ -5107,6 +5122,57 @@
         "mle/src/sumcheck/coefficients.rs"
       ],
       "scope": "Indexed model of the norm/logUp prover round on DenseMle tables: line_value, evaluate_target_from_values (width asserts none, single two-accumulator loop, xi*ZERO kept), round_sum_at (four width-sized scratch vectors by index loops, suffix loop, shift/mask PI loop, sum+xi*binding), current_round (is_complete Err, cache, samples at from(0..=5), adopted interpolate, coefficients[1..]), bind (prefix update with the old bound count, then +1, then bindBuffer on every table, num_vars=0 none) and the prover state Err/panic/Consistent/PrefixProvenance. Under Shape: roundSumAt = roundValue, the six samples are samplePolynomial of the degree-5 roundPolynomial, the omitted entry is coeff 0 = the verifier half-sum reconstruction, the sent five coefficients evaluate through the actual Verifier.evaluateRound from the endpoint-sum claim, all reads in bounds, Shape preserved by bind and prefix = booleanRowEq of the bound point. Shape is the constructor's caller invariant, not a runtime guard; from_base transposition/eq_evals_ext3/weight provenance, interleaved scratch order, dishonest prover, transcript, round chaining and PCS are not proved; the Tables-level round theorems take 0<remaining so the totalized reads stay within the proved bounds, and state theorems derive it from Consistent and not isComplete."
+    },
+    {
+      "module": "Audit.Wire3.OpenedClaimFold",
+      "theorems": [
+        "Audit.Wire3.OpenedClaimFold.foldLayers_append",
+        "Audit.Wire3.OpenedClaimFold.fold_append",
+        "Audit.Wire3.OpenedClaimFold.layer_append_even",
+        "Audit.Wire3.OpenedClaimFold.layer_join",
+        "Audit.Wire3.OpenedClaimFold.map_foldLayers_nil",
+        "Audit.Wire3.OpenedClaimFold.foldLayers_join",
+        "Audit.Wire3.OpenedClaimFold.foldLayers_full_singleton",
+        "Audit.Wire3.OpenedClaimFold.join_singletons",
+        "Audit.Wire3.OpenedClaimFold.foldLayers_join_row_folds",
+        "Audit.Wire3.OpenedClaimFold.packed_split_fold",
+        "Audit.Wire3.OpenedClaimFold.packedFold_split",
+        "Audit.Wire3.OpenedClaimFold.bindMany_append",
+        "Audit.Wire3.OpenedClaimFold.evaluate_split",
+        "Audit.Wire3.OpenedClaimFold.raw_lift",
+        "Audit.Wire3.OpenedClaimFold.raw_length",
+        "Audit.Wire3.OpenedClaimFold.raw_append",
+        "Audit.Wire3.OpenedClaimFold.raw_zero_column",
+        "Audit.Wire3.OpenedClaimFold.row_opening_is_column_evaluation",
+        "Audit.Wire3.OpenedClaimFold.join_uniform_length",
+        "Audit.Wire3.OpenedClaimFold.padded_columns_full",
+        "Audit.Wire3.OpenedClaimFold.padded_table_valid",
+        "Audit.Wire3.OpenedClaimFold.paddedTable_numVars",
+        "Audit.Wire3.OpenedClaimFold.fold_zero_column",
+        "Audit.Wire3.OpenedClaimFold.full_table_evaluation_is_fold_of_row_openings",
+        "Audit.Wire3.OpenedClaimFold.solidity_cell_is_rust_slot",
+        "Audit.Wire3.OpenedClaimFold.expected_claim_cell_exact",
+        "Audit.Wire3.OpenedClaimFold.context_point_exact",
+        "Audit.Wire3.OpenedClaimFold.native_point_is_reversed_dense_point",
+        "Audit.Wire3.OpenedClaimFold.expected_claim_cell_is_full_table_evaluation",
+        "Audit.Wire3.OpenedClaimFold.execute_bound_cell_is_full_table_evaluation",
+        "Audit.Wire3.OpenedClaimFold.sixth_cell_opens_nothing",
+        "Audit.Wire3.OpenedClaimFold.sixth_cell_of_execution_opens_nothing",
+        "Audit.Wire3.OpenedClaimFold.example_width",
+        "Audit.Wire3.OpenedClaimFold.example_full_table_evaluation",
+        "Audit.Wire3.OpenedClaimFold.example_openings_are_row_folds",
+        "Audit.Wire3.OpenedClaimFold.example_expected_cell",
+        "Audit.Wire3.OpenedClaimFold.example_native_point",
+        "Audit.Wire3.OpenedClaimFold.example_cell_opens_full_table",
+        "Audit.Wire3.OpenedClaimFold.example_dishonest_openings_differ"
+      ],
+      "sources": [
+        "mle/contracts/src/PackedClaimExt3.sol",
+        "mle/contracts/src/MleVerifierV2.sol",
+        "mle/src/verifier_v2.rs",
+        "mle/src/prover_v2.rs"
+      ],
+      "scope": "Associativity of the adopted Packed.fold/Connections.packedFold and DenseMleIndexed.bindMany over an appended point (row ++ index), the pack_mles column-major padded table (row bits low, index bits high, zero columns to 2^indexBits) whose full-table evaluation is the packed fold of the per-column row openings, the exact Solidity cell / Rust slot mapping (cells 0-2 at the log index point, 3-4 at the gate index point, cell 5 none), the native point as the reversal of the dense point, and under the explicit honest-prover hypothesis that the five claimed cells equal the per-column row folds, each of Verifier.expectedClaims equals the dense evaluation of the padded table at the WHIR point, also for any successful OuterAdapter.execute. Not PCS binding, WHIR acceptance, Fiat-Shamir or Rust/EVM refinement; the dishonest example shows the identity is conditional."
     }
   ]
 }

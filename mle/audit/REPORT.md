@@ -684,6 +684,42 @@ guard33件・dependency34件・provision20件、CI YAML、空白差分とruntime
 - 信頼境界（固定ProofWidgets JS、Lean toolchain/core、Python/Git、固定metaprogram、
   非adversarialなFS）と、fresh PASSを実装refinement/PCS健全性に読み替えない点は前節と同じ。
 
+## 第13継続更新（71338df0以降）
+
+再起動で`/private/tmp`のworktree・候補・一時runner・fresh receiptが消失したため、
+worktreeを`/Users/andropov/repos/intmax-plonky2-lean-wire3`へ再作成し、7依存を再provision、
+全rootを再buildして通常guardがPASSすることを確認した（77モデル・2175定理・424 hashes）。
+コミット`daa945d1`/`71338df0`はsubmoduleのobject storeに残っており内容は同一。
+
+- **WHIR期待claimと全表評価**: OpenedClaimFoldは採用済みPacked.fold/packedFold/bindManyの
+  row++index分割を同じ関数の結合則として証明し、pack_mlesの列優先padded tableの全表評価が
+  各列row openingのpacked foldに等しいこと、Solidity cell/Rust slotの対応、native点=dense点の
+  反転を接続する。5個のclaimed cellが各列のrow foldに等しいという明示的honest-prover仮定の下で
+  expectedClaimsの各cellがpadded tableのWHIR点でのdense評価に一致し、OuterAdapter.execute成功時の
+  contextにも適用される。第6 cellはnoneでlogNormInverseをgate点に結び付けない。
+  不正cellで一致しない具体例を持ち、PCS binding/WHIR受理/FSは主張しない。
+- **fresh source runnerの再実装と追跡**: 消失した一時runnerをREPORTの記録どおりに再実装し、
+  `mle/audit/fresh-source-audit.py`（self-check29件）として追跡対象に加えた。独立レビューで
+  既存`.lake/build`の混入経路・失敗の握り潰し・pre/post guard省略がないことを確認し、
+  指摘の任意改善（`lean --deps`必須化、Lean panicの失敗化、comment内include_strの除外、
+  audit dirの`__file__`由来化）を採用した。出力先は再起動で消える`/private/tmp`を拒否する。
+
+再実装runnerの採用前版（SHA256 `0b7e3ad8b2b3f51bf2224dbf0e6d507fb73e5292940bf82ae5b56ca2a2bb0493`）で
+コミット`71338df0`の77モデル・2175定理を再検査し、PASS（763.171秒）。
+1407非toolchainモジュール（audit/root 78、Mathlib 1091、Batteries 99、Aesop 108、Qq 11、
+ProofWidgets 18、ImportGraph 2）をsourceから再生成し、公理分布は消失した旧runnerの記録
+（807/689/428/248/2/1）と一致。実行時manifest SHA256 `9bca4717c0b7633cf18a325f71889b5b7ede95fefeacf129acc1ab018efe08ab`、
+receipt `fd517c5fedbb09692667fa223cdb279bcdb2556134050f329637d3ca147de55e`、graph
+`fa644927bfc7048f06cf083a1a0cc999a35cad3d80b5c4ab45a3a3b00944f1da`、保存先
+`/Users/andropov/.local/share/wire3-fresh-source/wire3-fresh-source-build.g6r0xrb1/`。
+OpenedClaimFold追加後の78モデル・2214定理と追跡版runnerでの再実行は次の記録に持ち越す。
+
+OpenedClaimFoldは別担当の独立read-onlyレビューで必須修正なし。採用namespaceでの直接buildと
+全統合guardはPASS。全2214名の実定理/型/推移的公理、427 reviewed hashes（runner 2fileを追加）、
+18表1147語、7依存5601fileを検査した。source inventoryは290file中31部分対応/259未対応を維持。
+guard33件・dependency34件・provision20件・fresh runner self-check29件、CI YAML、空白差分と
+runtime無変更もPASS。実装・main・親pinは変更せず、全実装/PCS健全性を完了したとはしない。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

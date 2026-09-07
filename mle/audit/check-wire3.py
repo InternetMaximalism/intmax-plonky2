@@ -60,7 +60,7 @@ REQUIRED_MODULES = {"Audit.Wire3." + name for name in (
     "GateAggregatePolynomial", "GateSuffixPolynomial",
     "OuterInterpolation", "OuterInterpolationTotal", "DenseMleIndexed", "OuterInitial",
     "OuterAdapter", "GateSlotAlgebra", "GateSlotCommutation", "GateSlotRound",
-    "NormDenseRound",
+    "NormDenseRound", "OpenedClaimFold",
 )}
 REQUIRED = {
     PROJECT + "/check-wire3.py", PROJECT + "/test-check-wire3.py",
@@ -68,6 +68,7 @@ REQUIRED = {
     PROJECT + "/lake-manifest.json", PROJECT + "/.gitignore",
     PROJECT + "/check-proof-dependencies.py", PROJECT + "/test-proof-dependencies.py",
     PROJECT + "/provision-proof-dependencies.py", PROJECT + "/test-provision-proof-dependencies.py",
+    PROJECT + "/fresh-source-audit.py", PROJECT + "/test-fresh-source-audit.py",
     PROJECT + "/Audit.lean", PROJECT + "/README.md", PROJECT + "/SCOPE.md",
     PROJECT + "/REPORT.md", "mle/protocol/mle_whir_v2.json",
     "mle/Cargo.toml", "Cargo.toml", "Cargo.lock", "rust-toolchain",

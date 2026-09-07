@@ -132,6 +132,14 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
   からnative adapterが反転する境界とSolidityが反転する境界を区別する。
 - 6個のclaimのうち外側terminalで使う5個を拘束する。第6セルは外側では未拘束で、
   WHIR内の処理対象であることと外側期待値との一致を混同しない。
+  OpenedClaimFoldは採用済みPacked.fold/Connections.packedFold/DenseMleIndexed.bindManyの
+  row++index分割（同じ関数の結合則で、再実装ではない）、pack_mlesの列優先padded table
+  （row bit下位・index bit上位、2^indexBitsまでzero列）の全表評価=各列row openingのpacked fold、
+  Solidity cell 0-2/log index点・3-4/gate index点・cell 5 noneとRust slot point·3+groupの一致、
+  native点=dense点の反転を証明し、5個のclaimed cellが各列のrow foldに等しいという明示的
+  honest-prover仮定の下でのみ、expectedClaimsの各cellがpadded tableのWHIR点でのdense評価に
+  一致することを導く。不正なcellでは一致しない具体例も持つ。opened値が真のPCS開示であること、
+  WHIR受理、FS、Rust/EVM refinementは主張しない。
 - WhirTerminalは終端比較のslice。Merkle/hash/FS/OOD/前段sumcheck/PoW/全bytes消費を
   含むWHIR verifier全体の証明ではない。WhirFinalでは同じfinalVectorを後続の最終
   sumcheck・逆順fold・非零・逆元計算・全constraint差引き・全linear-form・両EOFへ接続。

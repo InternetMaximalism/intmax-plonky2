@@ -78,8 +78,9 @@
 | [OuterAdapter](Audit/Wire3/OuterAdapter.lean) | 40byte内部snapshotの無損失decoder、実coupledRoundの6limb/counter、5claim+空第6cell→index domain→log/gate index列の実順序、checked外側loop=Verifier.roundStep、初期→WHIR contextのOption prefix。既存total Engineとの一致は明示CommitAgrees/SamplesAgree条件付き |
 | [GateSlotAlgebra/Commutation/Round](Audit/Wire3/GateSlotRound.lean) | Rustのslot-first累積（accumulated[slot]+=filter·value、範囲外writeはnone）とforward alpha powersが実combineRows/evalCombinedと可換。current_roundのsuffix外側・integer内側のmutable累積がGateSuffixの整数ごとのsuffix和に一致し、Valid eq表でhalf=2^(numVars−1)。補間/DenseMle構成は別 |
 | [NormDenseRound](Audit/Wire3/NormDenseRound.lean) | norm_logup.rsのround_sum_at（4 scratch vector・suffix loop・shift/mask PI loop）、evaluate_target_from_valuesの幅assert、current_roundの0..=5 sample→採用済み補間→定数省略、bindのprefix更新順とbindBuffer、prover stateのErr/panic/cache/Consistentを模し、送信5係数を実evaluateRoundが復元することを証明。構成データの由来・不正proverは別 |
+| [OpenedClaimFold](Audit/Wire3/OpenedClaimFold.lean) | 採用済みPacked.fold/packedFold/bindManyのrow++index分割、pack_mlesの列優先padded table、Solidity cell/Rust slot対応（0-2はlog点、3-4はgate点、第6はnone）、native点=dense点の反転。明示的honest-prover仮定（claimed cell=各列のrow fold）下でexpectedClaimsの各cellがpadded tableのWHIR点での評価に一致。PCS binding/WHIR受理は別 |
 
-現行rootは77モデル・2175件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
+現行rootは78モデル・2214件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
 件数は暗号安全性の達成率ではありません。
 
 [スコープと未証明事項](SCOPE.md)、[結果・再現手順・次工程](REPORT.md)、
@@ -110,6 +111,10 @@ Git blobと照合し、外部search path、追加Lean/config source、固定タ�
 別途、40モデル時点の全非toolchain依存1370モジュールをfresh出力へ再生成し、全1019定理を
 その出力だけで検査した記録をREPORTに保存しています。固定した11個の表示用JSデータと
 Lean toolchainはその検査でも信頼境界に残り、後続追加モデルの検査範囲とは区別します。
+fresh source再生成検査は `mle/audit/fresh-source-audit.py --run` で実行します（旧一時runnerの
+再実装、self-check29件は `test-fresh-source-audit.py`）。全非toolchainモジュールを空の出力先へ
+sourceから再compileし、既存`.lake/build`を検索pathに含めず、`lean --deps`で各moduleのimport解決を
+確認し、全定理を再probeしてreceiptを `~/.local/share/wire3-fresh-source/` へ書きます。
 `sorry`、`admit`、独自公理、`native_decide` による穴埋めは認めません。
 許容するglobalな論理公理は `propext`、`Classical.choice`、`Quot.sound` のみです。
 Poseidon/Cosetの全18表・1147語をSolidityと逐語比較し、PoseidonはRustとも比較します。
