@@ -871,6 +871,37 @@ manifest `ce2c6d30aa01e8b12716bd0eee1ad4e7940a4f2b7d08d637fe2848104683a802`、re
   受理するためiffが忠実なのはdegreeBits≤32（envelopeがdegreeBits≤13を強制するため到達不能）である旨と、
   引用行番号を追記した。
 
+### 第17継続更新の追補その3（1c2bc096以降）
+
+追跡版runnerでコミット`1c2bc096`の86モデル・2688定理を再検査しPASS（858.808秒、1416モジュール、
+manifest `d89e078087f53f5d3b8c6c3bec9b70cc5f485585b9f3fe304c2b86b85ed9a839`、receipt
+`5d41b90d3490e861906f854f552b6183a544fef60884965523faf04a4a8fb3c8`）。
+
+- **明示的暗号仮定下の条件付き健全性**: ConditionalSoundnessは18個の仮定を可視フィールドとして
+  列挙し、Integrated.verifyが受理しlog laneのbad eventが起きていなければ、抽出した表の
+  endpointSumが0であることを導く。これはIntegratedTerminalChainがzeroSumとして仮定していた命題で、
+  どのフィールドもendpointSumを値として言及しないことを確認したうえで循環なく導出している。
+  定理の形は「endpointSum=0、またはどこかのroundでdrawn challengeがbad setに入った」であり、
+  これはsumcheck健全性の正しい形である。bad set濃度上界195·⌈2^256/p⌉³は、受理から導いた
+  degreeBits≤13とquotientDegree+2≤10から195を出しており、仮定ではない。
+
+  **この定理が証明していないこと**を明記する。gate laneは証明していない。初稿はgate側の
+  cube和も結論していたが、gateTruths:=[]で任意の受理proofに対し仮定が成立してしまう退化した
+  連言であることが敵対的レビューで判明したため、採用済みgate proverに係数補間・Boolean cube和・
+  round連鎖・eq表由来のいずれも無いことを確認したうえで削除した。
+  195·(⌈2^256/p⌉/2^256)³≒2^-184は外側sumcheckの一致事象のみを数えた値であり、
+  支配項であるWHIR/Merkleを含まない。設計点は約100 bitであるから、この数値を系の
+  健全性誤差として引用すると約80 bit過大になる。failureは自由な有理数で上界しか与えられておらず、
+  実確率との橋渡しはどのフィールドも供給しない。第1連言と第4連言は合成されておらず、
+  実行に関する確率空間はこのファイルに存在しない。Assumptions全体の充足可能性も示していない。
+  抽出とcommitmentの接合（terminalのclaimed値=prover cell）は仮定のままである。
+
+  2回の敵対的独立レビューを通した。初回は上記の退化connective、未使用の2仮定と自由変数による
+  空虚化、scalarに留まる最終round橋、充足可能性の誇張、数値の誤引用リスクを指摘し、
+  すべて修正（gate連言と2仮定を削除、最終round橋を構造化して値等式を導出、
+  §12を部分的非空虚性検査に改題、警告を3箇所へ）。再レビューで修正の実効性を確認し、
+  残る4件の誇張表現（failureが実確率を上から抑えると読める記述など）も修正した。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

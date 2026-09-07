@@ -91,3 +91,4 @@ import Audit.Wire3.EqTableProvenance
 import Audit.Wire3.PublicInputHashBinding
 import Audit.Wire3.TranscriptProvenance
 import Audit.Wire3.VkSubgroupProvenance
+import Audit.Wire3.ConditionalSoundness

@@ -87,8 +87,12 @@
 | [PublicInputHashBinding](Audit/Wire3/PublicInputHashBinding.lean) | 実hash-no-padスポンジ（rate8/capacity4、overwrite、⌈len/8⌉chunk、4要素digest）を採用済みPoseidon上で具体化し、全30roundで基底体が保たれること・c0読出しが無損失であること、raw canonical preflight（256語上限と各語<P、fallbackなし）を証明。gate terminalのhash観測を具体関数へ置換し、hashLength仮定を除去 |
 | [TranscriptProvenance](Audit/Wire3/TranscriptProvenance.lean) | 「engineの初期transcriptが実導出そのもの」という単一前提から、7 challengeがchallengesFromInitialと一致すること、log/gate tau列とgate alphaが導出値であること、各challengeがsourceのdigest/counter位置に載ることを証明。ObservationOnlyは12→9項へ減る。hashの性質は一切使わず、順序と受け渡しのみ |
 | [VkSubgroupProvenance](Audit/Wire3/VkSubgroupProvenance.lean) | plonky2のtwo_adic_subgroupとVK生成元導出を模し、固定two-adic生成元の位数2^32を核証明書から確定。verifier_v2.rsの再計算検査は「VKのpowersが表の生成元の反復二乗である」ことと同値であることを証明し、EqTableProvenanceのSubgroupPowersProvenance仮定を解消する |
+| [ConditionalSoundness](Audit/Wire3/ConditionalSoundness.lean) | 18個の暗号仮定を可視フィールドとして列挙し、受理かつlog laneのbad eventなしなら抽出表のendpointSum=0（IntegratedTerminalChainが仮定していたzeroSumの導出）。bad set濃度は195·⌈2^256/p⌉³以下。**gate laneは未証明、2^-184は外側sumcheck項のみでWHIRを含まず、系全体の健全性誤差ではない** |
 
-現行rootは86モデル・2688件の名付き定理です。直近の検査結果はREPORTとmanifestで管理します。
+現行rootは87モデル・2742件の名付き定理です。
+**ConditionalSoundnessの数値2^-184を系の健全性誤差として引用しないでください。**
+これは外側sumcheckの一致事象のみを数えた値で、支配項であるWHIR/Merkleを含みません。
+gate laneは証明されておらず、抽出とcommitmentの接合も仮定のままです。直近の検査結果はREPORTとmanifestで管理します。
 件数は暗号安全性の達成率ではありません。
 
 [スコープと未証明事項](SCOPE.md)、[結果・再現手順・次工程](REPORT.md)、

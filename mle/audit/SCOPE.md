@@ -387,6 +387,21 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
 5. honest proverの全段階、completeness、再帰回路/親statementとのcompositionを証明。
 6. 暗号仮定を明記したPCS/Fiat–Shamir/grindingの定量的健全性を証明。
    全てのhashに無条件の数学的安全性があると仮定しない。
+   ConditionalSoundnessはこの方向の最初の一歩であり、完成ではない。
+   18個の仮定（適応的固定性、challenge law、抽出した表とその形状・truth chain・
+   最終roundの構造的対応、eq/subgroup/lambda/wire-map/transcriptの由来、
+   terminalのclaimed値=prover cellという抽出接合）を可視フィールドとして列挙し、
+   Integrated.verifyが受理しlog laneのどのroundでもdrawn challengeがbad setに入らないなら、
+   抽出した表のendpointSumが0であることを導く。これはIntegratedTerminalChainが
+   HonestNormProver.zeroSumとして仮定していた命題であり、循環なく導出されている。
+   bad setの濃度は195·⌈2^256/p⌉³以下（degreeBits≤13とquotientDegree+2≤10から195を導出）。
+   **重大な限定**: gate laneは証明していない。採用済みgate proverには係数補間も
+   Boolean cube和もround連鎖もないため、初稿のgate結論は退化しており削除した。
+   195·(⌈2^256/p⌉/2^256)³≒2^-184は外側sumcheckの一致事象のみで、支配項のWHIR/Merkleを含まない。
+   実装の設計点は約100 bitであり、この数値を系の健全性誤差として引用してはならない。
+   failureは自由な有理数で上からしか抑えられておらず、実確率との橋渡しはどのフィールドも与えない。
+   第1連言と第4連言は合成されておらず、実行に関する確率空間はこのファイルにない。
+   Assumptions全体の充足可能性は示していないため、instantiation次第では空虚になりうる。
 
 現target105の約101.5-bit値はリポジトリのgeneric-work見積もりで、Leanが証明した
 128-bit/end-to-end安全性ではありません。実装変更・デプロイ承認もこの更新には含みません。

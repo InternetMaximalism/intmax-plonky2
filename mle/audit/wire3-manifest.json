@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "2d4bf5f55532b28b84b154a447de1d5553cfc279e313b2a7323f0ccd5c4e772f",
+      "sha256": "f8121f034cf618998e1653647837122e6f45d06175832b63ed5ccd19fc27d43c",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "ddcda62e9772e2320c06e3c85919852f89923223079181ddee9ef4a3c6ae8230",
+      "sha256": "bf640275efc8f7a1d621c07f6b7e2e22c03a163fa2c86588d9bbd33af6cfcd76",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "0e61082d120437a01fd89dcd21ad6aff0605f12500fc8aa5ea33ec6f88e82cd0",
+      "sha256": "63b1ad58883a7f31d1283ec79420651965796b508398c973a054315a50d16688",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "3f13a1ada0f0473657aef19d4dfe921aa4b1981359c22310e4173d86c66eca12",
+      "sha256": "2b417f35f303800e0e732112b375a511609e5456f4628dcef3b1d288be1b395f",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "42c7b5e4b2da8ea83904c48c27346ced81c466957407effaa915842cd9275d02",
+      "sha256": "287596286986e66b86737d5edcd3d26ada6751547c67dac3586e5e6aa8d23848",
       "kind": "spec"
     },
     {
@@ -2176,6 +2176,11 @@
     {
       "path": "mle/audit/Audit/Wire3/VkSubgroupProvenance.lean",
       "sha256": "da6ddb3406c4ffb57ecce1e12dead793fe60f873b311129b4244d4154b833fbf",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/ConditionalSoundness.lean",
+      "sha256": "65d748f2e9804ba9407c159f23770fdb6ed56823b31eed89aee7f4553c59d00d",
       "kind": "current-model"
     }
   ],
@@ -5781,6 +5786,72 @@
         "mle/src/permutation/norm_logup.rs"
       ],
       "scope": "plonky2's two_adic_subgroup and the VK generator derivation modelled from the field crate (TWO_ADICITY 32, the fixed two-adic generator, exp_power_of_2 down to order 2^k, the powers() listing order) and from verifier_v2.rs 134-143. The fixed generator's order 2^32 is fixed by two kernel-evaluated power certificates, because the adopted GoldilocksDomain generator 7 is a different value. The source's recomputation check at verifier_v2.rs 130-147 is proved equivalent, in both directions, to the VK powers being the repeated squares of the derived generator, which turns EqTableProvenance's SubgroupPowersProvenance from an assumption into a theorem; the reverse direction closes by injectivity of the cast on canonical limbs, with no new Mul instance on Verifier.Base. The unwrap_or at verifier_v2.rs 136 is unreachable for 1 <= nLog and coincides with the derived value at nLog = 0. Residue is two visible fields: degreeBits equals the norm state width, and the prover's subgroup column is the embedded two_adic_subgroup. The source asserts n_log <= 32 and panics above while Lean's truncated subtraction accepts, so the iff is faithful exactly for degreeBits <= 32, a regime the envelope's degreeBits <= 13 makes unreachable."
+    },
+    {
+      "module": "Audit.Wire3.ConditionalSoundness",
+      "theorems": [
+        "Audit.Wire3.ConditionalSoundness.round_agreement_of_ne",
+        "Audit.Wire3.ConditionalSoundness.chain_separates",
+        "Audit.Wire3.ConditionalSoundness.chain_initial_agreement",
+        "Audit.Wire3.ConditionalSoundness.lane_length",
+        "Audit.Wire3.ConditionalSoundness.lane_messages",
+        "Audit.Wire3.ConditionalSoundness.lane_truths",
+        "Audit.Wire3.ConditionalSoundness.lane_claimed_run",
+        "Audit.Wire3.ConditionalSoundness.log_lane_claimed_run",
+        "Audit.Wire3.ConditionalSoundness.gate_lane_claimed_run",
+        "Audit.Wire3.ConditionalSoundness.honest_step_value",
+        "Audit.Wire3.ConditionalSoundness.honest_truth_run",
+        "Audit.Wire3.ConditionalSoundness.truth_tail_of_last_round_data",
+        "Audit.Wire3.ConditionalSoundness.round_bad_set_card",
+        "Audit.Wire3.ConditionalSoundness.round_bad_triples_card",
+        "Audit.Wire3.ConditionalSoundness.round_bad_uniform",
+        "Audit.Wire3.ConditionalSoundness.bad_sets_nil",
+        "Audit.Wire3.ConditionalSoundness.bad_sets_cons",
+        "Audit.Wire3.ConditionalSoundness.bad_sets_length",
+        "Audit.Wire3.ConditionalSoundness.bad_sets_union_card",
+        "Audit.Wire3.ConditionalSoundness.bad_sets_triple_card_sum",
+        "Audit.Wire3.ConditionalSoundness.bad_sets_uniform_sum",
+        "Audit.Wire3.ConditionalSoundness.derived_log_claim",
+        "Audit.Wire3.ConditionalSoundness.derived_gate_claim",
+        "Audit.Wire3.ConditionalSoundness.lane_length_of_shape",
+        "Audit.Wire3.ConditionalSoundness.shape_round_lengths",
+        "Audit.Wire3.ConditionalSoundness.envelope_parameter_bounds",
+        "Audit.Wire3.ConditionalSoundness.envelope_degree_bits_positive",
+        "Audit.Wire3.ConditionalSoundness.lanes_nonempty",
+        "Audit.Wire3.ConditionalSoundness.log_lane_message_lengths",
+        "Audit.Wire3.ConditionalSoundness.gate_lane_message_lengths",
+        "Audit.Wire3.ConditionalSoundness.honest_truth_lengths",
+        "Audit.Wire3.ConditionalSoundness.whir_quadratic_bad_card",
+        "Audit.Wire3.ConditionalSoundness.whir_quadratic_uniform",
+        "Audit.Wire3.ConditionalSoundness.whir_rlc_bad_card",
+        "Audit.Wire3.ConditionalSoundness.whir_rlc_uniform",
+        "Audit.Wire3.ConditionalSoundness.whir_domain_agreement_impossible",
+        "Audit.Wire3.ConditionalSoundness.opened_dot_binds_or_row_collision",
+        "Audit.Wire3.ConditionalSoundness.no_row_collision_binds_opened_dot",
+        "Audit.Wire3.ConditionalSoundness.norm_terminal_is_honest_last_value",
+        "Audit.Wire3.ConditionalSoundness.accepted_norm_cube_sum_vanishes",
+        "Audit.Wire3.ConditionalSoundness.sum_map_le",
+        "Audit.Wire3.ConditionalSoundness.lane_degree_bounds",
+        "Audit.Wire3.ConditionalSoundness.outer_failure_bound",
+        "Audit.Wire3.ConditionalSoundness.outer_failure_triple_count",
+        "Audit.Wire3.ConditionalSoundness.envelope_gives_concrete_bound",
+        "Audit.Wire3.ConditionalSoundness.outer_challenge_space_size",
+        "Audit.Wire3.ConditionalSoundness.outer_ratio_explicit",
+        "Audit.Wire3.ConditionalSoundness.worst_case_outer_bound_value",
+        "Audit.Wire3.ConditionalSoundness.conditional_soundness",
+        "Audit.Wire3.ConditionalSoundness.profile_bound",
+        "Audit.Wire3.ConditionalSoundness.honest_prover_has_no_bad_events",
+        "Audit.Wire3.ConditionalSoundness.no_collision_among_nil",
+        "Audit.Wire3.ConditionalSoundness.zero_law_satisfies_challenge_uniform",
+        "Audit.Wire3.ConditionalSoundness.zero_law_sum_is_zero"
+      ],
+      "sources": [
+        "mle/src/verifier_v2.rs",
+        "mle/contracts/src/MleVerifierV2.sol",
+        "mle/contracts/src/OuterLogupExt3Verifier.sol",
+        "mle/src/permutation/norm_logup.rs"
+      ],
+      "scope": "Eighteen cryptographic and provenance assumptions enumerated as visible structure fields (adaptive fixedness, the challenge law, the extracted tables with their shape, truth chain and structural last-round data, the eq/subgroup/lambda/wire-map/transcript provenance, and the extraction join that the terminal claimed values are the prover cells). Under them, if Integrated.verify accepts and no drawn log-lane challenge lands in its round's agreement set, the extracted tables' endpointSum is zero: the proposition IntegratedTerminalChain assumed as HonestNormProver.zeroSum, derived without circularity, in the correct sumcheck shape (zero sum or some challenge hit a bad set). The bad-set cardinality is at most 195*ceil(2^256/p)^3, with 195 derived from acceptance via degreeBits <= 13 and quotientDegree+2 <= 10. NOT PROVED: the gate lane, whose degenerate first-draft conclusion was deleted after review because no adopted gate prover has coefficient interpolation, a Boolean cube sum or round chaining; 195*(ceil(2^256/p)/2^256)^3 is approximately 2^-184 but counts outer-sumcheck agreement only and excludes the dominant WHIR and Merkle term, so it must never be quoted as the system's soundness error against a roughly 100-bit design point; failure is a free rational bounded above only, with no field bridging it to a real probability; the first and last conjuncts are never composed and there is no probability space over executions; the assumption conjunction is not shown inhabited."
     }
   ]
 }
