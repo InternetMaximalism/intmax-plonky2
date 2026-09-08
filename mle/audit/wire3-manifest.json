@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "74ef7fe2375fc4d91ba47d6de040fed95becf23679ab6dbc927396272ab142cf",
+      "sha256": "95f8b12e9b4f3879efd631a95732aa14a328ab545706b9f60fcfb13c3cccb214",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "17626aa10ddc25fd90faadecc2be501bbb136a3ddcbe48ac9844e64670455fff",
+      "sha256": "f8441b105ecbdf303824254522d0c88adb44b382d42c240b2de21148bd7ad097",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "d1993ca7f88f3f9fff66cadbf5187bf074f8829e60378f6d30e1ff7105370075",
+      "sha256": "f783b2e23dcd2b84a691584b19e13ef2951b9f338b2fefd64138d2ce8ef36c9a",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "fe4472561bdbf08a67691c3c6ddf31ef85dbb4ec4ea0fe5e3b5abcbac63b9e63",
+      "sha256": "5994ac0e23fa11553beff53dd3eaa1fc63e75e215b3597b44447266e62a87305",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "7d857108889fcbcb7fa5e9afbcd5a6094ce48fd83780d53a66a045f600001643",
+      "sha256": "efcb7431ce325518956b64c057bdde8e92a4c734a8d2ffe264d18b30d25fa41c",
       "kind": "spec"
     },
     {
@@ -2180,7 +2180,7 @@
     },
     {
       "path": "mle/audit/Audit/Wire3/ConditionalSoundness.lean",
-      "sha256": "65d748f2e9804ba9407c159f23770fdb6ed56823b31eed89aee7f4553c59d00d",
+      "sha256": "b9dfef23164f1a6fa54a5d650b24983cbecce1cccfc8f558bbdcdd2f915184d6",
       "kind": "current-model"
     },
     {
@@ -2191,6 +2191,16 @@
     {
       "path": "mle/audit/Audit/Wire3/OpeningBinding.lean",
       "sha256": "f7e808cfc67fd536283878ee3f56ccc650b356026b99849692f645a1794bc71e",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/ZeroCheckSemantics.lean",
+      "sha256": "a1cd8c0dc59e58636024e9359b33ec111578a9cb7024ae1586c225b9c88d4d27",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/GateClaimChain.lean",
+      "sha256": "bd2b4947e4744371d585b07c21f0f57128469fdf8068be5ce83b11adfd5e7951",
       "kind": "current-model"
     }
   ],
@@ -5975,6 +5985,116 @@
         "mle/contracts/src/PackedClaimExt3.sol"
       ],
       "scope": "Binding, not extraction, for WHIR row openings: two accepted openings of the same root at the same depth and index return the same raw row, hence the same canonical decoding and the same dot value, reduced to injectivity of hash on a finite list COMPUTED FROM THE EXECUTION (the returned rows plus the compression inputs at the cursor the adopted WhirRows theorem pins), so the predicate is not a free parameter and cannot be vacuously instantiated while the theorems fire. The grouped lift covers an arbitrary root list at an arbitrary position. ConditionalSoundness assumption 17 is rewritten biconditionally, leaving a fold-level residue (bound cell values at the point) that is strictly weaker than identifying the columns. The limits are proved as theorems: an opaque engine's WHIR check accepts every context and proof, and the opening relation survives replacing all three Merkle roots, so binding cannot yield the relation. No theorem relates a decoded row to any field of the used claims; extraction, WHIR proximity, Fiat-Shamir and collision probability are not claimed."
+    },
+    {
+      "module": "Audit.Wire3.ZeroCheckSemantics",
+      "theorems": [
+        "Audit.Wire3.ZeroCheckSemantics.sum_map_mul_left",
+        "Audit.Wire3.ZeroCheckSemantics.sum_range_indicator",
+        "Audit.Wire3.ZeroCheckSemantics.extension_eq_extensionOf",
+        "Audit.Wire3.ZeroCheckSemantics.extensionOf_uses_eq_table",
+        "Audit.Wire3.ZeroCheckSemantics.extension_weight_is_boolean_row_eq",
+        "Audit.Wire3.ZeroCheckSemantics.boolPoint_length",
+        "Audit.Wire3.ZeroCheckSemantics.mod_two_pow_succ_iff",
+        "Audit.Wire3.ZeroCheckSemantics.row_prod_at_boolean_point",
+        "Audit.Wire3.ZeroCheckSemantics.extensionOf_at_boolean_point",
+        "Audit.Wire3.ZeroCheckSemantics.extension_at_boolean_point",
+        "Audit.Wire3.ZeroCheckSemantics.extensionOf_ne_zero_at_boolean_point",
+        "Audit.Wire3.ZeroCheckSemantics.extensionOf_not_identically_zero",
+        "Audit.Wire3.ZeroCheckSemantics.values_zero_of_extension_zero_on_cube",
+        "Audit.Wire3.ZeroCheckSemantics.extensionOf_cons",
+        "Audit.Wire3.ZeroCheckSemantics.ofFn_tupleOf",
+        "Audit.Wire3.ZeroCheckSemantics.mem_vanishingSet",
+        "Audit.Wire3.ZeroCheckSemantics.card_filter_pi_succ",
+        "Audit.Wire3.ZeroCheckSemantics.card_root_le_one",
+        "Audit.Wire3.ZeroCheckSemantics.extensionOf_nil",
+        "Audit.Wire3.ZeroCheckSemantics.ofFn_cons",
+        "Audit.Wire3.ZeroCheckSemantics.extensionOf_ofFn_cons",
+        "Audit.Wire3.ZeroCheckSemantics.card_tuple_univ",
+        "Audit.Wire3.ZeroCheckSemantics.schwartz_zippel_step",
+        "Audit.Wire3.ZeroCheckSemantics.vanishing_card_bound",
+        "Audit.Wire3.ZeroCheckSemantics.vanishing_card_bound_explicit",
+        "Audit.Wire3.ZeroCheckSemantics.density_of_count",
+        "Audit.Wire3.ZeroCheckSemantics.vanishing_density_bound",
+        "Audit.Wire3.ZeroCheckSemantics.zeroCheckBadSet_empty",
+        "Audit.Wire3.ZeroCheckSemantics.zeroCheckBadSet_of_not_cube_zero",
+        "Audit.Wire3.ZeroCheckSemantics.zeroCheckBadSet_card_bound",
+        "Audit.Wire3.ZeroCheckSemantics.zeroCheckBadSet_card_bound_explicit",
+        "Audit.Wire3.ZeroCheckSemantics.zeroCheckBadSet_density_bound",
+        "Audit.Wire3.ZeroCheckSemantics.cube_zero_of_extension_zero",
+        "Audit.Wire3.ZeroCheckSemantics.cube_zero_of_extension_zero_at_tau",
+        "Audit.Wire3.ZeroCheckSemantics.rowElement_is_eq_times_gate",
+        "Audit.Wire3.ZeroCheckSemantics.cubeSum_is_extension",
+        "Audit.Wire3.ZeroCheckSemantics.gate_rows_vanish",
+        "Audit.Wire3.ZeroCheckSemantics.gate_rows_vanish_of_endpoint_sum",
+        "Audit.Wire3.ZeroCheckSemantics.gate_rows_vanish_of_derived_tau",
+        "Audit.Wire3.ZeroCheckSemantics.example_value_nonzero",
+        "Audit.Wire3.ZeroCheckSemantics.example_bool_point",
+        "Audit.Wire3.ZeroCheckSemantics.example_extension_at_one",
+        "Audit.Wire3.ZeroCheckSemantics.example_extension_at_zero",
+        "Audit.Wire3.ZeroCheckSemantics.example_extension_nonzero",
+        "Audit.Wire3.ZeroCheckSemantics.example_two_variable_agreement",
+        "Audit.Wire3.ZeroCheckSemantics.example_not_cube_zero",
+        "Audit.Wire3.ZeroCheckSemantics.example_bad_set_nonempty",
+        "Audit.Wire3.ZeroCheckSemantics.example_tau_condition_necessary",
+        "Audit.Wire3.ZeroCheckSemantics.example_good_tau"
+      ],
+      "sources": [
+        "mle/src/sumcheck/gate_ext3_v2.rs",
+        "mle/src/permutation/norm_logup.rs"
+      ],
+      "scope": "The multilinear extension built on the ADOPTED eq weight interpolates the given cube values at every Boolean point (low bit first, the adopted binding order), a nonzero cube value forces a nonzero extension, and the vanishing set of a nonzero extension in n variables has density at most n over the field size (Schwartz-Zippel at total degree at most n, the induction carried out with no assumed step and the n = 0 case proved; NOT the sharper exact multilinear count). The consumable corollary concludes that every adopted GateDenseRound row value is zero when the eq-weighted cube sum vanishes at a tau outside the bad set, with the eq hypothesis the adopted EqTableProvenance discharges and the transcript-derived tau. The bad set does NOT compose with the adopted badSets, which range over single challenges rather than n-tuples; an n-fold product event is not built. Adaptivity is not addressed (the bad set is indexed by the prover's own tables) and the conclusion is trivially true on rows where evalCombined returns none, so a consumer must add validateConfiguration and TableShape."
+    },
+    {
+      "module": "Audit.Wire3.GateClaimChain",
+      "theorems": [
+        "Audit.Wire3.GateClaimChain.state_endpoint_sum_is_cube_sum",
+        "Audit.Wire3.GateClaimChain.round_evaluate_bridge",
+        "Audit.Wire3.GateClaimChain.honest_message_length",
+        "Audit.Wire3.GateClaimChain.state_round_exists",
+        "Audit.Wire3.GateClaimChain.gate_challenge_exact",
+        "Audit.Wire3.GateClaimChain.honest_run_append",
+        "Audit.Wire3.GateClaimChain.honest_step_exact",
+        "Audit.Wire3.GateClaimChain.honest_run_exact",
+        "Audit.Wire3.GateClaimChain.honest_gate_chain_step",
+        "Audit.Wire3.GateClaimChain.honest_gate_chain",
+        "Audit.Wire3.GateClaimChain.source_start_gate_claim_zero",
+        "Audit.Wire3.GateClaimChain.chain_initial_claim",
+        "Audit.Wire3.GateClaimChain.honest_extraction_matches_verifier",
+        "Audit.Wire3.GateClaimChain.honest_run_is_derived_rounds",
+        "Audit.Wire3.GateClaimChain.accepted_gate_configuration_valid",
+        "Audit.Wire3.GateClaimChain.accepted_last_round_value_is_gate_claim",
+        "Audit.Wire3.GateClaimChain.accepted_last_state_value_is_gate_claim",
+        "Audit.Wire3.GateClaimChain.truth_chain_incomplete",
+        "Audit.Wire3.GateClaimChain.truth_chain_consistent",
+        "Audit.Wire3.GateClaimChain.truth_chain_lengths",
+        "Audit.Wire3.GateClaimChain.truth_chain_run",
+        "Audit.Wire3.GateClaimChain.truth_chain_numvars",
+        "Audit.Wire3.GateClaimChain.truth_chain_last_numvars",
+        "Audit.Wire3.GateClaimChain.truth_chain_last_shape",
+        "Audit.Wire3.GateClaimChain.constraint_free_gates",
+        "Audit.Wire3.GateClaimChain.constraint_free_contribution",
+        "Audit.Wire3.GateClaimChain.constraint_free_combine_rows",
+        "Audit.Wire3.GateClaimChain.constraint_free_cube_sum_vanishes",
+        "Audit.Wire3.GateClaimChain.accepted_gate_cube_sum_vanishes",
+        "Audit.Wire3.GateClaimChain.assumptions_force_message_lengths",
+        "Audit.Wire3.GateClaimChain.gate_lane_degree_bounds",
+        "Audit.Wire3.GateClaimChain.gate_lane_bad_set_card_bound",
+        "Audit.Wire3.GateClaimChain.gate_lane_bad_set_uniform_bound",
+        "Audit.Wire3.GateClaimChain.assumptions_cover_degree_bits",
+        "Audit.Wire3.GateClaimChain.empty_gate_truths_not_honest",
+        "Audit.Wire3.GateClaimChain.example_endpoint_sum_nonzero",
+        "Audit.Wire3.GateClaimChain.example_truth_chain",
+        "Audit.Wire3.GateClaimChain.example_lockstep",
+        "Audit.Wire3.GateClaimChain.example_honest_run",
+        "Audit.Wire3.GateClaimChain.example_not_lockstep_with_source_zero"
+      ],
+      "sources": [
+        "mle/src/verifier_v2.rs",
+        "mle/contracts/src/OuterLogupExt3Verifier.sol",
+        "mle/src/sumcheck/gate_ext3_v2.rs"
+      ],
+      "scope": "The gate lane chained through the ADOPTED Verifier.roundStep with the verifier's own gate challenge: the claim after i rounds is the round value of the tables after i binds, the run's messages and challenges are what derivedRounds consumes, the initial-claim iff is stated conditionally, and gate row count, hash length and validateConfiguration are DERIVED from acceptance for the terminal bridge. Under eight named visible fields plus acceptance and the adopted BadEventFree on the gate lane, the extracted tables' Boolean-cube sum is zero, reusing the adopted bad-event machinery with no second copy; the lane's own counting bound (quotientDegree+2)*degreeBits is re-instantiated, and ConditionalSoundness's 195 explicitly does NOT apply here. The degenerate instantiation that broke an earlier attempt is proved unsatisfiable. HONEST LIMITS: the theorem has no rejection power against an adversarial supplier of the state, because the assumptions pin only one linear functional of the eq table while the cube weight is independent; the constraint-free configuration degeneracy is proved and excluded by a visible field but the list is not exhaustive (zeroing every selector filter remains); this is not the circuit gate relation, and extraction and eq provenance at every row remain open."
     }
   ]
 }

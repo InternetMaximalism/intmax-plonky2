@@ -90,8 +90,10 @@
 | [ConditionalSoundness](Audit/Wire3/ConditionalSoundness.lean) | 18個の暗号仮定を可視フィールドとして列挙し、受理かつlog laneのbad eventなしなら抽出表のendpointSum=0（IntegratedTerminalChainが仮定していたzeroSumの導出）。bad set濃度は195·⌈2^256/p⌉³以下。**gate laneは未証明、2^-184は外側sumcheck項のみでWHIRを含まず、系全体の健全性誤差ではない** |
 | [GateDenseRound](Audit/Wire3/GateDenseRound.lean) | NormDenseRoundのgate版。current_roundを採用済みgridと補間で端まで模し、送信長=q+2、省略定数=verifierの半和復元、実evaluateRoundの再現、Consistentとround間端点恒等式、Boolean cube和の定義と第1roundでの一致を証明。多round帰納は未実施、cube和=0は主張しない（回路truth） |
 | [OpeningBinding](Audit/Wire3/OpeningBinding.lean) | 同root/index/depthの2つの受理openingが一致することを、実行から計算した有限listへのhash単射性へ還元（自由変数ではない）。抽出ではなくbindingであることを明示し、限界も定理として証明する（不透明engineのWHIR検査は任意のcontextを受理、opening関係は3つのrootを差し替えても不変） |
+| [ZeroCheckSemantics](Audit/Wire3/ZeroCheckSemantics.lean) | 採用済みeqによる多重線形拡張がcube上でgを補間し、非零値があれば恒等的に零でないこと、零点の密度≤n/\|F\|（Schwartz-Zippel、総次数≤n、帰納法は完遂）を証明。bad set外のtauでGateDenseRoundの各行値が0になる系を与える。badSetsとは合成しない（単一challenge対n組） |
+| [GateClaimChain](Audit/Wire3/GateClaimChain.lean) | gate laneを実Verifier.roundStepで多round連鎖し、terminal橋を渡し、受理+gate lane bad eventなしから抽出表のcube和=0を導く。gate lane固有の上界(q+2)·degreeBitsも再具体化。**供給者への棄却力はまだない**（eq表の自由度、selector零化、`numGateConstraints=0`退化は仮定4で除外） |
 
-現行rootは89モデル・2834件の名付き定理です。
+現行rootは91モデル・2923件の名付き定理です。
 **ConditionalSoundnessの数値2^-184を系の健全性誤差として引用しないでください。**
 これは外側sumcheckの一致事象のみを数えた値で、支配項であるWHIR/Merkleを含みません。
 gate laneは証明されておらず、抽出とcommitmentの接合も仮定のままです。直近の検査結果はREPORTとmanifestで管理します。

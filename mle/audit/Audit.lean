@@ -94,3 +94,5 @@ import Audit.Wire3.VkSubgroupProvenance
 import Audit.Wire3.ConditionalSoundness
 import Audit.Wire3.GateDenseRound
 import Audit.Wire3.OpeningBinding
+import Audit.Wire3.ZeroCheckSemantics
+import Audit.Wire3.GateClaimChain

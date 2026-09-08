@@ -396,13 +396,20 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    HonestNormProver.zeroSumとして仮定していた命題であり、循環なく導出されている。
    bad setの濃度は195·⌈2^256/p⌉³以下（degreeBits≤13とquotientDegree+2≤10から195を導出）。
    **重大な限定**: gate laneは証明していない。初稿のgate結論は退化しており削除した。
-   GateDenseRoundが障害のうち3つ（係数補間、Boolean cube和、最終roundに固定されない
-   telescoping）を解消したが、gate健全性にはなお5点が必要である。(1)多round帰納、
-   (2)向き（GateDenseRoundは完全性側であり、健全性は受理⇒関係で一致事象機構との接続が要る）、
-   (3)抽出とtranscript（受理transcriptのgate roundがConsistentな状態由来である保証がなく、
-   challengeも任意の体元にすぎない）、(4)gate terminal橋、(5)意味論的段階
-   （cube和=0は重み付き和の消失であって各gate制約の消失ではない）。
-   eq表のgateTau由来も未モデルのままである。
+   GateDenseRoundが障害3つを解消し、GateClaimChainが(1)多round帰納・(2)向きの転換・
+   (4)terminal橋を、ZeroCheckSemanticsが(5)意味論的段階を扱った。
+   GateClaimChainは受理とgate lane bad eventなしから抽出表のcube和=0を導き、
+   gate lane固有の上界(q+2)·degreeBitsも再具体化する（ConditionalSoundnessの195はこのlaneには
+   適用されない）。ZeroCheckSemanticsは採用済みeqの多重線形拡張の零点密度≤n/|F|を証明し、
+   bad set外のtauで各行値が0になる系を与える。
+   **ただしgate健全性は完成していない。** 現時点でGateClaimChainの定理には敵対的な供給者に対する
+   棄却力がない。仮定はeq表の1つの線形汎関数（bound cell）しか固定せず、cube重みの行和は独立なので、
+   正しいbound cellを持ちつつ行和が0のeq表を選べる。同種の退化は他にもあり、
+   `numGateConstraints=0`（envelopeは下限を課さず、採用済みexample configがこれ）は
+   可視の仮定4で除外したが、selector filterを全て零化する経路は残る。
+   さらにZeroCheckSemanticsのbad setは採用済みbadSetsと合成しない（単一challenge対n組で、
+   n重積事象が未構築）。bad setがprover自身の表で添字付けられるため、適応的選択の扱いも要る。
+   eq表のgateTau由来を全行で固定すること、抽出接合、これらが残る。
    195·(⌈2^256/p⌉/2^256)³≒2^-184は外側sumcheckの一致事象のみで、支配項のWHIR/Merkleを含まない。
    実装の設計点は約100 bitであり、この数値を系の健全性誤差として引用してはならない。
    failureは自由な有理数で上からしか抑えられておらず、実確率との橋渡しはどのフィールドも与えない。

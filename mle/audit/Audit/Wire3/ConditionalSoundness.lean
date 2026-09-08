@@ -1017,33 +1017,49 @@ verifier's gate terminal check passed", while its name and docstring advertised
 "the gate constraints are satisfied".  That gap is exactly the kind of claim
 this file must not make.
 
-Why it was not repaired instead.  Repairing it needs a gate analogue of the norm
+Why it was not repaired HERE.  Repairing it needs a gate analogue of the norm
 lane's honest chain, i.e. a definition of the gate cube sum as an actual
 Boolean-cube sum of the gate aggregate plus an assumption chaining the gate
-round list to it.  The
-adopted gate modules cannot supply this:
+round list to it.  When this note was first written the adopted gate modules
+could not supply any of the pieces.  THREE OF THE FOUR BLOCKERS ARE NOW GONE,
+supplied by the adopted `Audit.Wire3.GateDenseRound`; the fourth remains, and
+so does the reason this FILE does not state a gate conclusion.
 
-* `GateSlotRound.currentRoundGrid` / `currentRoundEvaluations` stop at the
-  `degree + 1` point-values; NO gate function interpolates them into round
-  message coefficients, so there is no `NormDenseRound.computeRound` analogue.
-* There is NO gate analogue of `OuterClaimChain.endpointSum`: nothing in the
-  gate modules evaluates a round polynomial at `0` and at `1` and adds them, so
-  the object the verifier's running gate claim would have to equal does not
-  exist.  (`GateSuffixPolynomial.sumSuffixes` sums Boolean SUFFIXES with the
-  round variable `x` still free; that is the round polynomial, not a cube sum.)
-* There is NO gate analogue of
-  `OuterClaimChain.bound_endpoint_sum_is_round_value`: every adopted lemma
-  relating `GateTerminalBinding.bindTables` to `currentRoundValue` is pinned at
-  `TableShape c 1`, i.e. the LAST round only.
-* The gate eq-table's derivation from `gateTau` is explicitly outside the
-  adopted model (`GateSuffixPolynomial`'s shape conditions "do not ... assert
-  the equality-table contents have been derived from tau"), so an eq-weighted
-  cube sum could not even be STATED with adopted material.
+GONE (per the `GateDenseRound` header):
 
-This is the same hole the adopted `IntegratedTerminalChain.GateChainHypotheses`
-carries in its `grid` field, whose own docstring says the honesty of the gate
-chain "is NOT derived" because "no gate prover with coefficient interpolation
-and `bind_challenge` chaining is adopted".
+* The interpolation gap is closed.  `GateDenseRound.computeRound` is the WHOLE
+  of gate_ext3_v2.rs `current_round` INCLUDING the interpolation call and the
+  dropped constant, built on `GateSlotRound.currentRoundGrid` /
+  `currentRoundEvaluations` plus `OuterInterpolationTotal`.  It is the
+  `NormDenseRound.computeRound` analogue this note said did not exist, and
+  `current_round_coefficients_shaped` fixes the sent message at `degree =
+  quotientDegree + 2` entries.
+* The Boolean-cube sum now exists.  `GateDenseRound.cubeSum` is the eq-weighted
+  all-gates aggregate summed over the cube, and `endpoint_sum_is_cube_sum`
+  proves a round's `f(0)+f(1)` IS that cube sum -- the `OuterClaimChain.endpointSum`
+  analogue this note said was missing.
+* The cross-round endpoint identity now exists and is NOT pinned at the last
+  round.  `GateDenseRound.bound_endpoint_sum_is_round_value` /
+  `bound_endpoint_sum_is_state_round_value` / `honest_chain_step` prove the NEXT
+  tables' `f'(0)+f'(1)` is the CURRENT round value at the drawn challenge, for
+  any state with at least two live variables.  (The `TableShape c 1` pinning
+  remains only on the last-round `GateTerminalBinding` lemmas, where it belongs.)
+
+STILL OPEN:
+
+* The gate eq-table's derivation from `gateTau` at every row remains outside the
+  adopted model: `GateDenseRound`'s own header states that "the eq table's
+  provenance from `tau` (`ext3_eq_evals`) is likewise NOT modelled: `eq` is a
+  supplied table".  A cube sum weighted by a SUPPLIED eq table can now be
+  stated, but it carries no rejection power against a supplier who chooses that
+  table, so it is still not the gate relation.
+* Extraction is still not formalised, so any gate conclusion would rest on an
+  assumed extracted-truth-chain in the same way the norm lane's does, plus the
+  same open extraction join (this file's ASSUMPTION 17 for the norm lane).
+* `IntegratedTerminalChain.GateChainHypotheses` still CARRIES its `grid` field
+  as a hypothesis rather than deriving it; only the reason its docstring gives
+  (that no gate prover with coefficient interpolation and `bind_challenge`
+  chaining is adopted) has been overtaken by `GateDenseRound`.
 
 CONSEQUENCE, STATED PLAINLY.  Nothing in this file proves that the gate lane's
 aggregate sums to zero over the Boolean cube, and nothing in this file proves

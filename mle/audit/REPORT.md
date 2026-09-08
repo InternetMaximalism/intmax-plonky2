@@ -929,6 +929,41 @@ OpeningBindingは必須修正2件（fold水準の残余を列の同定と書い�
 採用namespaceでの直接buildと全統合guardはPASS。全2834名の実定理/型/推移的公理、
 438 reviewed hashes、18表1147語、7依存5601fileを検査した。
 
+### 第17継続更新の追補その5（118caab2以降）
+
+追跡版runnerでコミット`118caab2`の89モデル・2834定理を再検査しPASS（1427.517秒、1419モジュール、
+manifest `17a71c4a1c340b182a88bd184c5f8dc5f862d9944131d6e4c5ef28554aa23ea4`、receipt
+`63cb1cc80dd9b9d25ee32b3429e9c5d66724579c1886940d7362f5366ee42ec5`）。
+
+- **意味論的段階**: ZeroCheckSemanticsは採用済みeqによる多重線形拡張がcube上でgを補間すること、
+  非零値があれば拡張が恒等的に零でないこと、零点の密度が n/|F| 以下であること
+  （Schwartz-Zippel、総次数≤n、帰納法は仮定段なしで完遂、n=0の端も証明）を示す。
+  bad set外のtauに対しGateDenseRoundの各行値が0になる系を、採用済み導出tauと
+  EqTableProvenanceが解消する eq 仮定のもとで与える。
+  採用済みbadSetsとは合成しない（単一challenge対n組）。
+- **gate laneの連鎖と向きの転換**: GateClaimChainは実Verifier.roundStepでgate laneを多round連鎖し、
+  gate row数・hash長・validateConfigurationを受理から導出してterminal橋を渡し、
+  受理とgate lane bad eventなしから抽出表のcube和=0を導く。採用済みbad event機構を再利用し
+  二重定義を作らない。gate lane固有の上界(q+2)·degreeBitsも再具体化した
+  （ConditionalSoundnessの195はこのlaneには適用されないことを明記）。
+  以前gate連言を退化させた`gateTruths := []`は、truth chainが実行に束縛されるため充足不能である
+  ことを定理で示した。
+
+  **正直に記録すべき限定**: この定理には敵対的供給者への棄却力がまだない。
+  仮定はeq表の1つの線形汎関数しか固定せず、cube重みの行和は独立なので、正しいbound cellを
+  持ちつつ行和0のeq表を選べる。同種の退化として`numGateConstraints=0`があり
+  （envelopeは下限を課さず、採用済みexample configがこれを設定している）、これは
+  レビューが発見し定理として証明したうえで可視の仮定4で除外した。網羅ではなく、
+  selector filterを全て零化する経路も残る。これらはheaderと本文に明記した。
+
+追加2モデルはいずれも敵対的独立レビューを通した。ZeroCheckSemanticsは必須修正なし（文書3件を適用、
+badSetsと合成するという誤りの訂正を含む）。GateClaimChainは必須修正4件
+（過大な表現の削除、上界の再具体化、退化の証明と可視の仮定による除外、棄却力なしの明記）を適用し、
+検証レビューで再確認したうえ、退化が2つだけと読める記述も訂正した。
+このとき採用済みConditionalSoundnessのgate lane記述が陳腐化していたためコメントのみ更新した。
+採用namespaceでの直接buildと全統合guardはPASS。全2923名の実定理/型/推移的公理、
+440 reviewed hashes、18表1147語、7依存5601fileを検査した。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。
