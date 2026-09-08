@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "95f8b12e9b4f3879efd631a95732aa14a328ab545706b9f60fcfb13c3cccb214",
+      "sha256": "69049d34629f6defc0c5b178595ce07b7f3bbe0a54aed3b7115818320a3c2695",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "f8441b105ecbdf303824254522d0c88adb44b382d42c240b2de21148bd7ad097",
+      "sha256": "ee7693be64cd91aacbcf91d460476c9762e33d77a861b1b9edec5596c868f64f",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "f783b2e23dcd2b84a691584b19e13ef2951b9f338b2fefd64138d2ce8ef36c9a",
+      "sha256": "7011eeacfd08752691d37b0f6ce6dc010efdcec39d576018f724f388d7472a34",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "5994ac0e23fa11553beff53dd3eaa1fc63e75e215b3597b44447266e62a87305",
+      "sha256": "2ae3a9b1f166d6efd2a21260503cec9275943a7eda016c6c48b827653f80c707",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "efcb7431ce325518956b64c057bdde8e92a4c734a8d2ffe264d18b30d25fa41c",
+      "sha256": "f9ffa0012cdf85c69891e4eb72f8734308e04ab8affe4f77cb88e19ca01ab074",
       "kind": "spec"
     },
     {
@@ -2201,6 +2201,16 @@
     {
       "path": "mle/audit/Audit/Wire3/GateClaimChain.lean",
       "sha256": "bd2b4947e4744371d585b07c21f0f57128469fdf8068be5ce83b11adfd5e7951",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/AlphaZeroCheck.lean",
+      "sha256": "8a8b3a4a90c8583b2ef90748f6c84fa78558e7da9fdfbf9800a3bf4c0446fa62",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/GateRejectionPower.lean",
+      "sha256": "14bd1b51a0208beb8996aceed7f76cabb7113e17336a579fa83e7ae320106f99",
       "kind": "current-model"
     }
   ],
@@ -6095,6 +6105,124 @@
         "mle/src/sumcheck/gate_ext3_v2.rs"
       ],
       "scope": "The gate lane chained through the ADOPTED Verifier.roundStep with the verifier's own gate challenge: the claim after i rounds is the round value of the tables after i binds, the run's messages and challenges are what derivedRounds consumes, the initial-claim iff is stated conditionally, and gate row count, hash length and validateConfiguration are DERIVED from acceptance for the terminal bridge. Under eight named visible fields plus acceptance and the adopted BadEventFree on the gate lane, the extracted tables' Boolean-cube sum is zero, reusing the adopted bad-event machinery with no second copy; the lane's own counting bound (quotientDegree+2)*degreeBits is re-instantiated, and ConditionalSoundness's 195 explicitly does NOT apply here. The degenerate instantiation that broke an earlier attempt is proved unsatisfiable. HONEST LIMITS: the theorem has no rejection power against an adversarial supplier of the state, because the assumptions pin only one linear functional of the eq table while the cube weight is independent; the constraint-free configuration degeneracy is proved and excluded by a visible field but the list is not exhaustive (zeroing every selector filter remains); this is not the circuit gate relation, and extraction and eq provenance at every row remain open."
+    },
+    {
+      "module": "Audit.Wire3.AlphaZeroCheck",
+      "theorems": [
+        "Audit.Wire3.AlphaZeroCheck.ofCoefficients_eval",
+        "Audit.Wire3.AlphaZeroCheck.ofCoefficients_eval_reduce",
+        "Audit.Wire3.AlphaZeroCheck.prepared_slots_is_coefficient_evaluation",
+        "Audit.Wire3.AlphaZeroCheck.combined_is_coefficient_evaluation",
+        "Audit.Wire3.AlphaZeroCheck.configured_slot_coefficients",
+        "Audit.Wire3.AlphaZeroCheck.getD_replicate_zero",
+        "Audit.Wire3.AlphaZeroCheck.slotValue_nil",
+        "Audit.Wire3.AlphaZeroCheck.slotValue_cons",
+        "Audit.Wire3.AlphaZeroCheck.slotRows_lookup",
+        "Audit.Wire3.AlphaZeroCheck.slot_coefficient_exact",
+        "Audit.Wire3.AlphaZeroCheck.aggregate_polynomial_coefficient",
+        "Audit.Wire3.AlphaZeroCheck.aggregate_is_polynomial_in_alpha",
+        "Audit.Wire3.AlphaZeroCheck.ofCoefficients_ne_zero",
+        "Audit.Wire3.AlphaZeroCheck.coeffs_ne_nil",
+        "Audit.Wire3.AlphaZeroCheck.mem_vanishingAlphas",
+        "Audit.Wire3.AlphaZeroCheck.mem_vanishingAlphas_of_not_all_zero",
+        "Audit.Wire3.AlphaZeroCheck.vanishingAlphas_card_succ_le",
+        "Audit.Wire3.AlphaZeroCheck.vanishingAlphas_card_bound",
+        "Audit.Wire3.AlphaZeroCheck.alphaBadSet_empty",
+        "Audit.Wire3.AlphaZeroCheck.alphaBadSet_of_not_all_zero",
+        "Audit.Wire3.AlphaZeroCheck.alphaBadSet_card_bound",
+        "Audit.Wire3.AlphaZeroCheck.alphaBadSet_card_succ_le",
+        "Audit.Wire3.AlphaZeroCheck.configured_alphaBadSet_card_bound",
+        "Audit.Wire3.AlphaZeroCheck.alphaBadSet_density_bound",
+        "Audit.Wire3.AlphaZeroCheck.all_slots_zero_of_aggregate_zero",
+        "Audit.Wire3.AlphaZeroCheck.getD_eq_zero_of_all_zero",
+        "Audit.Wire3.AlphaZeroCheck.gate_slots_vanish",
+        "Audit.Wire3.AlphaZeroCheck.wrap_getD",
+        "Audit.Wire3.AlphaZeroCheck.element_mk_eq_zero",
+        "Audit.Wire3.AlphaZeroCheck.zero_filter_contributes_nothing",
+        "Audit.Wire3.AlphaZeroCheck.filteredValue_zero_iff",
+        "Audit.Wire3.AlphaZeroCheck.selected_constraint_zero",
+        "Audit.Wire3.AlphaZeroCheck.slotValue_append_cons",
+        "Audit.Wire3.AlphaZeroCheck.slotValue_zero_of_filters_zero",
+        "Audit.Wire3.AlphaZeroCheck.active_gate_slot_value",
+        "Audit.Wire3.AlphaZeroCheck.active_gate_constraints_vanish",
+        "Audit.Wire3.AlphaZeroCheck.rowWires_length",
+        "Audit.Wire3.AlphaZeroCheck.rowConstants_length",
+        "Audit.Wire3.AlphaZeroCheck.combined_zero_of_gateValue_zero",
+        "Audit.Wire3.AlphaZeroCheck.gate_constraints_vanish_of_tau_and_alpha",
+        "Audit.Wire3.AlphaZeroCheck.getOpt_append_cons",
+        "Audit.Wire3.AlphaZeroCheck.validated_selected_gate_terms",
+        "Audit.Wire3.AlphaZeroCheck.selected_gate_constraints_vanish_of_tau_and_alpha",
+        "Audit.Wire3.AlphaZeroCheck.selected_gate_constraints_vanish_of_tau_and_alpha_of_terms",
+        "Audit.Wire3.AlphaZeroCheck.gate_constraints_vanish_at_derived_challenges",
+        "Audit.Wire3.AlphaZeroCheck.example_alpha_zero_selects_first_slot",
+        "Audit.Wire3.AlphaZeroCheck.example_coefficient_order",
+        "Audit.Wire3.AlphaZeroCheck.example_not_all_slots_zero",
+        "Audit.Wire3.AlphaZeroCheck.example_aggregate_at_zero",
+        "Audit.Wire3.AlphaZeroCheck.example_aggregate_at_one",
+        "Audit.Wire3.AlphaZeroCheck.example_alphaBadSet_nonempty",
+        "Audit.Wire3.AlphaZeroCheck.example_good_alpha",
+        "Audit.Wire3.AlphaZeroCheck.example_alpha_condition_necessary",
+        "Audit.Wire3.AlphaZeroCheck.example_alphaBadSet_card",
+        "Audit.Wire3.AlphaZeroCheck.example_not_all_slots_zero_alt",
+        "Audit.Wire3.AlphaZeroCheck.example_nonzero_bad_alpha",
+        "Audit.Wire3.AlphaZeroCheck.example_constants_width",
+        "Audit.Wire3.AlphaZeroCheck.example_zero_filter",
+        "Audit.Wire3.AlphaZeroCheck.example_zero_filter_gate_is_unconstrained"
+      ],
+      "sources": [
+        "mle/src/gate_ext3.rs",
+        "mle/src/sumcheck/gate_ext3_v2.rs"
+      ],
+      "scope": "A row's alpha-Horner gate aggregate as a polynomial whose coefficients ARE the adopted slot values (identification, not merely a degree bound; the adopted slotRows takes no alpha, so the slot buffer is alpha-free), reaching the actual evalCombined through the adopted configured_slots_equal_complete. The root bound card + 1 <= length descends to at most 122 from the adopted envelope's numGateConstraints <= 123. alphaBadSet has the adopted bad-set shape with an unconditional cardinality bound. For alpha outside it, every slot value of the row is zero, and where a gate's selector filter is nonzero its constraint values are zero; where the filter is zero the gate is genuinely UNCONSTRAINED, which is correct for a row outside its selector range. Slot k is the SUM over gate rows of filter times constraint, not one gate's value. The composition with the adopted tau zero-check is proved, including at the adopted transcript alpha and tau (alpha is drawn at an earlier counter than gate tau). No probability: both good-challenge premises are memberships in sets indexed by the prover's own tables, adaptivity is untouched, the bad set is per row so no union bound over the cube is taken, and it is not joined into the adopted badSets."
+    },
+    {
+      "module": "Audit.Wire3.GateRejectionPower",
+      "theorems": [
+        "Audit.Wire3.GateRejectionPower.gate_value_ignores_eq",
+        "Audit.Wire3.GateRejectionPower.cube_sum_is_eq_functional",
+        "Audit.Wire3.GateRejectionPower.replicate_zero_getD",
+        "Audit.Wire3.GateRejectionPower.zero_eq_column_row_sum",
+        "Audit.Wire3.GateRejectionPower.zero_eq_column_cube_sum_vanishes",
+        "Audit.Wire3.GateRejectionPower.zero_eq_forgery",
+        "Audit.Wire3.GateRejectionPower.constraint_free_scenario_is_real",
+        "Audit.Wire3.GateRejectionPower.zero_filter_contribution",
+        "Audit.Wire3.GateRejectionPower.zero_filter_combine_rows",
+        "Audit.Wire3.GateRejectionPower.zero_filter_eval_combined",
+        "Audit.Wire3.GateRejectionPower.all_filters_zero_gate_value",
+        "Audit.Wire3.GateRejectionPower.all_filters_zero_cube_sum",
+        "Audit.Wire3.GateRejectionPower.shape_mismatch_cube_sum_vanishes",
+        "Audit.Wire3.GateRejectionPower.consistent_state_has_matching_shape",
+        "Audit.Wire3.GateRejectionPower.extensionOf_one",
+        "Audit.Wire3.GateRejectionPower.partition_of_unity",
+        "Audit.Wire3.GateRejectionPower.eq_table_row_sum",
+        "Audit.Wire3.GateRejectionPower.eq_provenance_row_sum",
+        "Audit.Wire3.GateRejectionPower.no_eq_provenance_of_row_sum_ne_one",
+        "Audit.Wire3.GateRejectionPower.provenance_excludes_zero_row_sum",
+        "Audit.Wire3.GateRejectionPower.provenance_excludes_zero_eq_column",
+        "Audit.Wire3.GateRejectionPower.strong_gate_cube_sum_vanishes",
+        "Audit.Wire3.GateRejectionPower.strong_gate_rows_vanish",
+        "Audit.Wire3.GateRejectionPower.nonzero_row_forces_bad_tau",
+        "Audit.Wire3.GateRejectionPower.strong_assumptions_reject",
+        "Audit.Wire3.GateRejectionPower.row_sum_forgery_rejected",
+        "Audit.Wire3.GateRejectionPower.honest_eq_column_is_eq_table",
+        "Audit.Wire3.GateRejectionPower.forged_states_consistent",
+        "Audit.Wire3.GateRejectionPower.forged_state_row_nonzero",
+        "Audit.Wire3.GateRejectionPower.forged_states_satisfy_adopted_conclusion",
+        "Audit.Wire3.GateRejectionPower.forged_states_have_no_eq_provenance",
+        "Audit.Wire3.GateRejectionPower.forged_state_rejected_but_previously_accepted",
+        "Audit.Wire3.GateRejectionPower.honest_state_has_eq_provenance",
+        "Audit.Wire3.GateRejectionPower.honest_state_cube_sum_nonzero",
+        "Audit.Wire3.GateRejectionPower.not_mem_zeroCheckBadSet_of_extension_ne_zero",
+        "Audit.Wire3.GateRejectionPower.honest_state_extension_nonzero",
+        "Audit.Wire3.GateRejectionPower.selector_configuration_valid",
+        "Audit.Wire3.GateRejectionPower.selector_forgery_survives_eq_provenance",
+        "Audit.Wire3.GateRejectionPower.selector_column_matters"
+      ],
+      "sources": [
+        "mle/src/sumcheck/gate_ext3_v2.rs",
+        "mle/src/gate_ext3.rs"
+      ],
+      "scope": "The attack scenarios that made the adopted gate conclusion powerless, each proved real: a zero eq column makes that conclusion true for ANY tables while leaving every row's gateValue unchanged, the zero-row-sum class containing it, the constraint-free configuration (cited from the adopted proof), the all-selectors-zero case, and a shape mismatch. The partition of unity for the adopted eq (the cube row sum is identically one) is proved, so pinning the whole eq column to eqTable tau makes the zero-row-sum scenarios impossible. A strengthened assumption set adds the adopted full-table eq provenance (added, not replacing the bound-cell field, whose bridge is not built) and composes with the adopted zero-check to conclude EVERY row's aggregate is zero; the contrapositive gives rejection power, demonstrated on concrete forged states the old assumptions accepted. OPEN, proved rather than conceded: the selector forgery survives eq provenance, and while the all-zero witness is excluded by a visible guard the PARTIAL zeroing attack is not, which is a constants-provenance obligation inside the open extraction join. tau is a free variable here, never tied to the transcript, so adaptive choice of tau is excluded only by hypothesis; no probability is computed and the assumption set is not shown inhabited."
     }
   ]
 }

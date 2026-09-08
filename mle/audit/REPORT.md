@@ -964,6 +964,41 @@ badSetsと合成するという誤りの訂正を含む）。GateClaimChainは�
 採用namespaceでの直接buildと全統合guardはPASS。全2923名の実定理/型/推移的公理、
 440 reviewed hashes、18表1147語、7依存5601fileを検査した。
 
+### 第17継続更新の追補その6（c89d8ea7以降）
+
+追跡版runnerでコミット`c89d8ea7`の91モデル・2923定理を再検査しPASS（1129.262秒、1421モジュール、
+manifest `2470b854fbca0265d5e3acea62c4cd915f4bb6cdf77aec7c68253ea4c28a5d06`、receipt
+`bbcebcc6d799c6b14e1fac5184299e46855dbf9a1f8db136b9b91d19c86ec97f`）。
+
+「健全性に問題があるシナリオを特定し、そうでないと示す過程で健全性を証明する」方針で2モジュールを追加した。
+
+- **攻撃シナリオの列挙と棄却力**: GateRejectionPowerは攻撃シナリオを定義として列挙し、それぞれが
+  実在することを定理で示す。特にeq列をゼロにすると、任意の表に対して採用済みの結論が成立し、かつ
+  各行のgateValueは不変であることを証明した（旧定理が何も棄却していなかったことの形式的証明）。
+  そのうえで採用済みeqの単位分解（cube上の行和が恒等的に1）を証明し、eq列を全行で固定すれば
+  行和ゼロのeq表は存在しえないことを導く。強化仮定のもとで各行の集約が0であることを
+  ZeroCheckSemanticsと合成して示し、対偶により棄却力があることを述べ、旧仮定が受理していた
+  偽造状態2つを新仮定が棄却する具体例を与えた。
+- **alphaのzero-check**: AlphaZeroCheckは行の集約をalphaの多項式として扱い、係数が採用済みslot値
+  そのものであることを同定する（次数上界だけではない）。根の個数上界をenvelope由来の
+  numGateConstraints≤123から≤122として導き、bad set外のalphaで各slot値が0、filterが非零のgateは
+  制約自体が0であることを示す。tauとalphaの両zero-checkの合成を、採用済みtranscriptのalphaとtau
+  （alphaはgate tauより前のcounterで引かれる）に対して証明した。
+
+  **未解決として明記した攻撃面**: selectorの部分的零化（全零化はactiveFilterで除外されるが、
+  重要な行だけ零化して他所にgateを残す攻撃は残る。constants列の由来、すなわち抽出接合の問題）。
+  tauは両モジュールで自由変数でありtranscriptに束縛されていないため、表を固定した後にtauを
+  選ぶ適応的攻撃はhgood仮定でしか排除されない。確率は未計算で、alphaのbad setは行ごとなので
+  cube全体には2^n行のunion boundが要る。
+
+追加2モジュールはいずれも敵対的独立レビューを通した。AlphaZeroCheckは必須修正なし（推奨4件を適用）。
+GateRejectionPowerは必須修正1件（tauを「引かれた」と書いていたが自由変数である）と、
+selector偽造の範囲の訂正（例示した状態はactiveFilterで除外され、残るのは部分的零化）を適用した。
+採用時に、定理名の`?`と末尾プライムが採用済みguardの識別子正規表現と衝突することを発見し、
+2件を改名した（guardは`get?_append_cons`を`get`と誤読し、`x'`と`x`を重複と誤認する）。
+採用namespaceでの直接buildと全統合guardはPASS。全3021名の実定理/型/推移的公理、
+442 reviewed hashes、18表1147語、7依存5601fileを検査した。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

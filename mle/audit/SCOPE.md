@@ -409,7 +409,22 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    可視の仮定4で除外したが、selector filterを全て零化する経路は残る。
    さらにZeroCheckSemanticsのbad setは採用済みbadSetsと合成しない（単一challenge対n組で、
    n重積事象が未構築）。bad setがprover自身の表で添字付けられるため、適応的選択の扱いも要る。
-   eq表のgateTau由来を全行で固定すること、抽出接合、これらが残る。
+   eq表のgateTau由来を全行で固定することはGateRejectionPowerで扱った。
+   採用済みeqの単位分解（cube上の行和が恒等的に1）を証明し、eq列を全行`eqTable tau`へ
+   固定すれば行和ゼロのeq表が存在しえないことを導く。攻撃シナリオ（eq列ゼロ、行和ゼロ、
+   制約数ゼロ、形状不一致、selector全零化）はそれぞれ定理として提示し、
+   強化仮定が旧仮定の受理していた偽造状態を棄却することを具体例で示した。
+   AlphaZeroCheckは行の集約をalphaの多項式として係数を同定し（係数はslot値そのもの）、
+   根の個数≤numGateConstraints−1≤122をenvelopeから導き、bad set外のalphaで各slot値が0、
+   filterが非零のgateは制約自体が0であることを示す。tauとalphaの両zero-checkの合成も
+   採用済みchallenge上で証明した（alphaはgate tauより前のcounterで引かれる）。
+   **なお未解決**: selectorの部分的零化（全零化はactiveFilterで除外されるが、重要な行だけを
+   零化し他所にgateを残す攻撃は残る。constants列の由来＝抽出接合の問題）。
+   tauはこれらのモジュールでは自由変数でありtranscriptに束縛されていないため、
+   表を固定した後にtauを選ぶ適応的攻撃はhgood仮定でしか排除されていない。
+   確率も未計算で、hgoodは密度上界と合成されておらず、alphaのbad setは行ごとなので
+   cube全体には2^n行のunion boundが要る。filterが零の行は非拘束であり、これは
+   selector範囲外の行として正しい挙動である。
    195·(⌈2^256/p⌉/2^256)³≒2^-184は外側sumcheckの一致事象のみで、支配項のWHIR/Merkleを含まない。
    実装の設計点は約100 bitであり、この数値を系の健全性誤差として引用してはならない。
    failureは自由な有理数で上からしか抑えられておらず、実確率との橋渡しはどのフィールドも与えない。

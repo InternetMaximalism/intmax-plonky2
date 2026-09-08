@@ -96,3 +96,5 @@ import Audit.Wire3.GateDenseRound
 import Audit.Wire3.OpeningBinding
 import Audit.Wire3.ZeroCheckSemantics
 import Audit.Wire3.GateClaimChain
+import Audit.Wire3.AlphaZeroCheck
+import Audit.Wire3.GateRejectionPower

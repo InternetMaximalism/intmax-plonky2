@@ -92,8 +92,10 @@
 | [OpeningBinding](Audit/Wire3/OpeningBinding.lean) | 同root/index/depthの2つの受理openingが一致することを、実行から計算した有限listへのhash単射性へ還元（自由変数ではない）。抽出ではなくbindingであることを明示し、限界も定理として証明する（不透明engineのWHIR検査は任意のcontextを受理、opening関係は3つのrootを差し替えても不変） |
 | [ZeroCheckSemantics](Audit/Wire3/ZeroCheckSemantics.lean) | 採用済みeqによる多重線形拡張がcube上でgを補間し、非零値があれば恒等的に零でないこと、零点の密度≤n/\|F\|（Schwartz-Zippel、総次数≤n、帰納法は完遂）を証明。bad set外のtauでGateDenseRoundの各行値が0になる系を与える。badSetsとは合成しない（単一challenge対n組） |
 | [GateClaimChain](Audit/Wire3/GateClaimChain.lean) | gate laneを実Verifier.roundStepで多round連鎖し、terminal橋を渡し、受理+gate lane bad eventなしから抽出表のcube和=0を導く。gate lane固有の上界(q+2)·degreeBitsも再具体化。**供給者への棄却力はまだない**（eq表の自由度、selector零化、`numGateConstraints=0`退化は仮定4で除外） |
+| [AlphaZeroCheck](Audit/Wire3/AlphaZeroCheck.lean) | 行の集約をalphaの多項式として係数を同定（slot値そのもの）し、根の個数≤numGateConstraints−1≤122をenvelopeから導く。bad set外のalphaで各slot値が0、filterが非零のgateは制約自体が0。tauとalphaの両zero-checkの合成も採用済みchallenge上で証明。filter零の行は非拘束（正しい挙動） |
+| [GateRejectionPower](Audit/Wire3/GateRejectionPower.lean) | 攻撃シナリオ4つを定理として提示し、eqの単位分解（行和=1）で行和ゼロ偽造を不可能にする。強化仮定は旧仮定が受理した偽造状態を棄却することを具体例で示す。**selectorの部分的零化は未解決**（constants由来＝抽出接合）。tauはtranscriptに束縛されていない |
 
-現行rootは91モデル・2923件の名付き定理です。
+現行rootは93モデル・3021件の名付き定理です。
 **ConditionalSoundnessの数値2^-184を系の健全性誤差として引用しないでください。**
 これは外側sumcheckの一致事象のみを数えた値で、支配項であるWHIR/Merkleを含みません。
 gate laneは証明されておらず、抽出とcommitmentの接合も仮定のままです。直近の検査結果はREPORTとmanifestで管理します。
