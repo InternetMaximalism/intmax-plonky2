@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "f8121f034cf618998e1653647837122e6f45d06175832b63ed5ccd19fc27d43c",
+      "sha256": "74ef7fe2375fc4d91ba47d6de040fed95becf23679ab6dbc927396272ab142cf",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "bf640275efc8f7a1d621c07f6b7e2e22c03a163fa2c86588d9bbd33af6cfcd76",
+      "sha256": "17626aa10ddc25fd90faadecc2be501bbb136a3ddcbe48ac9844e64670455fff",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "63b1ad58883a7f31d1283ec79420651965796b508398c973a054315a50d16688",
+      "sha256": "d1993ca7f88f3f9fff66cadbf5187bf074f8829e60378f6d30e1ff7105370075",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "2b417f35f303800e0e732112b375a511609e5456f4628dcef3b1d288be1b395f",
+      "sha256": "fe4472561bdbf08a67691c3c6ddf31ef85dbb4ec4ea0fe5e3b5abcbac63b9e63",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "287596286986e66b86737d5edcd3d26ada6751547c67dac3586e5e6aa8d23848",
+      "sha256": "7d857108889fcbcb7fa5e9afbcd5a6094ce48fd83780d53a66a045f600001643",
       "kind": "spec"
     },
     {
@@ -2181,6 +2181,16 @@
     {
       "path": "mle/audit/Audit/Wire3/ConditionalSoundness.lean",
       "sha256": "65d748f2e9804ba9407c159f23770fdb6ed56823b31eed89aee7f4553c59d00d",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/GateDenseRound.lean",
+      "sha256": "7e2e724e87a9b90a2e6c34ee96e7ce1b9925dabb9c364442d961728efa391906",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/OpeningBinding.lean",
+      "sha256": "f7e808cfc67fd536283878ee3f56ccc650b356026b99849692f645a1794bc71e",
       "kind": "current-model"
     }
   ],
@@ -5852,6 +5862,119 @@
         "mle/src/permutation/norm_logup.rs"
       ],
       "scope": "Eighteen cryptographic and provenance assumptions enumerated as visible structure fields (adaptive fixedness, the challenge law, the extracted tables with their shape, truth chain and structural last-round data, the eq/subgroup/lambda/wire-map/transcript provenance, and the extraction join that the terminal claimed values are the prover cells). Under them, if Integrated.verify accepts and no drawn log-lane challenge lands in its round's agreement set, the extracted tables' endpointSum is zero: the proposition IntegratedTerminalChain assumed as HonestNormProver.zeroSum, derived without circularity, in the correct sumcheck shape (zero sum or some challenge hit a bad set). The bad-set cardinality is at most 195*ceil(2^256/p)^3, with 195 derived from acceptance via degreeBits <= 13 and quotientDegree+2 <= 10. NOT PROVED: the gate lane, whose degenerate first-draft conclusion was deleted after review because no adopted gate prover has coefficient interpolation, a Boolean cube sum or round chaining; 195*(ceil(2^256/p)/2^256)^3 is approximately 2^-184 but counts outer-sumcheck agreement only and excludes the dominant WHIR and Merkle term, so it must never be quoted as the system's soundness error against a roughly 100-bit design point; failure is a free rational bounded above only, with no field bridging it to a real probability; the first and last conjuncts are never composed and there is no probability space over executions; the assumption conjunction is not shown inhabited."
+    },
+    {
+      "module": "Audit.Wire3.GateDenseRound",
+      "theorems": [
+        "Audit.Wire3.GateDenseRound.add_lift",
+        "Audit.Wire3.GateDenseRound.map_lift_getD",
+        "Audit.Wire3.GateDenseRound.interleave_sum",
+        "Audit.Wire3.GateDenseRound.affine_weight_at_zero",
+        "Audit.Wire3.GateDenseRound.affine_weight_at_one",
+        "Audit.Wire3.GateDenseRound.suffix_element_defined",
+        "Audit.Wire3.GateDenseRound.sum_suffixes_indexed",
+        "Audit.Wire3.GateDenseRound.current_round_value_sum",
+        "Audit.Wire3.GateDenseRound.round_element_polynomial",
+        "Audit.Wire3.GateDenseRound.compute_round_after_completion",
+        "Audit.Wire3.GateDenseRound.compute_round_exact",
+        "Audit.Wire3.GateDenseRound.grid_is_polynomial_sample",
+        "Audit.Wire3.GateDenseRound.gate_degree_below_modulus",
+        "Audit.Wire3.GateDenseRound.current_round_coefficients_shaped",
+        "Audit.Wire3.GateDenseRound.omitted_constant_coefficient",
+        "Audit.Wire3.GateDenseRound.cube_reads_bounded",
+        "Audit.Wire3.GateDenseRound.slice_endpoint_is_row",
+        "Audit.Wire3.GateDenseRound.suffix_element_is_row_element",
+        "Audit.Wire3.GateDenseRound.endpoint_sum_is_cube_sum",
+        "Audit.Wire3.GateDenseRound.executed_endpoint_sum_is_cube_sum",
+        "Audit.Wire3.GateDenseRound.bound_affine_values_zero",
+        "Audit.Wire3.GateDenseRound.bound_affine_values_one",
+        "Audit.Wire3.GateDenseRound.bound_eq_weight_zero",
+        "Audit.Wire3.GateDenseRound.bound_eq_weight_one",
+        "Audit.Wire3.GateDenseRound.bound_table_shape",
+        "Audit.Wire3.GateDenseRound.bound_slice_evaluates",
+        "Audit.Wire3.GateDenseRound.bound_suffix_elements",
+        "Audit.Wire3.GateDenseRound.bound_endpoint_sum_is_round_value",
+        "Audit.Wire3.GateDenseRound.sent_round_evaluates_as_verifier",
+        "Audit.Wire3.GateDenseRound.current_round_after_completion",
+        "Audit.Wire3.GateDenseRound.consistent_table_shape",
+        "Audit.Wire3.GateDenseRound.consistent_eq_valid",
+        "Audit.Wire3.GateDenseRound.current_round_shaped",
+        "Audit.Wire3.GateDenseRound.honest_round_binds",
+        "Audit.Wire3.GateDenseRound.bind_challenge_consistent",
+        "Audit.Wire3.GateDenseRound.bound_endpoint_sum_is_state_round_value",
+        "Audit.Wire3.GateDenseRound.proof_extraction_requires_completion",
+        "Audit.Wire3.GateDenseRound.proof_extraction_exact",
+        "Audit.Wire3.GateDenseRound.honest_chain_step",
+        "Audit.Wire3.GateDenseRound.example_configuration",
+        "Audit.Wire3.GateDenseRound.example_consistent",
+        "Audit.Wire3.GateDenseRound.example_variables",
+        "Audit.Wire3.GateDenseRound.example_nonzero",
+        "Audit.Wire3.GateDenseRound.example_cube_sum",
+        "Audit.Wire3.GateDenseRound.example_cube_sum_literal",
+        "Audit.Wire3.GateDenseRound.example_bind",
+        "Audit.Wire3.GateDenseRound.example_chain_literal",
+        "Audit.Wire3.GateDenseRound.example_chain",
+        "Audit.Wire3.GateDenseRound.example_chain_step"
+      ],
+      "sources": [
+        "mle/src/sumcheck/gate_ext3_v2.rs",
+        "mle/src/sumcheck/coefficients.rs"
+      ],
+      "scope": "The gate counterpart of NormDenseRound: current_round modelled end to end through the adopted GateSlotRound grid and the adopted OuterInterpolation.interpolate with the constant coefficient dropped, the sent message length equal to what bind_challenge re-checks as a live branch, the omitted entry equal to the verifier's half-sum reconstruction, and the actual Verifier.evaluateRound reproducing the round value at every challenge. A Consistent invariant over the adopted gate prover state, the cross-round endpoint identity at an arbitrary round with its read bounds proved, and a Boolean-cube sum defined per row index whose first-round endpoint sum identity holds unconditionally. The multi-round induction is deliberately not done and cube sum equal to zero is NOT claimed, that being circuit truth. Everything state-level is honest-prover-only and is completeness, not soundness; eq-table provenance from gateTau, transcript binding and extraction remain outside."
+    },
+    {
+      "module": "Audit.Wire3.OpeningBinding",
+      "theorems": [
+        "Audit.Wire3.OpeningBinding.layerInputs_paired",
+        "Audit.Wire3.OpeningBinding.layerInputs_unpaired",
+        "Audit.Wire3.OpeningBinding.layerInputs_lone",
+        "Audit.Wire3.OpeningBinding.layer_parent_input_recorded",
+        "Audit.Wire3.OpeningBinding.layers_path_inputs_recorded",
+        "Audit.Wire3.OpeningBinding.accepted_opening_extracts_recorded_path",
+        "Audit.Wire3.OpeningBinding.path_collision_recorded",
+        "Audit.Wire3.OpeningBinding.noCollision_of_subset",
+        "Audit.Wire3.OpeningBinding.executedGroupInputs_success",
+        "Audit.Wire3.OpeningBinding.row_bytes_recorded",
+        "Audit.Wire3.OpeningBinding.merkle_input_recorded",
+        "Audit.Wire3.OpeningBinding.executedGroupsInputs_cons",
+        "Audit.Wire3.OpeningBinding.groups_position_inputs_recorded",
+        "Audit.Wire3.OpeningBinding.accepted_group_rows_bind_under_no_collision",
+        "Audit.Wire3.OpeningBinding.accepted_group_values_bind_under_no_collision",
+        "Audit.Wire3.OpeningBinding.accepted_group_dot_binds_under_no_collision",
+        "Audit.Wire3.OpeningBinding.accepted_groups_position_rows_bind_under_no_collision",
+        "Audit.Wire3.OpeningBinding.accepted_groups_position_rows_bind_or_collision",
+        "Audit.Wire3.OpeningBinding.mask_leaves_sixth_cell_unopened",
+        "Audit.Wire3.OpeningBinding.opens_committed_table_gives_full_table_cells",
+        "Audit.Wire3.OpeningBinding.expected_claims_determined_by_opened_values",
+        "Audit.Wire3.OpeningBinding.accepted_claims_are_folds_of_opened_values",
+        "Audit.Wire3.OpeningBinding.claimsMatch_unmask",
+        "Audit.Wire3.OpeningBinding.blind_engine_same_derived_data",
+        "Audit.Wire3.OpeningBinding.blind_engine_accepts_every_context",
+        "Audit.Wire3.OpeningBinding.opening_relation_ignores_the_commitment",
+        "Audit.Wire3.OpeningBinding.ext3_list_val_injective",
+        "Audit.Wire3.OpeningBinding.row_openings_are_fully_bound_cells",
+        "Audit.Wire3.OpeningBinding.opened_cells_are_bound_cells",
+        "Audit.Wire3.OpeningBinding.norm_claims_from_openings_and_column_identification",
+        "Audit.Wire3.OpeningBinding.example_executed_inputs_base_row",
+        "Audit.Wire3.OpeningBinding.example_no_collision_holds",
+        "Audit.Wire3.OpeningBinding.example_layer_input_is_the_actual_compression",
+        "Audit.Wire3.OpeningBinding.clash_rows_differ",
+        "Audit.Wire3.OpeningBinding.clash_same_leaf_hash",
+        "Audit.Wire3.OpeningBinding.clash_open_a",
+        "Audit.Wire3.OpeningBinding.clash_open_b",
+        "Audit.Wire3.OpeningBinding.clash_values_differ",
+        "Audit.Wire3.OpeningBinding.clash_dots_differ",
+        "Audit.Wire3.OpeningBinding.clash_executed_inputs_a",
+        "Audit.Wire3.OpeningBinding.clash_executed_inputs_b",
+        "Audit.Wire3.OpeningBinding.clash_no_collision_fails",
+        "Audit.Wire3.OpeningBinding.example_two_committed_tables_open_the_same_proof"
+      ],
+      "sources": [
+        "mle/src/verifier_v2.rs",
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol",
+        "mle/contracts/src/PackedClaimExt3.sol"
+      ],
+      "scope": "Binding, not extraction, for WHIR row openings: two accepted openings of the same root at the same depth and index return the same raw row, hence the same canonical decoding and the same dot value, reduced to injectivity of hash on a finite list COMPUTED FROM THE EXECUTION (the returned rows plus the compression inputs at the cursor the adopted WhirRows theorem pins), so the predicate is not a free parameter and cannot be vacuously instantiated while the theorems fire. The grouped lift covers an arbitrary root list at an arbitrary position. ConditionalSoundness assumption 17 is rewritten biconditionally, leaving a fold-level residue (bound cell values at the point) that is strictly weaker than identifying the columns. The limits are proved as theorems: an opaque engine's WHIR check accepts every context and proof, and the opening relation survives replacing all three Merkle roots, so binding cannot yield the relation. No theorem relates a decoded row to any field of the used claims; extraction, WHIR proximity, Fiat-Shamir and collision probability are not claimed."
     }
   ]
 }

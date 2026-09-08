@@ -395,13 +395,29 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    抽出した表のendpointSumが0であることを導く。これはIntegratedTerminalChainが
    HonestNormProver.zeroSumとして仮定していた命題であり、循環なく導出されている。
    bad setの濃度は195·⌈2^256/p⌉³以下（degreeBits≤13とquotientDegree+2≤10から195を導出）。
-   **重大な限定**: gate laneは証明していない。採用済みgate proverには係数補間も
-   Boolean cube和もround連鎖もないため、初稿のgate結論は退化しており削除した。
+   **重大な限定**: gate laneは証明していない。初稿のgate結論は退化しており削除した。
+   GateDenseRoundが障害のうち3つ（係数補間、Boolean cube和、最終roundに固定されない
+   telescoping）を解消したが、gate健全性にはなお5点が必要である。(1)多round帰納、
+   (2)向き（GateDenseRoundは完全性側であり、健全性は受理⇒関係で一致事象機構との接続が要る）、
+   (3)抽出とtranscript（受理transcriptのgate roundがConsistentな状態由来である保証がなく、
+   challengeも任意の体元にすぎない）、(4)gate terminal橋、(5)意味論的段階
+   （cube和=0は重み付き和の消失であって各gate制約の消失ではない）。
+   eq表のgateTau由来も未モデルのままである。
    195·(⌈2^256/p⌉/2^256)³≒2^-184は外側sumcheckの一致事象のみで、支配項のWHIR/Merkleを含まない。
    実装の設計点は約100 bitであり、この数値を系の健全性誤差として引用してはならない。
    failureは自由な有理数で上からしか抑えられておらず、実確率との橋渡しはどのフィールドも与えない。
    第1連言と第4連言は合成されておらず、実行に関する確率空間はこのファイルにない。
    Assumptions全体の充足可能性は示していないため、instantiation次第では空虚になりうる。
+   抽出とcommitmentの接合はOpeningBindingで部分的に扱った。同root/index/depthの2つの受理
+   openingが同じraw row・復号値・dotを返すことを、実行から計算した有限listに対するhashの
+   単射性のみへ還元する（自由変数ではなく、空listへの具体化で定理が空虚化しないことも確認済み）。
+   これはbindingであって抽出ではない。「あるcommitted tableが存在してその評価である」という
+   抽出はextractorを要し、ここでは証明しない。仮定17は双条件で書き換わるが、残余はfold水準
+   （点でのbound cell値）であって列の同定より弱い。さらに限界を定理として明示する。
+   不透明なengineのWHIR検査は任意のcontextとproofを受理するため、binding結果は具体的な
+   WHIR verifierに置き換わるまで外側の受理と接続しない。opening関係は3つのMerkle rootを
+   任意に差し替えても成立するため、同root性からこの関係を導くことはできない。
+   復号したrowをp.usedのどのfieldにも結び付ける定理もまだない。
 
 現target105の約101.5-bit値はリポジトリのgeneric-work見積もりで、Leanが証明した
 128-bit/end-to-end安全性ではありません。実装変更・デプロイ承認もこの更新には含みません。

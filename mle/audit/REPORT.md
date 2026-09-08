@@ -902,6 +902,33 @@ manifest `d89e078087f53f5d3b8c6c3bec9b70cc5f485585b9f3fe304c2b86b85ed9a839`、re
   §12を部分的非空虚性検査に改題、警告を3箇所へ）。再レビューで修正の実効性を確認し、
   残る4件の誇張表現（failureが実確率を上から抑えると読める記述など）も修正した。
 
+### 第17継続更新の追補その4（746ed942以降）
+
+追跡版runnerでコミット`746ed942`の87モデル・2742定理を再検査しPASS（801.944秒、1417モジュール、
+manifest `bbc6dd9d869a7cb4ec7eba545f3dcac20a9a1e5e0acbfa4a761033a62a82febe`、receipt
+`6b2b46bae6e8bffe40a5c4417ad0deb151d1104033d0b09d9b288c46b01a8b97`）。
+
+- **gate側のround模型**: GateDenseRoundはNormDenseRoundのgate版として、current_roundを採用済み
+  gridと採用済み補間で端まで模し（再実装なし）、送信messageの長さがbind_challengeの再検査値と
+  一致すること、省略された定数係数がverifierの半和復元と一致すること、実Verifier.evaluateRoundが
+  round値を再現することを証明する。Consistent不変量とround間の端点恒等式、および単一indexで
+  定義したBoolean cube和と第1roundでの端点和一致も証明した。多round帰納は未実施であり、
+  cube和=0は主張しない（それは回路truthである）。これによりcapstoneが挙げたgate障害4つのうち
+  3つが解消した。残る5点（多round帰納、向き、抽出/transcript、terminal橋、重み付き和と
+  各制約の区別）はSCOPEに列挙した。
+- **openingのbinding**: OpeningBindingは同root/index/depthの2つの受理openingが同じraw row・
+  復号値・dotを返すことを、実行から計算した有限listに対するhashの単射性のみへ還元する。
+  この述語は自由変数ではなく呼出しの結果から計算され、Merkle cursorも採用済み定理で固定される。
+  仮定17は双条件で書き換わるが、残余はfold水準であって列の同定より弱い。
+  さらに、限界そのものを定理として証明した。不透明engineのWHIR検査は任意のcontextを受理し、
+  opening関係は3つのrootを差し替えても成立する。したがってbindingから抽出は導けない。
+
+追加2モデルはいずれも敵対的独立レビューを通した。GateDenseRoundは必須修正なし（文書2件を適用）、
+OpeningBindingは必須修正2件（fold水準の残余を列の同定と書いていた点、双条件の数学的内容を
+過大に述べていた点）を適用し、復号rowとp.usedの未接続という未記載の欠落も明記した。
+採用namespaceでの直接buildと全統合guardはPASS。全2834名の実定理/型/推移的公理、
+438 reviewed hashes、18表1147語、7依存5601fileを検査した。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

@@ -92,3 +92,5 @@ import Audit.Wire3.PublicInputHashBinding
 import Audit.Wire3.TranscriptProvenance
 import Audit.Wire3.VkSubgroupProvenance
 import Audit.Wire3.ConditionalSoundness
+import Audit.Wire3.GateDenseRound
+import Audit.Wire3.OpeningBinding
