@@ -1117,6 +1117,39 @@ OuterSequentialConditioningは文書修正3件（`active`→`ownsNext`と位相�
 採用namespaceでの直接buildと全統合guardはPASS。全3390名の実定理/型/推移的公理、
 450 reviewed hashes、18表1147語、7依存5601fileを検査した。
 
+## 第21継続更新（1f3ffbf1以降）
+
+追跡版runnerでコミット`1f3ffbf1`の101モデル・3390定理を再検査しPASS（799.855秒、1431モジュール、
+manifest `1a3f5013728838f9d1e4a087ed58dedff2f0143e4611f6d44c1319e8f90422dd`、receipt
+`5498858df20a074cfe5ad952d763ede2638a1ff82e7dfb58669f6b66bb41b1e4`、graph
+`d1e15da16349989dca5ba0f1e273caf6f8769fcd52c6fc3a74505a7cd86a7cd5`）。
+loop方式の4回目。残余R1（engine不透明性）と、iteration 3で残した「供給列は点より前に固定」という読みの
+形式化、OuterSequentialConditioningが未証明としたLane水準の凍結比較を対象にした。
+
+- **engine不透明性**: InstalledWhirTailは採用済みの手動WHIR tailモデル`WhirConfigured.run`を
+  Integrated.modelEngineの`whirTail`に据え付ける。受理から具体tail実行の成功と3 rootの一致、初期評価値が
+  bound cellのpacked foldであることを導き、配備プロファイル（numRounds≥1）では3 rootが中間round 1で
+  開かれて各rowがMerkle認証されること、2受理実行の同root同leaf行が一致するか衝突することを証明した。
+  レビューは2巡した。1巡目で「numRounds=0を本番経路とする」誤り（fixtureは全てnumRounds≥1）、R1b述語が
+  WHIRと無関係に可住である欠陥、`wp`が自由である点を指摘し、round-1経路の定理群を追加、R1bを実行結果に
+  対して再定式化した。2巡目で再定式化した`extract`がcommitment rootを無視し異なるcommitment間で
+  cell一致を強制する（正直な実行でも偽になる）欠陥を指摘し、root引数とroot一致仮定を加えた。
+  R1bはper-column形でR3を包含するため、fold水準の変種も併記した。R2は変わらない。
+- **adaptiveな供給列**: AdaptiveAgreementFamilyはGatePointZeroCheckの一致集合を座標ごとの
+  Schwartz–Zippelに分解してOuterSequentialConditioningのadaptiveエンジンに載せ、供給列を最初の`cut`座標のみの
+  関数として質量≤tauTerm d、第5族込みの結合bad事象≤combinedBound+tauTerm d（envelope極値で≤2^-171）を得た。
+  Lane水準の凍結比較もDrawEncodesRun下でlaneごとに両方向同値として証明し、OSCの未証明項目を閉じた。
+  レビューは「adaptiveに選んだ列も覆われる」という見出しが過大であることを反例構成で示した。偽造者は
+  1座標を見ただけで残差を恒等的に零にする列（cc+(x0 / −(1−x0))型）を作れ、第5族は空になる。したがって
+  閉じているのは二分法（slice上で恒等零＝R2/R3の残余類、または質量≤tauTerm）であり、見出しを改め、
+  脱出構成を形式的残余証人として追加、cut=dの空事象とcut=0の固定列一致も定理化した。
+
+追加2モデルはいずれもFable側の敵対的検証を通した（InstalledWhirTailは2巡、必須修正計8件；
+AdaptiveAgreementFamilyは1巡、必須修正1件＋注記）。健全性欠陥は両モデルとも検出されず、指摘は
+いずれも被覆範囲・可住性・見出しの正確さに関するものであった。
+採用namespaceでの直接buildと全統合guardはPASS。全3508名の実定理/型/推移的公理、
+452 reviewed hashes、18表1147語、7依存5601fileを検査した。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

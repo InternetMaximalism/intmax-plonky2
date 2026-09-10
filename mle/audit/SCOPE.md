@@ -435,8 +435,19 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    committed列の幅はopening関係のfull条件から導出され、追加の幅仮定はない。gate点列がgate laneの
    round challenge列そのものであることを抽象engineで証明し、JointChallengeSpaceの第4族として
    outerGate座標上の質量≤tauTerm dを得る。
-   **なお未解決**: 供給列s0.tables.constantsは結論の2分岐（R2/R3）以外ではrootに束縛されず、
-   「密度n/|F|」の読みはcolが点より前に固定される場合にのみ意味を持つ（half (B)は未形式化）。
+   供給列を点の一部を見てから選ぶ読みはAdaptiveAgreementFamilyで扱った。一致集合を座標ごとの
+   Schwartz–Zippel（各座標のbad setはaffine制限の根で濃度≤1、恒等零の場合は数えず先行座標に課金）に
+   分解してOuterSequentialConditioningのadaptiveエンジンに載せ、供給列を最初の`cut`座標のみの関数として、
+   質量≤tauTerm d、第5族込みの結合bad事象≤combinedBound+tauTerm d（envelope極値で≤2^-171）を得た。
+   **ただし二分法の形でのみ閉じる**: 実現prefixを通るaffine slice上で差分列の拡張が恒等的に零になるか、
+   点が質量≤tauTermの集合に入るかのいずれかである。前者は偽造者が1座標を見ただけで構成できる
+   （cc+(x0 / −(1−x0))型の列で第5族は空になる。形式的残余証人として証明済み）ため、R2/R3に渡される
+   残余類は「実現prefixのslice上でcommitted列と拡張が一致する列」であり、全座標を待つ必要はない。
+   新たに覆われるのは残差を保つadaptiveな選択（多数の異なる列から選ぶ場合の費用がtauTermで済むこと）
+   だけである。cut=dでは事象は空で上界は空虚、cut=0・定数colOfはGPZCの固定列の読みに一致する。
+   Lane水準の凍結比較はDrawEncodesRun下でlaneごとに両方向同値として証明した（OSCの未証明項目を閉じる）。
+   **なお未解決**: 供給列s0.tables.constantsは結論の2分岐（R2/R3）以外ではrootに束縛されない
+   （half (B)は未形式化）。
    round digestがprefixの後に連鎖することは具体engineでのみ文書化（抽象engineでは未導出）。
    engine不透明性R1、opening関係R2、root→列写像R3は可視仮定のまま。
    tauの束縛はGateDerivedRejectionで扱った。棄却定理と合成定理をtranscript導出の
@@ -508,6 +519,21 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    WHIR verifierに置き換わるまで外側の受理と接続しない。opening関係は3つのMerkle rootを
    任意に差し替えても成立するため、同root性からこの関係を導くことはできない。
    復号したrowをp.usedのどのfieldにも結び付ける定理もまだない。
+   engine不透明性はInstalledWhirTailで扱った。採用済みの手動WHIR tailモデル`WhirConfigured.run`を
+   Integrated.modelEngineの`whirTail`に据え付け（parseWhir・configurationHash・deploymentValid・
+   initialTranscript・commitRound・sampleIndices・publicInputsHashは観測のまま、transcript/roundは不変）、
+   受理から具体tail実行の成功、3 rootが[pinned preprocessed, witness, normInverse]であること、初期評価値が
+   5つのbound cellのpacked foldであることを導く。session/instance（instanceは空）、claim mask `[31]`、
+   評価点のctx.pointsによる上書き、root byte変換の可逆性は実装と照合済み。配備プロファイル（v2 fixtureは
+   numRounds∈{1,2,3,4}）では3 rootが中間round 1で開かれ、各root位置のrowが`(initialOpen wp).merkleDepth`
+   でMerkle認証されること、2つの受理実行が同root・同leaf indexで同じrow bytesを返すか具体的衝突を出す
+   ことを、OpeningBindingの入口（openGroups）を通して証明した（inDomainSamples>0の下でindex非空も導出）。
+   numRounds=0のfinalsplit経路は別掲で、配備系ではない。このengineは空hintの例を実際に棄却する。
+   **なお未解決（R1b）**: 「最終検査が通れば期待値が認証済み行の多重線形評価に等しい」は、3 rootと
+   round-1 opening のみから列族を抽出する固定関数の存在（TailExtractsCommittedTables）として可視仮定に
+   した。WHIR近接性・list decoding・sumcheck健全性（確率的）に当たり未形式化。per-column形はR3を包含する
+   ため fold 水準の変種も併記した。`wp`（WHIRパラメータ）は engine の自由パラメータで、ソースでは
+   profile digestで固定されるがLeanでは観測にとどまる。R2は変わらない。
 
 現target105の約101.5-bit値はリポジトリのgeneric-work見積もりで、Leanが証明した
 128-bit/end-to-end安全性ではありません。実装変更・デプロイ承認もこの更新には含みません。

@@ -106,3 +106,5 @@ import Audit.Wire3.ConstantsProvenance
 import Audit.Wire3.JointChallengeSpace
 import Audit.Wire3.GatePointZeroCheck
 import Audit.Wire3.OuterSequentialConditioning
+import Audit.Wire3.InstalledWhirTail
+import Audit.Wire3.AdaptiveAgreementFamily

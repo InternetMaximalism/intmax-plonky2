@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "19a48cd42525c3c448cf6593d721754e1c6073afaf8ad434489d5bc21c1aa446",
+      "sha256": "af78f36eb6cf255b542a98e4f79d7322abf7742d1e60f36158b96b6f2701df64",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "e7a02a4f274784bc7c0da139942649c735b5fb54bede6a6e6c7f98bed21a8dc9",
+      "sha256": "740eece3b6a6967df8486c2a359d86af5f7992c2c6b84c4a327b0ae3667fc9de",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "89967dd58802d925298f91029132dc7a9cd1f8f51f5910ca299f0f2b0f5ceaf1",
+      "sha256": "eed3da869d801b491157d8ca0f3571f02fcf233e1f2c955c46ba688ecd3ad1a0",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "8fda583e10a9ac2b45abb5d4a881db9f2bcada2af853109e52707fb27ceeee02",
+      "sha256": "0ae1ab52db7123cb9d0ca6fe948c576af3922026d1f8f7738aa7c1414d2a53b1",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "551b82f31c504f8d6fd5c02e9d73e0186c91470009180c2eaf04250ba2b5e013",
+      "sha256": "8edceb0ac9052cd4632cdd925e78f8e903b31b0cb88a3c794f1d08e94a0c29d8",
       "kind": "spec"
     },
     {
@@ -2251,6 +2251,16 @@
     {
       "path": "mle/audit/Audit/Wire3/GatePointZeroCheck.lean",
       "sha256": "81e1fd68fc23e28ac3a0e6a7f75b744cb33807d9bc47ad2c766c5e001cab635e",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/AdaptiveAgreementFamily.lean",
+      "sha256": "c8c29443bc9aac15b33d58624195b917562ad43c428ac2e4a34707f545f00132",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/InstalledWhirTail.lean",
+      "sha256": "3b5ede7cf82f1416dbbeaa13272d71127c6d2072eb65470bf228f696a80d2535",
       "kind": "current-model"
     }
   ],
@@ -6721,6 +6731,147 @@
         "mle/src/prover_v2.rs"
       ],
       "scope": "Closes the adopted ConstantsProvenance residue 'bound-cell agreement is weaker than column identity' by Schwartz-Zippel on the verifier's derived gate point. The bridge cell (bindColumn col point) = ZeroCheckSemantics.extension col point holds whenever 2^|point| <= |col| (shorter columns break it: bindColumn truncates while extension zero-pads, proved by counterexample), so the set of gate points at which two columns' bound cells agree is the vanishing set of the difference column's multilinear extension; when the columns differ on the cube it has density at most n/|F| and uniform product mass at most tauTerm n. Composed theorems: if the supplied and pinned constants columns differ and the derived gate point lies outside the agreement set then, under acceptance, the extraction join CellsMatchClaims or the opening relation OpensCommittedTable fails (the root branch is closed by the pin). The supplied column width is derived from the adopted Consistent and EqCellBinding, the committed width from the opening relation's full condition, so no width hypothesis remains beyond those. The gate point column is proved, for the abstract engine, to be the gate lane's round challenge list, and the agreement set becomes a fourth family on the adopted JointSpace with mass at most tauTerm d. Residue: the supplied column is tied to the root only through the two conclusion branches (R2/R3), so the density reading is meaningful only with the column fixed before the point and Fiat-Shamir half (B) is unformalized; the chaining of round digests after the prefix is documented for the concrete engine only; R1 unchanged; WHIR and Merkle excluded; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.AdaptiveAgreementFamily",
+      "theorems": [
+        "Audit.Wire3.AdaptiveAgreementFamily.bindPrefix_nil",
+        "Audit.Wire3.AdaptiveAgreementFamily.bindPrefix_cons",
+        "Audit.Wire3.AdaptiveAgreementFamily.bindPrefix_append",
+        "Audit.Wire3.AdaptiveAgreementFamily.bindPrefix_snoc",
+        "Audit.Wire3.AdaptiveAgreementFamily.extensionOf_cons_bindHead",
+        "Audit.Wire3.AdaptiveAgreementFamily.extensionOf_bindPrefix",
+        "Audit.Wire3.AdaptiveAgreementFamily.searchNonzero_zero",
+        "Audit.Wire3.AdaptiveAgreementFamily.searchNonzero_succ",
+        "Audit.Wire3.AdaptiveAgreementFamily.searchNonzero_lt",
+        "Audit.Wire3.AdaptiveAgreementFamily.searchNonzero_spec",
+        "Audit.Wire3.AdaptiveAgreementFamily.exists_nonzero_of_not_cubeZero",
+        "Audit.Wire3.AdaptiveAgreementFamily.stepBad_of_cubeZero",
+        "Audit.Wire3.AdaptiveAgreementFamily.stepBad_of_not_cubeZero",
+        "Audit.Wire3.AdaptiveAgreementFamily.stepBad_card_le_one",
+        "Audit.Wire3.AdaptiveAgreementFamily.mem_stepBad_of_bindHead_cubeZero",
+        "Audit.Wire3.AdaptiveAgreementFamily.take_succ_ofFn",
+        "Audit.Wire3.AdaptiveAgreementFamily.walk_finds_bad",
+        "Audit.Wire3.AdaptiveAgreementFamily.sequential_agreement_fibre_le_one",
+        "Audit.Wire3.AdaptiveAgreementFamily.sequentialAgreementBad_prefixDependent",
+        "Audit.Wire3.AdaptiveAgreementFamily.mem_adaptiveAgreementSet",
+        "Audit.Wire3.AdaptiveAgreementFamily.agreement_subset_prefixEvent",
+        "Audit.Wire3.AdaptiveAgreementFamily.tuple_space_card",
+        "Audit.Wire3.AdaptiveAgreementFamily.adaptive_agreement_card_bound",
+        "Audit.Wire3.AdaptiveAgreementFamily.product_mass_of_card_bound",
+        "Audit.Wire3.AdaptiveAgreementFamily.adaptive_agreement_mass_bound",
+        "Audit.Wire3.AdaptiveAgreementFamily.adaptive_agreement_joint_mass_bound",
+        "Audit.Wire3.AdaptiveAgreementFamily.adaptive_joint_union_bound_with_agreement",
+        "Audit.Wire3.AdaptiveAgreementFamily.ofFn_of_get",
+        "Audit.Wire3.AdaptiveAgreementFamily.gate_point_is_the_draw",
+        "Audit.Wire3.AdaptiveAgreementFamily.gate_point_off_adaptive_agreement_of_joint",
+        "Audit.Wire3.AdaptiveAgreementFamily.gate_point_off_agreement_set_of_joint",
+        "Audit.Wire3.AdaptiveAgreementFamily.adaptive_column_forgery_forces_one_of_three",
+        "Audit.Wire3.AdaptiveAgreementFamily.bindHead_escapeDiff",
+        "Audit.Wire3.AdaptiveAgreementFamily.getD_ofFn_lt",
+        "Audit.Wire3.AdaptiveAgreementFamily.escapeCol_length",
+        "Audit.Wire3.AdaptiveAgreementFamily.diff_escapeCol",
+        "Audit.Wire3.AdaptiveAgreementFamily.escape_cubeZero",
+        "Audit.Wire3.AdaptiveAgreementFamily.escape_differs",
+        "Audit.Wire3.AdaptiveAgreementFamily.extensionOf_eq_zero_of_cubeZero",
+        "Audit.Wire3.AdaptiveAgreementFamily.take_one_ofFn",
+        "Audit.Wire3.AdaptiveAgreementFamily.escapeColOf_take_one",
+        "Audit.Wire3.AdaptiveAgreementFamily.escape_not_in_family",
+        "Audit.Wire3.AdaptiveAgreementFamily.escapeCol_agrees",
+        "Audit.Wire3.AdaptiveAgreementFamily.escape_agrees_everywhere",
+        "Audit.Wire3.AdaptiveAgreementFamily.escape_is_a_genuine_forgery",
+        "Audit.Wire3.AdaptiveAgreementFamily.escape_has_the_committed_width",
+        "Audit.Wire3.AdaptiveAgreementFamily.escape_kills_hnondeg",
+        "Audit.Wire3.AdaptiveAgreementFamily.cut_eq_d_empty",
+        "Audit.Wire3.AdaptiveAgreementFamily.cut_zero_is_fixed_column",
+        "Audit.Wire3.AdaptiveAgreementFamily.lane_eq",
+        "Audit.Wire3.AdaptiveAgreementFamily.frozen_step_two_owned",
+        "Audit.Wire3.AdaptiveAgreementFamily.frozen_step_two_unowned",
+        "Audit.Wire3.AdaptiveAgreementFamily.roundBadSet_ignores_challenge",
+        "Audit.Wire3.AdaptiveAgreementFamily.frozenLane_badSet_owned",
+        "Audit.Wire3.AdaptiveAgreementFamily.frozenLane_badSet_unowned",
+        "Audit.Wire3.AdaptiveAgreementFamily.frozenLane_laneBad_owned",
+        "Audit.Wire3.AdaptiveAgreementFamily.frozenLane_laneBad_unowned",
+        "Audit.Wire3.AdaptiveAgreementFamily.lane_event_cons",
+        "Audit.Wire3.AdaptiveAgreementFamily.adaptiveLaneEvent_eq",
+        "Audit.Wire3.AdaptiveAgreementFamily.laneBad_eq_empty_of_inactive",
+        "Audit.Wire3.AdaptiveAgreementFamily.not_mem_laneBad_of_inactive",
+        "Audit.Wire3.AdaptiveAgreementFamily.frozen_log_walk",
+        "Audit.Wire3.AdaptiveAgreementFamily.frozen_gate_walk",
+        "Audit.Wire3.AdaptiveAgreementFamily.frozen_lane_matches_laneEvent_at_encoding_draw",
+        "Audit.Wire3.AdaptiveAgreementFamily.outerTerm_nonneg",
+        "Audit.Wire3.AdaptiveAgreementFamily.alphaTerm_nonneg",
+        "Audit.Wire3.AdaptiveAgreementFamily.tauTerm_le_combinedBound",
+        "Audit.Wire3.AdaptiveAgreementFamily.combined_with_agreement_at_extremes",
+        "Audit.Wire3.AdaptiveAgreementFamily.good_event_with_agreement_mass_at_extremes",
+        "Audit.Wire3.AdaptiveAgreementFamily.Example.residue_not_cubeZero",
+        "Audit.Wire3.AdaptiveAgreementFamily.Example.residue_point_agrees",
+        "Audit.Wire3.AdaptiveAgreementFamily.Example.one_mem_adaptiveAgreementSet",
+        "Audit.Wire3.AdaptiveAgreementFamily.Example.example_agreement_subset",
+        "Audit.Wire3.AdaptiveAgreementFamily.Example.example_fibre_le_one",
+        "Audit.Wire3.AdaptiveAgreementFamily.Example.example_adaptive_mass_bound",
+        "Audit.Wire3.AdaptiveAgreementFamily.Example.example_adaptive_joint_mass_bound",
+        "Audit.Wire3.AdaptiveAgreementFamily.Example.example_adaptive_mass_bound_at_cut_one",
+        "Audit.Wire3.AdaptiveAgreementFamily.Example.frozenLane_ignores_values",
+        "Audit.Wire3.AdaptiveAgreementFamily.Example.outerCoords_one_round"
+      ],
+      "sources": [
+        "mle/src/verifier_v2.rs",
+        "mle/src/sumcheck/gate_ext3_v2.rs",
+        "mle/src/transcript_v2.rs"
+      ],
+      "scope": "The GatePointZeroCheck agreement set decomposed into a per-coordinate sequential Schwartz-Zippel family (at each gate-point coordinate the bad set is the root of the affine restriction, at most one point; an identically zero restriction is not counted but charged to an earlier coordinate), placed on the OuterSequentialConditioning adaptive engine with the supplied column a function of the first cut coordinates only: uniform product mass at most tauTerm d, and as a fifth family on the adopted JointSpace the adaptive joint bad event has mass at most combinedBound plus tauTerm d, at most 2^-171 at the envelope extremes. This closes the gap ONLY IN DICHOTOMY FORM: either the difference column's extension is identically zero on the affine slice through the realized prefix, or the point lies in a set of mass at most tauTerm. The first branch is forger-controlled after a single coordinate (a column of the form committed plus x0 or minus (1 - x0) empties the fifth family while agreeing at every point), proved as the formal residue witness; that residue class is handed to R2/R3. Genuinely new coverage is only for adaptive selections that keep a residual. cut = d gives the empty event, cut = 0 with a constant column is the fixed-column reading. The Lane-level frozen comparison left open by OuterSequentialConditioning is proved per lane as a two-sided equivalence at a DrawEncodesRun draw. Ideal uniform counting law, DrawEncodesRun is a coordinate statement not a hash assumption, Fiat-Shamir half (B) unformalized, R1 unchanged, WHIR and Merkle excluded, not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.InstalledWhirTail",
+      "theorems": [
+        "Audit.Wire3.InstalledWhirTail.root_digest_is_lossless",
+        "Audit.Wire3.InstalledWhirTail.mask_is_the_five_bound_cells",
+        "Audit.Wire3.InstalledWhirTail.installed_engine_keeps_transcript",
+        "Audit.Wire3.InstalledWhirTail.installed_engine_is_its_own_model_engine",
+        "Audit.Wire3.InstalledWhirTail.installed_engine_keeps_every_other_field",
+        "Audit.Wire3.InstalledWhirTail.unmask_get_of_bound",
+        "Audit.Wire3.InstalledWhirTail.installed_tail_true_iff",
+        "Audit.Wire3.InstalledWhirTail.installed_whir_acceptance_runs_the_tail",
+        "Audit.Wire3.InstalledWhirTail.installed_acceptance_context_is_the_pinned_statement",
+        "Audit.Wire3.InstalledWhirTail.unmask_context_claims_length",
+        "Audit.Wire3.InstalledWhirTail.unmask_context_claim_cell",
+        "Audit.Wire3.InstalledWhirTail.installed_acceptance_runs_the_concrete_tail",
+        "Audit.Wire3.InstalledWhirTail.tail_params_are_wp_projections",
+        "Audit.Wire3.InstalledWhirTail.installed_acceptance_group_authentication_finalsplit",
+        "Audit.Wire3.InstalledWhirTail.installed_acceptance_opens_authenticated_rows_finalsplit",
+        "Audit.Wire3.InstalledWhirTail.round_one_opening_tied_is_a_round_one_opening",
+        "Audit.Wire3.InstalledWhirTail.tail_success_has_tied_round_one_opening",
+        "Audit.Wire3.InstalledWhirTail.tail_success_has_round_one_opening",
+        "Audit.Wire3.InstalledWhirTail.round_one_indices_are_nonempty",
+        "Audit.Wire3.InstalledWhirTail.installed_acceptance_group_authentication_round_one",
+        "Audit.Wire3.InstalledWhirTail.installed_acceptance_opens_authenticated_rows_round_one",
+        "Audit.Wire3.InstalledWhirTail.installed_accepted_rows_bind_or_collision_finalsplit",
+        "Audit.Wire3.InstalledWhirTail.installed_accepted_rows_bind_or_collision_round_one",
+        "Audit.Wire3.InstalledWhirTail.installed_engine_rejects_failed_tail",
+        "Audit.Wire3.InstalledWhirTail.installed_verify_rejects_failed_tail",
+        "Audit.Wire3.InstalledWhirTail.installed_tail_rejects_root_count_mismatch",
+        "Audit.Wire3.InstalledWhirTail.installed_engine_is_not_blind_degenerate",
+        "Audit.Wire3.InstalledWhirTail.installed_acceptance_joins_claims_and_openings_finalsplit",
+        "Audit.Wire3.InstalledWhirTail.installed_acceptance_joins_claims_and_openings_round_one",
+        "Audit.Wire3.InstalledWhirTail.tail_extraction_binds_opened_cells_to_the_opened_rows",
+        "Audit.Wire3.InstalledWhirTail.tail_extraction_ties_tables_to_the_pinned_roots",
+        "Audit.Wire3.InstalledWhirTail.installed_acceptance_binds_claims",
+        "Audit.Wire3.InstalledWhirTail.tail_extraction_committed_tables_gives_fold_level",
+        "Audit.Wire3.InstalledWhirTail.example_profile_is_the_split_route",
+        "Audit.Wire3.InstalledWhirTail.example_context_parameters_are_admissible",
+        "Audit.Wire3.InstalledWhirTail.example_empty_hints_fail_the_concrete_tail",
+        "Audit.Wire3.InstalledWhirTail.example_installed_engine_rejects_empty_whir_hints",
+        "Audit.Wire3.InstalledWhirTail.example_abstract_model_accepted_the_same_call",
+        "Audit.Wire3.InstalledWhirTail.installed_engine_is_not_blind"
+      ],
+      "sources": [
+        "mle/src/commitment/whir_pcs.rs",
+        "mle/src/verifier_v2.rs",
+        "mle/contracts/src/MleVerifierV2.sol",
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol"
+      ],
+      "scope": "Residue R1 (engine opacity): the adopted manual WHIR tail model WhirConfigured.run is installed as the whirTail of Integrated.modelEngine (parseWhir, configurationHash, deploymentValid, initialTranscript, commitRound, sampleIndices and publicInputsHash stay observations; transcript and rounds are unchanged, so every abstract-engine theorem applies to the installed engine). Acceptance yields a successful concrete tail run whose three roots are the pinned preprocessed, witness and norm-inverse roots and whose initial evaluations are the packed folds of the five bound cells; session/instance (instance empty), the claim mask [31], the evaluation-point overwrite and the root byte conversion are checked against the source. On the deployed profiles (numRounds >= 1; every v2 fixture) the three roots are opened in intermediate round one and each root position's rows are Merkle-authenticated at the initial opening depth; two accepted executions sharing a root and a leaf index return the same row bytes or a concrete row collision; indices are nonempty under inDomainSamples > 0. The numRounds = 0 finalsplit route is stated separately and is not the deployed one. The installed engine rejects the empty-hint example that the abstract model accepts, so the blind-engine counterexample no longer applies to this engine. Residue R1b: that the final check ties the expected values to the authenticated rows is stated as a visible hypothesis, the existence of a fixed extractor from the three roots and the round-one opening to column families that open the claims (WHIR proximity and list decoding plus sumcheck soundness, probabilistic, absent); as formulated per column it subsumes R3, and a fold-level variant is given; wp is a free engine parameter pinned in the source only by the profile digest, an observation in Lean; R2 is untouched. No WHIR/PCS probabilistic soundness, hash security or Fiat-Shamir claim; not the system's soundness error."
     }
   ]
 }
