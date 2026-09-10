@@ -418,8 +418,17 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    根の個数≤numGateConstraints−1≤122をenvelopeから導き、bad set外のalphaで各slot値が0、
    filterが非零のgateは制約自体が0であることを示す。tauとalphaの両zero-checkの合成も
    採用済みchallenge上で証明した（alphaはgate tauより前のcounterで引かれる）。
-   **なお未解決**: selectorの部分的零化（全零化はactiveFilterで除外されるが、重要な行だけを
-   零化し他所にgateを残す攻撃は残る。constants列の由来＝抽出接合の問題）。
+   selectorの部分的零化はConstantsProvenanceで由来鎖として明示した。selector値←供給constants列
+   （source-boundedなget?読み、getD既定値なし）←導出gate点でのbound cell←gatePreprocessed.take numConstants
+   のclaim←committed列のbound cell←preprocessed root下のopening←deployment pin（Verifier.shapeの
+   `p.preprocessedRoot = pin.preprocessedRoot`、verifier_v2.rs 184-187、MleVerifierV2.sol 563）。
+   攻撃定理partial_zeroing_forces_one_of_three: 供給列とpinned列のbound cellが導出gate点で異なれば、
+   root不一致（pinで閉鎖）か抽出接合CellsMatchClaimsの破れかopening関係OpensCommittedTableの破れの
+   いずれかが必ず起きる。具体的偽造例（重要行のみ零化）で、旧仮定（activeFilter等）は検知しないが
+   新鎖は接合で捕捉することを示す。最強gate定理をpinned列上のfilterで再述した。
+   **なお未解決**: bound cell一致は列同定より弱い（[5,3]と[9,3]が[1]で同じcellを持つ反例つき）。
+   導出gate点で不可視な列改変を除外するにはsumcheck challengeによるzero-checkが要り未着手。
+   engine不透明性R1、opening関係R2、root→列写像R3は可視仮定のまま。
    tauの束縛はGateDerivedRejectionで扱った。棄却定理と合成定理をtranscript導出の
    gate tau/alphaで再述し（DerivedInitial下、eq列は導出tauのeqTableに全行固定、cube indexは
    採用済み列長から導出）、bound cell仮定を全表eq由来と構造的binding fieldから導いて、
@@ -442,12 +451,30 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    持ち上げて濃度≤2^n·(numGateConstraints−1)≤122·2^nを導き、外側sumcheck項
    （norm 5·d、gate (q+2)·d）と合わせて3つの質量の和を上界化する。envelope極値
    （degreeBits 13、q 8、制約123）で等式として展開し、有理数の厳密計算で≤2^-172を証明した。
-   **この数値の読み方**: 余裕は約0.07 bitでenvelopeぎりぎりであり（degreeBits 14や制約125で破れる）、
+   **この数値の読み方**: 余裕は約0.07 bitでenvelopeぎりぎりであり（degreeBits 14で破れる。制約数は123〜128まで成立し129で初めて破れる。以前の「125」は誤記）、
    WHIR/Merkle項を含まないため系の健全性誤差ではない（設計点は約100 bit）。3項は別々の
-   標本空間上の質量の和であり、結合事象や同時分布は形式化していない。積事象と行unionの
-   パラメータ（n、g、係数族）は受理実行の実際の表には束縛されておらず、外側項だけが
-   proofと設定に接続されている。filterが零の行は非拘束であり、これは
+   標本空間上の質量の和であった。filterが零の行は非拘束であり、これは
    selector範囲外の行として正しい挙動である。
+   結合事象はJointChallengeSpaceで形式化した。squeeze schedule（gate alpha、gate tau×d、外側log round×d、
+   外側gate round×d、計3d+1座標。log/gate roundは同一round digestのcounter 0と3で別のsqueeze）で添字づけた
+   `Draw d → DigestTriple`上の一様計数測度を定義し、座標事象とtau積事象の質量を計数で証明、
+   真のdisjunction事象の質量≤combinedBound（joint_union_bound、外側項は両laneの2d座標を被覆）を証明した。
+   seam `DrawEncodesRun`は「run の challenge がある1点の座標ごとの縮約である」という座標符号化の主張で、
+   reduceTripleの全射性により全hash・全engine・全受理実行で可住であることを補題として示す。
+   したがって**hash仮定ではない**。Fiat–Shamir半分(B)＝「符号化drawがjointProbability分布に従う」は
+   Lean上のどこにも表現されておらず、合成定理は暗号仮定を一切持たない（質量連言は計数事実、
+   結論連言は「runのdrawがbad set外なら制約が零」の含意）。外側roundのbad setは実現した
+   challengeとround messageに相対的で、prefix定数なのはtau/alpha族だけである（逐次条件付け/Fubiniは未証明、
+   ConditionalSoundness ASSUMPTION 3のまま）。schedulePositionはモジュール自身の写像で、alpha/tauは
+   DerivedInitial経由で固定されるが外側round座標のラベルは抽象engineに対して文書化のみである。
+   受理実行への束縛はAttachedUnionBoundで扱った。tau arityはdegreeBitsから導出（derived_gate_tau_width）、
+   行値はgateValue、alpha側の係数族は受理由来のslotCoefficients、制約数≤123は受理から導出し、
+   attached tupleがtranscriptの導出tau列そのものであること（attached_tau_tuple_ofFn）と、
+   attached bad setの回避が採用済みGoodDerivedTau/GoodDerivedAlphaと同値であることを示す。
+   combinedBoundは4引数すべてで単調（⌈2^256/p⌉·p≥2^256による）で、envelope下で
+   ≤combinedBound 13 8 13 123≤2^-172。attached_seamが計数上界と「導出tau/alphaがattached bad set外なら
+   全行で選択gateの制約が零」を1定理に結合する。法則は依然として明示的な理想一様分布であり、
+   tauの積構造は独立性の仮定そのもの、実transcriptとの橋（Fiat–Shamir半分(B)）は与えない。
    195·(⌈2^256/p⌉/2^256)³≒2^-184は外側sumcheckの一致事象のみで、支配項のWHIR/Merkleを含まない。
    実装の設計点は約100 bitであり、この数値を系の健全性誤差として引用してはならない。
    failureは自由な有理数で上からしか抑えられておらず、実確率との橋渡しはどのフィールドも与えない。

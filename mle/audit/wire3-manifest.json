@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "faa92660bad4609705443e8269f6acab23de61cccbfdc4bd740f6dcfd750552d",
+      "sha256": "1e4f5f9de7335895fb7bfa6a15ecddcf9ae0e463b1ad964bccb5e82e9c21f9ed",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "4fc2fd1998f18ff30aaf56e10dc095a5b5ceb297dddc3750c197351ed096738f",
+      "sha256": "959d67f2ffe6a38c8ab5dc0ac6f709d0d2b6c039c5fe57af2be95f9c3320c948",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "4c43b76dfae9ea5af7f184f840e55a2f5ead5b2bed69688d9bec73f031f1489d",
+      "sha256": "835fbf57d64ad9ca06db0d02927e9bb3efcc3bae37b13b9d2c2626cc9621a7ec",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "1fdd521dfd4a0ad441353726b490faea5f3c42b2de1f9fbc3b12a491a24fb7c1",
+      "sha256": "92d2a86bbbabcd999c7a09491d0a43766e1a82a9e4fce1cdc5d44a2a626915ac",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "54703bc98556b6a1311afec70a188098f8eacaf720eb837df0dd8aee0eb00132",
+      "sha256": "56f01a5041c9eafac58f562177eb3b3be2e5aceb94b5b00e14ea5456de9d3bff",
       "kind": "spec"
     },
     {
@@ -2226,6 +2226,21 @@
     {
       "path": "mle/audit/Audit/Wire3/CommitmentOrder.lean",
       "sha256": "c5748481f7db3523240b3a58ebefc0de29cc68c3b656f643423835fad12c5ad7",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/AttachedUnionBound.lean",
+      "sha256": "813a60c0653d4cd84b297c37cda28f13f51febb7e667a62dd33b3e65dfa52186",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/ConstantsProvenance.lean",
+      "sha256": "6ea0b23e1e074a2d51962c81705ba4ce47b97ad459bf8372f64c31ede60f5904",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/JointChallengeSpace.lean",
+      "sha256": "30f69979f952004b801e8997c2ef3880e116356fd1a362bf149381f9e3a96b37",
       "kind": "current-model"
     }
   ],
@@ -6380,6 +6395,178 @@
         "mle/src/prover_v2.rs"
       ],
       "scope": "The deterministic half of Fiat-Shamir adaptivity for the gate lane: the absorbed prefix before the gate alpha and gate tau squeezes is exactly twenty-two frames whose fold IS the adopted OuterInitial.relationState, with the preprocessed, witness and norm-inverse roots at positions 13, 15 and 19 followed only by two fixed statement-independent domain tags; gate alpha at counter 9+3d precedes every gate tau coordinate at 12+3d+3i. The gate bad SET depends on the committed wire and constant columns and not on the eq column, so tau enters only as the tested element. Changing the committed tables while keeping the prefix digest yields a concrete transcript collision, proved without assuming collision resistance via a strengthened frame injectivity lemma. The probabilistic half is refuted in its weakest deterministic form (a constant hash separates no prefixes), so it is a hash assumption no ordering argument can supply. Stated modulo the visible CommittedTables extraction join, with the gate list, configuration and public-input hash held fixed as parameters whose own provenance from the config/VK digest is not proved."
+    },
+    {
+      "module": "Audit.Wire3.AttachedUnionBound",
+      "theorems": [
+        "Audit.Wire3.AttachedUnionBound.gateConfig_numGateConstraints",
+        "Audit.Wire3.AttachedUnionBound.gateConfig_quotientDegree",
+        "Audit.Wire3.AttachedUnionBound.attachedRowValues_apply",
+        "Audit.Wire3.AttachedUnionBound.transport_mem_zeroCheckBadSet",
+        "Audit.Wire3.AttachedUnionBound.ofFn_cast",
+        "Audit.Wire3.AttachedUnionBound.attached_tau_tuple_ofFn",
+        "Audit.Wire3.AttachedUnionBound.attached_tau_avoidance_iff",
+        "Audit.Wire3.AttachedUnionBound.attached_good_derived_tau",
+        "Audit.Wire3.AttachedUnionBound.attached_tau_mass_bound",
+        "Audit.Wire3.AttachedUnionBound.attached_slot_coeffs_spec",
+        "Audit.Wire3.AttachedUnionBound.attached_alpha_union_card_bound",
+        "Audit.Wire3.AttachedUnionBound.attached_alpha_union_mass_bound",
+        "Audit.Wire3.AttachedUnionBound.attached_alpha_all_rows_good",
+        "Audit.Wire3.AttachedUnionBound.one_le_card_mul_ratio_cube",
+        "Audit.Wire3.AttachedUnionBound.tau_term_geometric",
+        "Audit.Wire3.AttachedUnionBound.tau_term_mono",
+        "Audit.Wire3.AttachedUnionBound.outer_term_mono",
+        "Audit.Wire3.AttachedUnionBound.alpha_term_mono",
+        "Audit.Wire3.AttachedUnionBound.combined_bound_mono",
+        "Audit.Wire3.AttachedUnionBound.attached_configuration_valid",
+        "Audit.Wire3.AttachedUnionBound.attached_combined_union_bound",
+        "Audit.Wire3.AttachedUnionBound.attached_combined_bound_at_envelope",
+        "Audit.Wire3.AttachedUnionBound.attached_combined_bound_numeric",
+        "Audit.Wire3.AttachedUnionBound.attached_all_rows_slots_vanish",
+        "Audit.Wire3.AttachedUnionBound.attached_all_rows_selected_constraints_vanish",
+        "Audit.Wire3.AttachedUnionBound.attached_seam",
+        "Audit.Wire3.AttachedUnionBound.attached_tau_mass_bound_one_bit",
+        "Audit.Wire3.AttachedUnionBound.attached_alpha_union_card_one_bit"
+      ],
+      "sources": [
+        "mle/src/verifier_v2.rs",
+        "mle/src/sumcheck/gate_ext3_v2.rs",
+        "mle/src/transcript_v2.rs"
+      ],
+      "scope": "The adopted ChallengeUnionBound with its free parameters tied to the accepted execution: the tau arity is degreeBits derived through the adopted derived_gate_tau_width, the row values are the adopted gateValue, the alpha coefficient family is the acceptance-derived slotCoefficients and numGateConstraints <= 123 is derived from acceptance; the attached tau tuple IS the transcript's derived tau column and avoidance of the attached bad sets is equivalent to the adopted GoodDerivedTau / GoodDerivedAlpha. combinedBound is proved monotone in all four arguments (ceil(2^256/p) * p >= 2^256), so under the envelope the attached mass sum is at most combinedBound 13 8 13 123 <= 2^-172; attached_seam joins the counting bound and 'derived tau and alpha outside the attached bad sets imply every row's selected gate constraints vanish' in one theorem with every hypothesis visible. The law is still an explicit ideal uniform law, the tau product structure is the independence assumption itself, and no bridge to the real transcript (Fiat-Shamir half (B)) is given. The figure excludes the dominant WHIR and Merkle term and is not the system's soundness error; the 0.07-bit headroom survives through 128 constraints and first fails at 129 (the envelope caps at 123)."
+    },
+    {
+      "module": "Audit.Wire3.ConstantsProvenance",
+      "theorems": [
+        "Audit.Wire3.ConstantsProvenance.getD_of_get",
+        "Audit.Wire3.ConstantsProvenance.get_map",
+        "Audit.Wire3.ConstantsProvenance.get_of_map_eq",
+        "Audit.Wire3.ConstantsProvenance.get_of_eq_map",
+        "Audit.Wire3.ConstantsProvenance.accepted_root_is_pinned",
+        "Audit.Wire3.ConstantsProvenance.wrong_root_never_accepted",
+        "Audit.Wire3.ConstantsProvenance.accepted_whir_binds_the_pinned_root",
+        "Audit.Wire3.ConstantsProvenance.preprocessed_group_is_the_pinned_root",
+        "Audit.Wire3.ConstantsProvenance.gate_preprocessed_is_cell_three",
+        "Audit.Wire3.ConstantsProvenance.rowFilter_reads_one_constants_entry",
+        "Audit.Wire3.ConstantsProvenance.rowFilter_depends_only_on_constants",
+        "Audit.Wire3.ConstantsProvenance.selector_index_inside_constants",
+        "Audit.Wire3.ConstantsProvenance.map_bindColumn_nil",
+        "Audit.Wire3.ConstantsProvenance.bindAlong_constants",
+        "Audit.Wire3.ConstantsProvenance.bindAll_tables",
+        "Audit.Wire3.ConstantsProvenance.gatePointColumn_is_lift",
+        "Audit.Wire3.ConstantsProvenance.constants_cells_are_bound_columns",
+        "Audit.Wire3.ConstantsProvenance.constants_column_bound_cell",
+        "Audit.Wire3.ConstantsProvenance.get_take",
+        "Audit.Wire3.ConstantsProvenance.constants_cell_is_a_gate_preprocessed_claim",
+        "Audit.Wire3.ConstantsProvenance.selector_source_is_a_claimed_constants_column",
+        "Audit.Wire3.ConstantsProvenance.gate_preprocessed_claims_are_committed_cells",
+        "Audit.Wire3.ConstantsProvenance.committed_column_claim",
+        "Audit.Wire3.ConstantsProvenance.forged_constants_cell_is_the_committed_cell",
+        "Audit.Wire3.ConstantsProvenance.partial_zeroing_forces_one_of_three",
+        "Audit.Wire3.ConstantsProvenance.accepted_partial_zeroing_forces_join_or_opening",
+        "Audit.Wire3.ConstantsProvenance.preprocessed_rows_bind_or_collision",
+        "Audit.Wire3.ConstantsProvenance.preprocessed_rows_bind_under_no_collision",
+        "Audit.Wire3.ConstantsProvenance.residue_columns_differ",
+        "Audit.Wire3.ConstantsProvenance.residue_columns_share_bound_cell",
+        "Audit.Wire3.ConstantsProvenance.bound_cell_agreement_is_not_column_equality",
+        "Audit.Wire3.ConstantsProvenance.pinned_filters_transfer",
+        "Audit.Wire3.ConstantsProvenance.activeFilter_is_a_deployment_property",
+        "Audit.Wire3.ConstantsProvenance.provenanced_selected_gate_constraints_vanish",
+        "Audit.Wire3.ConstantsProvenance.Example.states_are_consistent",
+        "Audit.Wire3.ConstantsProvenance.Example.forged_state_has_eq_provenance",
+        "Audit.Wire3.ConstantsProvenance.Example.forgery_satisfies_activeFilter",
+        "Audit.Wire3.ConstantsProvenance.Example.forgery_zeroes_the_rows_that_matter",
+        "Audit.Wire3.ConstantsProvenance.Example.honest_selector_detects_the_false_witness",
+        "Audit.Wire3.ConstantsProvenance.Example.old_assumptions_accept_the_forgery",
+        "Audit.Wire3.ConstantsProvenance.Example.forged_and_honest_bound_cells_differ",
+        "Audit.Wire3.ConstantsProvenance.Example.forgery_hits_a_branch",
+        "Audit.Wire3.ConstantsProvenance.Example.forgery_rejected_at_the_join"
+      ],
+      "sources": [
+        "mle/src/verifier_v2.rs",
+        "mle/src/prover_v2.rs",
+        "mle/contracts/src/MleVerifierV2.sol"
+      ],
+      "scope": "The provenance chain behind the partial selector-zeroing attack, proved link by link from the deployment pin: a gate's selector value is one source-bounded read of a supplied constants column; that column's fully bound cell at the verifier's derived gate point is the gatePreprocessed.take numConstants claim; the claim is the bound cell of the committed preprocessed column opened under the preprocessed root; and that root is pinned by Verifier.shape (verifier_v2.rs 184-187, MleVerifierV2.sol 563), so a wrong root is never accepted. The attack theorem partial_zeroing_forces_one_of_three: if the supplied and pinned columns differ in their bound cell at the derived gate point, then the root mismatches (closed by the pin), or the extraction join CellsMatchClaims fails, or the opening relation OpensCommittedTable fails; a concrete forgery that zeroes only the important rows is not detected by the adopted assumptions but is caught at the join, and the strongest adopted gate theorem is restated with its filters on the pinned columns. Residue: bound-cell agreement is strictly weaker than column identity (counterexample given), a column edit invisible at the derived gate point needs a sumcheck-challenge zero check that is not attempted, and R1 (engine opacity), R2 (opening relation) and R3 (root-to-columns map) remain visible hypotheses. No probability, no Fiat-Shamir, no WHIR proximity, no refinement claim."
+    },
+    {
+      "module": "Audit.Wire3.JointChallengeSpace",
+      "theorems": [
+        "Audit.Wire3.JointChallengeSpace.draw_card",
+        "Audit.Wire3.JointChallengeSpace.gate_alpha_position",
+        "Audit.Wire3.JointChallengeSpace.gate_tau_position",
+        "Audit.Wire3.JointChallengeSpace.outer_log_position",
+        "Audit.Wire3.JointChallengeSpace.outer_gate_position",
+        "Audit.Wire3.JointChallengeSpace.gate_alpha_counter_precedes_gate_tau",
+        "Audit.Wire3.JointChallengeSpace.schedule_position_injective",
+        "Audit.Wire3.JointChallengeSpace.joint_space_card",
+        "Audit.Wire3.JointChallengeSpace.joint_space_card_bits",
+        "Audit.Wire3.JointChallengeSpace.digest_triple_card_pos",
+        "Audit.Wire3.JointChallengeSpace.word_size_cast_ne_zero",
+        "Audit.Wire3.JointChallengeSpace.word_size_cube_cast_ne_zero",
+        "Audit.Wire3.JointChallengeSpace.joint_space_card_pos",
+        "Audit.Wire3.JointChallengeSpace.joint_space_card_cast_pos",
+        "Audit.Wire3.JointChallengeSpace.div_le_div_num",
+        "Audit.Wire3.JointChallengeSpace.cylinder_quotient",
+        "Audit.Wire3.JointChallengeSpace.joint_probability_nonneg",
+        "Audit.Wire3.JointChallengeSpace.joint_probability_empty",
+        "Audit.Wire3.JointChallengeSpace.joint_probability_mono",
+        "Audit.Wire3.JointChallengeSpace.joint_probability_union_le",
+        "Audit.Wire3.JointChallengeSpace.joint_probability_compl",
+        "Audit.Wire3.JointChallengeSpace.mem_coordEvent",
+        "Audit.Wire3.JointChallengeSpace.mem_tupleEvent",
+        "Audit.Wire3.JointChallengeSpace.coordFamily_self",
+        "Audit.Wire3.JointChallengeSpace.coordFamily_other",
+        "Audit.Wire3.JointChallengeSpace.coordEvent_eq_piFinset",
+        "Audit.Wire3.JointChallengeSpace.coordEvent_card",
+        "Audit.Wire3.JointChallengeSpace.coord_event_mass",
+        "Audit.Wire3.JointChallengeSpace.mem_tauEvent",
+        "Audit.Wire3.JointChallengeSpace.tau_rest_card",
+        "Audit.Wire3.JointChallengeSpace.tau_rest_fun_card",
+        "Audit.Wire3.JointChallengeSpace.tauEvent_card",
+        "Audit.Wire3.JointChallengeSpace.tau_event_mass",
+        "Audit.Wire3.JointChallengeSpace.logProj_apply",
+        "Audit.Wire3.JointChallengeSpace.gateProj_apply",
+        "Audit.Wire3.JointChallengeSpace.lane_event_mass_le",
+        "Audit.Wire3.JointChallengeSpace.outer_event_mass_le",
+        "Audit.Wire3.JointChallengeSpace.tau_bad_event_mass_le",
+        "Audit.Wire3.JointChallengeSpace.alpha_bad_event_mass_le",
+        "Audit.Wire3.JointChallengeSpace.mem_jointBadEvent",
+        "Audit.Wire3.JointChallengeSpace.mem_goodEvent",
+        "Audit.Wire3.JointChallengeSpace.mem_good_joint_event",
+        "Audit.Wire3.JointChallengeSpace.not_mem_jointBadEvent",
+        "Audit.Wire3.JointChallengeSpace.joint_union_bound",
+        "Audit.Wire3.JointChallengeSpace.joint_good_event_mass_ge",
+        "Audit.Wire3.JointChallengeSpace.modulus_lt_word",
+        "Audit.Wire3.JointChallengeSpace.fromLe_encodeNat_mod",
+        "Audit.Wire3.JointChallengeSpace.reduceTriple_encodeElement",
+        "Audit.Wire3.JointChallengeSpace.reduceTriple_surjective",
+        "Audit.Wire3.JointChallengeSpace.drawnAt_of_pointwise",
+        "Audit.Wire3.JointChallengeSpace.drawnAt_canonical",
+        "Audit.Wire3.JointChallengeSpace.draw_encodes_run_inhabited",
+        "Audit.Wire3.JointChallengeSpace.draw_encodes_run_of_accepted",
+        "Audit.Wire3.JointChallengeSpace.badEventFree_of_lane",
+        "Audit.Wire3.JointChallengeSpace.good_derived_tau_of_joint",
+        "Audit.Wire3.JointChallengeSpace.good_derived_alpha_of_joint",
+        "Audit.Wire3.JointChallengeSpace.run_good_event_mass_ge",
+        "Audit.Wire3.JointChallengeSpace.derived_selected_gate_constraints_vanish_at_a_good_draw",
+        "Audit.Wire3.JointChallengeSpace.log_lane_badEventFree_of_good_draw",
+        "Audit.Wire3.JointChallengeSpace.composed_gate_constraints_vanish_on_the_joint_space",
+        "Audit.Wire3.JointChallengeSpace.joint_good_event_mass_at_extremes",
+        "Audit.Wire3.JointChallengeSpace.combined_bound_at_extremes_between_two_powers",
+        "Audit.Wire3.JointChallengeSpace.draw_card_zero",
+        "Audit.Wire3.JointChallengeSpace.draw_card_one",
+        "Audit.Wire3.JointChallengeSpace.fixture_schedule_positions",
+        "Audit.Wire3.JointChallengeSpace.coord_event_empty",
+        "Audit.Wire3.JointChallengeSpace.coord_event_empty_mass",
+        "Audit.Wire3.JointChallengeSpace.lane_event_nil"
+      ],
+      "sources": [
+        "mle/src/verifier_v2.rs",
+        "mle/src/transcript_v2.rs",
+        "mle/contracts/src/TranscriptV2.sol"
+      ],
+      "scope": "One finite uniform sample space for every post-prefix challenge draw: the coordinates are the squeeze schedule (gate alpha, d gate tau coordinates, d outer log rounds, d outer gate rounds; the log and gate round challenges are distinct squeezes at counters 0 and 3 of the round digest), the law is counting on Draw d -> DigestTriple, and the masses of single-coordinate cylinders and of the tau product event are proved by counting. The GENUINE union bound: the mass of the actual disjunction event jointBadEvent is at most the adopted combinedBound, the outer term covering both lanes' 2d coordinates; 2^-173 <= combinedBound 13 8 13 123 <= 2^-172. The seam DrawEncodesRun is a coordinate-encoding statement, NOT a hash assumption: reduceTriple is surjective, so it is inhabited for every hash, every engine and every accepted run, and lemmas prove this. Fiat-Shamir half (B), the reading that the run's encoding draw is jointProbability-distributed, is not expressed anywhere in Lean, so the composed theorem carries no cryptographic hypothesis: its mass conjunct is a counting fact and its conclusion conjunct an implication from the run's draw avoiding the bad set to the selected gate constraints vanishing at a row. The outer round bad sets are relative to the realized challenges and round messages, not prefix constants (only the tau and alpha families are); sequential conditioning is not proved. The figure excludes the dominant WHIR and Merkle term and is not the system's soundness error."
     }
   ]
 }

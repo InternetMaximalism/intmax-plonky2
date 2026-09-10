@@ -1034,6 +1034,52 @@ manifest `83a68fcedb8deb2ad9cb2c4568c5525defeb649b41b2b60fe7d55ccb32cebdf5`、re
 採用namespaceでの直接buildと全統合guardはPASS。全3129名の実定理/型/推移的公理、
 445 reviewed hashes、18表1147語、7依存5601fileを検査した。
 
+## 第19継続更新（d937d15f以降）
+
+追跡版runnerでコミット`d937d15f`の96モデル・3129定理を再検査しPASS（1483.923秒、1426モジュール、
+manifest `29d29f182cbcda02a269ec76b782b0252aac9744c7b67211563f9d527c7bfb06`、receipt
+`0af02e6adc74c31dc52405ac55438683bc354b2010e595277abda0f2bbb5bc71`、graph
+`74a4b58940642560ced5a047d92f700d61ee3e440bfa73a46272d330a02ccac7`）。
+
+loop方式の2回目。前回残した「union boundの自由パラメータ」「selector部分零化の由来」
+「3項が別々の標本空間上にある」の3点を対象にした。
+
+- **受理実行への束縛**: AttachedUnionBoundはChallengeUnionBoundの自由パラメータ（n、g、係数族）を
+  受理実行に束縛する。tau arityはdegreeBitsから導出、行値はgateValue、係数族は受理由来の
+  slotCoefficients、制約数≤123は受理から導出し、attached tupleがtranscriptの導出tau列そのもので
+  あること（attached_tau_tuple_ofFn）を示す。combinedBoundは4引数すべてで単調で
+  （⌈2^256/p⌉·p≥2^256）、envelope下で≤combinedBound 13 8 13 123≤2^-172。attached_seamが
+  計数上界と「導出tau/alphaがattached bad set外なら全行で選択gateの制約が零」を1定理に結合する。
+  **数値はWHIR/Merkle項を含まず系の健全性誤差ではない**。余裕約0.07 bitは制約数128まで持ち、
+  129で初めて破れる（SCOPEの旧記述「125」は誤りで訂正した。envelopeは123で頭打ち）。
+- **selector部分零化の由来鎖**: ConstantsProvenanceはselector値←供給constants列←導出gate点での
+  bound cell←gatePreprocessed claim←committed列のbound cell←preprocessed root下のopening←
+  deployment pinの6リンクを、pin（Verifier.shape、verifier_v2.rs 184-187、MleVerifierV2.sol 563）を
+  起点に証明する。攻撃定理partial_zeroing_forces_one_of_threeは、供給列とpinned列のbound cellが
+  導出gate点で異なれば、root不一致（pinで閉鎖）・抽出接合CellsMatchClaimsの破れ・opening関係
+  OpensCommittedTableの破れのいずれかが必ず起きることを示し、具体的偽造例で旧仮定は検知せず
+  新鎖が接合で捕捉することを示す。残余は「bound cell一致は列同定より弱い」（反例つき）、
+  engine不透明性R1、opening関係R2、root→列写像R3で、いずれも可視仮定のまま。導出gate点で
+  不可視な列改変を除外するにはsumcheck challengeによるzero-checkが要り、未着手である。
+- **結合事象の形式化**: JointChallengeSpaceは3つの質量を1つの標本空間に載せる。squeeze schedule
+  （gate alpha、gate tau×d、外側log/gate round×d、計3d+1座標）で添字づけた`Draw d → DigestTriple`上の
+  一様計数測度を定義し、座標事象・tau積事象の質量を計数で証明、真のdisjunction事象の質量
+  ≤combinedBound（外側項は両laneの2d座標を被覆）を証明した。2^-173≤bound 13 8 13 123≤2^-172。
+  seam `DrawEncodesRun`はhash仮定ではなく座標符号化の主張で、全hash・全受理実行で可住であることを
+  補題として示す。Fiat–Shamir半分(B)「符号化drawがjointProbability分布」は未形式化のままで、
+  合成定理composed_gate_constraints_vanish_on_the_joint_spaceは暗号仮定を一切持たない。外側bad setは
+  実現challenge/messageに相対的でprefix定数ではない。**数値はWHIR/Merkle項を含まず系の健全性誤差ではない**。
+
+追加3モデルはいずれもFable側の敵対的検証を通した。AttachedUnionBoundは必須修正（「125で破れる」
+の誤記→129、SCOPEの同記述も訂正）、ConstantsProvenanceは文言3件（残余の列挙、旧定理の
+「真」→「結論が成立」、verifyCallもshapeを検査）、JointChallengeSpaceは必須修正3件（当初
+`TranscriptIsUniform`と名付けた seam がhash仮定ではなく全hashで可住である点、外側bad setを
+「prefix定数」とした誤り、合成定理の確率的読みの過大表現）と注記5件（合成定理の改名、log lane
+比較値の束縛、余裕表現、schedule写像の性格、maxHeartbeats 2箇所）を適用した。健全性欠陥は
+3モデルとも検出されなかった。
+採用namespaceでの直接buildと全統合guardはPASS。全3268名の実定理/型/推移的公理、
+448 reviewed hashes、18表1147語、7依存5601fileを検査した。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

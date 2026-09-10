@@ -101,3 +101,6 @@ import Audit.Wire3.GateRejectionPower
 import Audit.Wire3.GateDerivedRejection
 import Audit.Wire3.CommitmentOrder
 import Audit.Wire3.ChallengeUnionBound
+import Audit.Wire3.AttachedUnionBound
+import Audit.Wire3.ConstantsProvenance
+import Audit.Wire3.JointChallengeSpace

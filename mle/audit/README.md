@@ -97,8 +97,11 @@
 | [GateDerivedRejection](Audit/Wire3/GateDerivedRejection.lean) | 棄却定理をtranscript導出のgate tau/alphaで再述し、§3–4と縮約仮定集合から自由なchallengeを消す（10フィールド→9、bound cell仮定は全表eq由来から導出）。残るchallenge側の仮定は導出tau/alphaの2つの`hgood`と、sumcheck roundのBadEventFreeの3つ。§2は例外で自由alphaを保持 |
 | [CommitmentOrder](Audit/Wire3/CommitmentOrder.lean) | 適応性の決定論的半分。22 frameのprefixが採用済みrelationStateと一致し、3つのrootが13/15/19番目、最終rootとgate alpha/tau squeezeの間は固定domain tag 2つだけ。表の変更はprefixを変えるか具体的hash衝突を生む。確率的半分（B）は定数hashで反例が存在し、順序論法では届かないと定理で示す |
 | [ChallengeUnionBound](Audit/Wire3/ChallengeUnionBound.lean) | tauのzero-check bad setをn個の独立digest tripleの積事象へ、行ごとのalpha bad setを2^n行のunionへ持ち上げ、外側sumcheck項と合わせて3つの質量の和を上界化。envelope極値で≤2^-172を厳密有理数計算で証明（余裕0.07 bit、envelopeぎりぎり）。**WHIR/Merkle項を含まず系の健全性誤差ではない**。3項は別々の標本空間上で結合則は未形式化 |
+| [AttachedUnionBound](Audit/Wire3/AttachedUnionBound.lean) | ChallengeUnionBoundの自由パラメータ（n、g、係数族）を受理実行に束縛する。tau arityはdegreeBitsから導出、行値はgateValue、係数族は受理由来のslotCoefficients、制約数≤123は受理から導出。attached tuple＝transcriptのtau列（attached_tau_tuple_ofFn）。combinedBoundの4引数単調性を証明し、envelope下で≤combinedBound 13 8 13 123≤2^-172。attached_seamが計数上界と「全行で選択gateの制約が零」を1定理に結合。**数値はWHIR/Merkle項を含まず系の健全性誤差ではない**（余裕0.07 bit、制約129で破れる） |
+| [ConstantsProvenance](Audit/Wire3/ConstantsProvenance.lean) | selector部分零化攻撃の由来鎖L1–L6。selector値←供給constants列←bound cell←gatePreprocessed claim←committed列のbound cell←preprocessed root下のopening←deployment pin（Verifier.shape、verifier_v2.rs 184-187、MleVerifierV2.sol 563）。攻撃定理partial_zeroing_forces_one_of_three：供給列とpinned列のbound cellが導出gate点で異なれば、root不一致（pinで閉鎖）∨抽出接合の破れ∨opening関係の破れ。具体的偽造例で旧仮定は検知せず新鎖が接合で捕捉することを示す。**残余**: bound cell一致は列同定より弱い（反例つき）、engine不透明性R1、opening関係R2、root→列写像R3 |
+| [JointChallengeSpace](Audit/Wire3/JointChallengeSpace.lean) | 3つの質量を1つの標本空間に載せる。squeeze schedule（alpha、tau×d、外側log/gate round×d）で添字づけた`Draw d → DigestTriple`上の一様計数測度を定義し、座標事象・tau積事象の質量を計数で証明、真のdisjunction事象`jointBadEvent`の質量≤combinedBound（joint_union_bound）を証明。外側項は両laneの2d座標を被覆。seam `DrawEncodesRun`は座標符号化の主張で**hash仮定ではない**（reduceTriple全射により全hash・全受理実行で可住、補題つき）。Fiat–Shamir半分(B)「符号化drawがjointProbability分布」は未形式化で、合成定理は暗号仮定を一切持たない。外側bad setは実現challenge/messageに相対的で「prefix定数」ではない（tau/alphaのみ定数）。2^-173≤bound 13 8 13 123≤2^-172、**WHIR/Merkle項を含まず系の健全性誤差ではない** |
 
-現行rootは96モデル・3129件の名付き定理です。
+現行rootは99モデル・3268件の名付き定理です。
 **ConditionalSoundnessの数値2^-184を系の健全性誤差として引用しないでください。**
 これは外側sumcheckの一致事象のみを数えた値で、支配項であるWHIR/Merkleを含みません。
 gate laneは証明されておらず、抽出とcommitmentの接合も仮定のままです。直近の検査結果はREPORTとmanifestで管理します。
