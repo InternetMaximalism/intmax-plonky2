@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "1e4f5f9de7335895fb7bfa6a15ecddcf9ae0e463b1ad964bccb5e82e9c21f9ed",
+      "sha256": "19a48cd42525c3c448cf6593d721754e1c6073afaf8ad434489d5bc21c1aa446",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "959d67f2ffe6a38c8ab5dc0ac6f709d0d2b6c039c5fe57af2be95f9c3320c948",
+      "sha256": "e7a02a4f274784bc7c0da139942649c735b5fb54bede6a6e6c7f98bed21a8dc9",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "835fbf57d64ad9ca06db0d02927e9bb3efcc3bae37b13b9d2c2626cc9621a7ec",
+      "sha256": "89967dd58802d925298f91029132dc7a9cd1f8f51f5910ca299f0f2b0f5ceaf1",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "92d2a86bbbabcd999c7a09491d0a43766e1a82a9e4fce1cdc5d44a2a626915ac",
+      "sha256": "8fda583e10a9ac2b45abb5d4a881db9f2bcada2af853109e52707fb27ceeee02",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "56f01a5041c9eafac58f562177eb3b3be2e5aceb94b5b00e14ea5456de9d3bff",
+      "sha256": "551b82f31c504f8d6fd5c02e9d73e0186c91470009180c2eaf04250ba2b5e013",
       "kind": "spec"
     },
     {
@@ -2241,6 +2241,16 @@
     {
       "path": "mle/audit/Audit/Wire3/JointChallengeSpace.lean",
       "sha256": "30f69979f952004b801e8997c2ef3880e116356fd1a362bf149381f9e3a96b37",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/OuterSequentialConditioning.lean",
+      "sha256": "dfc9c5c997c14f1bf44dced7fb796c050e674031f7d3c75e152af0fb528038d4",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/GatePointZeroCheck.lean",
+      "sha256": "81e1fd68fc23e28ac3a0e6a7f75b744cb33807d9bc47ad2c766c5e001cab635e",
       "kind": "current-model"
     }
   ],
@@ -6567,6 +6577,150 @@
         "mle/contracts/src/TranscriptV2.sol"
       ],
       "scope": "One finite uniform sample space for every post-prefix challenge draw: the coordinates are the squeeze schedule (gate alpha, d gate tau coordinates, d outer log rounds, d outer gate rounds; the log and gate round challenges are distinct squeezes at counters 0 and 3 of the round digest), the law is counting on Draw d -> DigestTriple, and the masses of single-coordinate cylinders and of the tau product event are proved by counting. The GENUINE union bound: the mass of the actual disjunction event jointBadEvent is at most the adopted combinedBound, the outer term covering both lanes' 2d coordinates; 2^-173 <= combinedBound 13 8 13 123 <= 2^-172. The seam DrawEncodesRun is a coordinate-encoding statement, NOT a hash assumption: reduceTriple is surjective, so it is inhabited for every hash, every engine and every accepted run, and lemmas prove this. Fiat-Shamir half (B), the reading that the run's encoding draw is jointProbability-distributed, is not expressed anywhere in Lean, so the composed theorem carries no cryptographic hypothesis: its mass conjunct is a counting fact and its conclusion conjunct an implication from the run's draw avoiding the bad set to the selected gate constraints vanishing at a row. The outer round bad sets are relative to the realized challenges and round messages, not prefix constants (only the tau and alpha families are); sequential conditioning is not proved. The figure excludes the dominant WHIR and Merkle term and is not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.OuterSequentialConditioning",
+      "theorems": [
+        "Audit.Wire3.OuterSequentialConditioning.adaptiveEvent_nil",
+        "Audit.Wire3.OuterSequentialConditioning.mem_adaptiveEvent_cons",
+        "Audit.Wire3.OuterSequentialConditioning.mem_coordCylinder",
+        "Audit.Wire3.OuterSequentialConditioning.coordCylinder_eq_piFinset",
+        "Audit.Wire3.OuterSequentialConditioning.coordCylinder_card",
+        "Audit.Wire3.OuterSequentialConditioning.invariant_fiber_card",
+        "Audit.Wire3.OuterSequentialConditioning.adaptiveEvent_update_of_not_mem",
+        "Audit.Wire3.OuterSequentialConditioning.adaptiveBounded_nil",
+        "Audit.Wire3.OuterSequentialConditioning.adaptiveBounded_cons",
+        "Audit.Wire3.OuterSequentialConditioning.walk_union_card_bound",
+        "Audit.Wire3.OuterSequentialConditioning.walk_union_mass_bound",
+        "Audit.Wire3.OuterSequentialConditioning.mem_prefixEvent",
+        "Audit.Wire3.OuterSequentialConditioning.mem_tailCoords",
+        "Audit.Wire3.OuterSequentialConditioning.tailCoords_nodup",
+        "Audit.Wire3.OuterSequentialConditioning.tailCoords_length",
+        "Audit.Wire3.OuterSequentialConditioning.tailBounds_length",
+        "Audit.Wire3.OuterSequentialConditioning.tailBounds_sum",
+        "Audit.Wire3.OuterSequentialConditioning.prefixBad_card_le",
+        "Audit.Wire3.OuterSequentialConditioning.prefix_adaptiveBounded",
+        "Audit.Wire3.OuterSequentialConditioning.prefix_walk",
+        "Audit.Wire3.OuterSequentialConditioning.prefixEvent_eq_adaptiveEvent",
+        "Audit.Wire3.OuterSequentialConditioning.adaptive_union_card_bound",
+        "Audit.Wire3.OuterSequentialConditioning.adaptive_union_mass_bound",
+        "Audit.Wire3.OuterSequentialConditioning.Lane.step_active",
+        "Audit.Wire3.OuterSequentialConditioning.Lane.bounded_step",
+        "Audit.Wire3.OuterSequentialConditioning.Lane.badSet_card_le",
+        "Audit.Wire3.OuterSequentialConditioning.Lane.badSet_of_inactive",
+        "Audit.Wire3.OuterSequentialConditioning.laneStep_active",
+        "Audit.Wire3.OuterSequentialConditioning.laneStep_bounded",
+        "Audit.Wire3.OuterSequentialConditioning.laneBad_card_le",
+        "Audit.Wire3.OuterSequentialConditioning.laneBad_card_of_inactive",
+        "Audit.Wire3.OuterSequentialConditioning.altBounds_length",
+        "Audit.Wire3.OuterSequentialConditioning.coBounds_length",
+        "Audit.Wire3.OuterSequentialConditioning.altBounds_sum",
+        "Audit.Wire3.OuterSequentialConditioning.coBounds_sum",
+        "Audit.Wire3.OuterSequentialConditioning.adaptiveBounded_alt",
+        "Audit.Wire3.OuterSequentialConditioning.adaptiveBounded_co",
+        "Audit.Wire3.OuterSequentialConditioning.roundCoords_length",
+        "Audit.Wire3.OuterSequentialConditioning.mem_roundCoords",
+        "Audit.Wire3.OuterSequentialConditioning.log_ne_gate",
+        "Audit.Wire3.OuterSequentialConditioning.log_ne_log",
+        "Audit.Wire3.OuterSequentialConditioning.gate_ne_gate",
+        "Audit.Wire3.OuterSequentialConditioning.roundCoords_nodup",
+        "Audit.Wire3.OuterSequentialConditioning.outerCoords_nodup",
+        "Audit.Wire3.OuterSequentialConditioning.outerCoords_length",
+        "Audit.Wire3.OuterSequentialConditioning.jointProbability_eq_uniformMass",
+        "Audit.Wire3.OuterSequentialConditioning.digest_card_pos",
+        "Audit.Wire3.OuterSequentialConditioning.adaptive_lane_mass_le",
+        "Audit.Wire3.OuterSequentialConditioning.adaptive_lane_mass_le_odd",
+        "Audit.Wire3.OuterSequentialConditioning.adaptive_outer_event_mass_le",
+        "Audit.Wire3.OuterSequentialConditioning.mem_adaptiveJointBadEvent",
+        "Audit.Wire3.OuterSequentialConditioning.not_mem_adaptiveJointBadEvent",
+        "Audit.Wire3.OuterSequentialConditioning.adaptive_joint_union_bound",
+        "Audit.Wire3.OuterSequentialConditioning.adaptive_joint_good_event_mass_ge",
+        "Audit.Wire3.OuterSequentialConditioning.projCoords_length",
+        "Audit.Wire3.OuterSequentialConditioning.mem_projCoords",
+        "Audit.Wire3.OuterSequentialConditioning.projCoords_nodup",
+        "Audit.Wire3.OuterSequentialConditioning.frozen_is_adaptive_special_case",
+        "Audit.Wire3.OuterSequentialConditioning.frozen_adaptiveBounded",
+        "Audit.Wire3.OuterSequentialConditioning.frozen_lane_mass_le",
+        "Audit.Wire3.OuterSequentialConditioning.logProj_injective",
+        "Audit.Wire3.OuterSequentialConditioning.gateProj_injective",
+        "Audit.Wire3.OuterSequentialConditioning.joint_union_bound_recovered",
+        "Audit.Wire3.OuterSequentialConditioning.adaptive_good_event_mass_at_extremes",
+        "Audit.Wire3.OuterSequentialConditioning.echoLane_bounded",
+        "Audit.Wire3.OuterSequentialConditioning.echoLane_reads_its_prefix",
+        "Audit.Wire3.OuterSequentialConditioning.adaptive_lane_event_first_round",
+        "Audit.Wire3.OuterSequentialConditioning.adaptive_lane_event_zero",
+        "Audit.Wire3.OuterSequentialConditioning.outerCoords_one"
+      ],
+      "sources": [
+        "mle/src/verifier_v2.rs",
+        "mle/src/transcript_v2.rs",
+        "mle/contracts/src/TranscriptV2.sol"
+      ],
+      "scope": "Sequential conditioning (Fubini) for the outer coordinates of the adopted JointChallengeSpace: a general engine on finite product spaces (any Nodup coordinate list, adversary state updated by the realized head value only, bad set at step k depending on earlier coordinates only, PrefixDependent) bounds the mass of the adaptive union by the sum of the fibre bounds over the alphabet size; instantiated with a Lane structure whose round messages are abstract functions of all earlier realized challenges, on the source's interleaved schedule (log then gate per round; both coupled challenges come from one round digest at counters 0 and 3 and both round messages are fixed in one commit, so the modelled adversary, whose gate message may also see the round's log challenge, is at least as strong as the real one). The adaptive outer event has mass at most outerTerm, the same number as the prefix-frozen version, and the adaptive joint bad event (adaptive outer union the adopted tau and alpha events) has mass at most combinedBound; the adopted prefix-frozen laneEvent is an instance of the general engine and the adopted joint_union_bound is re-derived with exactly its type. ownsNext is the phase bit of the interleaved walk, not a lane switch: the gate lane's adopted roundBadSet appears at every gate coordinate. A Lane-level frozen comparison would need DrawEncodesRun and is not proved. The law is still a hand-written ideal uniform law, DrawEncodesRun is a coordinate statement not a hash assumption, Fiat-Shamir half (B) remains unformalized, no independence from the hash is claimed, WHIR and Merkle are excluded and the figure is not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.GatePointZeroCheck",
+      "theorems": [
+        "Audit.Wire3.GatePointZeroCheck.sum_map_add",
+        "Audit.Wire3.GatePointZeroCheck.extensionOf_congr",
+        "Audit.Wire3.GatePointZeroCheck.extensionOf_affine",
+        "Audit.Wire3.GatePointZeroCheck.extensionOf_sub",
+        "Audit.Wire3.GatePointZeroCheck.cell_bindColumn_eq_extension",
+        "Audit.Wire3.GatePointZeroCheck.cell_bindColumn_eq_extension_of_width",
+        "Audit.Wire3.GatePointZeroCheck.padding_breaks_the_bridge",
+        "Audit.Wire3.GatePointZeroCheck.longer_column_agrees",
+        "Audit.Wire3.GatePointZeroCheck.mem_columnAgreementSet",
+        "Audit.Wire3.GatePointZeroCheck.mem_columnAgreementSet_tupleOf",
+        "Audit.Wire3.GatePointZeroCheck.not_agrees_of_not_mem",
+        "Audit.Wire3.GatePointZeroCheck.columnAgreementSet_eq_vanishingSet",
+        "Audit.Wire3.GatePointZeroCheck.exists_differing_index",
+        "Audit.Wire3.GatePointZeroCheck.columnsDifferOnCube_of_ne",
+        "Audit.Wire3.GatePointZeroCheck.diffColumn_ne_zero",
+        "Audit.Wire3.GatePointZeroCheck.columnAgreement_card_bound",
+        "Audit.Wire3.GatePointZeroCheck.columnAgreement_density_bound",
+        "Audit.Wire3.GatePointZeroCheck.columnAgreementSet_eq_zeroCheckBadSet",
+        "Audit.Wire3.GatePointZeroCheck.gate_point_agreement_mass_bound",
+        "Audit.Wire3.GatePointZeroCheck.accepted_gate_point_width",
+        "Audit.Wire3.GatePointZeroCheck.bound_cells_differ_of_point_off_agreement",
+        "Audit.Wire3.GatePointZeroCheck.columns_differ_of_point_off_agreement",
+        "Audit.Wire3.GatePointZeroCheck.committed_width_of_opens",
+        "Audit.Wire3.GatePointZeroCheck.supplied_width_of_consistent",
+        "Audit.Wire3.GatePointZeroCheck.column_forgery_forces_one_of_three_off_bad_set",
+        "Audit.Wire3.GatePointZeroCheck.column_forgery_forces_one_of_three_off_bad_set_of_consistent",
+        "Audit.Wire3.GatePointZeroCheck.accepted_column_forgery_forces_join_or_opening_off_bad_set",
+        "Audit.Wire3.GatePointZeroCheck.accepted_column_forgery_forces_join_or_opening_off_bad_set_of_consistent",
+        "Audit.Wire3.GatePointZeroCheck.accepted_column_forgery_forces_join_or_opening_off_bad_set_tuple",
+        "Audit.Wire3.GatePointZeroCheck.accepted_column_forgery_forces_join_or_opening_off_bad_set_tuple_of_consistent",
+        "Audit.Wire3.GatePointZeroCheck.liftList_runRounds_gatePoint",
+        "Audit.Wire3.GatePointZeroCheck.gate_point_column_is_the_gate_lane_challenges",
+        "Audit.Wire3.GatePointZeroCheck.gate_lane_length_of_gate_point_width",
+        "Audit.Wire3.GatePointZeroCheck.mem_gatePointEvent",
+        "Audit.Wire3.GatePointZeroCheck.gatePointEvent_card",
+        "Audit.Wire3.GatePointZeroCheck.gate_point_event_mass",
+        "Audit.Wire3.GatePointZeroCheck.gate_point_agreement_joint_mass_bound",
+        "Audit.Wire3.GatePointZeroCheck.challenge_of_drawnAt",
+        "Audit.Wire3.GatePointZeroCheck.gate_point_coordinates_are_outerGate_draws",
+        "Audit.Wire3.GatePointZeroCheck.gate_point_off_agreement_of_joint",
+        "Audit.Wire3.GatePointZeroCheck.agreement_set_of_equal_columns",
+        "Audit.Wire3.GatePointZeroCheck.no_point_off_agreement_at_equal_columns",
+        "Audit.Wire3.GatePointZeroCheck.tauTerm_zero",
+        "Audit.Wire3.GatePointZeroCheck.Example.widthA",
+        "Audit.Wire3.GatePointZeroCheck.Example.widthB",
+        "Audit.Wire3.GatePointZeroCheck.Example.widthA_zero",
+        "Audit.Wire3.GatePointZeroCheck.Example.widthB_zero",
+        "Audit.Wire3.GatePointZeroCheck.Example.columns_differ",
+        "Audit.Wire3.GatePointZeroCheck.Example.columns_differ_on_cube",
+        "Audit.Wire3.GatePointZeroCheck.Example.one_mem_agreement",
+        "Audit.Wire3.GatePointZeroCheck.Example.zero_not_mem_agreement",
+        "Audit.Wire3.GatePointZeroCheck.Example.example_mass_bound",
+        "Audit.Wire3.GatePointZeroCheck.Example.example_joint_mass_bound"
+      ],
+      "sources": [
+        "mle/src/verifier_v2.rs",
+        "mle/src/dense_mle.rs",
+        "mle/src/prover_v2.rs"
+      ],
+      "scope": "Closes the adopted ConstantsProvenance residue 'bound-cell agreement is weaker than column identity' by Schwartz-Zippel on the verifier's derived gate point. The bridge cell (bindColumn col point) = ZeroCheckSemantics.extension col point holds whenever 2^|point| <= |col| (shorter columns break it: bindColumn truncates while extension zero-pads, proved by counterexample), so the set of gate points at which two columns' bound cells agree is the vanishing set of the difference column's multilinear extension; when the columns differ on the cube it has density at most n/|F| and uniform product mass at most tauTerm n. Composed theorems: if the supplied and pinned constants columns differ and the derived gate point lies outside the agreement set then, under acceptance, the extraction join CellsMatchClaims or the opening relation OpensCommittedTable fails (the root branch is closed by the pin). The supplied column width is derived from the adopted Consistent and EqCellBinding, the committed width from the opening relation's full condition, so no width hypothesis remains beyond those. The gate point column is proved, for the abstract engine, to be the gate lane's round challenge list, and the agreement set becomes a fourth family on the adopted JointSpace with mass at most tauTerm d. Residue: the supplied column is tied to the root only through the two conclusion branches (R2/R3), so the density reading is meaningful only with the column fixed before the point and Fiat-Shamir half (B) is unformalized; the chaining of round digests after the prefix is documented for the concrete engine only; R1 unchanged; WHIR and Merkle excluded; not the system's soundness error."
     }
   ]
 }

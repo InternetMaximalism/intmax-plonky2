@@ -104,3 +104,5 @@ import Audit.Wire3.ChallengeUnionBound
 import Audit.Wire3.AttachedUnionBound
 import Audit.Wire3.ConstantsProvenance
 import Audit.Wire3.JointChallengeSpace
+import Audit.Wire3.GatePointZeroCheck
+import Audit.Wire3.OuterSequentialConditioning

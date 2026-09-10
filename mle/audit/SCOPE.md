@@ -426,8 +426,18 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    root不一致（pinで閉鎖）か抽出接合CellsMatchClaimsの破れかopening関係OpensCommittedTableの破れの
    いずれかが必ず起きる。具体的偽造例（重要行のみ零化）で、旧仮定（activeFilter等）は検知しないが
    新鎖は接合で捕捉することを示す。最強gate定理をpinned列上のfilterで再述した。
-   **なお未解決**: bound cell一致は列同定より弱い（[5,3]と[9,3]が[1]で同じcellを持つ反例つき）。
-   導出gate点で不可視な列改変を除外するにはsumcheck challengeによるzero-checkが要り未着手。
+   bound cell一致と列同定の差はGatePointZeroCheckで導出gate点上のSchwartz–Zippelとして扱った。
+   cell(bindColumn col point)=extension col pointの橋渡し（2^|point|≤|col|で成立。短い列ではbindColumnが
+   切り詰めextensionがゼロ埋めするため破れる反例つき）により、2列の一致集合は差分列の多重線形拡張の
+   零点集合で、列がcube上で異なれば濃度≤n·|F|^(n-1)、一様積法則上の質量≤tauTerm n。合成定理: 列が
+   異なり導出gate点が一致集合外なら、受理下で抽出接合CellsMatchClaimsかopening関係OpensCommittedTableが
+   破れる（root分岐はpinで閉鎖）。供給列の幅2^degreeBitsは採用済みConsistent+EqCellBindingから、
+   committed列の幅はopening関係のfull条件から導出され、追加の幅仮定はない。gate点列がgate laneの
+   round challenge列そのものであることを抽象engineで証明し、JointChallengeSpaceの第4族として
+   outerGate座標上の質量≤tauTerm dを得る。
+   **なお未解決**: 供給列s0.tables.constantsは結論の2分岐（R2/R3）以外ではrootに束縛されず、
+   「密度n/|F|」の読みはcolが点より前に固定される場合にのみ意味を持つ（half (B)は未形式化）。
+   round digestがprefixの後に連鎖することは具体engineでのみ文書化（抽象engineでは未導出）。
    engine不透明性R1、opening関係R2、root→列写像R3は可視仮定のまま。
    tauの束縛はGateDerivedRejectionで扱った。棄却定理と合成定理をtranscript導出の
    gate tau/alphaで再述し（DerivedInitial下、eq列は導出tauのeqTableに全行固定、cube indexは
@@ -464,8 +474,16 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    したがって**hash仮定ではない**。Fiat–Shamir半分(B)＝「符号化drawがjointProbability分布に従う」は
    Lean上のどこにも表現されておらず、合成定理は暗号仮定を一切持たない（質量連言は計数事実、
    結論連言は「runのdrawがbad set外なら制約が零」の含意）。外側roundのbad setは実現した
-   challengeとround messageに相対的で、prefix定数なのはtau/alpha族だけである（逐次条件付け/Fubiniは未証明、
-   ConditionalSoundness ASSUMPTION 3のまま）。schedulePositionはモジュール自身の写像で、alpha/tauは
+   challengeとround messageに相対的で、prefix定数なのはtau/alpha族だけである。
+   逐次条件付けはOuterSequentialConditioningで証明した。有限積空間上の一般エンジン（Nodup座標列、
+   round kのbad setは先行座標のみに依存するPrefixDependent族、Fubiniの剥ぎ取りで質量≤Σ c_k/|A|）を、
+   round messageを先行challengeの関数とする`Lane`で両laneに具体化する。走査順は実装どおりroundごとに
+   log→gate（両challengeは同一round digestのcounter 0/3、両messageは1回のcommitで先に固定される。
+   モデルはgate messageが同roundのlog challengeを見ることを許し実物より強い敵対者を扱う）。adaptive
+   外側事象の質量≤outerTermでprefix凍結版と同じ数値、adaptive結合bad事象≤combinedBound。凍結版
+   laneEventはエンジンの特殊例で採用済みjoint_union_boundを再導出する（Lane水準の凍結比較は
+   DrawEncodesRunを要し未証明）。ConditionalSoundness ASSUMPTION 3の逐次条件付け部分はこれで閉じるが、
+   法則は依然として手で書いた理想一様分布であり、half (B)は未形式化である。schedulePositionはモジュール自身の写像で、alpha/tauは
    DerivedInitial経由で固定されるが外側round座標のラベルは抽象engineに対して文書化のみである。
    受理実行への束縛はAttachedUnionBoundで扱った。tau arityはdegreeBitsから導出（derived_gate_tau_width）、
    行値はgateValue、alpha側の係数族は受理由来のslotCoefficients、制約数≤123は受理から導出し、

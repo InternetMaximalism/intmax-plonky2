@@ -1080,6 +1080,43 @@ loop方式の2回目。前回残した「union boundの自由パラメータ」�
 採用namespaceでの直接buildと全統合guardはPASS。全3268名の実定理/型/推移的公理、
 448 reviewed hashes、18表1147語、7依存5601fileを検査した。
 
+## 第20継続更新（15d2ee8f以降）
+
+追跡版runnerでコミット`15d2ee8f`の99モデル・3268定理を再検査しPASS（790.780秒、1429モジュール、
+manifest `6aab14eb581a8fd56c27e41423d6504bba7e98c6c83a6430c0dd4cbf1de4056a`、receipt
+`0aeac5a0e2ac6914bf9f4866f3eb8ab99a3aedd7a6eb833233372048d41a88e3`、graph
+`07321f04a0fc2f950c3217445b4eeebb740ae441fed24be1e8dd4f12a53708e3`）。
+
+loop方式の3回目。前回残した「bound cell一致は列同定より弱い」と「外側bad setはprefix定数ではない」
+の2点を対象にした。
+
+- **gate点上のzero-check**: GatePointZeroCheckはConstantsProvenanceの残余を導出gate点上の
+  Schwartz–Zippelで閉じる。bound cellと多重線形拡張の橋渡しは2^|point|≤|col|で成立し（短い列では
+  bindColumnの切り詰めとextensionのゼロ埋めが食い違う反例を証明）、2列の一致集合は差分列の零点集合で
+  密度≤n/|F|、一様質量≤tauTerm。合成定理は、列が異なり導出gate点が一致集合外なら受理下で抽出接合か
+  opening関係が破れることを示す。レビューで、橋渡しの仮定が等式でなく不等式で足りること、committed列の
+  幅仮定がopening関係から導出できること、供給列の幅が採用済みConsistent+EqCellBindingで固定されることが
+  判明し、幅仮定を全て落とした。gate点列がgate laneのround challenge列であることを抽象engineで証明し、
+  JointChallengeSpaceの第4族（outerGate座標）として質量≤tauTerm dを得た。残余は、供給列が結論の2分岐
+  以外でrootに束縛されないこと（colを点より前に固定した読みでのみ密度が意味を持つ）、round digest連鎖が
+  具体engineのみで文書化されていること、R1–R3、half (B)。
+- **逐次条件付け**: OuterSequentialConditioningは外側座標のadaptive性を扱う。有限積空間上の一般エンジン
+  （Nodup座標列、PrefixDependentなbad set族、Fubiniの剥ぎ取り）で質量≤Σ c_k/|A|を証明し、round messageを
+  先行challengeの関数とする`Lane`で両laneに具体化した。走査順は実装どおりroundごとにlog→gate（両challengeは
+  同一round digestのcounter 0/3、両messageは1回のcommitで固定。モデルの敵対者は実物より強い＝安全側）。
+  adaptive外側事象の質量≤outerTermでprefix凍結版と同じ数値、adaptive結合bad事象≤combinedBound、凍結版
+  laneEventはエンジンの特殊例で採用済みjoint_union_boundを同じ型で再導出する。レビューでは`ownsNext`
+  （旧`active`）が交互走査の位相ビットでありgate laneのbad setが全gate座標に現れることをd=1で展開して
+  確認した。Lane水準の凍結比較はDrawEncodesRunを要し未証明。法則は依然として理想一様分布で、half (B)は
+  未形式化、**WHIR/Merkle項を含まず系の健全性誤差ではない**。
+
+追加2モデルはいずれもFable側の敵対的検証を通した。GatePointZeroCheckは必須修正3件（橋渡し仮定の
+不等式化、committed列幅仮定の除去と供給列幅の採用済み仮定からの導出、half (A)段落の過大表現）、
+OuterSequentialConditioningは文書修正3件（`active`→`ownsNext`と位相ビットの説明、凍結族がLaneではなく
+エンジンの実例である旨、message順序の誤記）を適用した。健全性欠陥は両モデルとも検出されなかった。
+採用namespaceでの直接buildと全統合guardはPASS。全3390名の実定理/型/推移的公理、
+450 reviewed hashes、18表1147語、7依存5601fileを検査した。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。
