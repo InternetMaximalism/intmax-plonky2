@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "af78f36eb6cf255b542a98e4f79d7322abf7742d1e60f36158b96b6f2701df64",
+      "sha256": "03fc1e0a3492d656f4504b64cc154c40020378be4bbcd0c98c6ae38b0f475e05",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "740eece3b6a6967df8486c2a359d86af5f7992c2c6b84c4a327b0ae3667fc9de",
+      "sha256": "8fe282a101b2650f1d89e130e8acaacf741503475be3237c061c6ebbe88e50c2",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "eed3da869d801b491157d8ca0f3571f02fcf233e1f2c955c46ba688ecd3ad1a0",
+      "sha256": "c8a37e39f6fd8bb8c2da1e077cc095370d7640ae06b2959399931911fe6ed6a4",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "0ae1ab52db7123cb9d0ca6fe948c576af3922026d1f8f7738aa7c1414d2a53b1",
+      "sha256": "add65b801e132d06fc1dd3f76989733ae384dba013a2e284701d25e0687e11cc",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "8edceb0ac9052cd4632cdd925e78f8e903b31b0cb88a3c794f1d08e94a0c29d8",
+      "sha256": "1c9b77aaab60d52a18023093ffd54059f3d03efd0040cc5290aad7ca328e98f2",
       "kind": "spec"
     },
     {
@@ -2261,6 +2261,16 @@
     {
       "path": "mle/audit/Audit/Wire3/InstalledWhirTail.lean",
       "sha256": "3b5ede7cf82f1416dbbeaa13272d71127c6d2072eb65470bf228f696a80d2535",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/InstalledIndexSampler.lean",
+      "sha256": "5cccb2e99ce2432b0e4f39aed37492dcb589a214c788b8761feb7f8ee4be506c",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/PinnedWhirProfile.lean",
+      "sha256": "b6227a303cbc71bf375f00b7101916418725baa167786f409eb695d3b310a4e9",
       "kind": "current-model"
     }
   ],
@@ -6872,6 +6882,100 @@
         "mle/contracts/src/spongefish/SpongefishWhirVerify.sol"
       ],
       "scope": "Residue R1 (engine opacity): the adopted manual WHIR tail model WhirConfigured.run is installed as the whirTail of Integrated.modelEngine (parseWhir, configurationHash, deploymentValid, initialTranscript, commitRound, sampleIndices and publicInputsHash stay observations; transcript and rounds are unchanged, so every abstract-engine theorem applies to the installed engine). Acceptance yields a successful concrete tail run whose three roots are the pinned preprocessed, witness and norm-inverse roots and whose initial evaluations are the packed folds of the five bound cells; session/instance (instance empty), the claim mask [31], the evaluation-point overwrite and the root byte conversion are checked against the source. On the deployed profiles (numRounds >= 1; every v2 fixture) the three roots are opened in intermediate round one and each root position's rows are Merkle-authenticated at the initial opening depth; two accepted executions sharing a root and a leaf index return the same row bytes or a concrete row collision; indices are nonempty under inDomainSamples > 0. The numRounds = 0 finalsplit route is stated separately and is not the deployed one. The installed engine rejects the empty-hint example that the abstract model accepts, so the blind-engine counterexample no longer applies to this engine. Residue R1b: that the final check ties the expected values to the authenticated rows is stated as a visible hypothesis, the existence of a fixed extractor from the three roots and the round-one opening to column families that open the claims (WHIR proximity and list decoding plus sumcheck soundness, probabilistic, absent); as formulated per column it subsumes R3, and a fold-level variant is given; wp is a free engine parameter pinned in the source only by the profile digest, an observation in Lean; R2 is untouched. No WHIR/PCS probabilistic soundness, hash security or Fiat-Shamir claim; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.InstalledIndexSampler",
+      "theorems": [
+        "Audit.Wire3.InstalledIndexSampler.claim_frame_count",
+        "Audit.Wire3.InstalledIndexSampler.claims_committed_is_the_frame_fold",
+        "Audit.Wire3.InstalledIndexSampler.claim_frames_get_log_preprocessed",
+        "Audit.Wire3.InstalledIndexSampler.claim_frames_get_log_witness",
+        "Audit.Wire3.InstalledIndexSampler.claim_frames_get_log_norm_inverse",
+        "Audit.Wire3.InstalledIndexSampler.claim_frames_get_gate_preprocessed",
+        "Audit.Wire3.InstalledIndexSampler.claim_frames_get_gate_witness",
+        "Audit.Wire3.InstalledIndexSampler.claim_frames_brackets",
+        "Audit.Wire3.InstalledIndexSampler.ext3_bytes_injective",
+        "Audit.Wire3.InstalledIndexSampler.ext3_payload_injective",
+        "Audit.Wire3.InstalledIndexSampler.encoded_vec_injective",
+        "Audit.Wire3.InstalledIndexSampler.claim_frames_injective",
+        "Audit.Wire3.InstalledIndexSampler.squeeze_ext3_success",
+        "Audit.Wire3.InstalledIndexSampler.squeeze_ext3_many_bound",
+        "Audit.Wire3.InstalledIndexSampler.squeeze_ext3_many_success",
+        "Audit.Wire3.InstalledIndexSampler.sample_checked_success_conditions",
+        "Audit.Wire3.InstalledIndexSampler.concrete_sampler_on_decoded_snapshot",
+        "Audit.Wire3.InstalledIndexSampler.concrete_sampler_rejects_malformed_snapshot",
+        "Audit.Wire3.InstalledIndexSampler.concrete_sampler_agrees_with_checked",
+        "Audit.Wire3.InstalledIndexSampler.installed_sampler_is_installed_tail_of_resampled",
+        "Audit.Wire3.InstalledIndexSampler.installed_sampler_keeps_transcript_and_rounds",
+        "Audit.Wire3.InstalledIndexSampler.installed_sampler_installed_and_observed_fields",
+        "Audit.Wire3.InstalledIndexSampler.installed_sampler_derived_indices",
+        "Audit.Wire3.InstalledIndexSampler.installed_sampler_matches_the_checked_execution",
+        "Audit.Wire3.InstalledIndexSampler.decoded_snapshot_exists_under_checked_execution",
+        "Audit.Wire3.InstalledIndexSampler.fixture_snapshot_decodes_for_every_hash",
+        "Audit.Wire3.InstalledIndexSampler.ext3_at_is_reduced_digest_triple",
+        "Audit.Wire3.InstalledIndexSampler.sampled_indices_absorb_used_claims",
+        "Audit.Wire3.InstalledIndexSampler.used_claims_fixed_before_index_squeeze",
+        "Audit.Wire3.InstalledIndexSampler.changing_used_claims_changes_the_index_digest_or_collides",
+        "Audit.Wire3.InstalledIndexSampler.installed_sampler_index_digest_binds_the_used_claims",
+        "Audit.Wire3.InstalledIndexSampler.index_lanes_have_index_bits_length",
+        "Audit.Wire3.InstalledIndexSampler.installed_sampler_meets_the_verify_index_length_guard",
+        "Audit.Wire3.InstalledIndexSampler.malformed_snapshot_fails_the_index_length_guard",
+        "Audit.Wire3.InstalledIndexSampler.installed_sampler_observation_needs_no_index_hypotheses",
+        "Audit.Wire3.InstalledIndexSampler.index_draw_card",
+        "Audit.Wire3.InstalledIndexSampler.index_log_position",
+        "Audit.Wire3.InstalledIndexSampler.index_gate_position",
+        "Audit.Wire3.InstalledIndexSampler.index_schedule_position_injective",
+        "Audit.Wire3.InstalledIndexSampler.index_positions_follow_the_outer_schedule",
+        "Audit.Wire3.InstalledIndexSampler.index_space_card",
+        "Audit.Wire3.InstalledIndexSampler.index_points_are_space_coordinates",
+        "Audit.Wire3.InstalledIndexSampler.uniform_index_mass_positive",
+        "Audit.Wire3.InstalledIndexSampler.per_column_identification_hook",
+        "Audit.Wire3.InstalledIndexSampler.toy_snapshot_decodes",
+        "Audit.Wire3.InstalledIndexSampler.example_concrete_sampler_shape",
+        "Audit.Wire3.InstalledIndexSampler.example_concrete_sampler_values",
+        "Audit.Wire3.InstalledIndexSampler.example_concrete_sampler_is_not_the_abstract_observation",
+        "Audit.Wire3.InstalledIndexSampler.example_fixture_claim_frames"
+      ],
+      "sources": [
+        "mle/src/prover_v2.rs",
+        "mle/src/verifier_v2.rs",
+        "mle/src/transcript_v2.rs",
+        "mle/contracts/src/MleVerifierV2.sol",
+        "mle/contracts/src/TranscriptV2.sol",
+        "mle/contracts/src/PackedClaimExt3.sol"
+      ],
+      "scope": "The index-point sampler, an engine observation until now, made concrete: the adopted checked sampler (OuterAdapter.sampleResult, which absorbs the used claims as the domain separator pcs-constituent-claims-v3, five tag-6 vector frames for the log preprocessed/witness/norm-inverse and gate preprocessed/witness cells plus one empty vector, and the separator pcs-constituent-index-v3, then squeezes the log lane at counters 3i and the gate lane at 3*indexBits+3i from one digest; checked against prover_v2.rs 144-164 as called by verifier_v2.rs 303-311 and MleVerifierV2.sol 458-476) is totalised over the snapshot decoder and installed on top of InstalledWhirTail's engine, equal by rfl to that engine with a resampled abstract engine, so every adopted theorem applies. Proved: the prefix before the index squeezes is the post-rounds state followed by the eight claim frames; equal index digests force equal state digests and equal used claims or a concrete transcript collision (tag-6 payload injectivity on canonical limbs plus the adopted frame injectivity; collision is a conclusion, never assumed absent); both lanes have length indexBits so the two index-length conjuncts of ObservationOnlyDerived become theorems; the per-column identification hook packages the ordering facts under the R1b hypothesis. The decoded-snapshot hypothesis is discharged under the adopted checked execution and on the fixture for every hash. The index coordinates form a finite space as a coordinate statement only, with no law attached; the schedule block number is a documented label, not derived. The probabilistic step (a forged cell family failing against a fresh index point) is not proved, so R1b and R3 stand; commitRound, parseWhir, configurationHash, initialTranscript and publicInputsHash remain observations; no hash security, Fiat-Shamir or WHIR/PCS soundness; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.PinnedWhirProfile",
+      "theorems": [
+        "Audit.Wire3.PinnedWhirProfile.canonical_check_exact",
+        "Audit.Wire3.PinnedWhirProfile.profile_ok_exact",
+        "Audit.Wire3.PinnedWhirProfile.params_depend_only_on_the_whir_encoding",
+        "Audit.Wire3.PinnedWhirProfile.pinned_params_of_decode",
+        "Audit.Wire3.PinnedWhirProfile.pinned_deployment_exact",
+        "Audit.Wire3.PinnedWhirProfile.pinned_engine_fields",
+        "Audit.Wire3.PinnedWhirProfile.pinned_engine_keeps_transcript",
+        "Audit.Wire3.PinnedWhirProfile.accepted_deployment_facts",
+        "Audit.Wire3.PinnedWhirProfile.accepted_profile_is_canonical",
+        "Audit.Wire3.PinnedWhirProfile.canonical_rows_are_sampled",
+        "Audit.Wire3.PinnedWhirProfile.canonical_profile_is_the_rust_row",
+        "Audit.Wire3.PinnedWhirProfile.canonical_profile_has_positive_samples",
+        "Audit.Wire3.PinnedWhirProfile.pinned_round_one_authentication",
+        "Audit.Wire3.PinnedWhirProfile.profile_forgery_needs_config_change",
+        "Audit.Wire3.PinnedWhirProfile.example_canonical_row_twenty_one_is_admissible",
+        "Audit.Wire3.PinnedWhirProfile.example_toy_profile_is_not_a_canonical_row",
+        "Audit.Wire3.PinnedWhirProfile.example_zero_sample_forgery_is_rejected",
+        "Audit.Wire3.PinnedWhirProfile.example_round_deletion_forgery_is_rejected"
+      ],
+      "sources": [
+        "mle/contracts/src/CanonicalWhirProfileV2.sol",
+        "mle/contracts/src/generated/WhirProfilesV2.sol",
+        "mle/contracts/src/MleVerifierV2.sol",
+        "mle/src/verifier_v2.rs",
+        "mle/src/fixture_v2.rs"
+      ],
+      "scope": "Pins InstalledWhirTail's free WHIR parameter record to the configuration: CanonicalWhirProfileV2.validateCanonical's four constraints (1 <= numVariables <= 21, session id, keccak256(abi.encode(config.whir)) equal to the generated table row's first 32 bytes at offset (n-1)*96, protocol id equal to the row's remaining 64 bytes; MleVerifierV2.sol 150-153) are installed as the concrete deploymentValid check of a pinned engine (all other observations unchanged). Acceptance yields that the decoded record passes the canonical check, equals the record the tail ran under, and has numVariables = degreeBits + indexBits; two accepted runs under the same deployment share the record by decoder determinism. The source enforces no syntactic positivity of inDomainSamples anywhere; positivity and numRounds >= 1 are derived only under a named table-semantics assumption (row digests correspond, digest equality separates records, standing in for keccak injectivity) for the two transcribed rows n = 10 (29 samples, 1 round) and n = 21 (29 samples, 4 rounds), checked field by field against the fixtures and by keccak recomputation against the generated table, and discharge the round-one authentication theorem's hypotheses there; the other nineteen rows are digest-only and not covered. The conjunct equating the accepted configuration's WHIR encoding with the deployed one idealises _requirePinnedConfiguration under keccak injectivity and is named as a residue. keccak itself, the VK immutable store and the decoder's Rust/Solidity refinement are not modelled; no WHIR/PCS soundness or hash security; not the system's soundness error."
     }
   ]
 }

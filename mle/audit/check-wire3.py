@@ -69,7 +69,8 @@ REQUIRED_MODULES = {"Audit.Wire3." + name for name in (
     "ChallengeUnionBound", "AttachedUnionBound", "ConstantsProvenance",
     "JointChallengeSpace", "GatePointZeroCheck",
     "OuterSequentialConditioning", "InstalledWhirTail",
-    "AdaptiveAgreementFamily",
+    "AdaptiveAgreementFamily", "PinnedWhirProfile",
+    "InstalledIndexSampler",
 )}
 REQUIRED = {
     PROJECT + "/check-wire3.py", PROJECT + "/test-check-wire3.py",

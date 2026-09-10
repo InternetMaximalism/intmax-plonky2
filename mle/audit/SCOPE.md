@@ -534,6 +534,28 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    した。WHIR近接性・list decoding・sumcheck健全性（確率的）に当たり未形式化。per-column形はR3を包含する
    ため fold 水準の変種も併記した。`wp`（WHIRパラメータ）は engine の自由パラメータで、ソースでは
    profile digestで固定されるがLeanでは観測にとどまる。R2は変わらない。
+   `wp`の固定はPinnedWhirProfileで扱った。`CanonicalWhirProfileV2.validateCanonical`の4制約
+   （1≤numVariables≤21、sessionId、`keccak256(abi.encode(config.whir))`=表の行[0:32]、protocolId=行[32:96]。
+   MleVerifierV2.sol 150-153）を`deploymentValid`の具体化として据え付け、受理から復号wpの正準性、
+   tailが走ったレコードと検査済みレコードの一致、numVariables=degreeBits+indexBitsを導く。ソースは
+   `inDomainSamples>0`を構文的にどこでも強制しないため、正値性とnumRounds≥1は表の意味論仮定
+   `TableIsCanonical`（行digestの対応、keccak単射性の代役rowSeparates）の下で、転記済み2行
+   （n=10、n=21。fixtureと生成表のkeccak再計算で一致を確認）に対してのみ導出する。他の19行はdigestのみで
+   未転記（生成器から機械的に追加可能）。`c.whirEncoding=c₀.whirEncoding`は`_requirePinnedConfiguration`
+   の理想化でkeccak単射性の残余として明記した。keccak自体・VK immutable store・復号器のRust/Solidity
+   refinementは未モデル。
+   index点samplerの観測はInstalledIndexSamplerで具体化した。採用済みの検査付きsampler
+   （OuterAdapter.sampleResult：used claimsをdomain separator「pcs-constituent-claims-v3」、tag 6の5 frame
+   （log preprocessed/witness/normInverse、gate preprocessed/witness）と空vector、separator
+   「pcs-constituent-index-v3」で吸収し、1つのdigestからlogはcounter 3i、gateは3·indexBits+3iでsqueeze。
+   prover_v2.rs 144-164、verifier_v2.rs 303-311、MleVerifierV2.sol 458-476と照合）をdecode上で全域化し、
+   installed engineに据え付けた。index squeeze前のprefixがround状態++claim framesであること、index digest
+   が等しければ状態digestとused claimsが等しいか具体的なtranscript衝突が出ること、両laneの長さがindexBits
+   であること、ObservationOnlyDerivedのlogIndex/gateIndex項が定理になることを証明した。これにより
+   「indexはcellの後に引かれる」というR3の順序面は定理になったが、偽造cell族が新鮮なindex点で失敗する
+   確率的段階は未証明でR1b/R3はそのまま。decode仮定は採用済みCommitAgrees下の実行とfixtureで可住。
+   index点の座標空間は座標主張のみで法則は付けない。commitRound・parseWhir・configurationHash・
+   initialTranscript・publicInputsHashは観測のまま。
 
 現target105の約101.5-bit値はリポジトリのgeneric-work見積もりで、Leanが証明した
 128-bit/end-to-end安全性ではありません。実装変更・デプロイ承認もこの更新には含みません。

@@ -108,3 +108,5 @@ import Audit.Wire3.GatePointZeroCheck
 import Audit.Wire3.OuterSequentialConditioning
 import Audit.Wire3.InstalledWhirTail
 import Audit.Wire3.AdaptiveAgreementFamily
+import Audit.Wire3.PinnedWhirProfile
+import Audit.Wire3.InstalledIndexSampler

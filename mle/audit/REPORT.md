@@ -1150,6 +1150,33 @@ AdaptiveAgreementFamilyは1巡、必須修正1件＋注記）。健全性欠陥�
 採用namespaceでの直接buildと全統合guardはPASS。全3508名の実定理/型/推移的公理、
 452 reviewed hashes、18表1147語、7依存5601fileを検査した。
 
+## 第22継続更新（70eed7fa以降）
+
+追跡版runnerでコミット`70eed7fa`の103モデル・3508定理を再検査しPASS（809.497秒、1433モジュール、
+manifest `66894f315b3846e4e86e18d511eea0586f4afce43148cc45570893637df092d5`、receipt
+`dcbd788f0e98ee3e9e43aebf33ec4cdb1336e52ab09e1034f783595bec8cafbc`、graph
+`8ce127fc76aa71e44913d54c1fb756e15a14df9f2d6485924970cff743b813cf`）。
+loop方式の5回目。InstalledWhirTailが残した「`wp`が自由」「index点のsamplerが観測」の2点を対象にした。
+
+- **WHIRプロファイルの固定**: PinnedWhirProfileは`CanonicalWhirProfileV2.validateCanonical`の4制約を
+  `deploymentValid`の具体化として据え付け、受理から復号wpの正準性とtail実行レコードの一致を導く。
+  ソースは`inDomainSamples>0`を構文的に強制しないため、正値性とnumRounds≥1は表の意味論仮定の下で
+  転記済み2行（n=10、n=21）に対してのみ導出し、round-1認証定理のhsamples/hroundsを消した。レビューは
+  4制約の忠実性と2行のkeccak再計算一致を確認し、「whirTailはconfigにアクセスできない」という誤った
+  設計根拠（実際はctx.parameters=c.whirEncoding）と「配備次元」という過大表現を修正させた。
+- **index点samplerの具体化**: InstalledIndexSamplerは採用済みの検査付きsamplerをdecode上で全域化して
+  installed engineに据え付け、index squeeze前のprefixがround状態++claim frames（6 frame、counter 3i／
+  3·indexBits+3i）であること、index digestの一致がused claimsの一致か具体的衝突を強制すること、両laneの
+  長さがindexBitsであることを証明し、「indexはcellの後に引かれる」（R3の順序面）を定理化した。
+  確率的段階（偽造cell族が新鮮なindex点で失敗する）は未証明のまま。レビューはソース忠実性を確認し、
+  decode仮定が実行上で可住であることの証明（採用済みCommitAgrees下、fixtureでも）を追加させ、
+  schedule上のblock番号がラベルにすぎない点を明記させた。
+
+追加2モデルはいずれもFable側の敵対的検証を通した（必須修正はいずれも文書と可住性補題の追加で、
+健全性欠陥は検出されなかった）。
+採用namespaceでの直接buildと全統合guardはPASS。全3575名の実定理/型/推移的公理、
+454 reviewed hashes、18表1147語、7依存5601fileを検査した。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。
