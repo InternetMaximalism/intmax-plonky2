@@ -999,6 +999,41 @@ selector偽造の範囲の訂正（例示した状態はactiveFilterで除外さ
 採用namespaceでの直接buildと全統合guardはPASS。全3021名の実定理/型/推移的公理、
 442 reviewed hashes、18表1147語、7依存5601fileを検査した。
 
+## 第18継続更新（f5424f98以降）
+
+追跡版runnerでコミット`f5424f98`の93モデル・3021定理を再検査しPASS（1279.663秒、1423モジュール、
+manifest `83a68fcedb8deb2ad9cb2c4568c5525defeb649b41b2b60fe7d55ccb32cebdf5`、receipt
+`3a48e1165b0466016fe20a3cbadc0ac60618e9a6e6f5172579df67f198f8ab2a`、graph
+`e43331323b2d7e39d37198ba817c5663fa8dc489117bfa98947d816a64d16114`）。
+
+本更新からloop方式に移行した。計画と結果検証をFable 5.1、実装をOpus 5が担当し、
+各候補は採用前に独立の敵対的レビューを通す。この回は「表を固定した後にchallengeを選ぶ」
+余地と、確率的読みへの橋の2点を対象にした。
+
+- **challengeのtranscript束縛**: GateDerivedRejectionは棄却定理と合成定理をtranscript導出の
+  gate tau/alphaで再述し、bound cell仮定を全表eq由来と構造的binding fieldから導いて、
+  自由なchallenge値を含まない9フィールドの縮約仮定集合を与える。§2は例外で自由alphaを保持する。
+  残るchallenge側の仮定は、導出tau/alphaに関する2つのhgoodと、sumcheck roundの採用済み
+  BadEventFreeの3つである。
+- **適応性の決定論的半分**: CommitmentOrderはgate alpha/tauのsqueeze前のprefixが22 frameで
+  採用済みrelationStateと一致し、3つのrootが13/15/19番目、最終rootとsqueezeの間は固定domain tag
+  2つだけであることを実装と照合して証明する。gateのbad setはeq列に依存せず、表を変えつつ
+  prefix digestを保つには具体的なtranscript衝突が要る（衝突耐性は仮定しない）。
+  確率的半分は定数hashに対する反例で否定され、順序論法では得られないhash仮定として残る。
+- **union bound**: ChallengeUnionBoundはtauのbad setをn個の独立digest tripleの積事象へ、
+  alphaの行ごとbad setを2^n行のunionへ持ち上げ、外側sumcheck項と合わせて3つの質量の和を
+  上界化する。envelope極値で等式に展開し、有理数の厳密計算で≤2^-172を証明した。
+  **この数値はWHIR/Merkle項を含まず系の健全性誤差ではない**。独立検算で総和は2^-172.07、
+  余裕は約0.07 bitでenvelopeぎりぎりである。3項は別々の標本空間上の質量の和であり、
+  結合事象は形式化していない。積事象と行unionのパラメータは受理実行の表に束縛されていない。
+
+追加3モデルはいずれもFable側の敵対的検証を通した。GateDerivedRejectionは文言の必須修正3件
+（§2の自由alpha、「challenge仮定は2つだけ」の過大主張、binding fieldがchallenge列の等式を
+含む点）、CommitmentOrderは引き締め2件、ChallengeUnionBoundは必須修正3件（「disjunctionの質量」
+という誤った表現、自由パラメータの明示、余裕の定量化）を適用した。
+採用namespaceでの直接buildと全統合guardはPASS。全3129名の実定理/型/推移的公理、
+445 reviewed hashes、18表1147語、7依存5601fileを検査した。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

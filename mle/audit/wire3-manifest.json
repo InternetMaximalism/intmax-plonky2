@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "69049d34629f6defc0c5b178595ce07b7f3bbe0a54aed3b7115818320a3c2695",
+      "sha256": "faa92660bad4609705443e8269f6acab23de61cccbfdc4bd740f6dcfd750552d",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "ee7693be64cd91aacbcf91d460476c9762e33d77a861b1b9edec5596c868f64f",
+      "sha256": "4fc2fd1998f18ff30aaf56e10dc095a5b5ceb297dddc3750c197351ed096738f",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "7011eeacfd08752691d37b0f6ce6dc010efdcec39d576018f724f388d7472a34",
+      "sha256": "4c43b76dfae9ea5af7f184f840e55a2f5ead5b2bed69688d9bec73f031f1489d",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "2ae3a9b1f166d6efd2a21260503cec9275943a7eda016c6c48b827653f80c707",
+      "sha256": "1fdd521dfd4a0ad441353726b490faea5f3c42b2de1f9fbc3b12a491a24fb7c1",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "f9ffa0012cdf85c69891e4eb72f8734308e04ab8affe4f77cb88e19ca01ab074",
+      "sha256": "54703bc98556b6a1311afec70a188098f8eacaf720eb837df0dd8aee0eb00132",
       "kind": "spec"
     },
     {
@@ -2211,6 +2211,21 @@
     {
       "path": "mle/audit/Audit/Wire3/GateRejectionPower.lean",
       "sha256": "14bd1b51a0208beb8996aceed7f76cabb7113e17336a579fa83e7ae320106f99",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/ChallengeUnionBound.lean",
+      "sha256": "2e18c3c10fbe0bb793af77f3a90b3a78ee4546065915de0162ddb32ca9676c14",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/GateDerivedRejection.lean",
+      "sha256": "1477607f8b1cfe1bda65fc7c8e8d36aa4853eb57fc03436cfcd5114f1b2dd320",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/CommitmentOrder.lean",
+      "sha256": "c5748481f7db3523240b3a58ebefc0de29cc68c3b656f643423835fad12c5ad7",
       "kind": "current-model"
     }
   ],
@@ -6223,6 +6238,148 @@
         "mle/src/gate_ext3.rs"
       ],
       "scope": "The attack scenarios that made the adopted gate conclusion powerless, each proved real: a zero eq column makes that conclusion true for ANY tables while leaving every row's gateValue unchanged, the zero-row-sum class containing it, the constraint-free configuration (cited from the adopted proof), the all-selectors-zero case, and a shape mismatch. The partition of unity for the adopted eq (the cube row sum is identically one) is proved, so pinning the whole eq column to eqTable tau makes the zero-row-sum scenarios impossible. A strengthened assumption set adds the adopted full-table eq provenance (added, not replacing the bound-cell field, whose bridge is not built) and composes with the adopted zero-check to conclude EVERY row's aggregate is zero; the contrapositive gives rejection power, demonstrated on concrete forged states the old assumptions accepted. OPEN, proved rather than conceded: the selector forgery survives eq provenance, and while the all-zero witness is excluded by a visible guard the PARTIAL zeroing attack is not, which is a constants-provenance obligation inside the open extraction join. tau is a free variable here, never tied to the transcript, so adaptive choice of tau is excluded only by hypothesis; no probability is computed and the assumption set is not shown inhabited."
+    },
+    {
+      "module": "Audit.Wire3.ChallengeUnionBound",
+      "theorems": [
+        "Audit.Wire3.ChallengeUnionBound.mem_productEvent",
+        "Audit.Wire3.ChallengeUnionBound.fiber_card_bound",
+        "Audit.Wire3.ChallengeUnionBound.product_event_card",
+        "Audit.Wire3.ChallengeUnionBound.product_space_card",
+        "Audit.Wire3.ChallengeUnionBound.product_space_card_bits",
+        "Audit.Wire3.ChallengeUnionBound.uniform_product_probability_nonneg",
+        "Audit.Wire3.ChallengeUnionBound.uniform_product_probability_bound",
+        "Audit.Wire3.ChallengeUnionBound.tau_product_mass_bound",
+        "Audit.Wire3.ChallengeUnionBound.digest_ratio_explicit",
+        "Audit.Wire3.ChallengeUnionBound.tau_term_explicit",
+        "Audit.Wire3.ChallengeUnionBound.mem_rowUnion",
+        "Audit.Wire3.ChallengeUnionBound.not_mem_rowUnion",
+        "Audit.Wire3.ChallengeUnionBound.rowUnion_card_le",
+        "Audit.Wire3.ChallengeUnionBound.alphaFamily_apply",
+        "Audit.Wire3.ChallengeUnionBound.alphaFamily_card",
+        "Audit.Wire3.ChallengeUnionBound.mem_alphaUnionBadSet",
+        "Audit.Wire3.ChallengeUnionBound.alpha_union_card_bound",
+        "Audit.Wire3.ChallengeUnionBound.alpha_union_configured_card_bound",
+        "Audit.Wire3.ChallengeUnionBound.alpha_union_mass_bound",
+        "Audit.Wire3.ChallengeUnionBound.alpha_outside_union",
+        "Audit.Wire3.ChallengeUnionBound.all_rows_gate_slots_vanish",
+        "Audit.Wire3.ChallengeUnionBound.all_rows_constraints_vanish_of_tau_and_alpha_union",
+        "Audit.Wire3.ChallengeUnionBound.outer_term_is_adopted_bound",
+        "Audit.Wire3.ChallengeUnionBound.combined_union_bound",
+        "Audit.Wire3.ChallengeUnionBound.accepted_combined_union_bound",
+        "Audit.Wire3.ChallengeUnionBound.digest_ratio_cube_nonneg",
+        "Audit.Wire3.ChallengeUnionBound.envelope_digest_terms_bound",
+        "Audit.Wire3.ChallengeUnionBound.envelope_combined_bound",
+        "Audit.Wire3.ChallengeUnionBound.combined_bound_at_extremes",
+        "Audit.Wire3.ChallengeUnionBound.combined_bound_at_extremes_numeric",
+        "Audit.Wire3.ChallengeUnionBound.envelope_extreme_combined_numeric",
+        "Audit.Wire3.ChallengeUnionBound.tau_term_one",
+        "Audit.Wire3.ChallengeUnionBound.tau_product_mass_bound_one",
+        "Audit.Wire3.ChallengeUnionBound.product_event_empty",
+        "Audit.Wire3.ChallengeUnionBound.uniform_product_probability_empty",
+        "Audit.Wire3.ChallengeUnionBound.alpha_union_one_row",
+        "Audit.Wire3.ChallengeUnionBound.alpha_union_all_empty_rows",
+        "Audit.Wire3.ChallengeUnionBound.alpha_union_two_rows"
+      ],
+      "sources": [
+        "mle/src/verifier_v2.rs",
+        "mle/src/transcript_v2.rs",
+        "mle/contracts/src/TranscriptV2.sol"
+      ],
+      "scope": "The tau zero-check bad set lifted to a product event over n independent digest triples (the adopted single-coordinate fibre bound applied coordinatewise, exponent 3n; independence of the n draws is the explicit product law, not a Keccak property), the per-row alpha bad sets lifted to a union over the 2^n cube rows with cardinality at most rows times (numGateConstraints - 1), at most 122 times 2^n, and the outer sumcheck terms (norm 5d, gate (q+2)d) added to give a bound on the SUM of three separately bounded masses on three different sample spaces; no joint event or law is formalized. At the envelope extremes the bound is expanded as an equality and shown at most 2^-172 by exact rational arithmetic; the total is about 2^-172.07 with about 0.07 bits of headroom, tight to the envelope. This figure excludes the dominant WHIR and Merkle term and must never be quoted as the system's soundness error. The parameters of the product and union terms are free and not tied to the accepted execution's tables; only the outer term connects to the proof and configuration; failure remains a free rational bounded above."
+    },
+    {
+      "module": "Audit.Wire3.GateDerivedRejection",
+      "theorems": [
+        "Audit.Wire3.GateDerivedRejection.derived_gate_tau_width",
+        "Audit.Wire3.GateDerivedRejection.derived_eq_numVars",
+        "Audit.Wire3.GateDerivedRejection.derived_gate_cube_sum_vanishes",
+        "Audit.Wire3.GateDerivedRejection.derived_gate_rows_vanish",
+        "Audit.Wire3.GateDerivedRejection.derived_nonzero_row_forces_bad_tau",
+        "Audit.Wire3.GateDerivedRejection.derived_assumptions_reject",
+        "Audit.Wire3.GateDerivedRejection.eq_cell_of_provenance",
+        "Audit.Wire3.GateDerivedRejection.derived_alpha_matches",
+        "Audit.Wire3.GateDerivedRejection.adopted_assumptions_of_derived",
+        "Audit.Wire3.GateDerivedRejection.strongAssumptions_of_derived",
+        "Audit.Wire3.GateDerivedRejection.derived_table_widths",
+        "Audit.Wire3.GateDerivedRejection.rowFilter_eq_mk",
+        "Audit.Wire3.GateDerivedRejection.rowFilter_zero_iff",
+        "Audit.Wire3.GateDerivedRejection.derived_gate_slots_vanish",
+        "Audit.Wire3.GateDerivedRejection.derived_selected_gate_constraints_vanish",
+        "Audit.Wire3.GateDerivedRejection.liftList_values",
+        "Audit.Wire3.GateDerivedRejection.values_injective",
+        "Audit.Wire3.GateDerivedRejection.adopted_alpha_is_derived_alpha",
+        "Audit.Wire3.GateDerivedRejection.adopted_tau_is_derived_tau",
+        "Audit.Wire3.GateDerivedRejection.challenges_are_pinned_to_the_derivation",
+        "Audit.Wire3.GateDerivedRejection.get_map_lift",
+        "Audit.Wire3.GateDerivedRejection.challenge_hypotheses_are_source_squeezes",
+        "Audit.Wire3.GateDerivedRejection.only_two_challenge_hypotheses_remain",
+        "Audit.Wire3.GateDerivedRejection.Example.fixture_derived",
+        "Audit.Wire3.GateDerivedRejection.Example.fixture_gate_tau_width",
+        "Audit.Wire3.GateDerivedRejection.Example.fixture_cube_rows",
+        "Audit.Wire3.GateDerivedRejection.Example.fixture_challenges_are_source_squeezes",
+        "Audit.Wire3.GateDerivedRejection.Example.fixture_gate_slots_vanish"
+      ],
+      "sources": [
+        "mle/src/verifier_v2.rs",
+        "mle/contracts/src/MleVerifierV2.sol",
+        "mle/src/sumcheck/gate_ext3_v2.rs"
+      ],
+      "scope": "The adopted gate rejection and composition theorems restated at the transcript-derived gate tau and gate alpha under DerivedInitial, with the eq field the adopted full-table GateEqProvenance at that tau and the cube index derived from the adopted column lengths. Configuration validity, both table widths and the vanishing cube sum are derived, not assumed. The adopted bound-cell eq field is derived from full-table provenance plus a structural binding field, so the reduced nine-field assumption set replaces the ten-field one and contains no free challenge value; the adopted free alpha and tau are shown to have been pinned by their transcript premises all along. Section 2 is the stated exception (implicit free alpha, tau merely instantiated). Three challenge-side premises remain: the two hgood memberships about DERIVED tau and alpha and the adopted BadEventFree on the sumcheck round challenges. No probability, no Fiat-Shamir, partial selector zeroing, the extraction join and circuit truth remain open; no inhabitant of the assumption set is exhibited."
+    },
+    {
+      "module": "Audit.Wire3.CommitmentOrder",
+      "theorems": [
+        "Audit.Wire3.CommitmentOrder.transcript_collision_exhibits_actual_hash_inputs",
+        "Audit.Wire3.CommitmentOrder.frame_injective",
+        "Audit.Wire3.CommitmentOrder.prefix_frame_count",
+        "Audit.Wire3.CommitmentOrder.prefix_state_is_relation_state",
+        "Audit.Wire3.CommitmentOrder.prefix_state_counter_zero",
+        "Audit.Wire3.CommitmentOrder.frames_get_preprocessed_root",
+        "Audit.Wire3.CommitmentOrder.frames_get_witness_root",
+        "Audit.Wire3.CommitmentOrder.frames_get_norm_inverse_root",
+        "Audit.Wire3.CommitmentOrder.three_roots_inside_the_prefix",
+        "Audit.Wire3.CommitmentOrder.only_two_domain_separators_after_the_last_root",
+        "Audit.Wire3.CommitmentOrder.frames_after_the_last_root_are_statement_independent",
+        "Audit.Wire3.CommitmentOrder.frames_after_the_last_root_are_domain_tags",
+        "Audit.Wire3.CommitmentOrder.draw_many_congr",
+        "Audit.Wire3.CommitmentOrder.gate_alpha_from_prefix",
+        "Audit.Wire3.CommitmentOrder.gate_tau_from_prefix",
+        "Audit.Wire3.CommitmentOrder.gate_challenges_factor_through_prefix",
+        "Audit.Wire3.CommitmentOrder.equal_prefix_gives_equal_gate_challenges",
+        "Audit.Wire3.CommitmentOrder.gate_challenge_counters",
+        "Audit.Wire3.CommitmentOrder.gate_bad_set_index_width",
+        "Audit.Wire3.CommitmentOrder.gate_bad_set_ignores_the_eq_column",
+        "Audit.Wire3.CommitmentOrder.gate_bad_set_depends_only_on_wires_and_constants",
+        "Audit.Wire3.CommitmentOrder.gate_eq_table_is_a_function_of_tau_alone",
+        "Audit.Wire3.CommitmentOrder.alpha_bad_set_depends_only_on_row_values",
+        "Audit.Wire3.CommitmentOrder.gate_alpha_precedes_every_gate_tau_coordinate",
+        "Audit.Wire3.CommitmentOrder.gate_bad_set_determined_by_the_roots",
+        "Audit.Wire3.CommitmentOrder.absorb_messages_bind_or_collide",
+        "Audit.Wire3.CommitmentOrder.prefix_digest_binds_the_frames",
+        "Audit.Wire3.CommitmentOrder.root_of_equal_byte_messages",
+        "Audit.Wire3.CommitmentOrder.prefix_digest_binds_the_three_roots",
+        "Audit.Wire3.CommitmentOrder.distinct_roots_force_a_distinct_prefix_or_a_collision",
+        "Audit.Wire3.CommitmentOrder.changing_the_committed_tables_changes_the_prefix_or_collides",
+        "Audit.Wire3.CommitmentOrder.constant_hash_prefix_digest",
+        "Audit.Wire3.CommitmentOrder.constant_hash_collapses_the_gate_challenges",
+        "Audit.Wire3.CommitmentOrder.statement_prefixes_differ",
+        "Audit.Wire3.CommitmentOrder.separation_fails_for_a_deterministic_hash",
+        "Audit.Wire3.CommitmentOrder.deterministic_adaptivity",
+        "Audit.Wire3.CommitmentOrder.Example.fixture_derived",
+        "Audit.Wire3.CommitmentOrder.Example.fixture_prefix_shape",
+        "Audit.Wire3.CommitmentOrder.Example.fixture_gate_challenge_counters",
+        "Audit.Wire3.CommitmentOrder.Example.fixture_factorisation",
+        "Audit.Wire3.CommitmentOrder.Example.fixture_execution_matches_engine",
+        "Audit.Wire3.CommitmentOrder.Example.fixture_deterministic_adaptivity"
+      ],
+      "sources": [
+        "mle/contracts/src/MleVerifierV2.sol",
+        "mle/contracts/src/TranscriptV2.sol",
+        "mle/src/verifier_v2.rs",
+        "mle/src/prover_v2.rs"
+      ],
+      "scope": "The deterministic half of Fiat-Shamir adaptivity for the gate lane: the absorbed prefix before the gate alpha and gate tau squeezes is exactly twenty-two frames whose fold IS the adopted OuterInitial.relationState, with the preprocessed, witness and norm-inverse roots at positions 13, 15 and 19 followed only by two fixed statement-independent domain tags; gate alpha at counter 9+3d precedes every gate tau coordinate at 12+3d+3i. The gate bad SET depends on the committed wire and constant columns and not on the eq column, so tau enters only as the tested element. Changing the committed tables while keeping the prefix digest yields a concrete transcript collision, proved without assuming collision resistance via a strengthened frame injectivity lemma. The probabilistic half is refuted in its weakest deterministic form (a constant hash separates no prefixes), so it is a hash assumption no ordering argument can supply. Stated modulo the visible CommittedTables extraction join, with the gate list, configuration and public-input hash held fixed as parameters whose own provenance from the config/VK digest is not proved."
     }
   ]
 }

@@ -98,3 +98,6 @@ import Audit.Wire3.ZeroCheckSemantics
 import Audit.Wire3.GateClaimChain
 import Audit.Wire3.AlphaZeroCheck
 import Audit.Wire3.GateRejectionPower
+import Audit.Wire3.GateDerivedRejection
+import Audit.Wire3.CommitmentOrder
+import Audit.Wire3.ChallengeUnionBound

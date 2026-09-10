@@ -420,10 +420,33 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    採用済みchallenge上で証明した（alphaはgate tauより前のcounterで引かれる）。
    **なお未解決**: selectorの部分的零化（全零化はactiveFilterで除外されるが、重要な行だけを
    零化し他所にgateを残す攻撃は残る。constants列の由来＝抽出接合の問題）。
-   tauはこれらのモジュールでは自由変数でありtranscriptに束縛されていないため、
-   表を固定した後にtauを選ぶ適応的攻撃はhgood仮定でしか排除されていない。
-   確率も未計算で、hgoodは密度上界と合成されておらず、alphaのbad setは行ごとなので
-   cube全体には2^n行のunion boundが要る。filterが零の行は非拘束であり、これは
+   tauの束縛はGateDerivedRejectionで扱った。棄却定理と合成定理をtranscript導出の
+   gate tau/alphaで再述し（DerivedInitial下、eq列は導出tauのeqTableに全行固定、cube indexは
+   採用済み列長から導出）、bound cell仮定を全表eq由来と構造的binding fieldから導いて、
+   自由なchallenge値を含まない9フィールドの縮約仮定集合を与える。§2のみ例外で、
+   暗黙の自由alphaを保持しtauを具体化するに留まる。残るchallenge側の仮定は3つ、
+   導出tau/alphaに関する2つのhgoodと、sumcheck roundのchallengeに関する採用済みBadEventFreeである。
+   これらは依然として仮定であり確率ではない。
+   適応性の決定論的半分はCommitmentOrderで扱った。gate alpha/tauのsqueeze前に吸収される
+   prefixは22 frameで採用済みrelationStateと一致し、preprocessed/witness/norm-inverse rootは
+   13/15/19番目、最終rootとsqueezeの間は固定domain tag 2つだけである（実装の
+   MleVerifierV2.sol 400-455とverifier_v2.rs 233-275で照合）。gateのbad setはeq列に依存せず
+   committed wire/constant列にのみ依存し、表を変えつつprefix digestを保つには具体的な
+   transcript衝突が要ることを、衝突耐性を仮定せずに示す。確率的半分（squeezeがprefixに対して
+   uniformかつ独立であること）は定数hashに対する反例で否定されるため、順序論法では得られず
+   hash仮定として残る。gate list・設定・public input hashは固定パラメータであり、
+   その config/VK digestからの由来はここでは証明しない。
+   union boundはChallengeUnionBoundで扱った。tauのzero-check bad setをn個の独立digest tripleの
+   積事象へ持ち上げ（採用済み単一座標のfibre上界を座標ごとに適用、指数3n、n個の独立性は
+   明示的な積の法則であってKeccakの性質ではない）、行ごとのalpha bad setを2^n行のunionへ
+   持ち上げて濃度≤2^n·(numGateConstraints−1)≤122·2^nを導き、外側sumcheck項
+   （norm 5·d、gate (q+2)·d）と合わせて3つの質量の和を上界化する。envelope極値
+   （degreeBits 13、q 8、制約123）で等式として展開し、有理数の厳密計算で≤2^-172を証明した。
+   **この数値の読み方**: 余裕は約0.07 bitでenvelopeぎりぎりであり（degreeBits 14や制約125で破れる）、
+   WHIR/Merkle項を含まないため系の健全性誤差ではない（設計点は約100 bit）。3項は別々の
+   標本空間上の質量の和であり、結合事象や同時分布は形式化していない。積事象と行unionの
+   パラメータ（n、g、係数族）は受理実行の実際の表には束縛されておらず、外側項だけが
+   proofと設定に接続されている。filterが零の行は非拘束であり、これは
    selector範囲外の行として正しい挙動である。
    195·(⌈2^256/p⌉/2^256)³≒2^-184は外側sumcheckの一致事象のみで、支配項のWHIR/Merkleを含まない。
    実装の設計点は約100 bitであり、この数値を系の健全性誤差として引用してはならない。

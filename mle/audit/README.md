@@ -94,8 +94,11 @@
 | [GateClaimChain](Audit/Wire3/GateClaimChain.lean) | gate laneを実Verifier.roundStepで多round連鎖し、terminal橋を渡し、受理+gate lane bad eventなしから抽出表のcube和=0を導く。gate lane固有の上界(q+2)·degreeBitsも再具体化。**供給者への棄却力はまだない**（eq表の自由度、selector零化、`numGateConstraints=0`退化は仮定4で除外） |
 | [AlphaZeroCheck](Audit/Wire3/AlphaZeroCheck.lean) | 行の集約をalphaの多項式として係数を同定（slot値そのもの）し、根の個数≤numGateConstraints−1≤122をenvelopeから導く。bad set外のalphaで各slot値が0、filterが非零のgateは制約自体が0。tauとalphaの両zero-checkの合成も採用済みchallenge上で証明。filter零の行は非拘束（正しい挙動） |
 | [GateRejectionPower](Audit/Wire3/GateRejectionPower.lean) | 攻撃シナリオ4つを定理として提示し、eqの単位分解（行和=1）で行和ゼロ偽造を不可能にする。強化仮定は旧仮定が受理した偽造状態を棄却することを具体例で示す。**selectorの部分的零化は未解決**（constants由来＝抽出接合）。tauはtranscriptに束縛されていない |
+| [GateDerivedRejection](Audit/Wire3/GateDerivedRejection.lean) | 棄却定理をtranscript導出のgate tau/alphaで再述し、§3–4と縮約仮定集合から自由なchallengeを消す（10フィールド→9、bound cell仮定は全表eq由来から導出）。残るchallenge側の仮定は導出tau/alphaの2つの`hgood`と、sumcheck roundのBadEventFreeの3つ。§2は例外で自由alphaを保持 |
+| [CommitmentOrder](Audit/Wire3/CommitmentOrder.lean) | 適応性の決定論的半分。22 frameのprefixが採用済みrelationStateと一致し、3つのrootが13/15/19番目、最終rootとgate alpha/tau squeezeの間は固定domain tag 2つだけ。表の変更はprefixを変えるか具体的hash衝突を生む。確率的半分（B）は定数hashで反例が存在し、順序論法では届かないと定理で示す |
+| [ChallengeUnionBound](Audit/Wire3/ChallengeUnionBound.lean) | tauのzero-check bad setをn個の独立digest tripleの積事象へ、行ごとのalpha bad setを2^n行のunionへ持ち上げ、外側sumcheck項と合わせて3つの質量の和を上界化。envelope極値で≤2^-172を厳密有理数計算で証明（余裕0.07 bit、envelopeぎりぎり）。**WHIR/Merkle項を含まず系の健全性誤差ではない**。3項は別々の標本空間上で結合則は未形式化 |
 
-現行rootは93モデル・3021件の名付き定理です。
+現行rootは96モデル・3129件の名付き定理です。
 **ConditionalSoundnessの数値2^-184を系の健全性誤差として引用しないでください。**
 これは外側sumcheckの一致事象のみを数えた値で、支配項であるWHIR/Merkleを含みません。
 gate laneは証明されておらず、抽出とcommitmentの接合も仮定のままです。直近の検査結果はREPORTとmanifestで管理します。
