@@ -699,6 +699,20 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    残るのは和集合に対するrun水準Fubini（両draw共に同一frame fibre上でdigestが定数になる素材は揃っている）と、
    `hst`（22+5d段目がpost-rounds snapshot）のLean上の接続（ConcreteChainThreadingの`chain_model_is_the_run_chain`が
    同じ事実を証明しているが、両モジュールは互いにimportしない）。
+   run水準の和集合上界はRunLevelUnionBoundで与えた: ILOの`hst`はCCTで放棄され、frame fibre Fubiniを2族同時に
+   1回実行して P[jointBad ∪ guardedIndexBad] ≤ combinedBound + 2·tauTerm + P[拡張chainのclash]（d=13で4560/|Block|、
+   閉じた実例でRHS<1、good table存在）。explicit engineの組立結論の失敗集合はhash添字付きの和集合事象に含まれる
+   （無条件）が、その質量上界は未達: 被覆仮定（∀hashで固定事象が支配）は非退化な実行で充足が知られず、
+   本監査の空虚性方針により削除した。残る橋渡しは固定プローバの2段階条件付き計数（alpha条件付き外側対角事象、
+   外側draw条件付きの索引一様性）で、適応的プローバとは別の問題。適応的プローバはStrategyChainBound（chainの
+   birthday項のみ）で着手。
+   適応的プローバはStrategyChainBoundで着手した: 戦略（既出digestとそれらのchallenge回答から次frameを選ぶ関数、
+   因果性は型に組込み）に対してもchainのclash確率はn(n+1)/2/|Block|（87段で3828/|Block|、固定プローバと同じ定数）で、
+   chain自身のno-clash事象で条件付けたchallenge回答は一様（単一・有限集合版）、戦略的外側プローバのchainは表ごとの
+   実現メッセージでconcreteFinalに一致する。戦略は自前の神託問合せを持たない（transcript制限付き適応性）ため、自分でhashを叩いて衝突を探すgrindingプローバは
+   対象外で、その衝突質量は問合せ数qに比例する（q·n/|Block|）。**未達**: 適応的プローバのjointBadEvent（combinedBound側）の上界。
+   OuterSequentialConditioningが理想モデルで与える逐次条件付けの計数を、13個のround digestにわたる入れ子の
+   no-clash事象の下で神託表へ輸送する段が残る。
    これらの結果はSoundnessAssemblyで1定理に組み立てた。explicit engineの受理、残余仮定の名前付き構造体
    （表の意味論と転記行、配備digestと有界性、fold水準のopening、抽出列の高さとcommitted幅、
    GateDerivedRejectionの9フィールド、slot係数）、実digest drawが4族のbad event外、実index drawが

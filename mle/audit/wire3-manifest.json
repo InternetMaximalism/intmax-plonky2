@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "cb348cc4c623c4555e03f39f07a648a26c42a097c2bf0f81141fc1a10591ff13",
+      "sha256": "4cfeb25f3316d8b3d652ba69fc9bc7f373ca7cf970cf8de2151cdfd9dddc9939",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "ce891561ec8dcca2a2eeb988519ffddd6938e02a02c8970648e6363ae6b58406",
+      "sha256": "c875a777fe3b98f38fbd940d9f3d93b374c0e989a2fc06578d76bcff5ceb1c18",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "bc73c75080a03dfd3189a3786f1af4e3ff67202334b21ccf4bd19cbda5648246",
+      "sha256": "0445b3908a6e51e8ee981d8c304d1ada77cf87baa5454485ba97ffc8071b6f1d",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "ad1af5323e9bdb29ebaade4b7cee530a5efbdc0f09081553bacdbfec066f26dc",
+      "sha256": "b1279ccf19b28f53c723c71fa54e778c8687c6a65001008699ecf985ef91f2f7",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "1977f2ab9017feada829ce280be10af5a156bcaeed94282c2f7e0a3ab5083916",
+      "sha256": "91707c24c9ec57644d009be4cea6fc5aadf012a1a2246e92cf06f0666d650d71",
       "kind": "spec"
     },
     {
@@ -2356,6 +2356,16 @@
     {
       "path": "mle/audit/Audit/Wire3/IndexLanesOracle.lean",
       "sha256": "6e887a24b0e7a644e63324e9277040cc32cb9e2bfb395814538a9a1fdf4bce4b",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/RunLevelUnionBound.lean",
+      "sha256": "7caea61b1c76235e3bc5853914b6fbdfed5b34e4de5533b7528eba255004228a",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/StrategyChainBound.lean",
+      "sha256": "ed44be0aff1e6a6d13cb89ba4227c5af3d6f41fff1bddbfe30b99625a2a5e723",
       "kind": "current-model"
     }
   ],
@@ -8204,6 +8214,136 @@
         "mle/src/verifier_v2.rs"
       ],
       "scope": "Puts the index lanes under the same random-oracle counting law as the gate and outer lanes. The extended frame chain appends the eight adopted claim frames to the twenty-two-frame prefix and the five frames per round; its digest after 22 + 5d + 8 stages is the adopted installed index digest for any snapshot whose digest is the chain's stage 22 + 5d (absorb reads only the digest). Bridge lemmas transport the adopted stage identifications from the prefix-round chain to the extended chain, so stage 22 is the derivation digest and stage 22 + 5i + 5 is round i's commit digest, and the index disjuncts of the extended clash event are statements about the adopted digests. At a fixed index digest the pushforward of the table law along the installed index draw is exactly the adopted index probability (three squeezes per coordinate, twice the index bits coordinates; the modular-reduction bias is charged inside the adopted tau term), and the guarded index bad event has mass at most twice the tau term. The index counters numerically overlap the outer round counters, so separation of the two schedules is by digest only; the fixed-digests union of the joint bad event and the index bad event has mass at most combinedBound plus twice the tau term under one law, consuming only each family's own injectivity. The extended chain's birthday term is (22+5d+8)(22+5d+9)/2 over the block count, 4560 over the block count at degreeBits 13, below one, on a non-empty event. Every hypothesis introduced here has a closed witness (index bits at most eight, degreeBits thirteen, L = 8192); inherited hypotheses (the prefix payload budget, the five lane-shape hypotheses) are named. Not delivered: the run-level Fubini for the union (both digests are table functions), and the Lean connection of the snapshot hypothesis to the concrete chain, which ConcreteChainThreading proves separately without either module importing the other. Random-oracle model, not keccak; fixed prover; WHIR and Merkle excluded; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.RunLevelUnionBound",
+      "theorems": [
+        "Audit.Wire3.RunLevelUnionBound.hash_of_frame_congr",
+        "Audit.Wire3.RunLevelUnionBound.frame_state_frame_congr",
+        "Audit.Wire3.RunLevelUnionBound.assembly_index_draw_is_at_run_index_digest",
+        "Audit.Wire3.RunLevelUnionBound.extended_chain_index_digest_is_the_run_index_digest",
+        "Audit.Wire3.RunLevelUnionBound.run_combined_schedule_inl",
+        "Audit.Wire3.RunLevelUnionBound.run_combined_schedule_inr",
+        "Audit.Wire3.RunLevelUnionBound.run_combined_schedule_injective_off_clash",
+        "Audit.Wire3.RunLevelUnionBound.run_combined_non_injective_subset_clash",
+        "Audit.Wire3.RunLevelUnionBound.run_union_bad_event_is_union",
+        "Audit.Wire3.RunLevelUnionBound.index_probability_nonneg",
+        "Audit.Wire3.RunLevelUnionBound.frame_split_challenge",
+        "Audit.Wire3.RunLevelUnionBound.frame_split_frame",
+        "Audit.Wire3.RunLevelUnionBound.run_source_digest_fibre_const",
+        "Audit.Wire3.RunLevelUnionBound.run_index_digest_fibre_const",
+        "Audit.Wire3.RunLevelUnionBound.run_combined_schedule_fibre_const",
+        "Audit.Wire3.RunLevelUnionBound.run_joint_fibre_count",
+        "Audit.Wire3.RunLevelUnionBound.run_index_fibre_count",
+        "Audit.Wire3.RunLevelUnionBound.run_union_fibre_count_le",
+        "Audit.Wire3.RunLevelUnionBound.run_union_draw_probability_le_fibrewise",
+        "Audit.Wire3.RunLevelUnionBound.run_union_bad_draw_probability_le",
+        "Audit.Wire3.RunLevelUnionBound.run_union_bad_draw_probability_le_birthday",
+        "Audit.Wire3.RunLevelUnionBound.run_union_bad_draw_probability_le_at_thirteen",
+        "Audit.Wire3.RunLevelUnionBound.length_budget_extended_chain",
+        "Audit.Wire3.RunLevelUnionBound.union_config_degree",
+        "Audit.Wire3.RunLevelUnionBound.union_config_index",
+        "Audit.Wire3.RunLevelUnionBound.union_round_count",
+        "Audit.Wire3.RunLevelUnionBound.union_length_budget",
+        "Audit.Wire3.RunLevelUnionBound.union_length_budget_chain",
+        "Audit.Wire3.RunLevelUnionBound.union_length_budget_extended",
+        "Audit.Wire3.RunLevelUnionBound.run_union_bad_draw_at_the_envelope_closed",
+        "Audit.Wire3.RunLevelUnionBound.block_card_ge_extended_birthday_scale",
+        "Audit.Wire3.RunLevelUnionBound.extended_birthday_term_le_two_pow_neg",
+        "Audit.Wire3.RunLevelUnionBound.run_union_closed_bound_lt_one",
+        "Audit.Wire3.RunLevelUnionBound.assembly_failure_subset_run_union",
+        "Audit.Wire3.RunLevelUnionBound.constant_table_in_union_clash_event",
+        "Audit.Wire3.RunLevelUnionBound.union_clash_event_nonempty",
+        "Audit.Wire3.RunLevelUnionBound.union_good_event_nonempty_at_the_envelope",
+        "Audit.Wire3.RunLevelUnionBound.union_query_set_is_not_frame_free",
+        "Audit.Wire3.RunLevelUnionBound.union_birthday_term_lt_one",
+        "Audit.Wire3.RunLevelUnionBound.union_hypotheses_are_satisfiable_at_the_envelope",
+        "Audit.Wire3.RunLevelUnionBound.run_union_at_the_envelope_is_not_vacuous",
+        "Audit.Wire3.RunLevelUnionBound.exists_good_table_of_mass_lt_one",
+        "Audit.Wire3.RunLevelUnionBound.run_union_good_table_exists_at_the_envelope"
+      ],
+      "sources": [
+        "mle/src/transcript_v2.rs",
+        "mle/contracts/src/TranscriptV2.sol",
+        "mle/src/verifier_v2.rs",
+        "mle/contracts/src/MleVerifierV2.sol"
+      ],
+      "scope": "The run-level union bound under one random-oracle law for a fixed (non-adaptive) prover. The snapshot hypothesis of IndexLanesOracle is discharged: stage 22 + 5d + 8 of the extended chain is the run's own index digest, the one the assembly's actual index draw squeezes from (definitionally). The frame-fibre Fubini of the random-oracle module is re-run once for the pair of families: every chain stage is a function of the frame half of the table, off the extended clash event the combined schedule of outer, gate and index squeezes is injective (block zero's digest is the derivation digest and is covered by the third disjunct), fibre counts are exact, so the mass of the union of the joint bad event and the guarded index bad event is at most combinedBound plus twice the tau term plus the mass of the extended clash event, hence plus (22+5d+8)(22+5d+9)/2 over the block count, 4560 over the block count at degreeBits thirteen; a closed instance at L = 381 with the test configuration at degreeBits thirteen and index bits eight has right-hand side below one and a table outside the bad event exists. The tables on which the adopted explicit good-draw assembly conclusion can fail are contained, unconditionally, in a hash-indexed union event; no mass bound for that set is proved: the cover a naive bridge would need (one fixed event dominating the engine's bad sets at every hash) is not known to be satisfiable at any non-degenerate run, so the cover statement and its mass corollary were removed after review. The gap is a two-stage conditional count for a fixed prover (the hash enters the outer bad event only through the gate alpha coordinate and the index bad event only through the outer row point), not adaptivity. The extended-chain length condition needs five width bounds on the used claims beyond the length budget; L = 381 allows width at most thirteen, the deployed index bits eight needs the larger envelope; the closed witness's index half is empty. Random-oracle model, not keccak; fixed prover; WHIR and Merkle excluded; the assembly conclusion is good-draw-conditional constraint vanishing, not circuit truth; R1b remains inside the residue; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.StrategyChainBound",
+      "theorems": [
+        "Audit.Wire3.StrategyChainBound.strat_hist_succ",
+        "Audit.Wire3.StrategyChainBound.strategy_state_succ",
+        "Audit.Wire3.StrategyChainBound.strategy_state_zero",
+        "Audit.Wire3.StrategyChainBound.strat_hist_eq",
+        "Audit.Wire3.StrategyChainBound.strat_hist_of_le",
+        "Audit.Wire3.StrategyChainBound.strat_hist_congr",
+        "Audit.Wire3.StrategyChainBound.strategy_hist_is_hist",
+        "Audit.Wire3.StrategyChainBound.const_strategy_bounded",
+        "Audit.Wire3.StrategyChainBound.strategy_chain_of_fixed_shape",
+        "Audit.Wire3.StrategyChainBound.strategy_sel_of_fixed_shape",
+        "Audit.Wire3.StrategyChainBound.challenge_at_reassign_frame",
+        "Audit.Wire3.StrategyChainBound.challenge_at_reassign_sel",
+        "Audit.Wire3.StrategyChainBound.strategy_sel_stable_gen",
+        "Audit.Wire3.StrategyChainBound.strategy_sel_stable_of",
+        "Audit.Wire3.StrategyChainBound.strategy_sel_ne",
+        "Audit.Wire3.StrategyChainBound.strategy_state_stable",
+        "Audit.Wire3.StrategyChainBound.strategy_chain_causal",
+        "Audit.Wire3.StrategyChainBound.strategy_state_distinct",
+        "Audit.Wire3.StrategyChainBound.strategy_clash_event_mem",
+        "Audit.Wire3.StrategyChainBound.strategy_chain_clash_probability_le",
+        "Audit.Wire3.StrategyChainBound.strategy_chain_no_clash_nonempty",
+        "Audit.Wire3.StrategyChainBound.challenge_input_digest_eq",
+        "Audit.Wire3.StrategyChainBound.challenge_at_is_sel",
+        "Audit.Wire3.StrategyChainBound.strategy_sel_ne_challenge_sel",
+        "Audit.Wire3.StrategyChainBound.challenge_sel_ne_of_counter",
+        "Audit.Wire3.StrategyChainBound.challenge_at_reassign_challenge",
+        "Audit.Wire3.StrategyChainBound.strategy_state_challenge_stable",
+        "Audit.Wire3.StrategyChainBound.challenge_sel_stable",
+        "Audit.Wire3.StrategyChainBound.no_clash_challenge_reassign",
+        "Audit.Wire3.StrategyChainBound.adaptive_fresh_step_uniform",
+        "Audit.Wire3.StrategyChainBound.strategy_challenge_fresh_step",
+        "Audit.Wire3.StrategyChainBound.strategy_challenge_fresh_uniform",
+        "Audit.Wire3.StrategyChainBound.strategy_challenge_joint_uniform",
+        "Audit.Wire3.StrategyChainBound.round_shape_at_is_msg",
+        "Audit.Wire3.StrategyChainBound.round_shape_msg_payload_bound",
+        "Audit.Wire3.StrategyChainBound.strategic_shape_apply",
+        "Audit.Wire3.StrategyChainBound.strategic_shape_bounded",
+        "Audit.Wire3.StrategyChainBound.strategic_challenges_is_sel",
+        "Audit.Wire3.StrategyChainBound.messages_from_length",
+        "Audit.Wire3.StrategyChainBound.messages_from_get",
+        "Audit.Wire3.StrategyChainBound.messages_from_get_none",
+        "Audit.Wire3.StrategyChainBound.realized_messages_length",
+        "Audit.Wire3.StrategyChainBound.realized_messages_get",
+        "Audit.Wire3.StrategyChainBound.realized_messages_get_none",
+        "Audit.Wire3.StrategyChainBound.strategic_hlen_of_bounded",
+        "Audit.Wire3.StrategyChainBound.strat_shape_at_strategic",
+        "Audit.Wire3.StrategyChainBound.strategic_shape_agrees",
+        "Audit.Wire3.StrategyChainBound.strategic_prover_chain_is_strategy_chain",
+        "Audit.Wire3.StrategyChainBound.strategic_prover_chain_base",
+        "Audit.Wire3.StrategyChainBound.strategic_prover_chain_step",
+        "Audit.Wire3.StrategyChainBound.strategic_prover_chain_is_the_run_chain",
+        "Audit.Wire3.StrategyChainBound.constant_table_strategy_state",
+        "Audit.Wire3.StrategyChainBound.constant_table_strategy_clashes",
+        "Audit.Wire3.StrategyChainBound.first_challenge_strategy_bounded",
+        "Audit.Wire3.StrategyChainBound.first_challenge_strategy_is_not_constant",
+        "Audit.Wire3.StrategyChainBound.first_challenge_chain_clash_probability_le",
+        "Audit.Wire3.StrategyChainBound.strategy_chain_clash_at_eighty_seven",
+        "Audit.Wire3.StrategyChainBound.strategic_prover_chain_clash_at_thirteen",
+        "Audit.Wire3.StrategyChainBound.challenge_truncated_round_causal",
+        "Audit.Wire3.StrategyChainBound.challenge_truncated_message_lengths",
+        "Audit.Wire3.StrategyChainBound.challenge_truncated_message_depends",
+        "Audit.Wire3.StrategyChainBound.challenge_truncated_strategic_bounded",
+        "Audit.Wire3.StrategyChainBound.adaptive_strategic_chain_clash_at_thirteen",
+        "Audit.Wire3.StrategyChainBound.strategy_clash_bound_at_eighty_seven_lt_one"
+      ],
+      "sources": [
+        "mle/src/transcript_v2.rs",
+        "mle/contracts/src/TranscriptV2.sol",
+        "mle/src/verifier_v2.rs"
+      ],
+      "scope": "The fresh-query induction re-run against a strategy rather than a list, for the chain's clash event: a first step toward an adaptive prover in the random-oracle model. A strategy maps the history (the stage digests produced so far and the oracle's answers at the challenge inputs of those digests) to the next frame's tag and payload, with causality built into the type; the fixed-shape chain is the special case of a strategy that ignores its history. For every strategy the chain's clash probability is at most n(n+1)/2 over the block count, the same constant as for a fixed prover, 3828 over the block count at the envelope's eighty-seven stages; the new ingredients are that the stage query depends on the table through challenge answers too, and that a frame is never a challenge input, so overwriting a frame answer leaves every earlier payload alone. The fresh-uniform challenge lemma: conditioned on the chain's own no-clash event up to a stage, the answers at that stage digest's challenge inputs are uniform, singly and jointly over a finite counter set, the adaptive analogue of the adopted fixed-digest uniformity. The strategic outer prover (twenty-two prefix frames, then per round five frames of a message chosen from the challenge history under the protocol's causality) has a chain equal, table by table, to the fixed-shape chain of the messages it realized at that table, carried through the adopted concrete final state. The strategy is transcript-restricted: it makes no oracle queries of its own, so a random-oracle prover that grinds candidate payloads against its own hash queries is not modelled and its clash mass grows with its query count. Not delivered: the union bound for an adaptive prover's joint bad event; the adopted OuterSequentialConditioning proves the per-round sequential conditioning in the ideal model, and the missing step is its transport to the oracle table across the nested no-clash events of the round digests. Non-vacuity: the constant table lies in every strategy's clash event and a strategy that reads a challenge answer is exhibited with its bound. Random-oracle model, not keccak; outer lanes only; not the system's soundness error."
     }
   ]
 }

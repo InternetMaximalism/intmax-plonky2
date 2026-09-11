@@ -1399,6 +1399,35 @@ loop方式の14回目。BirthdayClashBoundが残したchainモデルと実行の
   両モジュール合わせて122モデル・4530定理。今回もROMの法則下・固定プローバの結果であり、keccakの性質でも系の健全性
   誤差でもない。適応的プローバ、R1b（WHIR近接性+sumcheck健全性）、回路の真値、受理証明と残余の同時充足性は未着手。
 
+## 第31継続更新（5e55b602以降）
+
+追跡版runnerでコミット`5e55b602`の122モデル・4530定理を再検査しPASS（854.581秒、1452モジュール、
+manifest `d880585491d008e94f5b39a4cfeba31441f20373e89e122435be788954104346`、receipt
+`e06033d3d393f681e975e820cf3ce362ad1deb36250ed2ef1a5bb4365a10ec8a`、graph
+`65480d4334a2ee54b091f5c44bf8526dc910427ab4c95f0b0fec98be5d84ee3f`）。
+loop方式の15回目。ConcreteChainThreadingとIndexLanesOracleの接合（run水準の和集合上界）と、適応的プローバへの第一歩（chainのbirthday項）を対象にした。
+
+- **run水準の和集合上界**: RunLevelUnionBoundはILOの`hst`をCCTで放棄し（拡張chainの22+5d+8段目 = 組立の実索引digest、rfl）、
+  RandomOracleSqueezesのframe fibre Fubiniを2族同時に1回再実行して P[jointBad ∪ guardedIndexBad] ≤ combinedBound + 2·tauTerm +
+  P[拡張chainのclash]（d=13で4560/|Block|）を得た。閉じた実例（L=381）でRHS<1、good tableの存在も示した。explicit engineの
+  組立結論の失敗集合はhash添字付き和集合事象に含まれる（無条件）。レビューは分割と接頭辞分離の実使用、clash外での結合
+  単射性（block 0のdigest = derive digestを含む）、厳密なfibre計数、≤の総和を確認した一方、初稿の質量系が依存した被覆仮定
+  （∀hashで固定事象が支配）は固定プローバでも非退化な実行で充足が知られない（hashはgate alpha座標と外側row点経由でのみ
+  bad事象に入る）と判定し、空虚性方針により被覆定理と質量系を削除させた。残る橋渡しは2段階条件付き計数であり適応性の
+  問題ではないことを見出しに明記した。`hlenI`の追加コスト（p.usedの幅上界、L=381は幅≤13のみ）と閉証人の索引半分が∅である
+  ことも開示。
+- **戦略に対するbirthday上界**: StrategyChainBoundはfresh-query帰納を戦略（既出digestとそのchallenge回答から次frameを
+  選ぶ関数。因果性は型に組込み）に対して再実行し、任意の戦略でchainのclash確率 ≤ n(n+1)/2/|Block|（87段で3828/|Block|、
+  固定プローバと同じ定数）を得た。鍵は採用済み`frame_ne_challenge_input`（frame回答の書換えはchallenge回答を動かさない）と
+  no-clash下でのdigest相異。chain自身のno-clash事象で条件付けたchallenge回答の一様性（単一・有限集合版）、戦略的外側
+  プローバのchainが表ごとの実現メッセージでconcreteFinalに一致することも示した。レビューは戦略が自前の神託問合せを持たないtranscript制限付きモデルであること（grindingプローバは対象外、質量は問合せ数に比例）を見出しに明記させ、「履歴で条件付け」の表現をno-clash事象での条件付けに正した。未達は適応的プローバの和集合上界
+  （OuterSequentialConditioningの逐次条件付け計数の神託表への輸送）で、見出しで明示している。
+  両モジュール合わせて124モデル・4637定理。RunLevelUnionBoundの初稿の被覆仮定と、StrategyChainBoundの「Fiat–Shamirプローバが持つ
+  情報そのもの」という表現は、いずれもレビューで退けられた（前者は非退化な実行で充足が知られない仮定、後者は自前の神託問合せを
+  持つgrindingプローバを黙って除外していた）。今回もROMの法則下の結果であり、keccakの性質でも系の健全性誤差でもない。
+  残るのは固定プローバの2段階条件付き計数、適応的プローバの和集合上界（逐次条件付けの神託表への輸送）、grindingプローバの
+  問合せ計数、R1b、回路の真値、受理証明と残余の同時充足性。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。
