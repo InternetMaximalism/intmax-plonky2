@@ -665,7 +665,8 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    過大主張である。局所化した反証可能な述語（FrameFoldCollision、Index/RoundDigestClash、
    ConfigEncodingCollision、LeafCollision）で主要定理を言い直した。採用木側の要修正:
    `ConditionalSoundness.no_row_collision_binds_opened_dot`は仮定¬RowCollisionが充足不能で空虚
-   （NoCollisionAmong型の局所的単射性に置き換えるべき）。本SCOPEの「具体的なtranscript衝突」の各記述は
+   （NoCollisionAmong型の局所的単射性に置き換えるべき→OpenedDotBindingで置き換え済み。Lean上の利用箇所は0件で
+   健全性への帰結はない）。本SCOPEの「具体的なtranscript衝突」の各記述は
    「その実行の2つの具体的入力の衝突（局所述語）」と読むこと。
    Fiat–Shamir半分(B)の最初の形式化はRandomOracleSqueezesで行った。hashを有限集合Q上の一様ランダム表
    （random oracleの有限計数法則）とし、相異なる入力での射影の一様性、block digestを固定した条件付きでの
@@ -676,6 +677,13 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    1で空虚、実行のframe入力を含むQで<1（存在のみ証明）、小さい上界は未証明（birthday型計数）、適応的
    prover（pがTに依存）は未対応。初稿の非適応定理は仮定が全digestをzeroDigestに強制し空虚だったため
    棄却して再定式化した（2度目の空虚性検出）。ROMであってkeccakの性質ではない。
+   加算項のbirthday型計数はBirthdayClashBoundで進めた。fresh query補題（qでの回答に依存しない事象に
+   対する等式）とadaptive版、因果的で新鮮なchainの衝突確率上界、有界長の問い合わせ集合上でround foldの
+   5 frameから成るchainモデルの衝突確率≤5d(5d+1)/2/|Block|（d=13で2145/|Block|）を証明した（freshnessは
+   frame_injectiveから証明、定数表は衝突事象に属する）。**限定**: 上界はchainモデル上で、実行の
+   actualChainへの接続のうち、関係prefixの22 frameを繋いだchainの起点がderiveのdigestと一致すること
+   （87段で衝突確率≤3828/|Block|）は証明済み、concreteChainの帰納は未了で、run水準の加算項は仮定のまま。
+   局所化定理はstageQueriesの同位置frame対を名指す形に強化した。
    これらの結果はSoundnessAssemblyで1定理に組み立てた。explicit engineの受理、残余仮定の名前付き構造体
    （表の意味論と転記行、配備digestと有界性、fold水準のopening、抽出列の高さとcommitted幅、
    GateDerivedRejectionの9フィールド、slot係数）、実digest drawが4族のbad event外、実index drawが

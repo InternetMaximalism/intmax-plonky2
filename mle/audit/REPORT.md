@@ -1343,6 +1343,31 @@ LocalizedCollisionsは1巡；RustCallBoundaryは1巡）。本更新で検出さ�
 採用namespaceでの直接buildと全統合guardはPASS。全4292名の実定理/型/推移的公理、
 467 reviewed hashes、18表1147語、7依存5601fileを検査した。
 
+## 第29継続更新（2d8de2d1以降）
+
+追跡版runnerでコミット`2d8de2d1`の118モデル・4292定理を再検査しPASS（894.88秒、1448モジュール、
+manifest `1a98c5af11f6728ef9ba023b3c56aad6f8b4dcd6005bbd1b93722cde05bf3094`、receipt
+`c0bcbb4407930c4f14f846e5d2318e74d9d1d25844194a1fe466b90dbc6301e0`、graph
+`bab5f012649fef549d25ae80d3fe2cb8c412496a6602962d8670eca65ad5c1e3`）。
+loop方式の13回目。LocalizedCollisionsが指摘した空虚な採用済み定理の修復と、RandomOracleSqueezesに残った
+加算項（round digest衝突確率）のbirthday型上界を対象にした。
+
+- **空虚定理の修復**: OpenedDotBindingは`no_row_collision_binds_opened_dot`に利用箇所が無いことを棚卸しで
+  確認し、実行から計算される有限リスト上の単射性を仮定とする置き換え定理と葉衝突への局所化形、非退化な
+  実例と反証例を与えた。レビューは仮定の範囲の記述（多index openingでは他のrow/pathも含む）を正確化させた。
+- **birthday型上界**: BirthdayClashBoundはfresh query補題とadaptive版、因果的chainの衝突確率上界、
+  有界長の問い合わせ集合上でのround fold chainモデルの衝突確率≤5d(5d+1)/2/|Block|を証明した。レビューは
+  計数の核が健全で非空虚であることを確認し、Check.leanの被覆不足、chainモデルと実行の接続が未了である
+  こと、局所化定理の文が大域衝突述語のままである点を修正させた。修正でprefix 22 frameを繋いだchainの起点が
+  deriveのdigestと一致することまで証明され（87段で≤3828/|Block|）、concreteChainの帰納のみが残る。
+  run水準の加算項は依然仮定であり、2145/|Block|を実行の値として引用してはならない。
+
+追加2モデルはいずれもFable側の敵対的検証を通した。採用木側の修正として、空虚な
+`ConditionalSoundness.no_row_collision_binds_opened_dot`のdocstringを非推奨化しOpenedDotBindingを
+参照させた（定理の変更なし、利用箇所なし）。
+採用namespaceでの直接buildと全統合guardはPASS。全4431名の実定理/型/推移的公理、
+469 reviewed hashes、18表1147語、7依存5601fileを検査した。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "5cc2222a392f48177fc3020c67faea25cf61fc91304a0ba79c51f264cc986e79",
+      "sha256": "84cd9806c0ce72846a9231261a205f960e53bfda6499e979d468717b289f6dc9",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "1c42221cd5d9d1b0d9481475bbea3d95dd4f3f4b993ef3ba5d17bc4056b97dd1",
+      "sha256": "43d4e976525dbebb35e20bee6bcec7012aab004939578073e388df4117d3957d",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "c1730f14c327dabc1a2346dec2f3be8b7d52ea16e8db5c390bb0af519763b7ac",
+      "sha256": "6a9e3b093d40cea1874063d109a68ec1261a528b8b671178f8a5fb8f87935f0b",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "7ba5465231fea07eb00ee483246bee6d2a7929086e9afd733cbfbdf8057e8ef6",
+      "sha256": "54091215141f1411d08fe6b4c72678694f551ed707cc2ed0e33a301a654b5e18",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "6acc7d9cec10f0f9bca217112d78905ead2f64a8b892c52f9bf6096aaf222f62",
+      "sha256": "8f7b9958b65d492ab1ed5cd2254b320215749297a655050b6fe2f92ef2e34d6f",
       "kind": "spec"
     },
     {
@@ -2180,7 +2180,7 @@
     },
     {
       "path": "mle/audit/Audit/Wire3/ConditionalSoundness.lean",
-      "sha256": "b9dfef23164f1a6fa54a5d650b24983cbecce1cccfc8f558bbdcdd2f915184d6",
+      "sha256": "f57fd0dde5496778c78cb5377f75294242ecc2f5b5e8f0ee6ad3db3b6ba77c18",
       "kind": "current-model"
     },
     {
@@ -2336,6 +2336,16 @@
     {
       "path": "mle/audit/Audit/Wire3/RustCallBoundary.lean",
       "sha256": "c6e4e1f8802c13fc66e48366544ec0abda61723741e2ec1754dcf7ff979d8484",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/BirthdayClashBound.lean",
+      "sha256": "53e92c6d09509ed32c2d016f05312e2af8c1c94d2fc096a8b04328f566b18346",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/OpenedDotBinding.lean",
+      "sha256": "ba74ef3df890acbbedadc2027fe3005ed7d0fd747f9db0a535cc2cd18f7d3e38",
       "kind": "current-model"
     }
   ],
@@ -7903,6 +7913,165 @@
         "mle/contracts/src/MleVerifierV2.sol"
       ],
       "scope": "The Rust per-call boundary given its own deployment predicate, closing the Solidity-only caveat: every check mle_verify_v2 runs per call (byte caps, digest lengths, the width profile, constraint and degree caps, kIs, canonical subgroup powers, gates, the circuit-config digest recomputation, the WHIR ids, the proof's circuit digest) is mapped line by line to its Lean counterpart, the adopted envelope, shape, lookup admission, subgroup check and gate validation, plus two new pieces: the canonical kIs chain (the builder's coset shifts, substituted because CommonCircuitData is unmodelled, hence stricter than the source at that line) and the recomputed circuit-config digest (a mirror of the preimage, injective on fourteen members, with an abstract hash). The Rust predicate takes no deployed configuration because the VK is the deployment: from Solidity acceptance and the deployer's constructor facts every Rust check holds or a concrete khash collision exists (three conjuncts follow from acceptance alone); the Rust checks do not imply the Solidity pins (the WHIR encoding has no Rust input and a changed circuit digest passes once recomputed), so the VK's provenance is the Rust deployment; on the deployed configuration both engines return the same result. The Rust-flavoured engine still reads the Solidity skeleton's configuration-hash and chain guards and the pinned preprocessed root. Residues: VK dimensions versus common data, wire-map bounds, field order and extension degree, the absence of lookups as an assumption; a manual mirror, not refinement; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.BirthdayClashBound",
+      "theorems": [
+        "Audit.Wire3.BirthdayClashBound.reassign_at",
+        "Audit.Wire3.BirthdayClashBound.reassign_off",
+        "Audit.Wire3.BirthdayClashBound.reassign_same",
+        "Audit.Wire3.BirthdayClashBound.reassign_reassign",
+        "Audit.Wire3.BirthdayClashBound.invariant_at_reassign",
+        "Audit.Wire3.BirthdayClashBound.fibre_card_const",
+        "Audit.Wire3.BirthdayClashBound.fresh_coordinate_card",
+        "Audit.Wire3.BirthdayClashBound.block_card_cast_pos",
+        "Audit.Wire3.BirthdayClashBound.block_card_cast_ne",
+        "Audit.Wire3.BirthdayClashBound.fresh_coordinate_probability",
+        "Audit.Wire3.BirthdayClashBound.fresh_coordinate_target_card",
+        "Audit.Wire3.BirthdayClashBound.fresh_coordinate_target_probability",
+        "Audit.Wire3.BirthdayClashBound.adaptive_fresh_step_card",
+        "Audit.Wire3.BirthdayClashBound.adaptive_fresh_step",
+        "Audit.Wire3.BirthdayClashBound.adaptive_fresh_step_abs",
+        "Audit.Wire3.BirthdayClashBound.mem_no_clash",
+        "Audit.Wire3.BirthdayClashBound.mem_clash_event",
+        "Audit.Wire3.BirthdayClashBound.chain_target_card_le",
+        "Audit.Wire3.BirthdayClashBound.causal_mono",
+        "Audit.Wire3.BirthdayClashBound.chain_val_stable",
+        "Audit.Wire3.BirthdayClashBound.no_clash_reassign",
+        "Audit.Wire3.BirthdayClashBound.fresh_step_of_causal",
+        "Audit.Wire3.BirthdayClashBound.clash_step_bound",
+        "Audit.Wire3.BirthdayClashBound.no_clash_succ_compl",
+        "Audit.Wire3.BirthdayClashBound.oracle_probability_union_le",
+        "Audit.Wire3.BirthdayClashBound.clash_probability_le_sum",
+        "Audit.Wire3.BirthdayClashBound.sum_range_div_closed",
+        "Audit.Wire3.BirthdayClashBound.chain_clash_probability_le",
+        "Audit.Wire3.BirthdayClashBound.no_clash_nonempty",
+        "Audit.Wire3.BirthdayClashBound.mem_bounded_queries",
+        "Audit.Wire3.BirthdayClashBound.challenge_prefix_length",
+        "Audit.Wire3.BirthdayClashBound.frame_prefix_length",
+        "Audit.Wire3.BirthdayClashBound.challenge_input_length",
+        "Audit.Wire3.BirthdayClashBound.frame_total_length",
+        "Audit.Wire3.BirthdayClashBound.bounded_queries_challenge",
+        "Audit.Wire3.BirthdayClashBound.bounded_queries_closed",
+        "Audit.Wire3.BirthdayClashBound.bounded_queries_frame",
+        "Audit.Wire3.BirthdayClashBound.bounded_queries_not_frame_free",
+        "Audit.Wire3.BirthdayClashBound.hash_of_bounded",
+        "Audit.Wire3.BirthdayClashBound.index_frame_length",
+        "Audit.Wire3.BirthdayClashBound.index_frame_mem",
+        "Audit.Wire3.BirthdayClashBound.index_frame_ne",
+        "Audit.Wire3.BirthdayClashBound.frame_state_succ",
+        "Audit.Wire3.BirthdayClashBound.frame_state_is_hash",
+        "Audit.Wire3.BirthdayClashBound.avoid_base_card",
+        "Audit.Wire3.BirthdayClashBound.frame_sel_ne",
+        "Audit.Wire3.BirthdayClashBound.frame_state_stable",
+        "Audit.Wire3.BirthdayClashBound.frame_chain_causal",
+        "Audit.Wire3.BirthdayClashBound.frame_state_distinct_on_no_clash",
+        "Audit.Wire3.BirthdayClashBound.frame_chain_clash_probability_le",
+        "Audit.Wire3.BirthdayClashBound.block_card_gt_small",
+        "Audit.Wire3.BirthdayClashBound.frame_chain_no_clash_nonempty",
+        "Audit.Wire3.BirthdayClashBound.constant_table_state",
+        "Audit.Wire3.BirthdayClashBound.constant_table_clashes",
+        "Audit.Wire3.BirthdayClashBound.round_commit_is_stage_five",
+        "Audit.Wire3.BirthdayClashBound.index_frame_is_round_index_frame",
+        "Audit.Wire3.BirthdayClashBound.stage_queries_length",
+        "Audit.Wire3.BirthdayClashBound.stage_queries_get_zero",
+        "Audit.Wire3.BirthdayClashBound.stage_queries_get_one",
+        "Audit.Wire3.BirthdayClashBound.stage_queries_get_two",
+        "Audit.Wire3.BirthdayClashBound.stage_queries_get_three",
+        "Audit.Wire3.BirthdayClashBound.stage_queries_get_four",
+        "Audit.Wire3.BirthdayClashBound.stage_queries_answer",
+        "Audit.Wire3.BirthdayClashBound.stage_five_clash_collision",
+        "Audit.Wire3.BirthdayClashBound.stage_five_clash_transcript_collision",
+        "Audit.Wire3.BirthdayClashBound.round_message_get",
+        "Audit.Wire3.BirthdayClashBound.round_digest_clash_gives_round_frame_collision",
+        "Audit.Wire3.BirthdayClashBound.round_digest_clash_gives_transcript_collision",
+        "Audit.Wire3.BirthdayClashBound.round_shape_at",
+        "Audit.Wire3.BirthdayClashBound.round_shape_zero",
+        "Audit.Wire3.BirthdayClashBound.round_shape_tag_zero",
+        "Audit.Wire3.BirthdayClashBound.round_shape_payload_zero",
+        "Audit.Wire3.BirthdayClashBound.round_shape_tag_one",
+        "Audit.Wire3.BirthdayClashBound.round_shape_payload_one",
+        "Audit.Wire3.BirthdayClashBound.round_shape_tag_two",
+        "Audit.Wire3.BirthdayClashBound.round_shape_payload_two",
+        "Audit.Wire3.BirthdayClashBound.round_shape_tag_three",
+        "Audit.Wire3.BirthdayClashBound.round_shape_payload_three",
+        "Audit.Wire3.BirthdayClashBound.round_shape_tag_four",
+        "Audit.Wire3.BirthdayClashBound.round_shape_payload_four",
+        "Audit.Wire3.BirthdayClashBound.round_separator_length",
+        "Audit.Wire3.BirthdayClashBound.challenge_separator_length",
+        "Audit.Wire3.BirthdayClashBound.round_shape_payload_bound",
+        "Audit.Wire3.BirthdayClashBound.round_shape_payload_bound_of_degree",
+        "Audit.Wire3.BirthdayClashBound.round_shape_payload_bound_at_envelope",
+        "Audit.Wire3.BirthdayClashBound.round_chain_step",
+        "Audit.Wire3.BirthdayClashBound.round_digests_distinct",
+        "Audit.Wire3.BirthdayClashBound.round_digest_clash_event_subset",
+        "Audit.Wire3.BirthdayClashBound.constant_table_in_round_clash_event",
+        "Audit.Wire3.BirthdayClashBound.round_digest_clash_mass_le",
+        "Audit.Wire3.BirthdayClashBound.round_digest_clash_mass_at_thirteen",
+        "Audit.Wire3.BirthdayClashBound.round_digest_clash_bound_lt_one",
+        "Audit.Wire3.BirthdayClashBound.frame_state_is_fold",
+        "Audit.Wire3.BirthdayClashBound.fold_digest_add",
+        "Audit.Wire3.BirthdayClashBound.fold_digest_shift",
+        "Audit.Wire3.BirthdayClashBound.fold_digest_absorb",
+        "Audit.Wire3.BirthdayClashBound.prefix_round_shape_prefix",
+        "Audit.Wire3.BirthdayClashBound.prefix_round_shape_round",
+        "Audit.Wire3.BirthdayClashBound.prefix_round_shape_len",
+        "Audit.Wire3.BirthdayClashBound.prefix_round_shape_payload_bound",
+        "Audit.Wire3.BirthdayClashBound.prefix_fold_is_derive_digest",
+        "Audit.Wire3.BirthdayClashBound.prefix_state_is_derive_digest",
+        "Audit.Wire3.BirthdayClashBound.prefix_round_chain_step",
+        "Audit.Wire3.BirthdayClashBound.prefix_round_digest_clash_event_subset",
+        "Audit.Wire3.BirthdayClashBound.prefix_round_digest_clash_mass_le",
+        "Audit.Wire3.BirthdayClashBound.prefix_round_digest_clash_mass_at_thirteen",
+        "Audit.Wire3.BirthdayClashBound.prefix_round_digest_clash_bound_lt_one",
+        "Audit.Wire3.BirthdayClashBound.constant_table_in_prefix_round_clash_event",
+        "Audit.Wire3.BirthdayClashBound.schedule_non_injective_subset_clash",
+        "Audit.Wire3.BirthdayClashBound.run_bad_draw_probability_le_of_clash_bound",
+        "Audit.Wire3.BirthdayClashBound.clash_bound_hypothesis_satisfiable"
+      ],
+      "sources": [
+        "mle/src/transcript_v2.rs",
+        "mle/contracts/src/TranscriptV2.sol"
+      ],
+      "scope": "The birthday count for the additive clash term left by the random-oracle module: a fresh-query lemma (for an event that does not depend on the answer at a query, the joint probability with a fixed answer there equals the event's probability over the block count, as an equality via a fibre bijection), an adaptive version in which query and target may depend on the table provided nothing depends on the answer, and a clash bound for causal fresh chains. On the finite set of byte strings of bounded length, which satisfies the closure condition and contains frame inputs, the chain model of the round fold (five frames per round) has clash probability at most 5d(5d+1)/2 over the block count, at d = 13 at most 2145 over the block count and below one; freshness is proved from frame injectivity, not assumed, and the constant table lies in the clash event so the bound is not on an empty event. Honest delta: the bound is on the chain model, not yet threaded to the run's actual chain (the base digest is the oracle output of the twenty-two-frame relation prefix, which raises the constant to 3828 over the block count, and the concrete-chain induction is not done), the chain starting from the twenty-two-frame relation prefix is proved to start at the derivation's digest and has clash probability at most 3828 over the block count, but the concrete-chain induction to the run's actual chain is not done, so the run-level additive term remains a hypothesis and the chain-model numbers must not be quoted as the run's. The localized clash theorem names same-position frame witnesses of the two clashing rounds. Random-oracle model, not keccak; fixed prover; index lanes not covered; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.OpenedDotBinding",
+      "theorems": [
+        "Audit.Wire3.OpenedDotBinding.no_row_collision_binds_opened_dot_is_vacuous",
+        "Audit.Wire3.OpenedDotBinding.vacuous_hypothesis_has_no_instance",
+        "Audit.Wire3.OpenedDotBinding.vacuous_hypothesis_proves_anything",
+        "Audit.Wire3.OpenedDotBinding.opened_dot_disjunction_is_trivial_not_vacuous",
+        "Audit.Wire3.OpenedDotBinding.no_collision_among_is_no_collision",
+        "Audit.Wire3.OpenedDotBinding.openedDotInputs_contains_both_rows",
+        "Audit.Wire3.OpenedDotBinding.opened_dot_binds_under_no_collision_among",
+        "Audit.Wire3.OpenedDotBinding.opened_rows_bind_under_no_collision_among",
+        "Audit.Wire3.OpenedDotBinding.replacement_yields_the_vacuous_conclusion",
+        "Audit.Wire3.OpenedDotBinding.executedMerkleInputs_success",
+        "Audit.Wire3.OpenedDotBinding.executedMerkleInputs_subset",
+        "Audit.Wire3.OpenedDotBinding.opened_rows_bind_or_leaf_collision",
+        "Audit.Wire3.OpenedDotBinding.opened_dot_binds_or_leaf_collision",
+        "Audit.Wire3.OpenedDotBinding.localized_recovers_the_adopted_row_disjunction",
+        "Audit.Wire3.OpenedDotBinding.no_collision_among_refutes_the_leaf_disjunct",
+        "Audit.Wire3.OpenedDotBinding.example_opened_dot_inputs",
+        "Audit.Wire3.OpenedDotBinding.example_no_collision_among_holds",
+        "Audit.Wire3.OpenedDotBinding.example_row_membership",
+        "Audit.Wire3.OpenedDotBinding.example_replacement_instance",
+        "Audit.Wire3.OpenedDotBinding.example_replacement_instance_nonidentical",
+        "Audit.Wire3.OpenedDotBinding.separating_hash_at_target",
+        "Audit.Wire3.OpenedDotBinding.separating_hash_no_collision_among_two",
+        "Audit.Wire3.OpenedDotBinding.separating_hash_concrete_pair",
+        "Audit.Wire3.OpenedDotBinding.clash_no_collision_among_fails",
+        "Audit.Wire3.OpenedDotBinding.clash_conclusion_is_false",
+        "Audit.Wire3.OpenedDotBinding.clash_leaf_collision_holds",
+        "Audit.Wire3.OpenedDotBinding.leaf_collision_fails_on_equal_rows",
+        "Audit.Wire3.OpenedDotBinding.repair_summary"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol",
+        "mle/src/commitment/whir_pcs.rs"
+      ],
+      "scope": "Repair of the vacuous adopted theorem ConditionalSoundness.no_row_collision_binds_opened_dot, whose hypothesis negates a pigeonhole tautology. Inventory: the theorem has no Lean consumers (declaration and prose only), so no adopted conclusion depends on it and there is no soundness consequence. The replacement assumes injectivity of the hash on the execution-computed list of both openings' leaf rows and Merkle parent inputs (definitionally the adopted NoCollision) and derives the same conclusion by one application of the adopted opening theorem; the hypothesis excludes every pair the proof can produce and, for multi-index openings, the other rows and paths of the same two runs. A localized form concludes dot equality or a leaf collision between the two named rows under path injectivity alone and recovers the adopted disjunction. Satisfiability is shown by fully discharged instances (identical and non-identical openings) and falsifiability by two accepted openings of the same root and index with different dots under a clashing hash. Recommended: deprecate the vacuous theorem's docstring in the adopted file and point here. Not the system's soundness error."
     }
   ]
 }

@@ -718,8 +718,13 @@ theorem opened_dot_binds_or_row_collision (hash : Spongefish.Hash) (root : Merkl
     otherIndices layout hints otherHints s t otherS otherT rows otherRows row otherRow weights
     value otherValue h h' hm hm' hd hd'
 
-/-- If the concrete row pair this execution compares is not a collision witness,
-the two accepted openings decode to the same dot value. -/
+/-- DEPRECATED / VACUOUS (recorded 2026-09-11). The hypothesis `hfree` negates
+`WhirRowBinding.RowCollision`, whose second disjunct (two distinct 64-byte inputs
+with equal hash) is a finite pigeonhole tautology, so `hfree` is UNSATISFIABLE and
+this theorem, while true, has no instance. It has no consumers in the adopted tree.
+Use `OpenedDotBinding.opened_dot_binds_under_no_collision_among`, which assumes
+`NoCollisionAmong` on the execution-computed input list instead (the pattern this
+file already uses), and see `LocalizedCollisions` for the general finding. -/
 theorem no_row_collision_binds_opened_dot (hash : Spongefish.Hash) (root : Merkle.Digest)
     (depth index : Nat) (indices otherIndices : List Nat) (layout : WhirRows.Layout)
     (hints otherHints : Spongefish.Bytes) (s t otherS otherT : Spongefish.State)
