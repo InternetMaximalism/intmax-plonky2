@@ -1523,6 +1523,24 @@ loop方式の20回目。縮約履歴適応プローバの索引laneと、grindin
   committed cellの実現proofへの転送、複数bound cellの索引項、raw block読み戦略、一般grindingプローバの線形上界（charging方式の外）、
   g/coeffsOfと配備表の結合、R1b、回路の真値、受理の提示。
 
+## 第36継続更新（d523eecd以降）
+
+追跡版runnerでコミット`d523eecd`の133モデル・5115定理を再検査しPASS（1181.923秒、1463モジュール、
+manifest `cfd8dc008e434a455cd787bd2d38d2fcc94e4b35ddf81a5066b93f62fef31ffa`、receipt
+`4a3b0a6fdd5fa05305cf86d39f0658849700aad9d4289242170d5ba2b84e2ac5`、graph
+`73765b5d7ce76b9f3365fc820fb3e48620185de65eac0bb1eaf2218459767d77`）。
+loop方式の21回目。ReducedIndexLanesが残した転送と、reduced-history制限の解除を対象にした。
+
+- **engine自身の索引事象への転送**: ReducedEngineIndexは二戦略・同一表の合同補題、OLT §6のdraw同定、TSCCのrow点定理を実現proofで
+  組み合わせ、committed cellが縮約履歴の関数であることを示してengine自身の索引bad事象とのFinset恒等式を得、縮約適応上界
+  ≤ combinedBound + 2·tauTerm + chain衝突項をengine自身の事象上で成立させた（多cell版は5·2·tauTerm、衝突項1つ。RILのhstも放棄）。
+  レビューはFinset恒等式の左辺が`explicit_good_draw_assembly`のhidxが消費する事象そのものであること（probeで実際にhidxを放棄）、三つの同定が全て定理であること、合同補題の関数水準の量化、realizedRunの側条件、多cell版の単一衝突項を確認し、PASS-WITH-FIXES（REPORTの行数のみ）とした。
+- **reduced-history制限の解除**: RawBlockLanesは対角fresh stepに必要なのがRoundCausalのみであることを使い、OSCのLaneを経由しないraw lane
+  （rawメッセージ、縮約challengeでの評価）で任意のRoundCausal戦略の外側+block-0上界 ≤ combinedBound + chain衝突項を得、OLT §8を特例として
+  回収し、OLTが対応づけられなかったchallengeTruncatedMessageで閉実例を与えた。索引半分のraw版は未達と明記。レビューはraw laneの1段が採用済み検証器の段（縮約challengeでの多項式評価）と一致すること、結合、OLT §8の回収、単一衝突項、閉実例を確認しPASS-WITH-FIXES（文言）とし、見出しを「SCB (iii) の**各round分解の半分**をcombinedBound laneで閉じる（run水準の輸送は未着手）」に正させた。
+  両モジュール合わせて135モデル・5223定理。今回もROMの法則下の結果であり、keccakの性質でも系の健全性誤差でもない。残るのは
+  索引半分のraw版、grindingプローバの和集合上界、列・g/coeffsOfと配備表の結合（CommitmentOrder）、R1b、回路の真値、受理の提示。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

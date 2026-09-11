@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "bd32f8de071c447cb19512d3fbf4d6c3a9bebb41ed1bfd21b6a7f3f9c9bcc825",
+      "sha256": "f16aa76342a67deaaf521c833e2cb5fcba47e69266e1f0bbb12d798387c5d4f7",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "8ab7cb3dacc3b92911c91f6140a0349c4051af9144293838a878ba07b7a4af37",
+      "sha256": "724b1e34c11a063401e823caa1cf2ef6de85eb59607d9246fde69ccd99c1d9b5",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "8b6de5d51f248ef7db45a3d62813cf01262bf819c2950b90d9a11c7c856d0d7c",
+      "sha256": "be702d097fd4e09d2fb31dc8c35be93a1c18bea41ee3f13d7d6b6ddd862eda2c",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "db2a6ffc0137fbf9039c369856e4579004f45c5e0453b89bb1d5c2e314bb6de1",
+      "sha256": "b03dc91ed9368076bbd81902778deaff15dde26ecbe7c8773609bbc610d33ee8",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "ad2f371f6e11f80ab6f9f55cd330552856662790623e7f74b173d2df7c8844dc",
+      "sha256": "5b0784f5ed19f233afbe099f7b70afb36ab2d214dd49263833e5c57c8524cf60",
       "kind": "spec"
     },
     {
@@ -2411,6 +2411,16 @@
     {
       "path": "mle/audit/Audit/Wire3/GrindingGraphBound.lean",
       "sha256": "bee38a4d88faf04358fdaa3b6705eee69de4f77954901b7c2bcd261b0d67eb83",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/ReducedEngineIndex.lean",
+      "sha256": "1649b0f4f6873d37cf9fa4cdb3ca40d136876aec5e54f613b77b350dc6c79ebd",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/RawBlockLanes.lean",
+      "sha256": "b951bb9a35497d6c25f24521991a1fa2dd94796ddec1bdfa5e50ffdb4a1683bf",
       "kind": "current-model"
     }
   ],
@@ -8966,6 +8976,138 @@
         "mle/contracts/src/TranscriptV2.sol"
       ],
       "scope": "The query-graph view of grinding provers, with a negative conclusion stated as theorems. For every grinding strategy a stage clash is a collision of two distinct-string absorb positions on the absorb path, an event refined from the adopted all-pairs one; a unified charging theorem bounds the clash mass by the sum of per-position eligible-set sizes for any reassign-invariant position-dependent eligible family, and the adopted all-pairs bound, the adopted linear bound for state-framed provers, and a new graph-framed instance are its three specializations. The chain simulator \u2014 probing at the digests of its own probe answers without absorbing them \u2014 is written down concretely; it is not state-framed but is graph-framed, and its reachable-target set equals the all-pairs target at every position, so this charging scheme cannot improve on the all-pairs constant for it; no lower bound on any clash mass is claimed. Numerals unchanged from the adopted quadratic bound. Random-oracle model, not keccak; the chain's clash event only; probes frame-shaped; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.ReducedEngineIndex",
+      "theorems": [
+        "Audit.Wire3.ReducedEngineIndex.strat_hist_of_agree",
+        "Audit.Wire3.ReducedEngineIndex.strategy_frame_state_of_agree",
+        "Audit.Wire3.ReducedEngineIndex.challenge_sel_of_agree",
+        "Audit.Wire3.ReducedEngineIndex.stage_triple_of_agree",
+        "Audit.Wire3.ReducedEngineIndex.extended_agrees_below",
+        "Audit.Wire3.ReducedEngineIndex.extended_state_eq_reduced",
+        "Audit.Wire3.ReducedEngineIndex.extended_log_triple_eq",
+        "Audit.Wire3.ReducedEngineIndex.extended_gate_triple_eq",
+        "Audit.Wire3.ReducedEngineIndex.get_append_left",
+        "Audit.Wire3.ReducedEngineIndex.get_append_at",
+        "Audit.Wire3.ReducedEngineIndex.get_append_at_succ",
+        "Audit.Wire3.ReducedEngineIndex.outer_history_get_log",
+        "Audit.Wire3.ReducedEngineIndex.outer_history_get_gate",
+        "Audit.Wire3.ReducedEngineIndex.row_from_history_length",
+        "Audit.Wire3.ReducedEngineIndex.row_from_history_get",
+        "Audit.Wire3.ReducedEngineIndex.row_from_history_get_none",
+        "Audit.Wire3.ReducedEngineIndex.realized_used_proof_statement",
+        "Audit.Wire3.ReducedEngineIndex.realized_used_proof_messages",
+        "Audit.Wire3.ReducedEngineIndex.realized_used_proof_used",
+        "Audit.Wire3.ReducedEngineIndex.realized_run_statement",
+        "Audit.Wire3.ReducedEngineIndex.realized_run_messages",
+        "Audit.Wire3.ReducedEngineIndex.realized_run_used",
+        "Audit.Wire3.ReducedEngineIndex.realized_run_messages_length",
+        "Audit.Wire3.ReducedEngineIndex.realized_run_length_budget",
+        "Audit.Wire3.ReducedEngineIndex.run_log_draw_is_history_entry",
+        "Audit.Wire3.ReducedEngineIndex.run_gate_draw_is_history_entry",
+        "Audit.Wire3.ReducedEngineIndex.lift_get",
+        "Audit.Wire3.ReducedEngineIndex.lift_cell_row_is_row_from_history",
+        "Audit.Wire3.ReducedEngineIndex.committed_is_history_function",
+        "Audit.Wire3.ReducedEngineIndex.extended_rounds_state_is_run_digest",
+        "Audit.Wire3.ReducedEngineIndex.run_index_draw_is_index_read",
+        "Audit.Wire3.ReducedEngineIndex.guarded_is_assembly_index_bad_event",
+        "Audit.Wire3.ReducedEngineIndex.engine_index_target_is_reduced_target",
+        "Audit.Wire3.ReducedEngineIndex.engine_index_bad_event_eq",
+        "Audit.Wire3.ReducedEngineIndex.full_engine_index_bad_event_eq",
+        "Audit.Wire3.ReducedEngineIndex.reduced_engine_index_bad_draw_probability_le",
+        "Audit.Wire3.ReducedEngineIndex.inter_union_mass_le",
+        "Audit.Wire3.ReducedEngineIndex.full_bad_no_clash_mass_le",
+        "Audit.Wire3.ReducedEngineIndex.index_bad_event_no_clash_mass_le",
+        "Audit.Wire3.ReducedEngineIndex.reduced_engine_index_bad_draw_probability_le_all_cells",
+        "Audit.Wire3.ReducedEngineIndex.supplied_cell_at_realized_proof",
+        "Audit.Wire3.ReducedEngineIndex.engine_index_bad_event_at_honest_cells",
+        "Audit.Wire3.ReducedEngineIndex.realized_row_from_history_length",
+        "Audit.Wire3.ReducedEngineIndex.envelope_config_hypotheses",
+        "Audit.Wire3.ReducedEngineIndex.engine_index_bound_at_thirteen",
+        "Audit.Wire3.ReducedEngineIndex.engine_index_bound_at_thirteen_lt_one",
+        "Audit.Wire3.ReducedEngineIndex.engine_index_bound_at_thirteen_all_cells",
+        "Audit.Wire3.ReducedEngineIndex.engine_index_bound_at_thirteen_all_cells_lt_one"
+      ],
+      "sources": [
+        "mle/src/verifier_v2.rs",
+        "mle/contracts/src/MleVerifierV2.sol",
+        "mle/src/transcript_v2.rs",
+        "mle/contracts/src/TranscriptV2.sol"
+      ],
+      "scope": "Performs the transfer ReducedIndexLanes listed as not performed: the reduced-history adaptive index bound is stated on the explicit engine's own index bad event at its own index draw. A two-strategies same-table congruence shows the extended chain and the reduced chain agree below the claim frames; the adopted draw identification is applied at a realized run carrying the history-dependent used claims; the adopted row-point theorem gives the committed cells as a function of the reduced history; with the extracted columns as fixed data this yields a finset identity between the engine's index bad event and the previously parametrized one, hence the bound combinedBound plus twice the tau term plus the chain clash term, and a five-cell version with five times twice the tau term and one shared clash term. The chain-model snapshot hypothesis of the index module is discharged at the concrete final state the assembly names. Closed instances at the envelope are below one. Random-oracle model, not keccak; reduced-history transcript-restricted prover, grinding and raw-block strategies excluded; columns and tables not identified with the deployment; WHIR and Merkle excluded; good-draw-conditional conclusion; R1b in the residue; acceptance never exhibited; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.RawBlockLanes",
+      "theorems": [
+        "Audit.Wire3.RawBlockLanes.table_view_reassign_lower",
+        "Audit.Wire3.RawBlockLanes.raw_claims_succ",
+        "Audit.Wire3.RawBlockLanes.raw_target_card_le",
+        "Audit.Wire3.RawBlockLanes.raw_causal_reassign",
+        "Audit.Wire3.RawBlockLanes.raw_outer_state_reassign",
+        "Audit.Wire3.RawBlockLanes.raw_target_reassign",
+        "Audit.Wire3.RawBlockLanes.raw_round_mass_le",
+        "Audit.Wire3.RawBlockLanes.raw_outer_bad_event_zero",
+        "Audit.Wire3.RawBlockLanes.raw_round_inter_subset",
+        "Audit.Wire3.RawBlockLanes.raw_no_clash_mass_le",
+        "Audit.Wire3.RawBlockLanes.raw_outer_bad_draw_probability_le",
+        "Audit.Wire3.RawBlockLanes.raw_log_lane_causal",
+        "Audit.Wire3.RawBlockLanes.raw_gate_lane_causal",
+        "Audit.Wire3.RawBlockLanes.raw_log_lane_bounded",
+        "Audit.Wire3.RawBlockLanes.raw_gate_lane_bounded",
+        "Audit.Wire3.RawBlockLanes.strategic_challenges_is_table_view",
+        "Audit.Wire3.RawBlockLanes.raw_log_lane_message_is_realized",
+        "Audit.Wire3.RawBlockLanes.raw_gate_lane_message_is_realized",
+        "Audit.Wire3.RawBlockLanes.strategic_raw_outer_bad_draw_probability_le",
+        "Audit.Wire3.RawBlockLanes.reduced_history_of_table_view",
+        "Audit.Wire3.RawBlockLanes.lane_step_claim_active",
+        "Audit.Wire3.RawBlockLanes.lane_step_truth_claim_active",
+        "Audit.Wire3.RawBlockLanes.lane_step_claim_inactive",
+        "Audit.Wire3.RawBlockLanes.lane_step_truth_claim_inactive",
+        "Audit.Wire3.RawBlockLanes.outer_state_truth",
+        "Audit.Wire3.RawBlockLanes.reduced_truth_message_bounded",
+        "Audit.Wire3.RawBlockLanes.raw_reduced_causal",
+        "Audit.Wire3.RawBlockLanes.raw_log_lane_of_reduced_causal",
+        "Audit.Wire3.RawBlockLanes.raw_gate_lane_of_reduced_causal",
+        "Audit.Wire3.RawBlockLanes.log_state_message_of_reduced",
+        "Audit.Wire3.RawBlockLanes.log_state_truth_of_reduced",
+        "Audit.Wire3.RawBlockLanes.gate_state_message_of_reduced",
+        "Audit.Wire3.RawBlockLanes.gate_state_truth_of_reduced",
+        "Audit.Wire3.RawBlockLanes.log_claims_of_reduced",
+        "Audit.Wire3.RawBlockLanes.gate_claims_of_reduced",
+        "Audit.Wire3.RawBlockLanes.raw_log_target_of_reduced",
+        "Audit.Wire3.RawBlockLanes.raw_gate_target_of_reduced",
+        "Audit.Wire3.RawBlockLanes.log_triple_is_stage_triple",
+        "Audit.Wire3.RawBlockLanes.gate_triple_is_stage_triple",
+        "Audit.Wire3.RawBlockLanes.raw_outer_bad_event_of_reduced",
+        "Audit.Wire3.RawBlockLanes.mem_raw_full_bad_event",
+        "Audit.Wire3.RawBlockLanes.raw_full_bad_draw_probability_le",
+        "Audit.Wire3.RawBlockLanes.raw_full_bad_draw_probability_le_combined",
+        "Audit.Wire3.RawBlockLanes.strategic_raw_full_bad_draw_probability_le",
+        "Audit.Wire3.RawBlockLanes.raw_zero_truth_causal",
+        "Audit.Wire3.RawBlockLanes.raw_zero_truth_length",
+        "Audit.Wire3.RawBlockLanes.raw_target_zero_nonempty_of_agreement",
+        "Audit.Wire3.RawBlockLanes.separated_raw_lane_causal",
+        "Audit.Wire3.RawBlockLanes.separated_raw_lane_bounded",
+        "Audit.Wire3.RawBlockLanes.separated_raw_lane_claims_differ",
+        "Audit.Wire3.RawBlockLanes.separated_raw_lane_agrees_at_zero",
+        "Audit.Wire3.RawBlockLanes.separated_raw_target_zero_nonempty",
+        "Audit.Wire3.RawBlockLanes.table_view_at_constant_table",
+        "Audit.Wire3.RawBlockLanes.separated_raw_target_zero_nonempty_at_constant_table",
+        "Audit.Wire3.RawBlockLanes.probe_view_agrees_at_round_stages",
+        "Audit.Wire3.RawBlockLanes.truncated_gate_lane_is_not_reduced_history",
+        "Audit.Wire3.RawBlockLanes.raw_bound_at_thirteen",
+        "Audit.Wire3.RawBlockLanes.raw_full_bound_at_thirteen",
+        "Audit.Wire3.RawBlockLanes.raw_bound_at_thirteen_lt_one",
+        "Audit.Wire3.RawBlockLanes.raw_full_bound_at_thirteen_lt_one"
+      ],
+      "sources": [
+        "mle/src/transcript_v2.rs",
+        "mle/contracts/src/TranscriptV2.sol",
+        "mle/src/sumcheck/gate_ext3_v2.rs",
+        "mle/contracts/src/OuterLogupExt3Verifier.sol"
+      ],
+      "scope": "Lifts the reduced-history restriction of the adaptive outer bound. The adopted lane module's two obstructions concern factoring a raw message through the ideal-model lane's reduced argument, not the diagonal fresh step, which needs only that a round's target is unmoved by that round's own answers \u2014 the protocol's causality, blind to raw versus reduced. A raw lane carries a message read from the raw challenge view with running claims advanced by the adopted evaluation at the reduced challenge, exactly where the verifier evaluates; the lane of any strategy is now a one-line construction, its round message is proved equal to the strategy's realized message, and for every causal transcript-restricted strategy the outer bad-draw mass is at most the outer term plus the chain clash term, and with the fixed-target block-zero events at most combinedBound plus the clash term with one shared clash term. The reduced-history case of the adopted module is a special case by finset equality. The closed instance is the genuinely raw-reading truncated-message prover the adopted module could not pair, below one at the envelope. Not delivered: the index half for raw strategies (the adopted index module is stated over reduced strategies; a mechanical re-derivation remains), so twice the tau term is absent from every constant here. Random-oracle model, not keccak; no own oracle queries, grinding excluded; tables and columns fixed data; not the system's soundness error."
     }
   ]
 }

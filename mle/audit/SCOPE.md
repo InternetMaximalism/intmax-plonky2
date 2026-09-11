@@ -749,6 +749,13 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    chain模擬grindingプローバはGrindingGraphBoundで扱い、否定的結論を定理化した: 統一charging定理はGQB/GLB/graph-framedの3実例を
    持つが、chainSimulatorでは eligible 集合が全対に一致し、この方式では全対定数を超えて改善しない（衝突質量の下界は主張しない）。
    一般grindingプローバの線形上界はこの方式の外側にある。
+   RILの転送はReducedEngineIndexで実施した: 二戦略・同一表の合同補題、OLT §6の実現proofでのdraw同定、TSCCのrow点定理により
+   committed cellが縮約履歴の関数であることを示し、engine自身の索引bad事象との Finset 恒等式を経て縮約適応上界
+   ≤ combinedBound + 2·tauTerm + chain衝突項（多cell版は5·2·tauTerm）を得た（閉実例でRHS<1）。残るのは列とg/coeffsOfの配備との
+   結合（CommitmentOrder）、raw block読み戦略、grinding、R1b、受理の提示。
+   reduced-history制限はRawBlockLanesで解除した: OSCのLaneを経由せず、rawメッセージと縮約challengeでの評価を持つraw laneにより、
+   任意のRoundCausal transcript制限付き戦略に対して外側+block-0で ≤ combinedBound + chain衝突項（閉実例はOLTが対応づけられなかった
+   challengeTruncatedMessage）。残るのは索引半分のraw版（RILの機械的再導出）、grinding、列/表の配備との結合。
    これらの結果はSoundnessAssemblyで1定理に組み立てた。explicit engineの受理、残余仮定の名前付き構造体
    （表の意味論と転記行、配備digestと有界性、fold水準のopening、抽出列の高さとcommitted幅、
    GateDerivedRejectionの9フィールド、slot係数）、実digest drawが4族のbad event外、実index drawが

@@ -86,6 +86,7 @@ REQUIRED_MODULES = {"Audit.Wire3." + name for name in (
     "IndexStageFinerSplit", "OuterLaneTransport",
     "IndexGuardLiveness", "GrindingLinearBound", "ReducedFullTransport",
     "ReducedIndexLanes", "GrindingGraphBound",
+    "ReducedEngineIndex", "RawBlockLanes",
 )}
 REQUIRED = {
     PROJECT + "/check-wire3.py", PROJECT + "/test-check-wire3.py",
