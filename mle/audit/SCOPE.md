@@ -763,6 +763,19 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    SCB HONESTY (iii) 末尾のrun水準輸送はRunLevelTransportAuditで決着した: RBLのraw全事象は実現proofでの`actualDigestDraw`が
    `jointBadEvent`（実現lane）に落ちるrun水準事象とFinsetとして等しく、適応的run水準上界は固定プローバ定理と同じ文の形で成立、
    whole-schedule一様性は不要（一段事象の和）。積法則自体は主張しない（閉性は既知でなく成否は未決）。
+   「固定データ」残余の正体はCommitmentOrderSurveyで分類した: gate alphaはderive digestでのsqueeze = challenge座標であり、tau表gは
+   それを読むので固定gのtau事象はengine自身のtau事象のalpha固定スライス（対角はEngineTauDiagonalで評価）、coeffsOfは表のみの関数、
+   committed列はround-one opening（索引squeezeの後に吸収）に依存しprefixデータではなく、「固定」はR1b型のrootDetermined仮定。
+   採用済み6ファイルの過大な文言12箇所を修正した。残るのはCommittedTablesJoin（rootDetermined・preprocessedPinned・
+   configDeployed）そのもの、すなわちCommonCircuitData鏡像とVK/Rust境界を含む配備との結合。
+   grindingプローバの和集合上界はGrindingUnionBoundで、ChallengeRestricted（challengeは自身の段digestでのみ読む）の下に
+   ≤ combinedBound + N(N+1)/2/|Block|（N=(22+5d)(q+1)）を得た。laneはprobe回答履歴も読める（GrindLane）。除外されるのはpre-readプローバ
+   （probe回答digestでchallengeを先読み = FS challenge grinding。同一文字列の反復なので相異文字列衝突では評価できず、事象は質量1）で、
+   問合せ計数型の別論法が必要。bad集合がgrinder自身のabsorb payloadを運ぶ結合は未了。
+   engine自身のtau事象の対角はEngineTauDiagonalで評価した: alpha三つ組で分割しRFTの同時剥離を各ブロックに適用して ≤ tauTerm d
+   （任意の戦略・任意のG）、RXL経路を再構築して engine 自身の tau+索引事象上で ≤ combinedBound + 2·tauTerm + chain衝突項。
+   最終定理で∀-lane形のまま残るのは外側（`SoundnessAssembly.outerBadEvent`のalpha依存対角は適応系列で未解決。TSCCは固定プローバのみ）
+   とalpha（対角不要）。
    これらの結果はSoundnessAssemblyで1定理に組み立てた。explicit engineの受理、残余仮定の名前付き構造体
    （表の意味論と転記行、配備digestと有界性、fold水準のopening、抽出列の高さとcommitted幅、
    GateDerivedRejectionの9フィールド、slot係数）、実digest drawが4族のbad event外、実index drawが

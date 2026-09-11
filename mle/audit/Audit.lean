@@ -142,3 +142,6 @@ import Audit.Wire3.ReducedEngineIndex
 import Audit.Wire3.RawBlockLanes
 import Audit.Wire3.RawIndexLanes
 import Audit.Wire3.RunLevelTransportAudit
+import Audit.Wire3.CommitmentOrderSurvey
+import Audit.Wire3.GrindingUnionBound
+import Audit.Wire3.EngineTauDiagonal

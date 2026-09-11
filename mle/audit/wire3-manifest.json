@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "21009fa04f5b95a7eae5d5921d3920232560e2e410cb65716926766bae29dc8f",
+      "sha256": "af237ad5a7ba86cb4eb858c62d048b61e0c5e40cc4e7be6ee6f3c73a85aeb9a5",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "e33442ca8ef3aff3380eb5fa0ef22bf059a31ed945f33e39656a3882ef2bb360",
+      "sha256": "0c4f1b7d775049b8624f9bd9240367c734d7b7291d8ebe5780932fa9079ac09d",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "c09278bec1b3de9f5397d2f34b767b50bf5704a6b9a7bb6b23b160c8c5e8b3ff",
+      "sha256": "a7e77d6e1b2247113526aab5ae720ee4d62b4ab04c9b4c49fcd04d7664c7ec3e",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "cbbb5f5f15b4747d639f778e35b913432b1b1650ade7f7363201a5d1e4c829e4",
+      "sha256": "3163ea7c072c097886fe6516401caa2c2126d8c46db4fa3821987c618e8d8634",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "396f70e7c853600998872b1d7363417fcd66718ba9d94465e9a9d7dd051fc609",
+      "sha256": "e0f5c724a55f8850f390c07add8eb5d455e294224d2c1d82477b36ea31e333ce",
       "kind": "spec"
     },
     {
@@ -2240,12 +2240,12 @@
     },
     {
       "path": "mle/audit/Audit/Wire3/JointChallengeSpace.lean",
-      "sha256": "30f69979f952004b801e8997c2ef3880e116356fd1a362bf149381f9e3a96b37",
+      "sha256": "5229fc876d4218d370fe3dd6ea9bdea174d515957a856765c5dc34247790ad09",
       "kind": "current-model"
     },
     {
       "path": "mle/audit/Audit/Wire3/OuterSequentialConditioning.lean",
-      "sha256": "dfc9c5c997c14f1bf44dced7fb796c050e674031f7d3c75e152af0fb528038d4",
+      "sha256": "d5fa6b0236238b1528cc6fecabd75913b628ef509a55bbbe22b45357741ff9e4",
       "kind": "current-model"
     },
     {
@@ -2400,12 +2400,12 @@
     },
     {
       "path": "mle/audit/Audit/Wire3/ReducedFullTransport.lean",
-      "sha256": "769f8795291e512681a50420626836f24ce013f5af7ad3b74cde343ce00e539b",
+      "sha256": "fbb4ebb24c81f7be1d809ef1cc65799a0601ef04d173fffc62efea6a3f9c868e",
       "kind": "current-model"
     },
     {
       "path": "mle/audit/Audit/Wire3/ReducedIndexLanes.lean",
-      "sha256": "4fd93a1d75df1def4154f0b5f01b2b77e2bacb6c83d7cbed013548336107a439",
+      "sha256": "11f7e7f309f688f120e45d14450909da2f5eaa9de0c0f90bc888bfe00ecc0ee2",
       "kind": "current-model"
     },
     {
@@ -2415,7 +2415,7 @@
     },
     {
       "path": "mle/audit/Audit/Wire3/ReducedEngineIndex.lean",
-      "sha256": "1649b0f4f6873d37cf9fa4cdb3ca40d136876aec5e54f613b77b350dc6c79ebd",
+      "sha256": "f7f63f8a3fcef5d3669f05bbd15a8d0843896a0cd42f57b847a751d346b8b97f",
       "kind": "current-model"
     },
     {
@@ -2425,12 +2425,27 @@
     },
     {
       "path": "mle/audit/Audit/Wire3/RawIndexLanes.lean",
-      "sha256": "39d14bfe120f79cdf0d3c679fa168d65477010742354a6d678f0c3192e73ef90",
+      "sha256": "0e5a9e73d1c3d594c0859c778da0c5cf04791bd24402b905a2527889f69b6910",
       "kind": "current-model"
     },
     {
       "path": "mle/audit/Audit/Wire3/RunLevelTransportAudit.lean",
       "sha256": "ce4946a73a7d5d93f7b0db16e1612bcbfd0aed4e52e3aceec50db89293d9bcc7",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/CommitmentOrderSurvey.lean",
+      "sha256": "b69c11a46a3aab03ee845af652d06fdfcdb460eb98b7482363abad5ecfde44a1",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/GrindingUnionBound.lean",
+      "sha256": "9cb490279ecd3201458eeaf7134aa8351b5834934dcdeb2242c9ec7a90fd7691",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/EngineTauDiagonal.lean",
+      "sha256": "6fca67b22b46f7ca53b912b17dedd9797ff97887628c2ae56c1e6fcac9d50e17",
       "kind": "current-model"
     }
   ],
@@ -9235,6 +9250,192 @@
         "mle/src/verifier_v2.rs"
       ],
       "scope": "Settles the run-level sentence left open by the strategy module. The adopted joint bad event's outer part takes frozen lane-round lists whose own challenge field drives the claim recursion while the round bad set ignores it, so the raw per-round union of the raw-lane module equals, as a finset of tables, the run's own bad-draw event: the adopted actual digest draw at the proof the strategy actually submits, weighed against the adopted joint bad event at the lane rounds it actually plays; the draw identification is coordinate by coordinate through the adopted chain threading at a table-dependent proof. Hence the adaptive run-level bound, in the same statement form as the fixed-prover run-level theorem with the proof and lane lists realized table by table, at most combinedBound plus the chain clash term, with a closed instance below one. No whole-schedule uniformity is needed, since the event is a union of one-stage events and the union bound consumes only per-stage masses; the exact product law is not claimed (the no-clash event is not closed under overwriting an inner-stage answer) and no counterexample table is built. No law is attached to the actual digest draw; the mass is under the oracle-table law. Amendments to three adopted honesty passages are applied alongside. Random-oracle model, not keccak; transcript-restricted causal prover; outer and block-zero lanes; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.CommitmentOrderSurvey",
+      "theorems": [
+        "Audit.Wire3.CommitmentOrderSurvey.prefix_ignores_the_whir_tail",
+        "Audit.Wire3.CommitmentOrderSurvey.prefix_ignores_the_used_claims_and_the_round_messages",
+        "Audit.Wire3.CommitmentOrderSurvey.gate_challenges_ignore_the_whir_tail",
+        "Audit.Wire3.CommitmentOrderSurvey.gate_alpha_is_prefix_data",
+        "Audit.Wire3.CommitmentOrderSurvey.equal_prefix_digests_give_equal_gate_alpha",
+        "Audit.Wire3.CommitmentOrderSurvey.assembly_tau_table_factors_through_the_prefix_alpha",
+        "Audit.Wire3.CommitmentOrderSurvey.outer_bad_event_tau_table_factors_through_the_prefix_alpha",
+        "Audit.Wire3.CommitmentOrderSurvey.gate_alpha_counter_is_outside_every_gate_tau_triple",
+        "Audit.Wire3.CommitmentOrderSurvey.prefix_tau_table_ignores_the_eq_column",
+        "Audit.Wire3.CommitmentOrderSurvey.prefix_tau_table_depends_only_on_wires_and_constants",
+        "Audit.Wire3.CommitmentOrderSurvey.tau_bad_event_of_wires_and_constants",
+        "Audit.Wire3.CommitmentOrderSurvey.tau_bad_event_determined_by_the_roots",
+        "Audit.Wire3.CommitmentOrderSurvey.prefix_coefficients_ignore_the_eq_column",
+        "Audit.Wire3.CommitmentOrderSurvey.prefix_coefficients_depend_only_on_wires_and_constants",
+        "Audit.Wire3.CommitmentOrderSurvey.coefficients_are_determined_by_the_tables",
+        "Audit.Wire3.CommitmentOrderSurvey.alpha_bad_event_determined_by_the_tables",
+        "Audit.Wire3.CommitmentOrderSurvey.survey_gate_config",
+        "Audit.Wire3.CommitmentOrderSurvey.survey_coefficients_exist",
+        "Audit.Wire3.CommitmentOrderSurvey.extracted_state_depends_only_on_two_cells",
+        "Audit.Wire3.CommitmentOrderSurvey.demo_openings_differ",
+        "Audit.Wire3.CommitmentOrderSurvey.demo_extract_moves_with_the_opening",
+        "Audit.Wire3.CommitmentOrderSurvey.fit_column_head",
+        "Audit.Wire3.CommitmentOrderSurvey.extracted_columns_head",
+        "Audit.Wire3.CommitmentOrderSurvey.extracted_state_moves_with_the_opening",
+        "Audit.Wire3.CommitmentOrderSurvey.absorption_order_of_the_extractor_inputs",
+        "Audit.Wire3.CommitmentOrderSurvey.committed_tables_join_is_satisfiable",
+        "Audit.Wire3.CommitmentOrderSurvey.committed_tables_join_removes_the_opening_dependence",
+        "Audit.Wire3.CommitmentOrderSurvey.committed_tables_join_fixes_the_tau_table",
+        "Audit.Wire3.CommitmentOrderSurvey.committed_tables_join_fixes_the_coefficients"
+      ],
+      "sources": [
+        "mle/contracts/src/MleVerifierV2.sol",
+        "mle/src/verifier_v2.rs",
+        "mle/src/vk_v2.rs",
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol"
+      ],
+      "scope": "A survey module classifying the residue the random-oracle line calls fixed data: deployment data, prefix-absorbed proof material, R1b-extracted columns, the genuinely open committed-tables join, and a fifth category \u2014 a challenge squeezed at an earlier counter of the same digest. Two sharp findings: the assembly's zero-check table reads the block-zero gate alpha, a squeezed challenge coordinate, so every fixed-table tau event in the random-oracle line is the constant-alpha slice of the engine's own tau event, whose diagonal over the alpha triple is a separate count (the alpha counter is disjoint from every tau counter); and the committed columns are not prefix data, because the extractor reads the round-one opening, which the WHIR tail absorbs after the index squeeze, so a deterministic extractor moves with the opening at fixed roots and fixed data for the columns is the root-determined clause of the committed-tables join, a different status from the gate coefficients, which read no challenge. The join is stated with its three clauses and shown satisfiable at a degenerate constant extractor; twelve overstated adopted docstrings are amended alongside. Not the system's soundness error; nothing here changes a bound."
+    },
+    {
+      "module": "Audit.Wire3.GrindingUnionBound",
+      "theorems": [
+        "Audit.Wire3.GrindingUnionBound.chain_sel_stable_at",
+        "Audit.Wire3.GrindingUnionBound.chain_sel_ne_of_counter",
+        "Audit.Wire3.GrindingUnionBound.chain_answer_reassign_ne",
+        "Audit.Wire3.GrindingUnionBound.chain_stable_mono",
+        "Audit.Wire3.GrindingUnionBound.chain_stable_filter",
+        "Audit.Wire3.GrindingUnionBound.chain_peel_card",
+        "Audit.Wire3.GrindingUnionBound.chain_triple_eq_iff",
+        "Audit.Wire3.GrindingUnionBound.chain_triple_reassign_same",
+        "Audit.Wire3.GrindingUnionBound.chain_triple_fibre_card",
+        "Audit.Wire3.GrindingUnionBound.chain_triple_target_card",
+        "Audit.Wire3.GrindingUnionBound.chain_triple_target_mass_le",
+        "Audit.Wire3.GrindingUnionBound.chain_stable_of_all",
+        "Audit.Wire3.GrindingUnionBound.chain_tau_fibre_zero",
+        "Audit.Wire3.GrindingUnionBound.chain_tau_fibre_succ",
+        "Audit.Wire3.GrindingUnionBound.mem_chain_tau_fibre",
+        "Audit.Wire3.GrindingUnionBound.chain_tau_fibre_stable",
+        "Audit.Wire3.GrindingUnionBound.chain_tau_fibre_card",
+        "Audit.Wire3.GrindingUnionBound.chain_tau_fibre_at_extend",
+        "Audit.Wire3.GrindingUnionBound.chain_tau_target_card",
+        "Audit.Wire3.GrindingUnionBound.chain_tau_target_mass_le",
+        "Audit.Wire3.GrindingUnionBound.grinding_of_strategy_challenge_restricted",
+        "Audit.Wire3.GrindingUnionBound.grind_query_challenge_congr",
+        "Audit.Wire3.GrindingUnionBound.mem_grind_no_clash",
+        "Audit.Wire3.GrindingUnionBound.grind_no_clash_mono",
+        "Audit.Wire3.GrindingUnionBound.challenge_at_reassign_ne",
+        "Audit.Wire3.GrindingUnionBound.grind_challenges_reassign_lower",
+        "Audit.Wire3.GrindingUnionBound.grind_run_ans_challenge_stable",
+        "Audit.Wire3.GrindingUnionBound.grind_state_challenge_stable",
+        "Audit.Wire3.GrindingUnionBound.grind_no_clash_chain_stable_all",
+        "Audit.Wire3.GrindingUnionBound.grind_challenge_sel_ne_lower",
+        "Audit.Wire3.GrindingUnionBound.grind_table_view_reassign_lower",
+        "Audit.Wire3.GrindingUnionBound.grind_triple_reassign_lower",
+        "Audit.Wire3.GrindingUnionBound.grind_run_view_reassign_lower",
+        "Audit.Wire3.GrindingUnionBound.grind_lane_of_raw_lane_causal",
+        "Audit.Wire3.GrindingUnionBound.grind_lane_of_raw_lane_bounded",
+        "Audit.Wire3.GrindingUnionBound.probe_reading_lane_causal",
+        "Audit.Wire3.GrindingUnionBound.probe_reading_lane_bounded",
+        "Audit.Wire3.GrindingUnionBound.probe_reading_lane_reads_probes",
+        "Audit.Wire3.GrindingUnionBound.probe_grinder_absorb_is_run_cell",
+        "Audit.Wire3.GrindingUnionBound.grind_raw_claims_succ",
+        "Audit.Wire3.GrindingUnionBound.grind_raw_target_card_le",
+        "Audit.Wire3.GrindingUnionBound.grind_raw_causal_reassign",
+        "Audit.Wire3.GrindingUnionBound.grind_raw_state_reassign",
+        "Audit.Wire3.GrindingUnionBound.grind_raw_target_reassign",
+        "Audit.Wire3.GrindingUnionBound.grind_raw_round_mass_le",
+        "Audit.Wire3.GrindingUnionBound.grind_raw_outer_bad_event_zero",
+        "Audit.Wire3.GrindingUnionBound.grind_raw_round_inter_subset",
+        "Audit.Wire3.GrindingUnionBound.grind_raw_no_clash_mass_le",
+        "Audit.Wire3.GrindingUnionBound.grinding_outer_bad_draw_probability_le",
+        "Audit.Wire3.GrindingUnionBound.grind_gate_alpha_no_clash_mass_le",
+        "Audit.Wire3.GrindingUnionBound.grind_gate_tau_no_clash_mass_le",
+        "Audit.Wire3.GrindingUnionBound.mem_grinding_full_bad_event",
+        "Audit.Wire3.GrindingUnionBound.grinding_union_bad_draw_probability_le",
+        "Audit.Wire3.GrindingUnionBound.grinding_union_bad_draw_probability_le_combined",
+        "Audit.Wire3.GrindingUnionBound.probe_grinder_challenge_restricted",
+        "Audit.Wire3.GrindingUnionBound.grind_lane_bounded_mono",
+        "Audit.Wire3.GrindingUnionBound.grind_raw_target_zero_nonempty_of_agreement",
+        "Audit.Wire3.GrindingUnionBound.separated_grind_lane_causal",
+        "Audit.Wire3.GrindingUnionBound.separated_grind_lane_bounded",
+        "Audit.Wire3.GrindingUnionBound.grind_separated_raw_target_zero_nonempty",
+        "Audit.Wire3.GrindingUnionBound.grinding_union_bound_at_thirteen",
+        "Audit.Wire3.GrindingUnionBound.grinding_union_bound_at_thirteen_many_probes",
+        "Audit.Wire3.GrindingUnionBound.many_probes_clash_tiny",
+        "Audit.Wire3.GrindingUnionBound.grinding_union_bound_at_thirteen_many_probes_lt_one",
+        "Audit.Wire3.GrindingUnionBound.grind_round_target_invariant_of_challenge_restricted",
+        "Audit.Wire3.GrindingUnionBound.echo_grinder_bounded",
+        "Audit.Wire3.GrindingUnionBound.echo_grinder_probe_is_absorb",
+        "Audit.Wire3.GrindingUnionBound.echo_grinder_probe_answer_is_next_state",
+        "Audit.Wire3.GrindingUnionBound.oracle_probability_univ",
+        "Audit.Wire3.GrindingUnionBound.echo_grinder_pre_read_event_is_everything",
+        "Audit.Wire3.GrindingUnionBound.echo_grinder_pre_read_mass_one",
+        "Audit.Wire3.GrindingUnionBound.pre_read_grinder_bounded",
+        "Audit.Wire3.GrindingUnionBound.pre_read_grinder_absorb_is_probe_when_favourable",
+        "Audit.Wire3.GrindingUnionBound.pre_read_grinder_not_challenge_restricted"
+      ],
+      "sources": [
+        "mle/src/transcript_v2.rs",
+        "mle/contracts/src/TranscriptV2.sol",
+        "mle/src/sumcheck/gate_ext3_v2.rs"
+      ],
+      "scope": "The union bound along a grinding chain, for lanes that read the probe-answer history and the challenge view: for every grinding strategy that reads challenges only at its own stage digests \u2014 a class containing every lifted transcript-restricted strategy and the adopted probe-reading grinder \u2014 the mass of the outer and block-zero bad events is at most combinedBound plus the all-pairs clash term N(N+1)/2 over the block count with N the number of probe and absorb positions. The counting is restated over an abstract stage-digest family because the adopted peel is stated at strategy chains; the diagonal step goes through since probe answers are frame cells, unmoved by reassigning a round's challenge cells. Excluded and named: the pre-reading prover that reads the challenge at a probe answer's digest before choosing its message \u2014 the conditioning plan fails provably, because probe-then-absorb asks the same byte string and the pre-read event has mass one; a selector prover performing exactly that attack is exhibited and shown outside the class. This is Fiat\u2013Shamir challenge grinding and needs a query-counting argument, not the birthday term. Not delivered: the pairing that makes the bad sets carry the grinder's own absorbed messages (a byte decoder is needed); the zero-probe identity with the adopted raw event is not proved. Random-oracle model, not keccak; outer and block-zero lanes only; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.EngineTauDiagonal",
+      "theorems": [
+        "Audit.Wire3.EngineTauDiagonal.mem_engine_tau_bad_event",
+        "Audit.Wire3.EngineTauDiagonal.rft_tau_event_is_constant_slice",
+        "Audit.Wire3.EngineTauDiagonal.alpha_base_not_tau_counter",
+        "Audit.Wire3.EngineTauDiagonal.tau_counter_not_alpha_counter",
+        "Audit.Wire3.EngineTauDiagonal.engine_tau_alpha_invariant",
+        "Audit.Wire3.EngineTauDiagonal.engine_tau_target_invariant",
+        "Audit.Wire3.EngineTauDiagonal.tau_fibre_on_zero",
+        "Audit.Wire3.EngineTauDiagonal.tau_fibre_on_succ",
+        "Audit.Wire3.EngineTauDiagonal.mem_tau_fibre_on",
+        "Audit.Wire3.EngineTauDiagonal.tau_fibre_on_stable",
+        "Audit.Wire3.EngineTauDiagonal.tau_fibre_on_card",
+        "Audit.Wire3.EngineTauDiagonal.tau_fibre_on_at_extend",
+        "Audit.Wire3.EngineTauDiagonal.tau_target_card_on",
+        "Audit.Wire3.EngineTauDiagonal.tau_diag_card",
+        "Audit.Wire3.EngineTauDiagonal.tau_diag_mass_le",
+        "Audit.Wire3.EngineTauDiagonal.tau_term_nonneg",
+        "Audit.Wire3.EngineTauDiagonal.tau_product_card_le",
+        "Audit.Wire3.EngineTauDiagonal.engine_tau_no_clash_mass_le",
+        "Audit.Wire3.EngineTauDiagonal.engine_tau_no_clash_mass_le_at",
+        "Audit.Wire3.EngineTauDiagonal.mem_engine_full_bad_event",
+        "Audit.Wire3.EngineTauDiagonal.engine_full_bad_event_constant_slice",
+        "Audit.Wire3.EngineTauDiagonal.full_bad_draw_probability_le_engine_tau",
+        "Audit.Wire3.EngineTauDiagonal.full_bad_draw_probability_le_engine_tau_combined",
+        "Audit.Wire3.EngineTauDiagonal.reduced_full_bad_draw_probability_le_engine_tau",
+        "Audit.Wire3.EngineTauDiagonal.mem_raw_engine_full_bad_event",
+        "Audit.Wire3.EngineTauDiagonal.raw_engine_full_bad_event_constant_slice",
+        "Audit.Wire3.EngineTauDiagonal.raw_engine_full_no_clash_mass_le",
+        "Audit.Wire3.EngineTauDiagonal.raw_full_bad_draw_probability_le_engine_tau",
+        "Audit.Wire3.EngineTauDiagonal.raw_full_bad_draw_probability_le_engine_tau_combined",
+        "Audit.Wire3.EngineTauDiagonal.strategic_raw_full_bad_draw_probability_le_engine_tau",
+        "Audit.Wire3.EngineTauDiagonal.raw_engine_full_index_bad_event_constant_slice",
+        "Audit.Wire3.EngineTauDiagonal.raw_engine_full_bad_draw_probability_le",
+        "Audit.Wire3.EngineTauDiagonal.engine_gate_at_the_drawn_alpha",
+        "Audit.Wire3.EngineTauDiagonal.engine_gate_at_survey_config",
+        "Audit.Wire3.EngineTauDiagonal.alpha_read_is_gate_alpha_element",
+        "Audit.Wire3.EngineTauDiagonal.engine_tau_event_at_realized_alpha",
+        "Audit.Wire3.EngineTauDiagonal.raw_extended_alpha_read_is_gate_alpha_element",
+        "Audit.Wire3.EngineTauDiagonal.raw_extended_engine_tau_event_at_realized_alpha",
+        "Audit.Wire3.EngineTauDiagonal.engine_public_hash_is_the_statement_public_hash",
+        "Audit.Wire3.EngineTauDiagonal.sample_gate_at_zero",
+        "Audit.Wire3.EngineTauDiagonal.sample_gate_at_one",
+        "Audit.Wire3.EngineTauDiagonal.engine_tau_target_depends_on_alpha",
+        "Audit.Wire3.EngineTauDiagonal.sample_gate_not_constant",
+        "Audit.Wire3.EngineTauDiagonal.reduced_engine_full_bound_at_thirteen",
+        "Audit.Wire3.EngineTauDiagonal.reduced_engine_full_bound_at_thirteen_lt_one",
+        "Audit.Wire3.EngineTauDiagonal.closed_instance_hypotheses_satisfiable",
+        "Audit.Wire3.EngineTauDiagonal.raw_engine_full_index_bound_at_thirteen",
+        "Audit.Wire3.EngineTauDiagonal.raw_engine_full_index_bound_at_thirteen_lt_one",
+        "Audit.Wire3.EngineTauDiagonal.engine_bound_at_constant_table"
+      ],
+      "sources": [
+        "mle/src/verifier_v2.rs",
+        "mle/contracts/src/MleVerifierV2.sol",
+        "mle/src/transcript_v2.rs"
+      ],
+      "scope": "Closes the gap the survey's review exposed: the engine's own tau event, whose zero-check table reads the block-zero gate alpha, is the diagonal over the alpha triple, and its mass under the chain's no-clash event is at most the tau term for every strategy and every alpha-to-table map \u2014 the same constant as the fixed-table slice \u2014 by partitioning the conditioning event by the alpha triple, on each block of which the target is constant and the adopted joint peel of the tau counters applies (the alpha counter is disjoint from every tau counter), then summing with the adopted per-table density bound. The fixed-table tau event of the transport module is the constant slice by definition. The full bounds are restated with the engine's tau event, and the raw index route is rebuilt so that for every causal transcript-restricted strategy and claims choice the mass of the raw outer lanes, the engine's own tau event, the alpha lane and the engine's own index event is at most combinedBound plus twice the index tau term plus the chain clash term with one clash term. In the final theorem the tau and index events are the engine's own; the alpha event is the lane form (its coefficients read no challenge); the outer event is the lane form, and the engine's alpha-dependent outer diagonal, done for the fixed prover elsewhere, remains open for the adaptive line. A target that genuinely moves with the alpha is exhibited; closed instance below one. Random-oracle model, not keccak; transcript-restricted causal prover; committed-tables join inherited; not the system's soundness error."
     }
   ]
 }

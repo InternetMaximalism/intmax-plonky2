@@ -43,14 +43,22 @@ challenge -- and is therefore RUN-RELATIVE; that is why the outer lanes need the
 adopted `OuterLaneTransport` diagonal machinery at all.
 
 So for a `OuterLaneTransport.ReducedStrategy` -- indeed for EVERY
-`StrategyChainBound.Strategy` -- the tau and alpha targets are FIXED DATA: in every
-theorem below `g`, `rows` and `coeffsOf` are bound OUTSIDE the oracle law, and no
+`StrategyChainBound.Strategy` -- the tau and alpha targets are FIXED DATA IN EVERY
+THEOREM BELOW: `g`, `rows` and `coeffsOf` are bound OUTSIDE the oracle law, and no
 theorem below lets the prover choose them after seeing a challenge.  That is why
 the adopted `OuterLaneTransport.stage_triple_target_mass_le` is applied here AT A
-CONSTANT TARGET (`fun _ => ...`), and why no diagonal argument is needed for these
-two lanes.  `gate_alpha_bad_event_congr` and `gate_tau_bad_event_congr` state the
-matching structural fact: both events are CYLINDERS on the block-0 coordinates --
-two tables reading the same block-0 triples are both in or both out.
+CONSTANT TARGET (`fun _ => ...`), and why no diagonal argument is needed for the
+ALPHA lane.  THE TAU LANE IS DIFFERENT, AND THE READER MUST NOT GENERALISE.  The
+run's tau target is `ZeroCheckSemantics.gateValue gc gates publicHash alpha t`,
+and `alpha` is the block-0 coordinate squeezed at counter `9+3d` of this very
+digest: the run's `g` MOVES WITH THE ALPHA CELL.  What is proved below is
+therefore the CONSTANT-ALPHA SLICE of the engine's tau event.  Transporting the
+engine's own tau event needs the diagonal form of
+`stage_triple_target_mass_le` -- available in principle, since the alpha counter
+lies outside every tau triple -- and IT IS NOT PERFORMED HERE.
+`gate_alpha_bad_event_congr` and `gate_tau_bad_event_congr` state the matching
+structural fact for the fixed targets: both events are CYLINDERS on the block-0
+coordinates -- two tables reading the same block-0 triples are both in or both out.
 
 WHAT IS NOT CLAIMED.  That `g` and `coeffsOf` are the DEPLOYED run's tables is not
 proved here and is not provable here: it is the adopted `CommitmentOrder` reading
@@ -145,7 +153,7 @@ NOT covered.  The headline of section 5 restricts further, to the adopted
 the REDUCED round-challenge history alone.  Note also that for `strategicShape c s S`
 the twenty-two prefix frames are the adopted `gateChallengeFrames c s`: the
 commitment roots live in the statement `s` and are FIXED BEFORE the chain -- which
-is exactly why `g` and `coeffsOf` are legitimately fixed data here, and also why
+is why the ROOTS are fixed before the chain, and also why
 this prover cannot choose its commitments adaptively.  RAW-BLOCK-READING
 STRATEGIES REMAIN OPEN, for exactly the reason the adopted `OuterLaneTransport` header's
 `laneOfStrategy` paragraph gives.  Sections 2, 3 and 4 do hold for EVERY
@@ -304,10 +312,19 @@ theorem peel_pow (x y cb n : Nat) (h : x * cb = y) : x * cb ^ (n + 1) = y * cb ^
 /-- **THE GATE ALPHA BAD EVENT ON THE ORACLE TABLE.**  The digest triple the chain
 reads at the DERIVE DIGEST from the gate alpha counter reduces into the adopted
 `ChallengeUnionBound.alphaUnionBadSet`.  `rows` and `coeffsOf` are bound OUTSIDE
-the oracle law: the adopted alpha family is indexed by the gate wire/constant
-tables, which the adopted `CommitmentOrder` twenty-two-frame prefix has already
-absorbed, so this target is FIXED DATA, not a function of the table or of the
-prover's round messages. -/
+the oracle law.  The adopted alpha family is indexed by the gate wire/constant
+tables; what the adopted `CommitmentOrder` twenty-two-frame prefix absorbs is the
+two COMMITMENT ROOTS for those tables (frames 13 and 15), not the tables
+themselves, and the step from root to table is that module's open
+`CommittedTables` join -- under the adopted
+`ExtractorConstruction.extractedState` the columns are a function of the roots
+AND of the round-one WHIR opening, which no prefix frame absorbs.  Binding
+`coeffsOf` outside the oracle law is therefore an ASSUMPTION on the extractor,
+not a consequence of the absorb order; it is licensed for the
+transcript-restricted, reduced-history prover of HONESTY (ii), whose commitments
+live in the statement `s`.  NOTE that `AlphaZeroCheck.slotCoefficients` takes no
+challenge argument at all, so unlike the tau family this one really is a constant
+of the experiment once the table join is granted. -/
 noncomputable def gateAlphaBadEvent (L : Nat) (hL : 64 ≤ L) (e0 : Transcript.Digest)
     (strat : Strategy) (hb : StrategyBounded L strat) (d rows : Nat)
     (coeffsOf : Nat → List Element) : Finset (OracleTable (boundedQueries L)) :=
@@ -339,7 +356,9 @@ theorem gate_alpha_bad_event_congr (L : Nat) (hL : 64 ≤ L) (e0 : Transcript.Di
 
 /-- (2) **THE GATE ALPHA MASS, CONDITIONED ON THE CHAIN'S NO-CLASH EVENT.**  The
 adopted `OuterLaneTransport.stage_triple_target_mass_le` at a CONSTANT target -- no
-diagonal is needed, because the alpha bad set is fixed data -- composed with the
+diagonal is needed on THIS lane, because `AlphaZeroCheck.slotCoefficients` reads no
+challenge and the alpha bad set really is fixed data (contrast the tau lane, whose
+run-level target moves with the alpha cell) -- composed with the
 adopted `ChallengeUnionBound.alpha_union_mass_bound`.  The constant is the adopted
 `alphaTerm`, exactly the summand `combinedBound` carries. -/
 theorem gate_alpha_no_clash_mass_le (L : Nat) (hL : 64 ≤ L) (e0 : Transcript.Digest)
@@ -593,9 +612,19 @@ theorem tau_target_mass_le (L : Nat) (hL : 64 ≤ L) (e0 : Transcript.Digest) (s
 open Classical in
 /-- **THE GATE TAU BAD EVENT ON THE ORACLE TABLE.**  The tau column the chain reads
 at the DERIVE DIGEST reduces into the adopted
-`ZeroCheckSemantics.zeroCheckBadSet`.  `g` is bound OUTSIDE the oracle law: the
-adopted tau family is indexed by the gate value table, absorbed in the adopted
-`CommitmentOrder` twenty-two-frame prefix, so this target too is FIXED DATA. -/
+`ZeroCheckSemantics.zeroCheckBadSet`.  `g` is bound OUTSIDE the oracle law HERE,
+as a free parameter -- but the run's `g` is
+`ZeroCheckSemantics.gateValue gc gates publicHash alpha t`, and ALPHA IS NOT
+PREFIX DATA: it is the block-0 coordinate squeezed at counter `9+3d` of the SAME
+derive digest this event reads the tau block from.  `g` is therefore a function of
+a CHALLENGE, and this event is the SLICE of the engine's tau event AT A FIXED
+ALPHA.  The engine's own event is the DIAGONAL over the alpha triple, which the adopted
+`EngineTauDiagonal` bounds by the same `tauTerm`; the alpha counter is disjoint from every tau counter,
+so the adopted `OuterLaneTransport.stage_triple_target_mass_le` diagonal form
+would apply.  Of `g`'s other arguments, `gc` and `gates` are prefix data through
+the deployment digest, `publicHash` through the raw public inputs at frame 3, and
+`t` is NOT absorbed -- the prefix absorbs its roots, and the root-to-table step is
+the adopted open `CommitmentOrder.CommittedTables` join. -/
 noncomputable def gateTauBadEvent (L : Nat) (hL : 64 ≤ L) (e0 : Transcript.Digest)
     (strat : Strategy) (hb : StrategyBounded L strat) (d : Nat) (g : Nat → Element) :
     Finset (OracleTable (boundedQueries L)) :=

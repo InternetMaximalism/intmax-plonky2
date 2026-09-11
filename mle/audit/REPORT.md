@@ -1562,6 +1562,35 @@ loop方式の22回目。raw戦略の索引半分と、SCB HONESTY (iii) 末尾�
   keccakの性質でも系の健全性誤差でもない。残るのはgrindingプローバの和集合上界、列・表と配備との結合（CommitmentOrder）、R1b、
   回路の真値、受理の提示。
 
+## 第38継続更新（2cf506f6以降）
+
+追跡版runnerでコミット`2cf506f6`の137モデル・5317定理を再検査しPASS（1534.183秒、1467モジュール、
+manifest `4a84b12770f6c6ec43f9d20dd9c90bf32de3ba99e64526570eb62fffdd16e977`、receipt
+`1b1cfb8725f8aef6f143ca50496a1df0019b6972e60cdbf03ea0d86e94c05ec8`、graph
+`e1eb1d0e3cdedded09f0ea7b35b9941b7fc0e01aaa4c2f51c66a3fb5e1d71b16`）。
+loop方式の23回目。「固定データ」残余の分類、grindingプローバの和集合上界、そして分類が露わにしたtau事象のalpha対角を対象にした。
+
+- **固定データ残余の分類**: CommitmentOrderSurveyはgate alphaがderive digestのsqueeze（challenge座標）であり、assemblyのtau表gがそれを
+  読むことを示した。レビューは初稿がalphaを「prefixデータ」に分類していた点を退け（prefix digestの決定的関数であっても神託法則の
+  外側で束縛された値ではない）、ROM系列の固定gのtau事象がengine自身のtau事象のalpha固定スライスに過ぎず対角が未評価であること、
+  REI/RXLが「engine自身の事象」と呼べるのは索引事象のみであることを確定させた。committed列はround-one openingに依存し（索引squeeze
+  の後に吸収）prefixデータではなく、「固定」はR1b型のrootDetermined仮定と判明。採用済み6ファイル12箇所（RFT・JointChallengeSpace・
+  OuterSequentialConditioning・RIL・REI・RXL）の過大な文言を修正した。
+- **grindingの和集合上界**: GrindingUnionBoundはChallengeRestricted（challengeは自身の段digestでのみ読む）なgrindingプローバに対して
+  外側+block-0の和集合上界 ≤ combinedBound + N(N+1)/2/|Block| を得た（抽象段digest族上の剥離、probe回答も読めるGrindLane）。レビューは
+  初稿のpreReadGrinderが名指した攻撃を行っていないこと（tag不一致）と「より広いクラス」の包含未証明を指摘し、selector版と包含定理で
+  修正させ、bad集合がgrinder自身のメッセージを運ぶ結合は未了と見出しに明記させた。orchestratorの「拡張clash事象」案は
+  probe→absorbが同一文字列である点で反証され、pre-read（FS challenge grinding）はこの方式の外側にあると確定した。再検証は拡張laneの因果節がroundのchallenge段より厳密に下の cut（probeをroundの5 frameの間に挟むプローバは未モデル。緩い cut でも対角stepは通る）であること、selector版preReadGrinderが好都合な読みで実際にpre-read digestへ移ること、包含定理、結合が未了である旨の正直さを確認しPASS-WITH-FIXES（docstring 1箇所）とした。
+- **tau事象のalpha対角**: EngineTauDiagonalはalpha三つ組で条件付け事象を分割し、各ブロックでRFTの同時剥離を適用して engine自身のtau事象
+  の質量 ≤ tauTerm d を任意の戦略・任意のGについて示し（対角は定数を増やさない）、RXL経路を再構築してengine自身のtau+索引事象上で
+  ≤ combinedBound + 2·tauTerm + chain衝突項を得た。最終定理で∀-lane形のまま残るのは外側（適応系列でのalpha依存外側対角は未解決）と
+  alpha（対角不要）であることを明記。レビューは対角計数（alpha三つ組による分割、各ブロックの段安定性、値ごとの採用済み密度上界）とRXL経路の再構築（仮定はRXLと同一、衝突項1つ）を確認しPASS-WITH-FIXESとし、`alphaRead`が実現proofの`gateAlphaElement`に等しいという同定（RLTAから導出）を定理として追加させた。これで未証明の残余は tables = s0.tables（CommittedTables結合）のみ。
+  三モジュール合わせて140モデル・5469定理。CommitmentOrderSurveyの分類とEngineTauDiagonalにより、transcript制限付き因果的プローバの
+  ROM適応的上界は engine 自身の tau・索引事象上で述べられ、外側（alpha依存の対角、適応系列で未解決）とalpha（対角不要）は∀-lane形。
+  今回もROMの法則下の結果であり、keccakの性質でも系の健全性誤差でもない。残るのは適応系列の外側alpha対角、pre-readプローバの
+  問合せ計数、grinder自身のメッセージとの結合、CommittedTablesJoin（rootDetermined・preprocessedPinned・configDeployed）、R1b、
+  回路の真値、受理の提示。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

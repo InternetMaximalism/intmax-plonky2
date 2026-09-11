@@ -202,7 +202,13 @@ reduced history.  WHAT JUSTIFIES THAT SHAPE, AND WHAT DOES NOT:
     `_gate_` at `realizedProof`, the adopted
     `TwoStageConditionalCount.row_point_is_outer_draw_function` (that module is NOT
     in this module's import closure), and the standing assumption -- the same one
-    (ii) already makes for `g` and `coeffsOf` -- that the extracted columns are
+    (ii) already makes for `g` and `coeffsOf`, WHICH IS THREE ASSUMPTIONS AND NOT ONE:
+    `cols` and `coeffsOf` are functions of the extracted tables alone, and "fixed data"
+    for them is the adopted open `CommitmentOrder.CommittedTables` join (the
+    extractor's round-one-opening argument must drop out); `g` additionally reads the
+    block-0 gate alpha, so for the ENGINE'S OWN `g` the fixed-`g` tau summand is a
+    SLICE AT ONE ALPHA, and its diagonal over alpha is not proved in this tree --
+    that the extracted columns are
     FIXED DATA; `RowPointFixed` (constancy across all hashes) is NOT required,
     because the `committed` parameter is quantified universally and the real
     committed cells are literally a function of the reduced history once the

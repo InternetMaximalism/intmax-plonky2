@@ -934,11 +934,15 @@ theorem adaptive_outer_event_mass_le (d q : Nat) (logLane gateLane : Lane)
 
 /-! ## 4. The genuine joint union bound, with an ADAPTIVE outer family
 
-The tau and alpha families are the adopted ones and are reused verbatim: they
-are indexed by the gate wire/constant tables, which the adopted
-`CommitmentOrder` pins to material absorbed BEFORE any of these squeezes, so for
-them a prefix-frozen family is the right model.  Only the outer family is
-run-relative, and only it is replaced by its adaptive version here. -/
+The tau and alpha families are the adopted ones and are reused verbatim: they are
+indexed by the gate wire/constant tables, which the adopted `CommitmentOrder`
+pins -- via its open `CommittedTables` join -- to the ROOTS absorbed BEFORE any of
+these squeezes.  For the ALPHA family that makes a prefix-frozen family the right
+model.  FOR THE TAU FAMILY IT DOES NOT, QUITE: its index also reads the gate alpha,
+squeezed at counter `9+3d` of the same digest, so a prefix-frozen tau family models
+the run only at a FIXED ALPHA.  The outer family is run-relative in a second and
+stronger sense -- it recurses through the realized round challenges -- and only it
+is replaced by its adaptive version here. -/
 
 /-- THE DISJUNCTION EVENT WITH AN ADAPTIVE OUTER FAMILY: some coupled round of
 either lane agrees for a prover whose round messages may depend on every earlier

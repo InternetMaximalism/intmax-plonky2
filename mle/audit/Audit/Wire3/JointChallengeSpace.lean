@@ -85,14 +85,20 @@ with different absorbed prefixes get the SAME gate alpha.
 
 ## HOW MUCH OF THE JOINT LAW'S SHAPE IS JUSTIFIED
 
-Two of the three coordinate families ARE indexed by data fixed before every one
-of these squeezes.  The gate tau family (`ZeroCheckSemantics.zeroCheckBadSet`)
-and the gate alpha family (`AlphaZeroCheck.alphaBadSet`) are indexed by the gate
-wire/constant tables, and `CommitmentOrder`'s twenty-two-frame prefix carries the
-preprocessed, witness and norm-inverse roots at positions 13, 15 and 19, with
-`only_two_domain_separators_after_the_last_root` showing that the only frames
-between the last root and these squeezes are two fixed domain separators.  For
-THOSE two families the bad sets really are constants of the experiment.
+Two of the three coordinate families are indexed by the gate wire/constant tables
+rather than by the run's realized challenges.  `CommitmentOrder`'s twenty-two-frame
+prefix carries the preprocessed, witness and norm-inverse roots at positions 13, 15
+and 19, with `only_two_domain_separators_after_the_last_root` showing that the only
+frames between the last root and these squeezes are two fixed domain separators.
+READ THE TWO FAMILIES SEPARATELY.  The gate alpha family
+(`AlphaZeroCheck.alphaBadSet`) is indexed by `AlphaZeroCheck.slotCoefficients`,
+which takes NO challenge argument, so once the root-to-table join is granted its
+bad set really is a constant of the experiment.  The gate tau family
+(`ZeroCheckSemantics.zeroCheckBadSet`) is NOT: its index is
+`ZeroCheckSemantics.gateValue gc gates publicHash alpha t`, and `alpha` is the
+block-0 coordinate this very law squeezes at counter `9+3d`.  The tau bad set is a
+constant of the experiment only AT A FIXED ALPHA; as a function of the run it moves
+with the alpha cell.
 
 THE OUTER FAMILY IS NOT.  `laneEvent` recurses through
 `OuterRound.evaluate a r.message r.challenge` -- the run's REALIZED challenge --

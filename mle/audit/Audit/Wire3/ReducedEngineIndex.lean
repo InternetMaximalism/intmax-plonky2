@@ -128,7 +128,13 @@ strategy produced at the table and the claims the used-claims choice picked at
 the run's own reduced history.  NOTHING BELOW SAYS THAT RECORD IS ACCEPTED, or
 that an accepted proof exists; `Integrated.verify` is never invoked.  The
 extracted columns `cols`, like the adopted `g` and `coeffsOf`, are UNIVERSALLY
-QUANTIFIED FIXED DATA and are NOT identified with the deployed committed tables
+QUANTIFIED FIXED DATA -- THREE ASSUMPTIONS, NOT ONE: `cols` and `coeffsOf` are
+functions of the extracted tables alone, and "fixed data" for them is the adopted
+open `CommitmentOrder.CommittedTables` join (the extractor's round-one-opening
+argument must drop out); `g` additionally reads the block-0 gate alpha, so for the
+ENGINE'S OWN `g` the fixed-`g` tau summand is a SLICE AT ONE ALPHA and its diagonal
+over alpha is not proved in this tree -- and are NOT identified with the deployed
+committed tables
 anywhere: that identification is the adopted `CommitmentOrder` reading together
 with that module's own open `CommittedTables` extraction join, which this module
 INHERITS unchanged and does not strengthen.  What section 6 removes is the
@@ -593,7 +599,11 @@ theorem lift_cell_row_is_row_from_history (gdec : Integrated.DecodeGates)
 
 /-- **THE COMMITTED CELL FAMILY AS A FUNCTION OF THE REDUCED HISTORY.**  The
 extracted columns are FIXED DATA -- the standing assumption the adopted
-`ReducedIndexLanes` HONESTY (ii)/(iii) makes for `g` and `coeffsOf` -- and the
+`ReducedIndexLanes` HONESTY (ii)/(iii) makes for `g` and `coeffsOf`, which for
+`cols` and `coeffsOf` is the adopted open `CommitmentOrder.CommittedTables` join
+(the extractor's round-one-opening argument must drop out) and for `g` is that
+join PLUS a fixed gate alpha, `g` being a function of the block-0 alpha cell -- and
+the
 row point they are evaluated at is read off the history, so the whole family is. -/
 def committedOf (cols : Fin 5 → List (List Element)) (cellIndex : Fin 5)
     (xs : List Element) : List Element :=

@@ -139,8 +139,14 @@ chose.  It is not a statement about every proof record the engine might be hande
 `coeffsOf` ARE FIXED DATA, bound outside the oracle law.  That is exactly the
 standing assumption the adopted `ReducedIndexLanes` and `ReducedEngineIndex` make,
 and it is what lets `ReducedEngineIndex.committedOf` be a function of the history
-alone.  The adopted `CommitmentOrder` join -- whether the deployed commitment order
-forces those columns -- remains OPEN and is not addressed here.
+alone.  IT IS THREE ASSUMPTIONS, NOT ONE.  `cols` and `coeffsOf` are functions of
+the extracted tables alone, and "fixed data" for them is the adopted open
+`CommitmentOrder.CommittedTables` join -- whether the deployed commitment order
+forces those columns -- which remains OPEN and is not addressed here; the
+extractor's round-one-opening argument must drop out for it.  `g` ADDITIONALLY
+READS THE BLOCK-0 GATE ALPHA, so for the ENGINE'S OWN `g` the fixed-`g` tau summand
+below is a SLICE AT ONE ALPHA; its diagonal over alpha is not proved in this tree
+either.
 
 (vi) WHIR AND MERKLE ARE EXCLUDED.  No WHIR round, no Merkle path, no proof-of-work
 grinding check is modelled anywhere below.
@@ -1257,7 +1263,7 @@ theorem raw_full_engine_index_bad_event_eq (gdec : Integrated.DecodeGates)
       cellIndex cols]
 
 open Classical in
-/-- (8) **THE HEADLINE: THE FULL ADAPTIVE BOUND ON THE ENGINE'S OWN EVENTS, FOR A
+/-- (8) **THE HEADLINE: THE FULL ADAPTIVE BOUND ON THE ENGINE'S OWN INDEX EVENT, FOR A
 TRANSCRIPT-RESTRICTED CAUSAL RAW PROVER.**  For EVERY `RoundCausal S` and EVERY `ClaimsCausal d U`, the mass of
 the adopted `RawBlockLanes.rawFullBadEvent` UNION THE EXPLICIT ENGINE'S OWN index
 bad event at the raw realized run is at most
