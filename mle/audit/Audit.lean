@@ -129,3 +129,5 @@ import Audit.Wire3.ConcreteChainThreading
 import Audit.Wire3.IndexLanesOracle
 import Audit.Wire3.RunLevelUnionBound
 import Audit.Wire3.StrategyChainBound
+import Audit.Wire3.GrindingQueryBound
+import Audit.Wire3.TwoStageConditionalCount

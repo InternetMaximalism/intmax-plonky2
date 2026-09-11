@@ -1428,6 +1428,30 @@ loop方式の15回目。ConcreteChainThreadingとIndexLanesOracleの接合（run
   残るのは固定プローバの2段階条件付き計数、適応的プローバの和集合上界（逐次条件付けの神託表への輸送）、grindingプローバの
   問合せ計数、R1b、回路の真値、受理証明と残余の同時充足性。
 
+## 第32継続更新（c2b5bc53以降）
+
+追跡版runnerでコミット`c2b5bc53`の124モデル・4637定理を再検査しPASS（875.055秒、1454モジュール、
+manifest `a42ad65a94eb376744257475a45bc82f565ab22adde7422a2d5a8bebe50b2f34`、receipt
+`baf9c8f84601c50fffa062a2d9d0733f8b3179bfb64302af71079bd0b9f18af2`、graph
+`ca1b2c730dee823ab5a50a75eda72564f9fc51b443d8e37769706164d2102972`）。
+loop方式の16回目。RunLevelUnionBoundが契約として残した固定プローバの2段階条件付き計数と、StrategyChainBoundが除外したgrindingプローバを対象にした。
+
+- **2段階条件付き計数の外側段**: TwoStageConditionalCountはexplicit engineのouter bad事象がgate alpha座標経由でのみhashに依存すること
+  （engine自身の依存も吸収）を示し、対角事象を一座標条件付き計数で採用済みcombinedBoundのまま評価してRLUBのfibre Fubiniで神託表へ
+  輸送した（`run_outer_stage_mass_le`）。レビューは条件付けの正当性（各固定alpha事象がalpha座標から独立な柱であることが実効仮定で、
+  敵対的族{w | w_α = a}は排除される）と定数の一致を確認した一方、索引段の「row点は外側drawの関数でない（log-tau列）」という障害主張を
+  採用済み補題で反証した。修正後はrow点が外側drawの関数であることを定理化し、索引段の条件付き計数は`RowPointFixed`を明示仮定として
+  払い出し（定数列で非退化に充足、payoffは定数committed列のみと明記）、閉実例の索引半分が∅であることを定理で記録して、guardが生きる
+  第二の閉実例を追加した。
+- **grindingプローバのchain上界**: GrindingQueryBoundは各段q回の自前probe問合せを持つプローバを定式化し、採用済みCausalが再問合せ
+  に耐えないことを見出してfreshness事象で条件付けるFreshCausalへ置き換え、異なる文字列間の回答一致事象の上界を経由して
+  chainの衝突質量 ≤ N(N+1)/2/|Block|（N=(q+1)n、q=0で3828/|Block|）を得た。probeの回答を読む戦略の提示、q=0でのSCBとの表ごとの
+  一致を示した。レビュー要求でchallenge入力の読み取りを任意digestに一般化し（列の位置のみframe形）、上界がqについて2次で
+  先頭項が≈(q+1)倍緩いこと（SCBの「q·n」は発見的）を明記した。
+  両モジュール合わせて126モデル・4780定理。今回もROMの法則下の結果であり、keccakの性質でも系の健全性誤差でもない。残るのは
+  索引段の細分割（3段契約）、適応的/grindingプローバの和集合上界、grinding上界のq線形化、R1b、回路の真値、受理証明と残余の
+  同時充足性。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

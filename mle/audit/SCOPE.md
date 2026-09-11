@@ -713,6 +713,16 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    対象外で、その衝突質量は問合せ数qに比例する（q·n/|Block|）。**未達**: 適応的プローバのjointBadEvent（combinedBound側）の上界。
    OuterSequentialConditioningが理想モデルで与える逐次条件付けの計数を、13個のround digestにわたる入れ子の
    no-clash事象の下で神託表へ輸送する段が残る。
+   grindingプローバはGrindingQueryBoundで扱った: 各段q回の自前probe問合せ（frame形、逐次適応的）を持つプローバに対しても
+   chainの衝突質量は N(N+1)/2/|Block|（N=(q+1)n）で、q=0は採用済みの3828/|Block|に戻る。採用済みCausalは再問合せに
+   耐えないためfreshness事象で条件付けるFreshCausalへ置き換えた（採用済み結果は弱めない）。challenge入力へのprobeは
+   列の位置にはならないが、challenge入力の読み取り自体は任意のdigestで無償。上界はqについて2次で先頭項は≈(q+1)倍緩い。
+   適応的/grindingプローバの和集合上界は依然未達。
+   固定プローバの2段階条件付き計数はTwoStageConditionalCountで外側段を完了した: explicit engineのouter bad事象はgate alpha座標経由でのみ
+   hashに依存し、対角事象の質量は一座標条件付き計数で採用済みcombinedBoundのまま、RLUBのfibre Fubiniで神託表へ輸送される。索引段は
+   依存事実（row点は外側drawの関数。初稿の障害主張は反証・撤回）まで証明し、条件付き計数自体は`RowPointFixed`（定数committed列で
+   非退化に充足）を明示仮定として`assembly_failure_mass_le`を与えた（定数committed列のみ）。残る細分割（frame半分＋外側challenge
+   cellを固定し索引cellを自由にするfibre）は抽象計数`product_diagonal_card_le`と3段契約で規定済み。
    これらの結果はSoundnessAssemblyで1定理に組み立てた。explicit engineの受理、残余仮定の名前付き構造体
    （表の意味論と転記行、配備digestと有界性、fold水準のopening、抽出列の高さとcommitted幅、
    GateDerivedRejectionの9フィールド、slot係数）、実digest drawが4族のbad event外、実index drawが
