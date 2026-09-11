@@ -648,6 +648,34 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    digest語の正準性を強制するため、`Fin modulus`モデルはSolidityの受理集合を下から近似する（安全側）。
    proof側で固定されるのはcircuitDigest・protocolVersion・preprocessedRoot・widthで、witness/normInverse
    root・round多項式・used・WHIRバイト列は攻撃者が選びshapeの長さとtailのみが制約する。
+   Rust側の呼び出し境界はRustCallBoundaryで扱った。`mle_verify_v2`がcallごとに走らせる検査（byte cap、
+   digest長、幅profile、制約数・次数のcap、kIs、正準subgroup powers、gates、circuit_config_digestの再計算、
+   WHIR id、proofのcircuit digest等）を行単位でLeanの対応物に対応付け、kIsの正準連鎖（builder由来の値。
+   CommonCircuitData未モデルのためソースより厳しい下近似）とcircuit_config_digestの再計算（前像の鏡写し、
+   14メンバーで単射）を新たにモデル化して`rustDeployment`を定義した。Rustの境界にはdigestのpinが無く
+   VKが配備そのものであるため、Solidity側受理から（衝突を除き）Rust検査が従う一方、Rust検査だけでは
+   Solidityのpinは出ない（whirEncodingはRustに入力が無い）。配備config上で両engineは同じ結果を返す。
+   rustEngineはVerifier.verifyの骨格経由でconfigurationHash/chainId guardとpinned preprocessed rootも
+   読む。残余: vk次元とcommon_dataの比較、wire-map範囲、体の位数とD、lookupの不在は仮定。
+   **横断的所見（LocalizedCollisions）**: `TranscriptCollision`・`KhashCollision`・`Khash2Collision`
+   （∃ a b, a ≠ b ∧ hash a = hash b）は無限の入力域から有限のdigestへの任意の関数で成り立つ鳩の巣の
+   トートロジーであり、`RowCollision`の第2選言も有限の鳩の巣で常に真である。本SCOPEとREPORTで
+   「衝突耐性を仮定せず具体的衝突を出す」と記した採用済み定理（37件＋17件）は、文としては仮定なしに
+   真であり、監査内容は構成的証明が示す2つの具体的入力にしか無い。これは健全性欠陥ではなく文の形での
+   過大主張である。局所化した反証可能な述語（FrameFoldCollision、Index/RoundDigestClash、
+   ConfigEncodingCollision、LeafCollision）で主要定理を言い直した。採用木側の要修正:
+   `ConditionalSoundness.no_row_collision_binds_opened_dot`は仮定¬RowCollisionが充足不能で空虚
+   （NoCollisionAmong型の局所的単射性に置き換えるべき）。本SCOPEの「具体的なtranscript衝突」の各記述は
+   「その実行の2つの具体的入力の衝突（局所述語）」と読むこと。
+   Fiat–Shamir半分(B)の最初の形式化はRandomOracleSqueezesで行った。hashを有限集合Q上の一様ランダム表
+   （random oracleの有限計数法則）とし、相異なる入力での射影の一様性、block digestを固定した条件付きでの
+   スケジュールsqueezeの一様性とbad draw質量≤combinedBound（d≤13で仮定の充足を証明、d=13の閉じた実例）
+   を示した。block digest自体がframe問い合わせの出力で逐次依存することを見出し、frame/challenge入力の
+   prefix分離（15バイト目）からcongruence補題を証明、frame fibre上のFubiniでrun水準の上界
+   P[bad draw] ≤ combinedBound + P[round digestの局所的衝突]を得た。**限定**: 最小の閉包証人では加算項が
+   1で空虚、実行のframe入力を含むQで<1（存在のみ証明）、小さい上界は未証明（birthday型計数）、適応的
+   prover（pがTに依存）は未対応。初稿の非適応定理は仮定が全digestをzeroDigestに強制し空虚だったため
+   棄却して再定式化した（2度目の空虚性検出）。ROMであってkeccakの性質ではない。
    これらの結果はSoundnessAssemblyで1定理に組み立てた。explicit engineの受理、残余仮定の名前付き構造体
    （表の意味論と転記行、配備digestと有界性、fold水準のopening、抽出列の高さとcommitted幅、
    GateDerivedRejectionの9フィールド、slot係数）、実digest drawが4族のbad event外、実index drawが

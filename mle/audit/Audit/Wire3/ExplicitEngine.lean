@@ -807,9 +807,10 @@ conjunct did have content. What of it SURVIVES concretely in this model:
   `Integrated.successful_gate_evaluation_checks_all_metadata` extracts
   `Gates.validateConfiguration (Integrated.gateConfig c) gates = some ()` from the
   gate preflight, and `accepted_gate_rows_are_the_decoded_length` restates that at
-  this engine. The evaluator's COVERAGE limit stands unchanged (Gates.lean models
-  the 14 configured families' metadata checks but evaluates only ids 0,1,2,3,6,7);
-  what survives is the configuration validation, not full evaluation.
+  this engine. What survives here is the configuration validation, not full
+  evaluation. (Coverage note: `Gates.lean`'s own partial evaluator handles ids
+  0,1,2,3,6,7 only, but the integrated entry uses `GatesComplete.evaluateUnfiltered`,
+  which evaluates all 14 configured families — `GateEvaluatorCoverage.coverage_status`.)
 
 What does NOT survive, and is the residue of this module:
 

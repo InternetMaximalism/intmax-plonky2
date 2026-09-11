@@ -1308,6 +1308,41 @@ R1b（WHIR近接性＋sumcheck健全性）、Fiat–Shamir半分(B)、回路真�
 採用namespaceでの直接buildと全統合guardはPASS。全4024名の実定理/型/推移的公理、
 464 reviewed hashes、18表1147語、7依存5601fileを検査した。
 
+## 第28継続更新（917e2cde以降）
+
+追跡版runnerでコミット`917e2cde`の115モデル・4024定理を再検査しPASS（836.35秒、1445モジュール、
+manifest `9052117b5b14fc5f9f6bc5d090c8427343e2616e887e3268bee021bb18630629`、receipt
+`66cfeff187cba129d908bdd75567cedf4bf19ec9099af82d6f8faa21bc505d7c`、graph
+`e0d7e1c579f195daf593899226630c55a665a282f5eb0be6a3f0c127b718d988`）。
+loop方式の11回目。Rust側の呼び出し境界と、Fiat–Shamir半分(B)の最初の形式化を対象にした。あわせて
+採用済みSoundnessAssemblyのcommittedWidth注記（HonestOpenings.openedから導出可能）とExplicitEngineの
+被覆注記（完全dispatcherは14 family）を文書修正した（定理の変更なし）。
+
+- **Rust側境界**: RustCallBoundaryはRustのcallごとの検査を対応付け、kIs正準連鎖とcircuit_config_digest
+  再計算をモデル化して、Solidity側受理からRust検査が従うこと、逆は成り立たないこと（VKが配備）、配備
+  config上で両engineが一致することを示した。レビューはkIs近似の向き（ソースより厳しい下近似）と、
+  rustEngineがverify骨格経由でSolidityのpinも読む点を明記させた。
+- **衝突述語の局所化**: LocalizedCollisionsは`TranscriptCollision`等の大域的衝突述語が鳩の巣の
+  トートロジーであることを証明し、影響する採用済み定理54件を文として自明であると明示した上で、局所化
+  した反証可能な述語で主要定理を言い直した。レビューはRowCollision系も表に含めること、
+  `ConditionalSoundness.no_row_collision_binds_opened_dot`が仮定充足不能で空虚であること（採用木側の
+  要修正として記録）、ConditionalSoundness 685-692の先行注記の引用を求めた。本更新のREPORT／SCOPEに
+  おける「具体的衝突」の記述は局所述語の意味に読み替える。
+- **random oracleのsqueeze**: RandomOracleSqueezesはhashを有限集合上の一様ランダム表とし、block digestを
+  固定した条件付きでスケジュールsqueezeが一様でbad draw質量≤combinedBoundであること（d=13の閉じた実例
+  つき）、frame/challenge入力の分離によるcongruence補題、frame fibre上のFubiniによるrun水準の上界
+  P[bad draw] ≤ combinedBound + P[round digestの局所的衝突]を示した。初稿の非適応定理はレビューが仮定の
+  矛盾（全digestがzeroDigestに強制される）をLeanで導いてFAILとなり、再定式化後の再レビューで「大域衝突
+  述語がトートロジー」という横断的所見と「最小の閉包証人では加算項が1」という限定が指摘され、局所述語
+  への置換と、加算項<1となるQの存在証明・正直な記述で収束した。小さい上界と適応的proverは未解決。
+
+追加3モデルはいずれもFable側の敵対的検証を通した（RandomOracleSqueezesは4巡、うち1回はFAIL；
+LocalizedCollisionsは1巡；RustCallBoundaryは1巡）。本更新で検出された採用木側の要修正は
+`ConditionalSoundness.no_row_collision_binds_opened_dot`の空虚性（仮定¬RowCollisionが充足不能）と、
+「具体的衝突」記述の局所述語への読み替えである。
+採用namespaceでの直接buildと全統合guardはPASS。全4292名の実定理/型/推移的公理、
+467 reviewed hashes、18表1147語、7依存5601fileを検査した。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

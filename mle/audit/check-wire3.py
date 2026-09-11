@@ -33,6 +33,8 @@ EXTERNAL_IMPORTS = {
     "Audit.Wire3.GoldilocksNorm": frozenset({"Mathlib.Tactic.Ring"}),
     "Audit.Wire3.WhirPolynomial": frozenset({"Mathlib.Algebra.Polynomial.Roots"}),
     "Audit.Wire3.WhirChallenge": frozenset({"Mathlib.Data.Fintype.Card"}),
+    "Audit.Wire3.LocalizedCollisions": frozenset({
+        "Mathlib.Data.Fintype.Card", "Mathlib.Data.Fintype.BigOperators", "Mathlib.Data.Fintype.Pi"}),
     "Audit.Wire3.WhirQuicksort": frozenset({"Mathlib.Data.List.Perm"}),
     "Audit.Wire3.WhirQuicksortCorrectness": frozenset({"Mathlib.Data.List.Sort"}),
     "Audit.Wire3.GatePolynomial": frozenset({"Mathlib.Data.List.Count"}),
@@ -75,7 +77,8 @@ REQUIRED_MODULES = {"Audit.Wire3." + name for name in (
     "InstalledWhirParse", "IndexPointZeroCheck",
     "ExplicitEngine", "GateEvaluatorCoverage",
     "SoundnessAssembly", "CanonicalProofCheck",
-    "ExtractorConstruction",
+    "ExtractorConstruction", "RustCallBoundary",
+    "LocalizedCollisions", "RandomOracleSqueezes",
 )}
 REQUIRED = {
     PROJECT + "/check-wire3.py", PROJECT + "/test-check-wire3.py",

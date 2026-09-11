@@ -120,3 +120,6 @@ import Audit.Wire3.GateEvaluatorCoverage
 import Audit.Wire3.SoundnessAssembly
 import Audit.Wire3.CanonicalProofCheck
 import Audit.Wire3.ExtractorConstruction
+import Audit.Wire3.RustCallBoundary
+import Audit.Wire3.LocalizedCollisions
+import Audit.Wire3.RandomOracleSqueezes

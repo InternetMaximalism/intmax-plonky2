@@ -384,10 +384,14 @@ structure AssemblyResidue (gdec : Integrated.DecodeGates) (hash : Spongefish.Has
     2 ^ (OpenedClaimFold.cellRow
       (Verifier.derivedRounds (engine gdec hash thash khash P c₀) c p) cellIndex).length
   /-- (f) **THE COMMITTED WIDTH.** The extracted family has exactly as many
-  columns as the run supplied cells. NOT DISCHARGED: the capacity clause of
-  `Verifier.envelope` gives only `≤ 2 ^ c.indexBits` on each side
-  (`IndexPointZeroCheck.bound_cell_supplied_width_le`), never equality, and
-  `IndexPointZeroCheck.padding_hides_unequal_widths` shows the gap is real. -/
+  columns as the run supplied cells. Kept as a field here so the assembly is
+  usable under the R3-free fold-level predicate alone, where only the capacity
+  clause of `Verifier.envelope` is available (`≤ 2 ^ c.indexBits` on each side,
+  `IndexPointZeroCheck.bound_cell_supplied_width_le`, and
+  `IndexPointZeroCheck.padding_hides_unequal_widths` shows that gap is real).
+  Under the R1b honest-openings relation it IS derivable: the `opened` field is a
+  `List.map`, so the widths agree — `ExtractorConstruction.committed_width_of_openings`
+  discharges this field from `HonestOpenings`. -/
   committedWidth : (cols cellIndex).length =
     (OpenedClaimFold.boundCell p.used
       (Verifier.derivedIndices (engine gdec hash thash khash P c₀) c p) cellIndex).1.length
@@ -1476,7 +1480,7 @@ nothing else.
 | `gatesEncodingBound`, `whirEncodingBound` | ABI | Lean `Nat` is unbounded; Solidity `uint256` is not |
 | `foldLevelOpening` | R1b | WHIR proximity plus sumcheck soundness; `InstalledWhirTail.TailExtractsFoldLevel` is the adopted named form |
 | `extractedColumnHeight` | R1b / width | a shape fact about extractor output |
-| `committedWidth` | width | `Verifier.envelope`'s capacity clause gives only `≤ 2 ^ indexBits` on each side, never equality |
+| `committedWidth` | width | irreducible only under the fold-level predicate (capacity gives `≤`); derivable from `HonestOpenings.opened` (`ExtractorConstruction.committed_width_of_openings`) |
 | `gatesDecode` | bookkeeping | the EXISTENCE of the decoded list is a theorem; pinning the split is definitional |
 | `extractedStateConsistent`, `extractedTruthChain`, `lastCells`, `cellsMatchClaims`, `eqProvenance`, `eqCellBinding`, `activeFilter` | R2 | extraction: the adopted open join and the data it is supposed to produce |
 | `gateConstraintsPositive` | envelope gap | `Verifier.envelope` caps `numGateConstraints` but never demands positivity |
