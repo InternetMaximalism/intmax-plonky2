@@ -209,9 +209,15 @@ assumption list untouched -- and nothing here instantiates it.
 (vi) WHAT IS STILL MISSING FOR A RUN-LEVEL ADAPTIVE STATEMENT.  The adopted
 `RandomOracleSqueezes.run_draw_probability_le_fibrewise` bounds the run's WHOLE
 bad-draw mass for a FIXED proof by a Fubini over frame fibres; that argument does
-not survive a table-dependent proof, and it is not repeated here.  What section 5
-bounds is an event defined directly on the oracle table, not `runDrawEvent` at a
-`jointBadEvent`.  The Fiat--Shamir half -- that the run's encoding draw is
+not survive a table-dependent proof, and it is not repeated here.  What section 5 bounds is an event defined directly on the oracle table.  It is
+NOT the adopted `RandomOracleSqueezes.runDrawEvent`, whose `Verifier.Proof` and
+whose two lane lists are quantified OUTSIDE the law.  For the reduced-subclass
+headline `reduced_outer_lane_bad_draw_probability_le` (outer event, claimed start
+`0`), the adopted `RunLevelTransportAudit` (through `RawBlockLanes`'s
+`raw_outer_bad_event_of_reduced`) shows it IS the same event once that proof and
+those lists are replaced, table by table, by the ones the prover realizes there;
+for the general section-5 headline at an arbitrary `Strategy` and `Lane` no such
+identification exists.  The Fiat--Shamir half -- that the run's encoding draw is
 `jointProbability`-distributed -- remains exactly as unformalized as the adopted
 `JointChallengeSpace.DrawEncodesRun` header says, and nothing below is a claim
 that Fiat--Shamir soundness has been established for an adaptive prover.

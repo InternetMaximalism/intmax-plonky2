@@ -68,7 +68,10 @@ table.
    OWN, so this closes the PER-ROUND-DECOMPOSITION half of SCB HONESTY (iii) at
    the `combinedBound` lanes, for every transcript-restricted prover that obeys
    the protocol's causality; the run-level transport named in that item's last
-   sentence remains open (see (vi)).  NO REDUCED-HISTORY RESTRICTION REMAINS on
+   sentence is carried out in the adopted `RunLevelTransportAudit` for the paired
+   form (`strategicShape c s S`, `RoundCausal S`, claimed start `0`), which
+   identifies this event with the run's own `actualDigestDraw` bad-draw event at
+   the realized proof (see (vi)).  NO REDUCED-HISTORY RESTRICTION REMAINS on
    this half.
 4. THE ADOPTED SUBCLASS IS AN INSTANCE (section 8).  `raw_log_target_of_reduced`
    and `raw_gate_target_of_reduced` prove that at a `ReducedStrategy` the raw
@@ -183,8 +186,15 @@ would be wrong.
 PROVED.  The adopted `RandomOracleSqueezes.run_draw_probability_le_fibrewise`
 bounds a run's whole bad-draw mass for a FIXED proof by a Fubini over frame
 fibres; that argument does not survive a table-dependent proof and is not repeated
-here.  What is bounded below is an event defined directly on the oracle table, not
-`runDrawEvent` at a `jointBadEvent`.  The reading that THE RUN'S ENCODING DRAW IS
+here.  What is bounded below is an event defined directly on the oracle table.  It is
+not the adopted `RandomOracleSqueezes.runDrawEvent`, which quantifies its
+`Verifier.Proof` and its two lane lists OUTSIDE the law; for the paired form
+(`strategicShape c s S`, `RoundCausal S`, claimed start `0`) the adopted
+`RunLevelTransportAudit` proves that `rawFullBadEvent` IS that event once the
+proof and the lane lists are replaced, table by table, by the ones this prover
+realizes -- `raw_full_bad_event_is_adaptive_run_draw_event` -- so the run-level
+transport named in item 3's last clause is no longer open at these lanes for
+that form (the bounds at an arbitrary `Strategy` carry no such identification).  The reading that THE RUN'S ENCODING DRAW IS
 DISTRIBUTED BY `jointProbability` remains exactly as unformalized as the adopted
 `JointChallengeSpace.DrawEncodesRun` header says.  NOTHING BELOW IS A CLAIM THAT
 ADAPTIVE FIAT--SHAMIR SOUNDNESS HAS BEEN ESTABLISHED.

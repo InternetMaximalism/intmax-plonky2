@@ -179,9 +179,22 @@ proves it by COUNTING ON THE ADOPTED FINITE `JointChallengeSpace.JointSpace`,
 not on `OracleTable (boundedQueries L)`.  The missing step is the transport: an
 oracle-table analogue of
 `RandomOracleSqueezes.draw_at_fixed_digests_is_uniform` in which the digests are
-the strategy chain's own.  Section 3 is the one-stage form of that transport; the
-whole-schedule form, and therefore the adaptive run-level bound, is NOT proved
-here.
+the strategy chain's own.  Section 3 is the one-stage form of that transport, and IT IS THE ONLY FORM THE
+UNION BOUND CONSUMES.  The adopted `RawBlockLanes` carries the per-round
+decomposition out on the oracle table, and the adopted `RunLevelTransportAudit`
+proves that the resulting per-round union IS, as a `Finset` of tables, the run's
+own bad-draw event -- the adopted `InstalledRoundCommit.actualDigestDraw` at the
+proof the strategy actually submits, weighed against the adopted
+`JointChallengeSpace.jointBadEvent` at the lane rounds it actually plays -- so the
+adaptive run-level bound follows from the one-stage form alone (for the
+outer-plus-block-`0` `jointBadEvent`, for transcript-restricted causal provers at
+claimed start `0`; the index lanes are the adopted `RawIndexLanes`; random-oracle
+model; grinding excluded).  NO WHOLE-SCHEDULE UNIFORMITY STATEMENT IS NEEDED FOR
+IT, AND NONE IS PROVED ANYWHERE IN THIS TREE: no adopted lemma gives closure of
+the chain's no-clash event up to stage `n` under overwriting a challenge answer at
+a stage below `n`, so the `StageStable` route to an exact product law is not open;
+whether that law holds is not settled either way, and no counterexample table is
+constructed.
 
 (iv) THE LANES ARE THE OUTER SUMCHECK LANES.  The index lanes, the WHIR folding
 transcript and the Merkle openings are NOT covered.  The chain modelled in

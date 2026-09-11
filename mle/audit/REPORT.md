@@ -1541,6 +1541,27 @@ loop方式の21回目。ReducedIndexLanesが残した転送と、reduced-history
   両モジュール合わせて135モデル・5223定理。今回もROMの法則下の結果であり、keccakの性質でも系の健全性誤差でもない。残るのは
   索引半分のraw版、grindingプローバの和集合上界、列・g/coeffsOfと配備表の結合（CommitmentOrder）、R1b、回路の真値、受理の提示。
 
+## 第37継続更新（d6603b5c以降）
+
+追跡版runnerでコミット`d6603b5c`の135モデル・5223定理を再検査しPASS（1401.11秒、1465モジュール、
+manifest `675137424184c1cd832a5056d58563def95cadc9aabc5b2ad12963dda487e079`、receipt
+`f407c41b37cc38204335d5871b5819e881d7e363c31c0c0b63368444ec6124f7`、graph
+`01d65a87670b039fa86501fbbac7ecd75cfa5340302213b86d2e7e6f56b948ef`）。
+loop方式の22回目。raw戦略の索引半分と、SCB HONESTY (iii) 末尾のrun水準輸送の決着を対象にした。
+
+- **raw索引半分とengine転送**: RawIndexLanesはClaimsCausalなused-claims選択を持つraw拡張chainを定義し、RILの計数スタックとREIの転送補題を
+  逐語的に再利用して（新規は不変性補題2本）、任意のRoundCausal S・ClaimsCausal Uに対しexplicit engine自身の事象上で
+  ≤ combinedBound + 2·tauTerm + chain衝突項（5 cell版は5·2·tauTerm）を得た。閉実例はraw blockを読む戦略と claims 選択で
+  RHS<1。レビューはClaimsCausalがRoundCausalのd段目版と定義的に一致すること、claim frameとindexDigestの同定、no-clash下のdigest分離（全カウンタで不変）、RIL計数スタックの戦略非依存性、engine事象とのFinset恒等式（probeでhidxを放棄）、単一衝突項と5 cell版を確認しPASS-WITH-FIXES（文書のみ）とした。
+- **run水準輸送の決着**: RunLevelTransportAuditは採用済み`jointBadEvent`の外側部が凍結LaneRoundリストを取り、claimの再帰が各roundの
+  challenge欄で進むことから、RBLのraw全事象が実現proofでの`actualDigestDraw`のrun水準bad事象とFinsetとして等しいことを示し、
+  適応的run水準上界を固定プローバ定理と同じ形で得た（閉実例でRHS<1）。whole-schedule一様性は不要と定理化し、積法則は主張しない。
+  提案された修正文をSCB (iii)/OLT (vi)/RBL (vi) のdocstringに反映した。レビューは`jointBadEvent`の外側部が凍結LaneRoundリストを取り自身のchallenge欄で再帰すること、実現laneが採用済み`DrawEncodesRun`のseam述語を実現drawで満たすこと、座標ごとの輸送、事象が固定プローバ族の対角であること（同じ文の形）を確認しPASS-WITH-FIXES（散文）とした: 「no-clash事象は内側段の再割当で閉じない」という未証明の否定を「閉性は既知でなく、積法則の成否はここでは未決」に改め、提案修正文に範囲（外側+block-0、transcript制限付き因果的プローバ、claimed start 0、索引はRawIndexLanes、ROM、grinding除外。OLT側は縮約部分クラスの見出しに限る）を明記させた。
+  両モジュール合わせて137モデル・5317定理。これでROMの適応的上界はtranscript制限付き（自前問合せなし）の因果的プローバに対して、
+  外側・block-0・索引の全laneでexplicit engine自身の事象上に成立し、run水準の形でも述べられた。今回もROMの法則下の結果であり、
+  keccakの性質でも系の健全性誤差でもない。残るのはgrindingプローバの和集合上界、列・表と配備との結合（CommitmentOrder）、R1b、
+  回路の真値、受理の提示。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

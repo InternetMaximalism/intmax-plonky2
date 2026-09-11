@@ -756,6 +756,13 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    reduced-history制限はRawBlockLanesで解除した: OSCのLaneを経由せず、rawメッセージと縮約challengeでの評価を持つraw laneにより、
    任意のRoundCausal transcript制限付き戦略に対して外側+block-0で ≤ combinedBound + chain衝突項（閉実例はOLTが対応づけられなかった
    challengeTruncatedMessage）。残るのは索引半分のraw版（RILの機械的再導出）、grinding、列/表の配備との結合。
+   raw戦略の索引半分とengine転送はRawIndexLanesで完了し、任意のcausal transcript制限付き戦略（RoundCausal S, ClaimsCausal U）に対して
+   explicit engine自身の事象上で ≤ combinedBound + 2·tauTerm + chain衝突項（5 cell版は5·2·tauTerm）が成立、閉実例でRHS<1。
+   これでROMの適応的上界はtranscript制限付きの範囲で全laneに及んだ。残るのはgrinding（自前問合せ）の和集合上界、列・表の
+   配備との結合、R1b、回路の真値、受理の提示。
+   SCB HONESTY (iii) 末尾のrun水準輸送はRunLevelTransportAuditで決着した: RBLのraw全事象は実現proofでの`actualDigestDraw`が
+   `jointBadEvent`（実現lane）に落ちるrun水準事象とFinsetとして等しく、適応的run水準上界は固定プローバ定理と同じ文の形で成立、
+   whole-schedule一様性は不要（一段事象の和）。積法則自体は主張しない（閉性は既知でなく成否は未決）。
    これらの結果はSoundnessAssemblyで1定理に組み立てた。explicit engineの受理、残余仮定の名前付き構造体
    （表の意味論と転記行、配備digestと有界性、fold水準のopening、抽出列の高さとcommitted幅、
    GateDerivedRejectionの9フィールド、slot係数）、実digest drawが4族のbad event外、実index drawが
