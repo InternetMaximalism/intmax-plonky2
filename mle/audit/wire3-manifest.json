@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "84cd9806c0ce72846a9231261a205f960e53bfda6499e979d468717b289f6dc9",
+      "sha256": "cb348cc4c623c4555e03f39f07a648a26c42a097c2bf0f81141fc1a10591ff13",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "43d4e976525dbebb35e20bee6bcec7012aab004939578073e388df4117d3957d",
+      "sha256": "ce891561ec8dcca2a2eeb988519ffddd6938e02a02c8970648e6363ae6b58406",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "6a9e3b093d40cea1874063d109a68ec1261a528b8b671178f8a5fb8f87935f0b",
+      "sha256": "bc73c75080a03dfd3189a3786f1af4e3ff67202334b21ccf4bd19cbda5648246",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "54091215141f1411d08fe6b4c72678694f551ed707cc2ed0e33a301a654b5e18",
+      "sha256": "ad1af5323e9bdb29ebaade4b7cee530a5efbdc0f09081553bacdbfec066f26dc",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "8f7b9958b65d492ab1ed5cd2254b320215749297a655050b6fe2f92ef2e34d6f",
+      "sha256": "1977f2ab9017feada829ce280be10af5a156bcaeed94282c2f7e0a3ab5083916",
       "kind": "spec"
     },
     {
@@ -2346,6 +2346,16 @@
     {
       "path": "mle/audit/Audit/Wire3/OpenedDotBinding.lean",
       "sha256": "ba74ef3df890acbbedadc2027fe3005ed7d0fd747f9db0a535cc2cd18f7d3e38",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/ConcreteChainThreading.lean",
+      "sha256": "a74f1b498d655e85c3b0dbc381bbc4e7d913eb3add54bfca87b21a540cf50cd4",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/IndexLanesOracle.lean",
+      "sha256": "6e887a24b0e7a644e63324e9277040cc32cb9e2bfb395814538a9a1fdf4bce4b",
       "kind": "current-model"
     }
   ],
@@ -8072,6 +8082,128 @@
         "mle/src/commitment/whir_pcs.rs"
       ],
       "scope": "Repair of the vacuous adopted theorem ConditionalSoundness.no_row_collision_binds_opened_dot, whose hypothesis negates a pigeonhole tautology. Inventory: the theorem has no Lean consumers (declaration and prose only), so no adopted conclusion depends on it and there is no soundness consequence. The replacement assumes injectivity of the hash on the execution-computed list of both openings' leaf rows and Merkle parent inputs (definitionally the adopted NoCollision) and derives the same conclusion by one application of the adopted opening theorem; the hypothesis excludes every pair the proof can produce and, for multi-index openings, the other rows and paths of the same two runs. A localized form concludes dot equality or a leaf collision between the two named rows under path injectivity alone and recovers the adopted disjunction. Satisfiability is shown by fully discharged instances (identical and non-identical openings) and falsifiability by two accepted openings of the same root and index with different dots under a clashing hash. Recommended: deprecate the vacuous theorem's docstring in the adopted file and point here. Not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.ConcreteChainThreading",
+      "theorems": [
+        "Audit.Wire3.ConcreteChainThreading.concrete_final_take_succ",
+        "Audit.Wire3.ConcreteChainThreading.round_incoming_succ",
+        "Audit.Wire3.ConcreteChainThreading.round_incoming_step_is_the_frame_fold",
+        "Audit.Wire3.ConcreteChainThreading.chain_model_is_the_run_chain",
+        "Audit.Wire3.ConcreteChainThreading.chain_model_is_the_round_incoming",
+        "Audit.Wire3.ConcreteChainThreading.run_round_digest_is_chain_digest",
+        "Audit.Wire3.ConcreteChainThreading.run_gate_round_digest_is_chain_digest",
+        "Audit.Wire3.ConcreteChainThreading.prefix_message_payload_bound",
+        "Audit.Wire3.ConcreteChainThreading.length_budget_queries",
+        "Audit.Wire3.ConcreteChainThreading.length_budget_frames",
+        "Audit.Wire3.ConcreteChainThreading.length_budget_chain",
+        "Audit.Wire3.ConcreteChainThreading.run_round_digest_clash_event_is_prefix_round_clash",
+        "Audit.Wire3.ConcreteChainThreading.run_clash_probability_le",
+        "Audit.Wire3.ConcreteChainThreading.run_clash_probability_le_of_budget",
+        "Audit.Wire3.ConcreteChainThreading.run_clash_probability_at_thirteen",
+        "Audit.Wire3.ConcreteChainThreading.run_bad_draw_probability_le_birthday",
+        "Audit.Wire3.ConcreteChainThreading.run_bad_draw_probability_le_birthday_at_thirteen",
+        "Audit.Wire3.ConcreteChainThreading.block_card_ge_birthday_scale",
+        "Audit.Wire3.ConcreteChainThreading.birthday_term_le_two_pow_neg",
+        "Audit.Wire3.ConcreteChainThreading.zip_replicate",
+        "Audit.Wire3.ConcreteChainThreading.budget_round_messages",
+        "Audit.Wire3.ConcreteChainThreading.replicate_get_d",
+        "Audit.Wire3.ConcreteChainThreading.budget_round_count",
+        "Audit.Wire3.ConcreteChainThreading.length_budget_at_envelope",
+        "Audit.Wire3.ConcreteChainThreading.length_budget_is_satisfiable_at_thirteen",
+        "Audit.Wire3.ConcreteChainThreading.run_bad_draw_probability_le_birthday_closed",
+        "Audit.Wire3.ConcreteChainThreading.closed_bound_lt_one",
+        "Audit.Wire3.ConcreteChainThreading.prefix_round_clash_event_mono",
+        "Audit.Wire3.ConcreteChainThreading.constant_table_in_run_clash_event",
+        "Audit.Wire3.ConcreteChainThreading.run_clash_event_nonempty",
+        "Audit.Wire3.ConcreteChainThreading.budget_query_set_is_not_frame_free",
+        "Audit.Wire3.ConcreteChainThreading.birthday_term_lt_one"
+      ],
+      "sources": [
+        "mle/src/transcript_v2.rs",
+        "mle/contracts/src/TranscriptV2.sol",
+        "mle/src/verifier_v2.rs"
+      ],
+      "scope": "Threads the chain model of BirthdayClashBound onto the run's actual commit chain. By induction on the round index, the chain's digest after 22 + 5r absorbs equals the adopted concreteFinal of the run's first r coupled messages from the derived state (the incoming counter is dead because absorb reads only the digest; concrete_final_take_succ is the list bookkeeping the adopted module left open); the adopted sourceDigest of round r is the chain's stage 22 + 5r + 5 (the getD fallback is never taken under the shape's length equation); hence the adopted clashEvent and the chain model's prefix round clash event are the same finset. The additive clash hypothesis of the random-oracle run-level bound is discharged: for a fixed (non-adaptive) prover under the random-oracle model the bad-draw mass is at most combinedBound plus (22+5d)(22+5d+1)/2 over the block count, at d = 13 the term 3828 over the block count, at most 2^-244 symbolically. A length-budget predicate collects the seven side conditions, with a closed witness at L = 381 and degreeBits 13; the closed instance leaves only a field element free and its right-hand side is below one (via the adopted combined_bound_at_extremes_numeric). Non-vacuity: the constant table lies in the clash event and the bounded query set is not frame-free, so the trivial plus-one bound does not apply. Honest limits: random-oracle model, not keccak; the prover's messages are fixed before the table is sampled, so the adaptive prover is not covered; outer sumcheck lanes only, index lanes, WHIR folding and Merkle excluded; the masses are not the system's soundness error (about a hundred-bit design point)."
+    },
+    {
+      "module": "Audit.Wire3.IndexLanesOracle",
+      "theorems": [
+        "Audit.Wire3.IndexLanesOracle.prefix_round_index_shape_early",
+        "Audit.Wire3.IndexLanesOracle.prefix_round_index_shape_claim",
+        "Audit.Wire3.IndexLanesOracle.claim_shape_zero",
+        "Audit.Wire3.IndexLanesOracle.claim_shape_one",
+        "Audit.Wire3.IndexLanesOracle.claim_shape_two",
+        "Audit.Wire3.IndexLanesOracle.claim_shape_three",
+        "Audit.Wire3.IndexLanesOracle.claim_shape_four",
+        "Audit.Wire3.IndexLanesOracle.claim_shape_five",
+        "Audit.Wire3.IndexLanesOracle.claim_shape_six",
+        "Audit.Wire3.IndexLanesOracle.claim_shape_seven",
+        "Audit.Wire3.IndexLanesOracle.claim_shape_past_end",
+        "Audit.Wire3.IndexLanesOracle.claim_shape_tags",
+        "Audit.Wire3.IndexLanesOracle.claims_separator_length",
+        "Audit.Wire3.IndexLanesOracle.index_separator_length",
+        "Audit.Wire3.IndexLanesOracle.claim_shape_payload_bound",
+        "Audit.Wire3.IndexLanesOracle.prefix_round_index_shape_payload_bound",
+        "Audit.Wire3.IndexLanesOracle.absorb_messages_cons",
+        "Audit.Wire3.IndexLanesOracle.absorb_messages_digest_congr",
+        "Audit.Wire3.IndexLanesOracle.index_digest_congr",
+        "Audit.Wire3.IndexLanesOracle.index_state_is_index_digest",
+        "Audit.Wire3.IndexLanesOracle.index_state_hypothesis_is_satisfiable",
+        "Audit.Wire3.IndexLanesOracle.frame_state_agree_below",
+        "Audit.Wire3.IndexLanesOracle.extended_prefix_agrees",
+        "Audit.Wire3.IndexLanesOracle.extended_stage22_is_derive",
+        "Audit.Wire3.IndexLanesOracle.extended_round_stage_five",
+        "Audit.Wire3.IndexLanesOracle.extended_clash_index_disjuncts_are_run_digests",
+        "Audit.Wire3.IndexLanesOracle.index_counters_distinct",
+        "Audit.Wire3.IndexLanesOracle.index_counter_range",
+        "Audit.Wire3.IndexLanesOracle.index_counter_bound",
+        "Audit.Wire3.IndexLanesOracle.index_schedule_index_injective",
+        "Audit.Wire3.IndexLanesOracle.index_bundle_preimage_card",
+        "Audit.Wire3.IndexLanesOracle.index_schedule_card",
+        "Audit.Wire3.IndexLanesOracle.index_space_card_as_blocks",
+        "Audit.Wire3.IndexLanesOracle.index_pushforward_uniform",
+        "Audit.Wire3.IndexLanesOracle.index_draw_at_digest_is_encoded",
+        "Audit.Wire3.IndexLanesOracle.index_draw_at_fixed_digest_is_uniform",
+        "Audit.Wire3.IndexLanesOracle.guarded_index_bad_event_of_differ",
+        "Audit.Wire3.IndexLanesOracle.guarded_index_bad_event_of_cube_agreement",
+        "Audit.Wire3.IndexLanesOracle.guarded_index_bad_event_of_equal_cells",
+        "Audit.Wire3.IndexLanesOracle.tau_term_nonneg",
+        "Audit.Wire3.IndexLanesOracle.index_space_card_cast_pos",
+        "Audit.Wire3.IndexLanesOracle.guarded_index_bad_event_mass_le",
+        "Audit.Wire3.IndexLanesOracle.index_bad_draw_at_fixed_digest_le",
+        "Audit.Wire3.IndexLanesOracle.combined_sel_inl",
+        "Audit.Wire3.IndexLanesOracle.combined_sel_inr",
+        "Audit.Wire3.IndexLanesOracle.index_counters_meet_round_counters",
+        "Audit.Wire3.IndexLanesOracle.index_input_ne_joint_input",
+        "Audit.Wire3.IndexLanesOracle.combined_schedule_injective",
+        "Audit.Wire3.IndexLanesOracle.joint_sel_injective_of_combined",
+        "Audit.Wire3.IndexLanesOracle.index_sel_injective_of_combined",
+        "Audit.Wire3.IndexLanesOracle.joint_and_index_bad_at_fixed_digests_le",
+        "Audit.Wire3.IndexLanesOracle.extended_digest_clash_event_subset",
+        "Audit.Wire3.IndexLanesOracle.extended_digest_clash_mass_le",
+        "Audit.Wire3.IndexLanesOracle.extended_digest_clash_mass_at_thirteen",
+        "Audit.Wire3.IndexLanesOracle.extended_digest_clash_bound_lt_one",
+        "Audit.Wire3.IndexLanesOracle.constant_table_in_extended_clash_event",
+        "Audit.Wire3.IndexLanesOracle.extended_chain_good_event_nonempty",
+        "Audit.Wire3.IndexLanesOracle.index_schedule_index_mem",
+        "Audit.Wire3.IndexLanesOracle.index_schedule_hypotheses_are_satisfiable",
+        "Audit.Wire3.IndexLanesOracle.index_schedule_hypotheses_are_satisfiable_at_eight",
+        "Audit.Wire3.IndexLanesOracle.source_block_le_degree",
+        "Audit.Wire3.IndexLanesOracle.separated_index_digest_ne",
+        "Audit.Wire3.IndexLanesOracle.separated_digest_hypotheses_are_satisfiable",
+        "Audit.Wire3.IndexLanesOracle.separated_digest_hypotheses_are_satisfiable_at_the_envelope",
+        "Audit.Wire3.IndexLanesOracle.joint_and_index_bad_at_the_envelope_closed",
+        "Audit.Wire3.IndexLanesOracle.length_budget_is_satisfiable_at_the_envelope",
+        "Audit.Wire3.IndexLanesOracle.envelope_round_budget_is_the_adopted_one"
+      ],
+      "sources": [
+        "mle/src/transcript_v2.rs",
+        "mle/contracts/src/TranscriptV2.sol",
+        "mle/contracts/src/MleVerifierV2.sol",
+        "mle/src/verifier_v2.rs"
+      ],
+      "scope": "Puts the index lanes under the same random-oracle counting law as the gate and outer lanes. The extended frame chain appends the eight adopted claim frames to the twenty-two-frame prefix and the five frames per round; its digest after 22 + 5d + 8 stages is the adopted installed index digest for any snapshot whose digest is the chain's stage 22 + 5d (absorb reads only the digest). Bridge lemmas transport the adopted stage identifications from the prefix-round chain to the extended chain, so stage 22 is the derivation digest and stage 22 + 5i + 5 is round i's commit digest, and the index disjuncts of the extended clash event are statements about the adopted digests. At a fixed index digest the pushforward of the table law along the installed index draw is exactly the adopted index probability (three squeezes per coordinate, twice the index bits coordinates; the modular-reduction bias is charged inside the adopted tau term), and the guarded index bad event has mass at most twice the tau term. The index counters numerically overlap the outer round counters, so separation of the two schedules is by digest only; the fixed-digests union of the joint bad event and the index bad event has mass at most combinedBound plus twice the tau term under one law, consuming only each family's own injectivity. The extended chain's birthday term is (22+5d+8)(22+5d+9)/2 over the block count, 4560 over the block count at degreeBits 13, below one, on a non-empty event. Every hypothesis introduced here has a closed witness (index bits at most eight, degreeBits thirteen, L = 8192); inherited hypotheses (the prefix payload budget, the five lane-shape hypotheses) are named. Not delivered: the run-level Fubini for the union (both digests are table functions), and the Lean connection of the snapshot hypothesis to the concrete chain, which ConcreteChainThreading proves separately without either module importing the other. Random-oracle model, not keccak; fixed prover; WHIR and Merkle excluded; not the system's soundness error."
     }
   ]
 }

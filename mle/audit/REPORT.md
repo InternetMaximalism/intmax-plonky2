@@ -1368,6 +1368,37 @@ loop方式の13回目。LocalizedCollisionsが指摘した空虚な採用済み�
 採用namespaceでの直接buildと全統合guardはPASS。全4431名の実定理/型/推移的公理、
 469 reviewed hashes、18表1147語、7依存5601fileを検査した。
 
+## 第30継続更新（94989dd5以降）
+
+追跡版runnerでコミット`94989dd5`の120モデル・4431定理を再検査しPASS（1116.97秒、1450モジュール、
+manifest `988316051e4fa86ff372fd3b430b39f682acb4e10f73fbb31d3475cc7902bbd4`、receipt
+`d546da99ae1a2948b8fc020e66519438b72c823a1ebf8a6576bd69d404c629ac`、graph
+`ed485185cd626206d3ef8ded95c2c4df8bdf7646a260c7677eeebf0e82a5bb9e`）。
+loop方式の14回目。BirthdayClashBoundが残したchainモデルと実行の接続、およびindex laneのROM法則下での扱いを対象にした。
+
+- **chainの実行への同定**: ConcreteChainThreadingは`chain_model_is_the_run_chain`（帰納法）で
+  chainの22+5r段目のdigestを採用済み`concreteFinal`の先頭rメッセージ後のdigestに同定し、採用済み
+  `sourceDigest`をchainの22+5r+5段目として読み、`clashEvent`と`prefixRoundDigestClashEvent`が同じFinsetで
+  あることを示した。これによりRandomOracleSqueezesのrun水準上界に残っていた加算項の仮定は放棄され、
+  `run_bad_draw_probability_le_birthday`は固定（非適応）プローバのROM下で確率的側条件を残さないrun水準上界
+  （≤ combinedBound + (22+5d)(22+5d+1)/2/|Block|、d=13で3828/|Block| ≤ 2^-244）になった。長さ予算の閉じた証人
+  （L=381）と閉じた実例、そのRHS<1（`closed_bound_lt_one`）、非空性（定数表∈clash事象、frame-freeでない）を添えた。
+  レビューは数学を完全に再現し（独立に再構築したoleanが作者のものと一致）、absorbが入力counterを読まないこと、
+  getDの退化分岐が採られないこと、事象等式が真の等式であることを確認した。修正は参照SHA、見出し文への
+  「固定プローバ・ROM」限定句の明記、frame計数（statementベクトル2 + root 3）、RHS<1定理の追加、公理なし定理数。
+- **index laneのROM法則**: IndexLanesOracleは採用済みclaim frame 8個を足した拡張chainの22+5d+8段目が採用済み
+  `indexDigest`であることを示し、レビュー要求の橋渡し補題で拡張chainの22段目・22+5i+5段目を採用済みderive/
+  roundCommitted digestに同定した。固定index digest下で`actualIndexDraw`の押し出しは採用済み`indexProbability`に厳密に
+  等しく（3 squeeze/座標、mod pの偏りは採用済みtauTerm側に既に計上）、guard付きindex bad事象は≤2·tauTerm、joint族と
+  index族の和集合は固定digest下で≤combinedBound+2·tauTerm（索引カウンタは外側カウンタと数値的に重なるため、分離は
+  digestのみ。和集合上界が消費するのは各族の単射性のみで、交差の相異は充足性経路でしか使われないことを明記）、
+  拡張chainのbirthday上界はd=13で4560/|Block|。レビューはLeanモデルとSolidity/Rustの両方で22+5d段目が索引サンプラに
+  渡されるsnapshotであること（最後のround commitと索引absorbの間に他のtranscript操作がない）、押し出し等式が可除性
+  仮定なしに厳密であることを確認した。未実施は和集合のrun水準Fubiniと、`hst`のLean上の接続（ConcreteChainThreadingが
+  同じ事実を証明するが相互importはない）。
+  両モジュール合わせて122モデル・4530定理。今回もROMの法則下・固定プローバの結果であり、keccakの性質でも系の健全性
+  誤差でもない。適応的プローバ、R1b（WHIR近接性+sumcheck健全性）、回路の真値、受理証明と残余の同時充足性は未着手。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

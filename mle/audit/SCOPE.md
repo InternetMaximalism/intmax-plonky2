@@ -682,14 +682,29 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    5 frameから成るchainモデルの衝突確率≤5d(5d+1)/2/|Block|（d=13で2145/|Block|）を証明した（freshnessは
    frame_injectiveから証明、定数表は衝突事象に属する）。**限定**: 上界はchainモデル上で、実行の
    actualChainへの接続のうち、関係prefixの22 frameを繋いだchainの起点がderiveのdigestと一致すること
-   （87段で衝突確率≤3828/|Block|）は証明済み、concreteChainの帰納は未了で、run水準の加算項は仮定のまま。
+   （87段で衝突確率≤3828/|Block|）は証明済み、concreteChainの帰納は未了で、run水準の加算項は仮定のまま（→ConcreteChainThreadingで帰納を完了し加算項を放棄、下記）。
    局所化定理はstageQueriesの同位置frame対を名指す形に強化した。
+   chainモデルと実行の接続はConcreteChainThreadingで完了した: chainの22+5r段目は採用済みconcreteFinalの
+   先頭rメッセージ後のdigestに等しく（帰納法。absorbは入力stateのdigestのみを読むのでcounterの追跡は不要）、
+   `sourceDigest`はchainの22+5r+5段目、RandomOracleSqueezesの`clashEvent`はchainモデルの
+   `prefixRoundDigestClashEvent`と同じFinsetであるから、run水準上界の加算項はbirthday型の
+   (22+5d)(22+5d+1)/2/|Block|（d=13で3828/|Block| ≤ 2^-244）で放棄され、`run_bad_draw_probability_le_birthday`
+   は固定（非適応）プローバのROM下で確率的側条件を残さない。閉じた証人（L=381）でRHS<1。残るのは
+   適応的プローバ（strategyに対するfresh-query帰納）、index lane（IndexLanesOracleが固定digest下で扱う）、
+   WHIR/Merkle、keccak自体、そしてこれらの質量が系の健全性誤差ではないという事実。
+   index laneはIndexLanesOracleで同じROM法則下に置いた: claim frame 8個を足した拡張chainの22+5d+8段目は
+   採用済みindexDigestであり、固定index digest下でactualIndexDrawの押し出しは採用済みindexProbabilityに厳密に等しく、
+   guard付きindex bad事象は≤2·tauTerm、joint族とindex族の和集合は固定digest下で≤combinedBound+2·tauTerm
+   （索引カウンタは外側カウンタと重なるため分離はdigestのみ）、拡張chainのbirthday上界はd=13で4560/|Block|。
+   残るのは和集合に対するrun水準Fubini（両draw共に同一frame fibre上でdigestが定数になる素材は揃っている）と、
+   `hst`（22+5d段目がpost-rounds snapshot）のLean上の接続（ConcreteChainThreadingの`chain_model_is_the_run_chain`が
+   同じ事実を証明しているが、両モジュールは互いにimportしない）。
    これらの結果はSoundnessAssemblyで1定理に組み立てた。explicit engineの受理、残余仮定の名前付き構造体
    （表の意味論と転記行、配備digestと有界性、fold水準のopening、抽出列の高さとcommitted幅、
    GateDerivedRejectionの9フィールド、slot係数）、実digest drawが4族のbad event外、実index drawが
    ガード付きindex bad event外、から全行の選択gate制約消失・per-column同定・pinned profile行・
    core一致（衝突を除く）を導く。質量はjoint spaceで≤combinedBound+tauTerm d（≤2^-171）、index spaceで
-   ≤2·tauTerm bits（≤2^-187）で、別空間なので加算しない。初稿はindex bad eventが無ガードで結論が仮定と
+   ≤2·tauTerm bits（≤2^-187）で、別空間なので加算しない。（IndexLanesOracleはROM法則下・固定digest版で両者を同一の表上の和集合として≤combinedBound+2·tauTermを与えた。）初稿はindex bad eventが無ガードで結論が仮定と
    矛盾し（レビューがFalseを導出）、偽造前提が残余に紛れていたため棄却され、修正後の再レビューで
    反駁が型検査を通らないこと、正直な抽出ではbad eventが空になることを確認した。**残る限定**: 受理と
    残余仮定の同時充足可能性はexplicit engineで受理されるproofを構成しない限り提示できない；結論は

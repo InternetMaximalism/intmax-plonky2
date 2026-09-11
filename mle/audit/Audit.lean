@@ -125,3 +125,5 @@ import Audit.Wire3.LocalizedCollisions
 import Audit.Wire3.RandomOracleSqueezes
 import Audit.Wire3.OpenedDotBinding
 import Audit.Wire3.BirthdayClashBound
+import Audit.Wire3.ConcreteChainThreading
+import Audit.Wire3.IndexLanesOracle
