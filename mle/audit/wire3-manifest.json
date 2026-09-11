@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "0882451a7053c3c17fc5847f8828574b01990288be4395540a0cd5661d84acda",
+      "sha256": "bd32f8de071c447cb19512d3fbf4d6c3a9bebb41ed1bfd21b6a7f3f9c9bcc825",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "5d13f2be3728d3caf2af8b1a8c5fe08f0dee7b86002305231f551ff03b7b36e8",
+      "sha256": "8ab7cb3dacc3b92911c91f6140a0349c4051af9144293838a878ba07b7a4af37",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "c1bb9c9b9663a27ad4bbc6bd932646825e29aa6fe303407d345d8d7c76ee0721",
+      "sha256": "8b6de5d51f248ef7db45a3d62813cf01262bf819c2950b90d9a11c7c856d0d7c",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "34540f8984a664192a63af65075b7c72a5c410b845ac543b2ba5443b4843d880",
+      "sha256": "db2a6ffc0137fbf9039c369856e4579004f45c5e0453b89bb1d5c2e314bb6de1",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "26ef6c987f60151fc8c2b20703b88a6123f122b5404e571d9dd37d4949228b0f",
+      "sha256": "ad2f371f6e11f80ab6f9f55cd330552856662790623e7f74b173d2df7c8844dc",
       "kind": "spec"
     },
     {
@@ -2401,6 +2401,16 @@
     {
       "path": "mle/audit/Audit/Wire3/ReducedFullTransport.lean",
       "sha256": "769f8795291e512681a50420626836f24ce013f5af7ad3b74cde343ce00e539b",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/ReducedIndexLanes.lean",
+      "sha256": "4fd93a1d75df1def4154f0b5f01b2b77e2bacb6c83d7cbed013548336107a439",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/GrindingGraphBound.lean",
+      "sha256": "bee38a4d88faf04358fdaa3b6705eee69de4f77954901b7c2bcd261b0d67eb83",
       "kind": "current-model"
     }
   ],
@@ -8821,6 +8831,141 @@
         "mle/contracts/src/OuterLogupExt3Verifier.sol"
       ],
       "scope": "Extends the reduced-history adaptive bound of OuterLaneTransport from the outer term alone to the full combinedBound by adding the block-zero gate-tau and gate-alpha events squeezed at the derivation digest, stage twenty-two of the strategy chain. The adopted tau and alpha bad events are indexed by fixed data (the zero-check table and the gate coefficients) and mention no round message, lane, strategy or table, so the fixed-target mass lemma applies at the stage-twenty-two digest with no diagonal; the tau event is not a coordinate product, so the whole block of three-times-d counters is peeled jointly with an exact fibre count; the three events are joined with a single shared clash term through the nested no-clash events. For every strategy and lane pair the generic form holds, and for the reduced-history subclass the bound is combinedBound plus the chain clash term, with a closed instance at thirteen rounds below one. Not included: the index lanes, whose used claims are absorbed after the rounds and are functions of the table for an adaptive prover, so the fixed-target route does not extend and a diagonal form would be needed; the identification of the zero-check table and gate coefficients with the deployed tables is not claimed. Reduced-history transcript-restricted provers only; grinding and raw-block strategies excluded; random-oracle model, not keccak; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.ReducedIndexLanes",
+      "theorems": [
+        "Audit.Wire3.ReducedIndexLanes.round_stage_lt_index_stage",
+        "Audit.Wire3.ReducedIndexLanes.derive_stage_lt_index_stage",
+        "Audit.Wire3.ReducedIndexLanes.rounds_stage_le_index_stage",
+        "Audit.Wire3.ReducedIndexLanes.index_block_base_is_index_counter",
+        "Audit.Wire3.ReducedIndexLanes.index_idx_lt",
+        "Audit.Wire3.ReducedIndexLanes.exists_index_draw",
+        "Audit.Wire3.ReducedIndexLanes.index_counter_lt",
+        "Audit.Wire3.ReducedIndexLanes.index_counter_mem_lt",
+        "Audit.Wire3.ReducedIndexLanes.index_counters_disjoint",
+        "Audit.Wire3.ReducedIndexLanes.index_space_card_as_triples",
+        "Audit.Wire3.ReducedIndexLanes.idx_fibre_zero",
+        "Audit.Wire3.ReducedIndexLanes.idx_fibre_succ",
+        "Audit.Wire3.ReducedIndexLanes.mem_idx_fibre",
+        "Audit.Wire3.ReducedIndexLanes.idx_fibre_stable",
+        "Audit.Wire3.ReducedIndexLanes.idx_fibre_card",
+        "Audit.Wire3.ReducedIndexLanes.index_read_at_counter",
+        "Audit.Wire3.ReducedIndexLanes.idx_extend_at_idx",
+        "Audit.Wire3.ReducedIndexLanes.idx_fibre_at_extend",
+        "Audit.Wire3.ReducedIndexLanes.idx_target_card",
+        "Audit.Wire3.ReducedIndexLanes.idx_diagonal_card",
+        "Audit.Wire3.ReducedIndexLanes.idx_diagonal_mass_le",
+        "Audit.Wire3.ReducedIndexLanes.idx_diagonal_mass_le_density",
+        "Audit.Wire3.ReducedIndexLanes.extended_shape_apply",
+        "Audit.Wire3.ReducedIndexLanes.extended_shape_round",
+        "Audit.Wire3.ReducedIndexLanes.extended_shape_claim",
+        "Audit.Wire3.ReducedIndexLanes.extended_shape_bounded",
+        "Audit.Wire3.ReducedIndexLanes.extended_strat_shape_is_claim_shape",
+        "Audit.Wire3.ReducedIndexLanes.extended_state_fold",
+        "Audit.Wire3.ReducedIndexLanes.extended_stage_is_index_digest",
+        "Audit.Wire3.ReducedIndexLanes.extended_index_state_hypothesis_is_satisfiable",
+        "Audit.Wire3.ReducedIndexLanes.outer_history_reassign",
+        "Audit.Wire3.ReducedIndexLanes.realized_history_reassign",
+        "Audit.Wire3.ReducedIndexLanes.realized_claims_reassign",
+        "Audit.Wire3.ReducedIndexLanes.used_cell_is_bound_cell",
+        "Audit.Wire3.ReducedIndexLanes.mem_index_bad_event",
+        "Audit.Wire3.ReducedIndexLanes.index_bad_no_clash_mass_le",
+        "Audit.Wire3.ReducedIndexLanes.mem_full_index_bad_event",
+        "Audit.Wire3.ReducedIndexLanes.full_index_bad_draw_probability_le",
+        "Audit.Wire3.ReducedIndexLanes.full_index_bad_draw_probability_le_combined",
+        "Audit.Wire3.ReducedIndexLanes.extended_log_lane_message_is_realized",
+        "Audit.Wire3.ReducedIndexLanes.extended_gate_lane_message_is_realized",
+        "Audit.Wire3.ReducedIndexLanes.realized_history_length",
+        "Audit.Wire3.ReducedIndexLanes.index_bad_target_of_differ",
+        "Audit.Wire3.ReducedIndexLanes.index_bad_target_at_honest_cells",
+        "Audit.Wire3.ReducedIndexLanes.eight_index_counter_budget",
+        "Audit.Wire3.ReducedIndexLanes.index_stage_thirteen",
+        "Audit.Wire3.ReducedIndexLanes.block_card_ge_index_birthday_scale",
+        "Audit.Wire3.ReducedIndexLanes.index_birthday_term_le_two_pow_neg",
+        "Audit.Wire3.ReducedIndexLanes.index_term_at_eight_numeric",
+        "Audit.Wire3.ReducedIndexLanes.history_claims_bounded",
+        "Audit.Wire3.ReducedIndexLanes.history_claims_depends",
+        "Audit.Wire3.ReducedIndexLanes.full_index_bound_at_thirteen",
+        "Audit.Wire3.ReducedIndexLanes.full_index_bound_at_thirteen_lt_one",
+        "Audit.Wire3.ReducedIndexLanes.index_read_is_actual_index_draw"
+      ],
+      "sources": [
+        "mle/src/transcript_v2.rs",
+        "mle/contracts/src/TranscriptV2.sol",
+        "mle/contracts/src/MleVerifierV2.sol",
+        "mle/src/verifier_v2.rs"
+      ],
+      "scope": "Adds the index lanes to the reduced-history adaptive bound: after all coupled rounds the prover chooses its used claims as a function of the reduced round-challenge history alone (no raw block, no counter above five, no prefix digest, no answer at the index digest), the eight claim frames are absorbed, and the chain's stage 22 + 5d + 8 digest is proved to be the adopted index digest at the realized claims with the column read equal to the adopted index draw. At that digest the index bad set at the realized claims is a table-dependent target invariant under reassigning the index challenge cells (separation by digest under the no-clash event, since the index counters overlap the round counters numerically), its density is at most twice the tau term, the block of six-times-bits counters is peeled jointly, and the nested no-clash events give one shared clash term: for the reduced adaptive prover the mass of the outer, block-zero and index bad events together is at most combinedBound plus twice the tau term plus (22+5d+8)(22+5d+9)/2 over the block count, below one at the envelope. Disclosed: the committed cells at the row point are a parameter function of the history (the adopted row-point statement is cited for that shape but its transfer to the realized proof is not performed); the index summand covers one bound cell. Random-oracle model, not keccak; reduced-history transcript-restricted prover; grinding and raw-block strategies, WHIR and Merkle excluded; tables and committed columns not identified with the deployment; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.GrindingGraphBound",
+      "theorems": [
+        "Audit.Wire3.GrindingGraphBound.reach_in_zero",
+        "Audit.Wire3.GrindingGraphBound.reach_in_succ",
+        "Audit.Wire3.GrindingGraphBound.reach_in_mono_depth",
+        "Audit.Wire3.GrindingGraphBound.reach_in_mono_edges",
+        "Audit.Wire3.GrindingGraphBound.reach_in_step",
+        "Audit.Wire3.GrindingGraphBound.reach_in_of_graph_edge",
+        "Audit.Wire3.GrindingGraphBound.absorb_answer_digest",
+        "Audit.Wire3.GrindingGraphBound.absorb_frame_digest",
+        "Audit.Wire3.GrindingGraphBound.absorb_path_graph_edge",
+        "Audit.Wire3.GrindingGraphBound.state_reach_in",
+        "Audit.Wire3.GrindingGraphBound.on_absorb_path_lt",
+        "Audit.Wire3.GrindingGraphBound.absorb_path_node_reach",
+        "Audit.Wire3.GrindingGraphBound.mem_path_clash_event",
+        "Audit.Wire3.GrindingGraphBound.grinding_clash_path_aux",
+        "Audit.Wire3.GrindingGraphBound.grinding_clash_subset_path",
+        "Audit.Wire3.GrindingGraphBound.path_clash_subset_distinct_clash",
+        "Audit.Wire3.GrindingGraphBound.path_clash_positions_on_path",
+        "Audit.Wire3.GrindingGraphBound.constant_table_path_clash",
+        "Audit.Wire3.GrindingGraphBound.eligible_hit_event_succ",
+        "Audit.Wire3.GrindingGraphBound.mem_eligible_hit_event",
+        "Audit.Wire3.GrindingGraphBound.eligible_fresh_step",
+        "Audit.Wire3.GrindingGraphBound.eligible_step_bound",
+        "Audit.Wire3.GrindingGraphBound.eligible_hit_probability_le_sum",
+        "Audit.Wire3.GrindingGraphBound.grinding_clash_le_eligible_sum",
+        "Audit.Wire3.GrindingGraphBound.all_pairs_reassign_invariant",
+        "Audit.Wire3.GrindingGraphBound.all_pairs_card_le",
+        "Audit.Wire3.GrindingGraphBound.all_pairs_clash_subset",
+        "Audit.Wire3.GrindingGraphBound.two_mul_sum_succ",
+        "Audit.Wire3.GrindingGraphBound.sum_succ_rat",
+        "Audit.Wire3.GrindingGraphBound.grinding_clash_all_pairs_via_eligible",
+        "Audit.Wire3.GrindingGraphBound.state_reassign_invariant",
+        "Audit.Wire3.GrindingGraphBound.eligible_hit_event_state",
+        "Audit.Wire3.GrindingGraphBound.grinding_clash_linear_via_eligible",
+        "Audit.Wire3.GrindingGraphBound.frame_digest_at_reassign",
+        "Audit.Wire3.GrindingGraphBound.answer_digest_at_reassign",
+        "Audit.Wire3.GrindingGraphBound.reach_in_reassign",
+        "Audit.Wire3.GrindingGraphBound.reach_target_card_le",
+        "Audit.Wire3.GrindingGraphBound.reach_target_reassign_invariant",
+        "Audit.Wire3.GrindingGraphBound.graph_framed_answer_reach",
+        "Audit.Wire3.GrindingGraphBound.graph_clash_subset",
+        "Audit.Wire3.GrindingGraphBound.grinding_clash_graph_le",
+        "Audit.Wire3.GrindingGraphBound.frame_digest_of_state_framed_probes",
+        "Audit.Wire3.GrindingGraphBound.graph_framed_of_state_framed_probes",
+        "Audit.Wire3.GrindingGraphBound.absorb_position_frame",
+        "Audit.Wire3.GrindingGraphBound.chain_simulator_bounded",
+        "Audit.Wire3.GrindingGraphBound.chain_simulator_probe_zero_frame",
+        "Audit.Wire3.GrindingGraphBound.chain_simulator_probe_succ_frame",
+        "Audit.Wire3.GrindingGraphBound.chain_simulator_probe_graph_edge",
+        "Audit.Wire3.GrindingGraphBound.chain_simulator_graph_framed",
+        "Audit.Wire3.GrindingGraphBound.chain_simulator_not_state_framed",
+        "Audit.Wire3.GrindingGraphBound.chain_simulator_every_earlier_answer_eligible",
+        "Audit.Wire3.GrindingGraphBound.chain_simulator_reach_target_eq",
+        "Audit.Wire3.GrindingGraphBound.linear_constant_lt_all_pairs_constant",
+        "Audit.Wire3.GrindingGraphBound.probe_grinder_graph_framed",
+        "Audit.Wire3.GrindingGraphBound.chain_simulator_graph_clash_le",
+        "Audit.Wire3.GrindingGraphBound.constant_table_chain_simulator_clashes",
+        "Audit.Wire3.GrindingGraphBound.constant_table_reach_target_hit",
+        "Audit.Wire3.GrindingGraphBound.chain_simulator_clash_at_eighty_seven_many_probes",
+        "Audit.Wire3.GrindingGraphBound.chain_simulator_clash_at_eighty_seven_many_probes_tiny"
+      ],
+      "sources": [
+        "mle/src/transcript_v2.rs",
+        "mle/contracts/src/TranscriptV2.sol"
+      ],
+      "scope": "The query-graph view of grinding provers, with a negative conclusion stated as theorems. For every grinding strategy a stage clash is a collision of two distinct-string absorb positions on the absorb path, an event refined from the adopted all-pairs one; a unified charging theorem bounds the clash mass by the sum of per-position eligible-set sizes for any reassign-invariant position-dependent eligible family, and the adopted all-pairs bound, the adopted linear bound for state-framed provers, and a new graph-framed instance are its three specializations. The chain simulator \u2014 probing at the digests of its own probe answers without absorbing them \u2014 is written down concretely; it is not state-framed but is graph-framed, and its reachable-target set equals the all-pairs target at every position, so this charging scheme cannot improve on the all-pairs constant for it; no lower bound on any clash mass is claimed. Numerals unchanged from the adopted quadratic bound. Random-oracle model, not keccak; the chain's clash event only; probes frame-shaped; not the system's soundness error."
     }
   ]
 }

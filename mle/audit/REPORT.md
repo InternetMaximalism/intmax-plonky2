@@ -1504,6 +1504,25 @@ loop方式の19回目。OuterLaneTransportの縮約部分クラス上界の定�
   索引laneの適応的扱い（対角形）、raw block読み戦略、probe予算内でchainを模擬する攻撃者、g/coeffsOfと配備表の結合、R1b、回路の真値、
   受理の提示。
 
+## 第35継続更新（a5f73b35以降）
+
+追跡版runnerでコミット`a5f73b35`の131モデル・5002定理を再検査しPASS（1394.096秒、1461モジュール、
+manifest `cfb7c94f799310747fb97688a054d4d49ce5cf348c078d9197aa40d120e2f779`、receipt
+`3ac5415e12fab3d64d2292dfbeb76adf25440108595e02054588262cc4abfd8f`、graph
+`a31ef1dcf2b4e847e7b686811bb7bb2a9c71cecd861fe370743039ae9378ba59`）。
+loop方式の20回目。縮約履歴適応プローバの索引laneと、grindingプローバの問合せグラフによる見方を対象にした。
+
+- **縮約適応プローバの索引lane**: ReducedIndexLanesは履歴依存のused-claims選択を8 claim frameとして吸収する拡張戦略のchainの22+5d+8段目が
+  実現claimsでの採用済みindexDigestであることを示し、索引digestでの対角fresh step（分離はno-clash下のdigest）と密度補題、6·bitsカウンタの
+  同時剥離で、索引項2·tauTermを加えた `≤ combinedBound + 2·tauTerm + (22+5d+8)(22+5d+9)/2/|Block|` を得た（閉実例でRHS<1）。committed cell
+  は履歴の関数のパラメータであり実現proofへの転送は未実施、索引項は1 bound cell分と開示。レビューは拡張chainの同定（claim frame 8個、Uが読むのは縮約round履歴のみ）、no-clash下のdigestによる分離、密度補題と6·bitsカウンタの剥離の厳密性、単一の衝突項を確認しPASS-WITH-FIXES（文書のみ）とし、HONESTY (iii) を「転送に必要なのはprefix合同補題・OLT §6の実現draw同定・TSCCのrow点定理と列が固定データであるという既存の仮定であり、RowPointFixedは不要」に正させた。
+- **grindingの問合せグラフ**: GrindingGraphBoundは段の衝突をabsorb経路上の位置対の衝突に帰着し、GQB/GLBを実例に持つ統一charging定理を
+  与えた上で、chain模擬プローバでは eligible 集合が全対に一致してこの方式では定数が改善しないことを定理として記録した（否定的結論、
+  衝突質量の下界は主張しない）。レビューは統一定理がGQBのfresh位置帰納の位置依存target版であり3実例が採用済み定理と項単位で一致すること、到達上限がnでなくmであること、混入痕跡がないことを確認しPASSとした（docstring 2点を補足）。
+  両モジュール合わせて133モデル・5115定理。今回もROMの法則下の結果であり、keccakの性質でも系の健全性誤差でもない。残るのは
+  committed cellの実現proofへの転送、複数bound cellの索引項、raw block読み戦略、一般grindingプローバの線形上界（charging方式の外）、
+  g/coeffsOfと配備表の結合、R1b、回路の真値、受理の提示。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

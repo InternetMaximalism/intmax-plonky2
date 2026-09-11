@@ -136,3 +136,5 @@ import Audit.Wire3.OuterLaneTransport
 import Audit.Wire3.IndexGuardLiveness
 import Audit.Wire3.GrindingLinearBound
 import Audit.Wire3.ReducedFullTransport
+import Audit.Wire3.ReducedIndexLanes
+import Audit.Wire3.GrindingGraphBound

@@ -743,6 +743,12 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    縮約履歴部分クラスの適応的上界はReducedFullTransportでblock-0のgate tau/gate alpha事象（derive digestでの固定target）を加え、
    完全なcombinedBound + chain衝突項に到達した（閉実例でRHS<1）。索引laneは適応的プローバでは使用claimが表の関数になるため未含
    （対角形が必要）。g/coeffsOfが配備表であることの結合は未了。
+   縮約履歴適応プローバの索引laneはReducedIndexLanesで取り込んだ: 履歴依存のused-claims選択を8 claim frameとして吸収し、索引digestでの
+   対角fresh step（分離はno-clash下のdigest）と密度補題で ≤ combinedBound + 2·tauTerm + chain衝突項（閉実例でRHS<1）。committed cellは
+   履歴の関数のパラメータ（実現proofへの転送は未実施）、索引項は1 bound cell分。
+   chain模擬grindingプローバはGrindingGraphBoundで扱い、否定的結論を定理化した: 統一charging定理はGQB/GLB/graph-framedの3実例を
+   持つが、chainSimulatorでは eligible 集合が全対に一致し、この方式では全対定数を超えて改善しない（衝突質量の下界は主張しない）。
+   一般grindingプローバの線形上界はこの方式の外側にある。
    これらの結果はSoundnessAssemblyで1定理に組み立てた。explicit engineの受理、残余仮定の名前付き構造体
    （表の意味論と転記行、配備digestと有界性、fold水準のopening、抽出列の高さとcommitted幅、
    GateDerivedRejectionの9フィールド、slot係数）、実digest drawが4族のbad event外、実index drawが
