@@ -131,3 +131,5 @@ import Audit.Wire3.RunLevelUnionBound
 import Audit.Wire3.StrategyChainBound
 import Audit.Wire3.GrindingQueryBound
 import Audit.Wire3.TwoStageConditionalCount
+import Audit.Wire3.IndexStageFinerSplit
+import Audit.Wire3.OuterLaneTransport

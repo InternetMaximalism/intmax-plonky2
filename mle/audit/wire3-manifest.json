@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "51cdf317bc6b9b05ad4893c6665d464e4d7c1f5ccf1e310dffff48ea95994eb0",
+      "sha256": "6ca0b8d12583d9fc371f2b1a32e90b6b52995163784e5afd50b419270c6fe8ef",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "ae0108d07812924592b24d378161b2b246540ac2646b8235900818b394f72be0",
+      "sha256": "626402fbb11aac2240ac5d739dc637b855de9bfd778308e4c2cc30e876939712",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "e05a735dc470a2607ebd412726766c05efd80d06874596e79ce84bf8184312f2",
+      "sha256": "96062e40c660cbac4202a40a978d8e3541988ace2df23d96877b5d01c3ef62d6",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "7bc3ae0a0ce58be2340c7634035f78a906e63f333f68faeab012daf592141575",
+      "sha256": "50239401cc7e08cb79ee866b704fb034c1593f6021d01c62db52b9bcd3328021",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "5f0829d912e0f59274a77ef6d69357ae3fbe79ad55ba6bd6042ff6fbf445958e",
+      "sha256": "ca3820399a93a941cecc59fa2d8cc5eb10ccab3f686c957fc7f18e14b9d0389d",
       "kind": "spec"
     },
     {
@@ -2376,6 +2376,16 @@
     {
       "path": "mle/audit/Audit/Wire3/TwoStageConditionalCount.lean",
       "sha256": "f8d72043d627a10cb988677f9fd18152acb2ff32f21621494d304d6e3376036b",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/IndexStageFinerSplit.lean",
+      "sha256": "4841cfe97676f6ca3169e8a64ee7450a496d479b63170741984a01a393318a17",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/OuterLaneTransport.lean",
+      "sha256": "6a3619c931ee3da0d4e8f2bbf0a0c19c221c05643e77158afc2d5e72b41cb826",
       "kind": "current-model"
     }
   ],
@@ -8518,6 +8528,145 @@
         "mle/src/transcript_v2.rs"
       ],
       "scope": "The outer stage of the two-stage conditional count RunLevelUnionBound left as a contract, for a fixed (non-adaptive) prover under the random-oracle model. The adopted outer bad event depends on the hash only through the gate alpha, the explicit engine's own hash-dependence is absorbed (lane messages and truths are read off the proof; the frozen lane reads no challenge), and the gate alpha is one coordinate of the run's own outer draw, so the honest object is the diagonal event of points lying in the bad set at their own alpha coordinate; a one-coordinate conditional count (each fixed-alpha event a cylinder off the alpha coordinate, via the adopted invariant fibre count) weighs it by the adopted combinedBound term for term, the alpha summand left undiagonalized. Because the diagonal is a fixed finset, RunLevelUnionBound's fibre Fubini transports it: the mass of tables whose own outer draw lands in the engine's own outer bad event is at most combinedBound plus the extended clash term. For the index stage both dependence facts are proved: supplied cells are index-draw independent, committed cells depend only on the row point, and the row point is a function of the run's own outer draw (the first draft's claim that it read the log-tau column was refuted in review and withdrawn). The conditional count of the index stage itself is not built; it is issued as the named hypothesis RowPointFixed (the committed cell family takes one value at every hash), satisfiable at empty columns and, non-degenerately, at a constant column of the row's width, under which the assembly failure mass is at most combinedBound plus twice the tau term plus the extended clash term, 4560 over the block count at degreeBits thirteen; every payoff covers constant committed columns only. Closed instances: the earlier witness's empty index half is recorded as a theorem and a live witness with non-zero used cells has a live guard; right-hand side below one; a good table exists. The abstract two-group conditional count and a three-step contract for the finer table split are left for the follow-up. Random-oracle model, not keccak; fixed prover; outer and index lanes only; the assembly conclusion is good-draw-conditional constraint vanishing, not circuit truth; R1b in the residue; acceptance never exhibited; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.IndexStageFinerSplit",
+      "theorems": [
+        "Audit.Wire3.IndexStageFinerSplit.mem_product_diagonal_event",
+        "Audit.Wire3.IndexStageFinerSplit.frame_fibre_card",
+        "Audit.Wire3.IndexStageFinerSplit.index_preimage_card_le",
+        "Audit.Wire3.IndexStageFinerSplit.run_index_diagonal_fibre_count_le",
+        "Audit.Wire3.IndexStageFinerSplit.run_union_diagonal_fibre_count_le",
+        "Audit.Wire3.IndexStageFinerSplit.run_union_diagonal_probability_le_fibrewise",
+        "Audit.Wire3.IndexStageFinerSplit.row_point_of_length",
+        "Audit.Wire3.IndexStageFinerSplit.cell_row_is_row_point_of",
+        "Audit.Wire3.IndexStageFinerSplit.index_bad_event_at_is_index_bad_at",
+        "Audit.Wire3.IndexStageFinerSplit.index_bad_at_mass_le",
+        "Audit.Wire3.IndexStageFinerSplit.run_union_diagonal_subset_at",
+        "Audit.Wire3.IndexStageFinerSplit.joint_probability_empty",
+        "Audit.Wire3.IndexStageFinerSplit.run_index_stage_mass_le",
+        "Audit.Wire3.IndexStageFinerSplit.assembly_failure_subset_diagonal",
+        "Audit.Wire3.IndexStageFinerSplit.assembly_failure_mass_le_unconditional",
+        "Audit.Wire3.IndexStageFinerSplit.assembly_failure_mass_le_unconditional_birthday",
+        "Audit.Wire3.IndexStageFinerSplit.assembly_failure_mass_le_unconditional_at_thirteen",
+        "Audit.Wire3.IndexStageFinerSplit.opened_cells_at_constant_column",
+        "Audit.Wire3.IndexStageFinerSplit.guard_live_at_constant_column_at_every_outer_draw",
+        "Audit.Wire3.IndexStageFinerSplit.live_index_guard_is_live_at_every_outer_draw",
+        "Audit.Wire3.IndexStageFinerSplit.assembly_failure_at_the_envelope_unconditional",
+        "Audit.Wire3.IndexStageFinerSplit.assembly_failure_at_the_envelope_unconditional_is_not_vacuous",
+        "Audit.Wire3.IndexStageFinerSplit.assembly_good_table_exists_unconditional"
+      ],
+      "sources": [
+        "mle/src/verifier_v2.rs",
+        "mle/contracts/src/MleVerifierV2.sol",
+        "mle/src/transcript_v2.rs",
+        "mle/contracts/src/TranscriptV2.sol"
+      ],
+      "scope": "The finer table split TwoStageConditionalCount left as a three-step contract, built in full, discharging its RowPointFixed hypothesis by counting rather than assuming, for a fixed (non-adaptive) prover under the random-oracle model. Off the chain clash the combined schedule of outer and index squeezes is injective, so the outer cells and the index cells are disjoint and the adopted restriction ratio at the combined selector makes the pair of outer draw and index draw jointly uniform on a frame fibre; the abstract two-group count weighs the diagonal event whose index half depends on the run's own outer draw, each member of the engine's hash-indexed index family being the guarded index bad event at the row point that outer draw determines, of mass at most twice the tau term; the frame-fibre Fubini transports it with the single extended clash term. Hence the mass of tables whose own index draw lands in the engine's own index bad event is at most twice the tau term plus the clash term, and the explicit engine's assembly failure mass is at most combinedBound plus twice the tau term plus the clash term, 4560 over the block count at degreeBits thirteen, with no hypothesis on the committed columns; every hypothesis is discharged at the live closed witness with the right-hand side below one and a table on which the assembly does not fail; the guard is live along the whole diagonal at one constant column. Still open: guard liveness at a non-constant committed column (a dead guard only makes the tau term slack). Random-oracle model, not keccak; fixed prover, the prover model is unchanged; outer and index lanes only; the conclusion is good-draw-conditional constraint vanishing, not circuit truth; R1b in the residue; acceptance never exhibited; the clash term is the chain model's; L = 381 covers width at most thirteen; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.OuterLaneTransport",
+      "theorems": [
+        "Audit.Wire3.OuterLaneTransport.stage_no_clash_mono",
+        "Audit.Wire3.OuterLaneTransport.stage_stable_mono",
+        "Audit.Wire3.OuterLaneTransport.stage_stable_no_clash",
+        "Audit.Wire3.OuterLaneTransport.stage_stable_filter",
+        "Audit.Wire3.OuterLaneTransport.stage_peel_card",
+        "Audit.Wire3.OuterLaneTransport.stage_answer_reassign_ne",
+        "Audit.Wire3.OuterLaneTransport.mem_triple_counters",
+        "Audit.Wire3.OuterLaneTransport.stage_triple_eq_iff",
+        "Audit.Wire3.OuterLaneTransport.digest_triple_card_as_blocks",
+        "Audit.Wire3.OuterLaneTransport.peel_three",
+        "Audit.Wire3.OuterLaneTransport.stage_triple_fibre_card",
+        "Audit.Wire3.OuterLaneTransport.stage_triple_target_card",
+        "Audit.Wire3.OuterLaneTransport.stage_triple_target_mass_le",
+        "Audit.Wire3.OuterLaneTransport.strategy_challenge_diagonal_fresh_uniform",
+        "Audit.Wire3.OuterLaneTransport.small_counter_lt",
+        "Audit.Wire3.OuterLaneTransport.round_stage_lt",
+        "Audit.Wire3.OuterLaneTransport.round_stage_le",
+        "Audit.Wire3.OuterLaneTransport.challenge_answer_reassign_lower",
+        "Audit.Wire3.OuterLaneTransport.stage_triple_reassign_lower",
+        "Audit.Wire3.OuterLaneTransport.stage_triple_reassign_same",
+        "Audit.Wire3.OuterLaneTransport.outer_state_reassign",
+        "Audit.Wire3.OuterLaneTransport.log_target_reassign",
+        "Audit.Wire3.OuterLaneTransport.gate_target_reassign",
+        "Audit.Wire3.OuterLaneTransport.outer_state_log_bounded",
+        "Audit.Wire3.OuterLaneTransport.outer_state_gate_bounded",
+        "Audit.Wire3.OuterLaneTransport.outer_state_log_owns",
+        "Audit.Wire3.OuterLaneTransport.outer_state_gate_owns",
+        "Audit.Wire3.OuterLaneTransport.round_log_mass_le",
+        "Audit.Wire3.OuterLaneTransport.round_gate_mass_le",
+        "Audit.Wire3.OuterLaneTransport.univ_filter_inter_subset",
+        "Audit.Wire3.OuterLaneTransport.subset_inter_union_compl",
+        "Audit.Wire3.OuterLaneTransport.outer_lane_bad_event_zero",
+        "Audit.Wire3.OuterLaneTransport.oracle_probability_empty",
+        "Audit.Wire3.OuterLaneTransport.round_bad_inter_subset",
+        "Audit.Wire3.OuterLaneTransport.outer_no_clash_mass_le",
+        "Audit.Wire3.OuterLaneTransport.fibre_mass_eq",
+        "Audit.Wire3.OuterLaneTransport.round_terms_sum",
+        "Audit.Wire3.OuterLaneTransport.outer_lane_bad_draw_probability_le",
+        "Audit.Wire3.OuterLaneTransport.stage_triple_is_actual_digests",
+        "Audit.Wire3.OuterLaneTransport.frame_state_shape_congr",
+        "Audit.Wire3.OuterLaneTransport.strategic_source_digest_is_stage_digest",
+        "Audit.Wire3.OuterLaneTransport.strategic_run_log_draw_is_log_triple",
+        "Audit.Wire3.OuterLaneTransport.strategic_run_gate_draw_is_gate_triple",
+        "Audit.Wire3.OuterLaneTransport.realized_proof_statement",
+        "Audit.Wire3.OuterLaneTransport.zip_map_fst_snd",
+        "Audit.Wire3.OuterLaneTransport.realized_proof_messages",
+        "Audit.Wire3.OuterLaneTransport.realized_proof_witness",
+        "Audit.Wire3.OuterLaneTransport.co_echo_lane_bounded",
+        "Audit.Wire3.OuterLaneTransport.co_echo_lane_reads_its_prefix",
+        "Audit.Wire3.OuterLaneTransport.echo_lane_owns",
+        "Audit.Wire3.OuterLaneTransport.co_echo_lane_owns",
+        "Audit.Wire3.OuterLaneTransport.lane_bad_set_mem_of_agreement",
+        "Audit.Wire3.OuterLaneTransport.lane_bad_nonempty_of_agreement",
+        "Audit.Wire3.OuterLaneTransport.reduce_zero_digest_triple",
+        "Audit.Wire3.OuterLaneTransport.separated_lane_bounded",
+        "Audit.Wire3.OuterLaneTransport.separated_lane_owns",
+        "Audit.Wire3.OuterLaneTransport.separated_lane_claims_differ",
+        "Audit.Wire3.OuterLaneTransport.separated_lane_agrees_at_zero",
+        "Audit.Wire3.OuterLaneTransport.separated_lane_bad_nonempty",
+        "Audit.Wire3.OuterLaneTransport.separated_lane_round_zero_target_nonempty",
+        "Audit.Wire3.OuterLaneTransport.tuple_event_empty",
+        "Audit.Wire3.OuterLaneTransport.closed_log_bad_set_zero_empty",
+        "Audit.Wire3.OuterLaneTransport.closed_log_bad_set_one_empty",
+        "Audit.Wire3.OuterLaneTransport.closed_gate_bad_set_zero_empty",
+        "Audit.Wire3.OuterLaneTransport.closed_log_target_zero_empty",
+        "Audit.Wire3.OuterLaneTransport.closed_log_target_one_empty",
+        "Audit.Wire3.OuterLaneTransport.closed_gate_target_zero_empty",
+        "Audit.Wire3.OuterLaneTransport.closed_lanes_log_owns",
+        "Audit.Wire3.OuterLaneTransport.closed_lanes_gate_owns",
+        "Audit.Wire3.OuterLaneTransport.outer_lane_bound_at_thirteen",
+        "Audit.Wire3.OuterLaneTransport.outer_lane_bound_at_thirteen_lt_one",
+        "Audit.Wire3.OuterLaneTransport.reduced_history_succ",
+        "Audit.Wire3.OuterLaneTransport.reduced_history_congr",
+        "Audit.Wire3.OuterLaneTransport.reduced_round_causal",
+        "Audit.Wire3.OuterLaneTransport.strategy_of_reduced_bounded",
+        "Audit.Wire3.OuterLaneTransport.outer_history_succ",
+        "Audit.Wire3.OuterLaneTransport.outer_history_length",
+        "Audit.Wire3.OuterLaneTransport.take_length_append",
+        "Audit.Wire3.OuterLaneTransport.take_own_length",
+        "Audit.Wire3.OuterLaneTransport.outer_state_message",
+        "Audit.Wire3.OuterLaneTransport.reduced_history_is_outer_history",
+        "Audit.Wire3.OuterLaneTransport.reduced_history_at_strategic",
+        "Audit.Wire3.OuterLaneTransport.log_lane_of_reduced_bounded",
+        "Audit.Wire3.OuterLaneTransport.gate_lane_of_reduced_bounded",
+        "Audit.Wire3.OuterLaneTransport.log_lane_of_reduced_message_is_realized",
+        "Audit.Wire3.OuterLaneTransport.gate_lane_of_reduced_message_is_realized",
+        "Audit.Wire3.OuterLaneTransport.reduced_outer_lane_bad_draw_probability_le",
+        "Audit.Wire3.OuterLaneTransport.previous_challenge_message_log",
+        "Audit.Wire3.OuterLaneTransport.previous_challenge_message_log_length",
+        "Audit.Wire3.OuterLaneTransport.previous_challenge_message_gate_length",
+        "Audit.Wire3.OuterLaneTransport.previous_challenge_message_depends",
+        "Audit.Wire3.OuterLaneTransport.previous_challenge_bound_at_thirteen"
+      ],
+      "sources": [
+        "mle/src/transcript_v2.rs",
+        "mle/contracts/src/TranscriptV2.sol",
+        "mle/src/sumcheck/gate_ext3_v2.rs",
+        "mle/contracts/src/OuterLogupExt3Verifier.sol"
+      ],
+      "scope": "Transports OuterSequentialConditioning's prefix-dependent per-round conditioning from the ideal joint space to the oracle table along a strategy-driven chain. The technical core is a diagonal fresh step: the conditioning event is partitioned by the value of a table-dependent target, the target is constant on each block, and three sequential counter peels give the count of tables whose stage triple lands in their own target at most the target size times the event size over the triple alphabet; the lane state before a round is a function of strictly earlier stage answers (the transported prefix dependence), the no-clash events are nested, and the per-round adopted cardinality bounds sum to the exact adopted outer term. The general headline bounds, for every transcript-restricted strategy and every pair of lanes meeting the degree bounds, quantified independently, the mass that a strategy-driven chain's challenge lands in a lane's per-round bad set by outerTerm plus the chain clash term; this is prefix-dependent lane transport, not the adaptive union bound, because a lane's message is a function of the reduced challenge prefix while a strategy reads raw blocks at every stage and counter and the reduction is not injective, so no lane realizes a general strategy's messages (the adopted truncated-message strategy included). The reduced-history subclass of strategies, whose round message is a function of the reduced round-challenge history alone, is embedded into the adopted strategies with matching lanes, the lane's round message is proved equal to the strategy's realized message, and for that subclass the bound is a genuine adaptive union bound, closing the adopted strategy module's open item for that subclass only. Emptiness and non-emptiness of round bad sets are recorded as theorems (empty at the closed instance's early rounds; non-empty at a separated lane). Random-oracle model, not keccak; transcript-restricted prover, grinding excluded; outer lanes only; the constant is the outer term alone; not the system's soundness error."
     }
   ]
 }

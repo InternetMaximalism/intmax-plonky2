@@ -1452,6 +1452,36 @@ loop方式の16回目。RunLevelUnionBoundが契約として残した固定プ�
   索引段の細分割（3段契約）、適応的/grindingプローバの和集合上界、grinding上界のq線形化、R1b、回路の真値、受理証明と残余の
   同時充足性。
 
+## 第33継続更新（3a5fedba以降）
+
+追跡版runnerでコミット`3a5fedba`の126モデル・4780定理を再検査しPASS（883.049秒、1456モジュール、
+manifest `b04b24cb68d71f05e5a74468b0f1d8311bfb204e368a8accaf59347b22bda9cc`、receipt
+`6e0cf2860eaa8c94a2923190a2a5039ba12c0827eba57b53b41372232a96d7f7`、graph
+`c600a127f60b34f5ab9eba36e01d894a5f5b8491cb72f590b56e0c1730077cb5`）。同コミットに対する先行2回の実行は、並行して動いていた実装エージェントが
+`pkill -f "[l]ean --root"`を発行してrunnerのleanプロセスを外部から停止させたため失敗（`lean exited -15`、出力なし）しており、
+監査上の所見ではない（記録は候補ディレクトリのfresh-run-3a5fedba-FAIL-run1/2.logとreceipt写し）。
+loop方式の17回目。TwoStageConditionalCountが契約として残した索引段の細分割と、StrategyChainBoundが残した適応的プローバの和集合上界を対象にした。
+
+- **索引段の細分割**: IndexStageFinerSplitは結合scheduleのclash外単射性、結合selectorでのrestrict_ratio、2群条件付き計数、frame fibre
+  Fubiniの3段を構築し、`RowPointFixed`を計数で放棄した。見出しは`run_index_stage_mass_le ≤ 2·tauTerm + P[拡張clash]`と
+  `assembly_failure_mass_le_unconditional`（committed列に条件なし、RHSはcombinedBound + 2·tauTerm + P[拡張clash]、d=13で4560/|Block|、
+  閉実例でRHS<1）。レビューは対角計数（uは補完のK1半分であってfibre定数ではない、F uは文字通りrow点でのguard付き索引bad事象）、RLUBのhash添字付き族との
+  文字単位の一致、単一のFubiniによる加算項1つ、仮定がTSCCから`RowPointFixed`（と`committed0`）を除いただけであることを確認し、PASSとした。
+  文言上の指摘（未使用引数、派生形の限定句、「放棄」は計数による仮定の除去であり述語の証明ではない）を反映した。
+- **外側laneの条件付けの輸送**: OuterLaneTransport（初稿名AdaptiveUnionTransport）は対角fresh step（条件付け事象をtargetの値で分割）と
+  入れ子no-clash事象でOSCの各round条件付けを神託表へ輸送し、任意の戦略駆動chainに対して ≤ outerTerm + chain衝突項を得た。レビューは
+  計数の正しさ（採用済みlaneBad_card_leの天井上界、和がouterTermに厳密一致）を確認する一方、一般形の見出しが**戦略と独立に量化された
+  laneのbad集合**を扱っており（判定 iii）、SCB (iii)の「roundのbad集合はプローバが選んだメッセージで決まる」を閉じていないこと、
+  閉実例のbad集合が早いroundで空であるのに非空を主張していたことを指摘した。修正でモジュールを改名し、構成不能性（定義域と損失）を
+  見出しに明記、非空性を両方向の定理にし、縮約履歴部分クラス（ReducedStrategy）でlane messageと実現メッセージの一致を証明して、
+  その部分クラスに限る真の適応的和集合上界`reduced_outer_lane_bad_draw_probability_le`を追加した。再検証は結合補題が真の恒等式であること（lane側のbad集合の入力 = 戦略がround rで吸収したメッセージ、gate側のtake帳簿も一致）を
+  確認し、部分クラス定理を判定 (i)（真の適応的上界）、一般形を判定 (iii) と評価してPASSとした。truth関数と主張が自由なのは∀量化で
+  正しい形（正直なメッセージではbad集合が空）。
+  両モジュール合わせて128モデル・4895定理。IndexStageFinerSplitにより、固定プローバのROM下でexplicit engineの組立結論の失敗集合に
+  committed列の条件なしの質量上界が付いた。今回もROMの法則下の結果であり、keccakの性質でも系の健全性誤差でもない。残るのは
+  raw block読みの戦略への適応的上界、tauTerm/alphaTermの輸送、grindingの和集合上界、非定数列でのguard生存性、R1b、回路の真値、
+  受理の提示。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

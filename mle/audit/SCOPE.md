@@ -723,6 +723,17 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    依存事実（row点は外側drawの関数。初稿の障害主張は反証・撤回）まで証明し、条件付き計数自体は`RowPointFixed`（定数committed列で
    非退化に充足）を明示仮定として`assembly_failure_mass_le`を与えた（定数committed列のみ）。残る細分割（frame半分＋外側challenge
    cellを固定し索引cellを自由にするfibre）は抽象計数`product_diagonal_card_le`と3段契約で規定済み。
+   索引段の細分割はIndexStageFinerSplitで完成した: 結合scheduleのclash外単射性から外側cellと索引cellが互いに素、restrict_ratioで
+   (外側draw, 索引draw)が同時一様、2群条件付き計数で索引半分がrun自身の外側drawに依存する対角事象を各点≤2·tauTermで評価し、
+   frame fibre Fubiniで加算項1つのまま神託表へ。これによりexplicit engineの組立結論の失敗集合の質量上界
+   `assembly_failure_mass_le_unconditional ≤ combinedBound + 2·tauTerm + P[拡張clash]`（d=13で4560/|Block|）が、固定プローバのROM下で
+   committed列に条件なく成立し、閉実例でRHS<1。残るのは非定数列でのguard生存性（緩みのみ）、適応的プローバ
+   （AdaptiveUnionTransportで着手）、R1b、回路の真値、受理の提示。
+   適応的プローバの和集合上界はOuterLaneTransportで前進した: 対角fresh step（targetの値で分割）と入れ子no-clash事象により
+   OSCの各round条件付けを神託表へ輸送し、任意の戦略駆動chainに対し ≤ outerTerm + chain衝突項。ただし一般形はlaneと戦略を
+   独立に量化しており（prefix依存lane輸送。raw blockを読む一般のStrategyにはlaneOfStrategyが構成不能）、SCB (iii)を閉じるのは
+   縮約履歴部分クラス（ReducedStrategy、lane messageと実現メッセージの一致を証明）に限る。残るのはraw block読みの戦略、
+   tauTerm/alphaTermの輸送、grindingプローバの和集合上界。
    これらの結果はSoundnessAssemblyで1定理に組み立てた。explicit engineの受理、残余仮定の名前付き構造体
    （表の意味論と転記行、配備digestと有界性、fold水準のopening、抽出列の高さとcommitted幅、
    GateDerivedRejectionの9フィールド、slot係数）、実digest drawが4族のbad event外、実index drawが
