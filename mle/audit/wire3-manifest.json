@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "78ab6a6a5bff53437a2468c1f7aa9f205ac23bd61e940040e5e3cc7d05108212",
+      "sha256": "ea46aa5bb1c4f97f79c823f42cf1aeaf7107bd48074a6f2c48b4b9ac22d4c64c",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "380c2f9134a80138d752ac5497d8dfe80e22a7d1c93dbe11cc42180f1d7eab8d",
+      "sha256": "e8b48b671c013f00ff73a405990e363e68315ef66743bdf8c731a263bc704b32",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "25294194a25b5610c0b983463f7516ec904b5a907f08bd9fb7d58f184bb4f971",
+      "sha256": "bc1416e1efdcb869628ed694047ae0452cb8f81bd24678af7485c8b8a189b203",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "89f3159ce7cbd15308090de81b0b644591f8de15d34fb7303bffd957e0056ee7",
+      "sha256": "9877efa2e7b01d52ad4686ca1ee0368b1a1c74a1d52c27ca8e484014ccfb5589",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "48bf7818d42a029b1c6689669940be44c1f3bdc153a35639febbabac39b46d43",
+      "sha256": "0cc82217c11cd9f2d2a690d4f2df9258ed1871ad38b3d223982b742a338ac6ce",
       "kind": "spec"
     },
     {
@@ -2281,6 +2281,16 @@
     {
       "path": "mle/audit/Audit/Wire3/InstalledInitialTranscript.lean",
       "sha256": "1ec4dc4efc90559bf64ed12d1abdd590fb5e777e04989eb0f11b8537023a3b44",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/InstalledWhirParse.lean",
+      "sha256": "78d6bc5e1cae97769296b47af4a64da2147c2861d8f893834595169a7bd8a4bf",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/ComposedEngine.lean",
+      "sha256": "0c5ab96619e66973dc3bd85bb0e86101e5181f930256de7167b63590fefa0fd9",
       "kind": "current-model"
     }
   ],
@@ -7095,6 +7105,95 @@
         "mle/contracts/src/PoseidonPublicInputsHash.sol"
       ],
       "scope": "On top of the installed sampler engine, the initial-transcript observation is replaced by the adopted OuterInitial derivation on the verifier's statement and the public-input hash by the adopted concrete Poseidon hash-no-pad, giving one engine with eight concrete fields at once; the novelty is the composition, since the adopted withInitial_derived already gives DerivedInitial by rfl for any engine. For this engine DerivedInitial is a theorem for every configuration and proof, so the thirty-six downstream hderiv sites and the PublicInputHashBinding hsub sites become unconditional: the headline theorems of GateDerivedRejection, AttachedUnionBound, JointChallengeSpace's composed theorem, ConstantsProvenance and CommitmentOrder's deterministic adaptivity are restated without hderiv, with acceptance now under the concrete sampler/tail/initial engine (a stronger premise). The derivation reads no other engine hook (raw public inputs are absorbed at frame 3) and verify reads the hook only through initialTranscript. The absorbed prefix is CommitmentOrder's twenty-two frames with the roots at 13, 15 and 19 and gate alpha/tau at counters 9+3d and 12+3d+3i of the prefix digest; accepted proofs' public inputs satisfy the Solidity 256-word cap and per-word range check. Remaining observations: commitRound, parseWhir, configurationHash, deploymentValid; the prover-side challenge equality is a hypothesis about the prover's record and is not discharged. The hash stays an arbitrary deterministic function with no injectivity, uniformity or random-oracle property, so this is order-and-plumbing identity, not Fiat-Shamir soundness; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.InstalledWhirParse",
+      "theorems": [
+        "Audit.Wire3.InstalledWhirParse.tail_run_factors_through_prefix_run",
+        "Audit.Wire3.InstalledWhirParse.parse_and_tail_read_the_same_prefix",
+        "Audit.Wire3.InstalledWhirParse.prefix_run_success_gives_whir_prefix",
+        "Audit.Wire3.InstalledWhirParse.root_word_of_root_digest",
+        "Audit.Wire3.InstalledWhirParse.map_root_word_of_parse_roots",
+        "Audit.Wire3.InstalledWhirParse.map_root_word_comp",
+        "Audit.Wire3.InstalledWhirParse.concrete_parse_roots_are_the_prefix_roots",
+        "Audit.Wire3.InstalledWhirParse.roots_and_claims_match_reduces_to_claims",
+        "Audit.Wire3.InstalledWhirParse.concrete_parse_claims_are_the_bound_cells",
+        "Audit.Wire3.InstalledWhirParse.claims_match_of_pointwise",
+        "Audit.Wire3.InstalledWhirParse.expected_claims_bound_index_below_five",
+        "Audit.Wire3.InstalledWhirParse.installed_parse_is_round_engine_of_reparsed",
+        "Audit.Wire3.InstalledWhirParse.installed_parse_keeps_everything_else",
+        "Audit.Wire3.InstalledWhirParse.installed_parse_keeps_transcript",
+        "Audit.Wire3.InstalledWhirParse.verify_whir_concrete_iff",
+        "Audit.Wire3.InstalledWhirParse.verify_whir_concrete_iff_roots_are_free",
+        "Audit.Wire3.InstalledWhirParse.derived_context_claims_match_is_automatic",
+        "Audit.Wire3.InstalledWhirParse.receive_one_root_bytes",
+        "Audit.Wire3.InstalledWhirParse.receive_commitments_root_bytes",
+        "Audit.Wire3.InstalledWhirParse.prefix_run_commitment_bytes",
+        "Audit.Wire3.InstalledWhirParse.accepted_transcript_carries_the_pinned_roots",
+        "Audit.Wire3.InstalledWhirParse.parse_none_rejects",
+        "Audit.Wire3.InstalledWhirParse.wrong_root_in_transcript_is_rejected",
+        "Audit.Wire3.InstalledWhirParse.accepted_verification_parses_the_concrete_prefix",
+        "Audit.Wire3.InstalledWhirParse.accepted_verify_first_root_is_pinned",
+        "Audit.Wire3.InstalledWhirParse.example_concrete_parse_rejects_the_empty_transcript",
+        "Audit.Wire3.InstalledWhirParse.example_abstract_parsers_accept_the_empty_transcript",
+        "Audit.Wire3.InstalledWhirParse.example_installed_parse_engine_rejects"
+      ],
+      "sources": [
+        "mle/src/commitment/whir_pcs.rs",
+        "mle/src/verifier_v2.rs",
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol",
+        "mle/contracts/src/MleVerifierV2.sol"
+      ],
+      "scope": "The WHIR parse, an engine observation until now, made concrete as the projection of the adopted WhirInitial.phaseInitial, WhirPrefix.run and WhirTail.runPrefix chain (initial phase, initial sumcheck and the intermediate rounds): the actual roots are the first root copy each commitment carries in the transcript, the bound roots the second copy, the claims the mask-0x1f readClaims, checked against whir_pcs.rs 1514-1556 and 1586-1614 and SpongefishWhirVerify.sol 374 and 384-387 with nothing new modelled. Proved: verifyWhir on the installed engine is equivalent to prefix success, root agreement, claim agreement and tail acceptance; the root conjunct is redundant because a successful prefix already forces both copies to equal the context roots; an accepted transcript carries each root at byte offset k times the commitment stride (64 plus 24 times outDomainSamples times numVectors) and again after the out-of-domain answers; a transcript whose first 32 bytes are not the encoding of the first context root (or are missing) is rejected; the parse and the tail read the same prefix execution because the tail run factors definitionally through the prefix run. At the derived context the first root is the proof's preprocessed root, which acceptance pins to the deployment root through shape. Composed with the other installers only configurationHash remains an observation (the composition is not performed here). The WHIR context's protocol id, session id and parameters and the parameter record stay free, pinned in the source only by the profile digest; R1b, R2, R3 unchanged; no WHIR/PCS soundness, hash security or Fiat-Shamir; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.ComposedEngine",
+      "theorems": [
+        "Audit.Wire3.ComposedEngine.composed_is_the_pinned_engine",
+        "Audit.Wire3.ComposedEngine.composed_is_the_installed_initial_engine",
+        "Audit.Wire3.ComposedEngine.composed_is_the_installed_round_engine",
+        "Audit.Wire3.ComposedEngine.composed_is_the_sampler_and_tail_engine",
+        "Audit.Wire3.ComposedEngine.composed_is_its_own_model_engine",
+        "Audit.Wire3.ComposedEngine.composed_installed_fields",
+        "Audit.Wire3.ComposedEngine.composed_remaining_observations",
+        "Audit.Wire3.ComposedEngine.composed_derived_objects",
+        "Audit.Wire3.ComposedEngine.composed_initial_hypothesis_holds_at_the_round_base",
+        "Audit.Wire3.ComposedEngine.composed_initial_is_derived",
+        "Audit.Wire3.ComposedEngine.composed_initial_columns",
+        "Audit.Wire3.ComposedEngine.composed_decoded_snapshot",
+        "Audit.Wire3.ComposedEngine.composed_snapshots_always_decode",
+        "Audit.Wire3.ComposedEngine.composed_rounds_are_the_checked_execution",
+        "Audit.Wire3.ComposedEngine.composed_round_digests_chain_after_prefix",
+        "Audit.Wire3.ComposedEngine.composed_lanes_are_concrete",
+        "Audit.Wire3.ComposedEngine.composed_actual_digest_draw_encodes_run",
+        "Audit.Wire3.ComposedEngine.composed_sampled_indices_absorb_used_claims",
+        "Audit.Wire3.ComposedEngine.composed_index_lanes_have_index_bits_length",
+        "Audit.Wire3.ComposedEngine.composed_acceptance_envelope_and_shape",
+        "Audit.Wire3.ComposedEngine.composed_acceptance_bounds_degree_bits",
+        "Audit.Wire3.ComposedEngine.composed_accepted_snapshot_decodes",
+        "Audit.Wire3.ComposedEngine.composed_accepted_round_digests_chain_after_prefix",
+        "Audit.Wire3.ComposedEngine.composed_accepted_sampled_indices_absorb_used_claims",
+        "Audit.Wire3.ComposedEngine.composed_accepted_lanes_are_concrete",
+        "Audit.Wire3.ComposedEngine.composed_accepted_execution_exists",
+        "Audit.Wire3.ComposedEngine.composed_accepted_execution_exists_of_profile_lengths",
+        "Audit.Wire3.ComposedEngine.composed_accepted_profile_is_canonical",
+        "Audit.Wire3.ComposedEngine.composed_round_one_authentication",
+        "Audit.Wire3.ComposedEngine.composed_accepted_tail_runs_the_pinned_profile",
+        "Audit.Wire3.ComposedEngine.composed_parse_whir_cannot_pass_a_wrong_root",
+        "Audit.Wire3.ComposedEngine.composed_accepted_public_inputs_within_solidity_cap",
+        "Audit.Wire3.ComposedEngine.composed_acceptance_summary",
+        "Audit.Wire3.ComposedEngine.example_fixture_initial_is_derived",
+        "Audit.Wire3.ComposedEngine.example_fixture_round_shape",
+        "Audit.Wire3.ComposedEngine.example_fixture_snapshot_decodes",
+        "Audit.Wire3.ComposedEngine.example_fixture_index_lanes",
+        "Audit.Wire3.ComposedEngine.example_fixture_public_input_hash",
+        "Audit.Wire3.ComposedEngine.example_forged_profiles_are_rejected"
+      ],
+      "sources": [
+        "mle/src/verifier_v2.rs",
+        "mle/contracts/src/MleVerifierV2.sol"
+      ],
+      "scope": "One engine composing every installed field: the model engine's four evaluators, the WHIR tail at the pinned profile record, the concrete index sampler, the OuterInitial initial observation, the concrete public-input hash, the concrete round commit and the pinned-profile deployment check, so ten of the twelve engine fields are concrete and only parseWhir and configurationHash remain observations. Five rfl identities relate it to each installing module's engine over the appropriate base (the installers commute); the initial-transcript hypothesis carried by nine InstalledRoundCommit theorems is discharged by rfl and degreeBits <= 13 and the round-count shape facts are derived from acceptance. The acceptance summary derives sixteen conjuncts from acceptance plus the table-semantics assumption and a transcribed profile row: the three roots opened and Merkle-authenticated in round one, the outer rounds equal to the checked execution with concrete digest chaining, the index lanes squeezed after the used claims with length indexBits, the initial transcript equal to the derivation with the twenty-two-frame prefix, and the public inputs within the Solidity cap; every conjunct is an application of an adopted theorem. An abstract parseWhir can make a good proof fail but cannot pass a root other than the ones the outer verifier bound the context to (a consistency statement; only the preprocessed root is deployment-pinned, the witness and norm-inverse roots are the proof's own). The protocol and session id lengths are pinned neither by the envelope nor by the canonical check, so the existence of the checked execution needs those two hypotheses. The indexBits = 0 failure branch is unreachable for this engine. R1b, R2, R3, Fiat-Shamir half (B), keccak and the two-row limitation of the table assumption are unchanged; not the system's soundness error."
     }
   ]
 }

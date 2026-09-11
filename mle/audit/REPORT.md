@@ -1203,6 +1203,32 @@ loop方式の6回目。engineに残る観測のうち初期transcript／公開�
 採用namespaceでの直接buildと全統合guardはPASS。全3659名の実定理/型/推移的公理、
 456 reviewed hashes、18表1147語、7依存5601fileを検査した。
 
+## 第24継続更新（3efafd4c以降）
+
+追跡版runnerでコミット`3efafd4c`の107モデル・3659定理を再検査しPASS（810.778秒、1437モジュール、
+manifest `3e92472ca8f048d02592429233f36e9021d3909c0bb9c6321a2435d6c38ecc6c`、receipt
+`b9f35b7157061f3ebda7c2ae15ab35bebc4bbbf88eb547058cdd9312c04b060e`、graph
+`5d78a9de153572488476087bf45923df70c353168779e71dab70af815d1f9de9`）。
+loop方式の7回目。据え付け済みフィールドの合成と、最後に残る観測の1つparseWhirを対象にした。
+
+- **engineの合成**: ComposedEngineは10フィールドを具体化した1つのengineを与え、観測はparseWhirと
+  configurationHashのみになった。5つのrfl同一性で各据え付けengineと一致し、InstalledRoundCommitの
+  初期transcript仮定はrflで消え、degreeBits≤13と形状仮定は受理から導かれる。要約定理は受理から16連言を
+  導く（各連言は採用済み定理の適用のみ）。抽象parseWhirが誤ったrootを通せないことも定理化した。レビューは
+  16連言をそれぞれ元定理とbase engineまで追跡して正しいことを確認し、文書上の不正確（採用済みmoduleを
+  「staged」と記載、`hi`を担ぐ定理数、「pinned triple」の表現）を修正させた。
+- **parseWhirの据え付け**: InstalledWhirParseは採用済みWhirInitialのprefix読み取りの射影としてparseWhirを
+  具体化し、verifyWhirの同値、root条件の冗長性、transcriptバイト列上のroot位置、誤ったrootの棄却、parseと
+  tailが同じprefix実行を読むことを証明した。レビューはソース忠実性（stride、root 2本の順序、OOD回答の
+  位置、mask）を確認し、非推奨補題の警告4件の除去と、prefixが中間roundまで含む点・derivedContextの先頭
+  rootがproof側である点（pinとの一致はshape経由で追加）の明記を求めた。合成後に残る観測はconfigurationHash
+  のみである。
+
+追加2モデルはいずれもFable側の敵対的検証を通した（必須修正は文書と警告除去で、健全性欠陥は
+検出されなかった）。
+採用namespaceでの直接buildと全統合guardはPASS。全3726名の実定理/型/推移的公理、
+458 reviewed hashes、18表1147語、7依存5601fileを検査した。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

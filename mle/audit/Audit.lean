@@ -112,3 +112,5 @@ import Audit.Wire3.PinnedWhirProfile
 import Audit.Wire3.InstalledIndexSampler
 import Audit.Wire3.InstalledInitialTranscript
 import Audit.Wire3.InstalledRoundCommit
+import Audit.Wire3.ComposedEngine
+import Audit.Wire3.InstalledWhirParse

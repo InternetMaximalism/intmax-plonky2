@@ -580,7 +580,28 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    ただし初期transcript観測とdegreeBits≤13の下では全snapshotがdecodeするため、本モジュールの定理では
    その経路に到達しない（導出でないinitialObservationを持つengineでのみ生きる）。DrawEncodesRunは依然
    座標主張で、laneの値が実digestの縮約であることまでを示す。初期transcriptとpublicInputsHashの据え付け
-   （InstalledInitialTranscript）との合成は次段。
+   （InstalledInitialTranscript）との合成はComposedEngineで行った。modelEngineの4評価器、whirTail
+   （PinnedWhirProfileのpinned record）、sampleIndices、initialObservation、publicInputsHash、commitRound、
+   deploymentValidの10フィールドが具体化された1つのengineを与え、観測は`parseWhir`と`configurationHash`
+   の2つだけになった。各据え付けengineとの同一性を5つのrflで示し、InstalledRoundCommitの9定理が担ぐ
+   初期transcript仮定はrflで消え、degreeBits≤13と形状仮定は受理から導かれる。要約定理は受理・
+   TableIsCanonical・転記済み行から16連言を導き、各連言は採用済み定理の適用のみで新しい証明内容を含まない。
+   抽象parseWhirは良いproofを落とせても誤ったrootを通せない（tailはparsed recordを読まず、WhirInitialが
+   transcriptから読むrootをctx.rootsと照合する。deployment-pinnedなのはpreprocessed rootのみ）。
+   protocolId/sessionIdの長さはenvelopeにもcanonical検査にも含まれず、検査付き実行の存在にはその2仮定が
+   要る。indexBits=0の失敗経路はこのengineでは到達不能。R1b/R2/R3・half (B)・keccak・TableIsCanonicalの
+   限定は不変。
+   parseWhirの観測はInstalledWhirParseで具体化した。採用済みWhirInitial.phaseInitial→WhirPrefix.run→
+   WhirTail.runPrefix（初期phase・初期sumcheck・中間round）の射影として定義し（actualRootsはtranscriptの
+   1本目のroot、boundRootsは2本目、claimsはmask 0x1fのreadClaims。whir_pcs.rs 1514-1556/1586-1614、
+   SpongefishWhirVerify.sol 374/384-387と照合。新規のモデル化はない）、verifyWhirがprefix成功∧root一致∧
+   claim一致∧tail受理と同値であること、root条件はprefix成功に含まれ冗長であること、transcriptバイト列が
+   位置k·stride（stride=64+24·outDomainSamples·numVectors）と+32+24·(…)にroot 2本を運ぶこと、先頭32バイトが
+   先頭rootの符号化と異なる（または欠ける）transcriptは棄却されること、parseとtailが同じprefix実行を
+   読むこと（tailRun=prefixRun.bind runTail、定義的）を証明した。derivedContextの先頭rootはproofの
+   preprocessedRootで、受理下ではshapeによりpinに一致する。ComposedEngineと合わせると残る観測は
+   configurationHashのみ（本moduleは合成を行わない）。WhirContextのprotocolId/sessionId/parametersと`wp`は
+   依然自由（ソースではprofile digestで固定、Leanでは観測）。R1b/R2/R3は不変。
 
 現target105の約101.5-bit値はリポジトリのgeneric-work見積もりで、Leanが証明した
 128-bit/end-to-end安全性ではありません。実装変更・デプロイ承認もこの更新には含みません。
