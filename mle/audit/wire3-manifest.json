@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "3eba86a0fc5c9657156e1d77af52f5c338ccf7698cd304cd76037f490426d71d",
+      "sha256": "5f9df49aea9d4b736d965532041da5bb439f61af7f08b0ff6666f31d0553b754",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "ce3707d09b75948efcf2e6034097810bdc793b5c91ce0bf4799be7e589e7cc7d",
+      "sha256": "1eda9b8492a3ff6cc583a9220378db11fb39cc9646e761791ddab95605e95660",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "56e0554917a154de70ac83a5ef3fac3e4a97a6b591d115cb3facefca2d5d52a0",
+      "sha256": "3d6e069bcb1b8bfb8fb1df60bd3f0e928e1837eaa9b30f69fda751b46600cf6e",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "cf903e94ebb96dce16de34753f34155d1f56e0f74ea6b39e840a7bea2b841ce3",
+      "sha256": "41ff8e1fe1f52d4a1e7968d426f85283bb524b19f8409a8d03bda50d4548253f",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "292d963fb51d904f9a67c0d83f6cdc63470be00ef569353af49c0e5f964643c1",
+      "sha256": "7e3e5eae139e1f72b1f869a9b9029e825bf0416fc858604ed5f3cd8515e91b0c",
       "kind": "spec"
     },
     {
@@ -2301,6 +2301,16 @@
     {
       "path": "mle/audit/Audit/Wire3/IndexPointZeroCheck.lean",
       "sha256": "66a2d8dcb208a200bc5bb1fd5bbe4dae9e6184e58d282e9e0ad52ac4bde4e647",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/SoundnessAssembly.lean",
+      "sha256": "e90dfc84f7ea0519d4d9f97e3849f7099f751567858ca294c26076b3da6b8612",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/GateEvaluatorCoverage.lean",
+      "sha256": "af67f1d4604a7a9a62ae11dfdcff42fd5f82b2f9b8bab8056e8c199339c6ed20",
       "kind": "current-model"
     }
   ],
@@ -7365,6 +7375,125 @@
         "mle/contracts/src/PackedClaimExt3.sol"
       ],
       "scope": "The probabilistic step behind residue R3 (per-column identification of the WHIR claims) given as a dichotomy by Schwartz-Zippel on the index point: the packed fold of a cell list at the index point equals the multilinear extension of the zero-padded list (cells at most 2^indexBits, both sides low bit first, no reversal; composed from adopted lemmas), so the set of index points at which two cell families' packed folds agree is the vanishing set of their difference with density at most indexBits over the field size and uniform product mass at most tauTerm indexBits on the index sampler's coordinate space, for both lanes. Under the adopted fold-level opening relation, either the supplied cells equal the committed columns' openings (literally the per-column opened field) or the derived index point lies in that explicitly bounded set, stated at each bound cell (log lane for cells 0-2, gate lane for 3-4). At a common width the agreement set is everything only when the lists are equal (injectivity of the extension on cube values), so no residue class is handed to R2 there; the committed width is a hypothesis since the capacity field gives only an upper bound, and with unequal widths zero padding can hide a difference, so identification up to trailing zeros is given as a variant. The cells are absorbed before the index squeeze by the adopted ordering theorem; Fiat-Shamir half (B) is not formalized; only the joint law on the index space is given. R1b at fold level and R2 are unchanged; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.SoundnessAssembly",
+      "theorems": [
+        "Audit.Wire3.SoundnessAssembly.explicit_is_the_installed_initial_engine",
+        "Audit.Wire3.SoundnessAssembly.explicit_is_the_installed_tail_engine",
+        "Audit.Wire3.SoundnessAssembly.explicit_is_the_composed_engine",
+        "Audit.Wire3.SoundnessAssembly.explicit_accepted_run_facts",
+        "Audit.Wire3.SoundnessAssembly.explicit_initial_is_derived",
+        "Audit.Wire3.SoundnessAssembly.explicit_actual_digest_draw_encodes_run",
+        "Audit.Wire3.SoundnessAssembly.explicit_index_lanes_are_draw_coordinates",
+        "Audit.Wire3.SoundnessAssembly.gate_lane_degree_of_extraction",
+        "Audit.Wire3.SoundnessAssembly.explicit_pinned_profile_row",
+        "Audit.Wire3.SoundnessAssembly.fold_level_opening_of_tail_extraction",
+        "Audit.Wire3.SoundnessAssembly.not_mem_badEvent_parts",
+        "Audit.Wire3.SoundnessAssembly.frozen_lane_bounded",
+        "Audit.Wire3.SoundnessAssembly.bad_event_mass_le",
+        "Audit.Wire3.SoundnessAssembly.not_mem_run_bad_event",
+        "Audit.Wire3.SoundnessAssembly.adaptive_event_empty_of_invariant",
+        "Audit.Wire3.SoundnessAssembly.lane_bad_empty_of_honest",
+        "Audit.Wire3.SoundnessAssembly.lane_step_honest",
+        "Audit.Wire3.SoundnessAssembly.adaptive_lane_event_empty_of_honest",
+        "Audit.Wire3.SoundnessAssembly.frozen_lane_honest",
+        "Audit.Wire3.SoundnessAssembly.tau_bad_event_empty_of_cube_zero",
+        "Audit.Wire3.SoundnessAssembly.alpha_bad_event_empty_of_all_zero",
+        "Audit.Wire3.SoundnessAssembly.honest_outer_bad_event_empty",
+        "Audit.Wire3.SoundnessAssembly.honest_extraction_misses_outer_bad_event",
+        "Audit.Wire3.SoundnessAssembly.index_bad_event_of_differ",
+        "Audit.Wire3.SoundnessAssembly.index_bad_event_of_cube_agreement",
+        "Audit.Wire3.SoundnessAssembly.index_bad_event_of_equal_cells_is_empty",
+        "Audit.Wire3.SoundnessAssembly.tau_term_nonneg",
+        "Audit.Wire3.SoundnessAssembly.index_bad_event_mass_le",
+        "Audit.Wire3.SoundnessAssembly.run_per_column_identification",
+        "Audit.Wire3.SoundnessAssembly.index_good_draw_iff_identification",
+        "Audit.Wire3.SoundnessAssembly.explicit_good_draw_assembly",
+        "Audit.Wire3.SoundnessAssembly.constants_forgery_forces_join_or_opening_off_bad_set",
+        "Audit.Wire3.SoundnessAssembly.residue_inventory_is_exact",
+        "Audit.Wire3.SoundnessAssembly.joint_mass_at_the_envelope",
+        "Audit.Wire3.SoundnessAssembly.index_mass_at_the_envelope",
+        "Audit.Wire3.SoundnessAssembly.assembly_masses_at_the_envelope"
+      ],
+      "sources": [
+        "mle/src/verifier_v2.rs",
+        "mle/contracts/src/MleVerifierV2.sol"
+      ],
+      "scope": "Glue only: the deterministic and counting results assembled into one statement for the explicit engine. From acceptance, a named residue structure (the table-semantics assumption and a transcribed row, the deployment digest with its bounds, the fold-level opening derived from the adopted tail extraction predicate, the extracted column height and committed width, the nine adopted gate extraction fields and the slot coefficients), the run's actual-digest draw lying outside the four guarded families (outer lanes, tau, alpha), and its actual index draw lying outside the guarded index agreement event, the theorem concludes that every row's selected gate constraints vanish, the bound cell's per-column identification, the pinned profile row facts and the deployed-core equality up to a hash collision. Masses: the outer families with the agreement family have mass at most combinedBound plus tauTerm d (at most 2^-171 at the envelope) and the index events at most twice tauTerm indexBits (at most 2^-187 for at most eight bits); the two sample spaces are distinct and the masses are not added. The first draft was rejected in review as vacuous (an unguarded index event made the conclusion contradict a hypothesis, and a forgery premise sat in the residue); the fixed version guards the index event, moves the constants attack to a conditional corollary, and the re-review confirmed the refutation no longer typechecks and that an honest extraction makes the bad event empty. Joint satisfiability of acceptance with the residue is not exhibited; the conclusion is good-draw-conditional constraint vanishing and identification, not circuit truth, WHIR proximity or hash security; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.GateEvaluatorCoverage",
+      "theorems": [
+        "Audit.Wire3.GateEvaluatorCoverage.partial_evaluator_coverage",
+        "Audit.Wire3.GateEvaluatorCoverage.complete_dispatcher_below_coset",
+        "Audit.Wire3.GateEvaluatorCoverage.complete_dispatcher_coset_shape_checked",
+        "Audit.Wire3.GateEvaluatorCoverage.declared_tables_match_adopted_requirements",
+        "Audit.Wire3.GateEvaluatorCoverage.guarded_value",
+        "Audit.Wire3.GateEvaluatorCoverage.guarded_is_some",
+        "Audit.Wire3.GateEvaluatorCoverage.guarded_output",
+        "Audit.Wire3.GateEvaluatorCoverage.noop_shape",
+        "Audit.Wire3.GateEvaluatorCoverage.noop_constraint_count",
+        "Audit.Wire3.GateEvaluatorCoverage.constant_shape",
+        "Audit.Wire3.GateEvaluatorCoverage.constant_constraint_count",
+        "Audit.Wire3.GateEvaluatorCoverage.public_input_shape",
+        "Audit.Wire3.GateEvaluatorCoverage.public_input_constraint_count",
+        "Audit.Wire3.GateEvaluatorCoverage.arithmetic_shape",
+        "Audit.Wire3.GateEvaluatorCoverage.arithmetic_constraint_count",
+        "Audit.Wire3.GateEvaluatorCoverage.poseidon_shape",
+        "Audit.Wire3.GateEvaluatorCoverage.poseidon_constraint_count",
+        "Audit.Wire3.GateEvaluatorCoverage.poseidon_mds_shape",
+        "Audit.Wire3.GateEvaluatorCoverage.poseidon_mds_constraint_count",
+        "Audit.Wire3.GateEvaluatorCoverage.arithmetic_extension_shape",
+        "Audit.Wire3.GateEvaluatorCoverage.arithmetic_extension_constraint_count",
+        "Audit.Wire3.GateEvaluatorCoverage.mul_extension_shape",
+        "Audit.Wire3.GateEvaluatorCoverage.mul_extension_constraint_count",
+        "Audit.Wire3.GateEvaluatorCoverage.exponentiation_shape",
+        "Audit.Wire3.GateEvaluatorCoverage.exponentiation_constraint_count",
+        "Audit.Wire3.GateEvaluatorCoverage.base_sum_shape",
+        "Audit.Wire3.GateEvaluatorCoverage.base_sum_constraint_count",
+        "Audit.Wire3.GateEvaluatorCoverage.reducing_shape",
+        "Audit.Wire3.GateEvaluatorCoverage.reducing_constraint_count",
+        "Audit.Wire3.GateEvaluatorCoverage.reducing_extension_shape",
+        "Audit.Wire3.GateEvaluatorCoverage.reducing_extension_constraint_count",
+        "Audit.Wire3.GateEvaluatorCoverage.random_access_shape",
+        "Audit.Wire3.GateEvaluatorCoverage.random_access_constraint_count",
+        "Audit.Wire3.GateEvaluatorCoverage.coset_layout_of_shape",
+        "Audit.Wire3.GateEvaluatorCoverage.coset_interpolation_output",
+        "Audit.Wire3.GateEvaluatorCoverage.coset_rejects_bad_parameters",
+        "Audit.Wire3.GateEvaluatorCoverage.coset_rejects_bad_shape",
+        "Audit.Wire3.GateEvaluatorCoverage.coset_accepts_valid_shape",
+        "Audit.Wire3.GateEvaluatorCoverage.coset_interpolation_shape",
+        "Audit.Wire3.GateEvaluatorCoverage.coset_interpolation_constraint_count",
+        "Audit.Wire3.GateEvaluatorCoverage.unknown_gate_not_evaluated",
+        "Audit.Wire3.GateEvaluatorCoverage.extended_agrees_with_complete_dispatcher",
+        "Audit.Wire3.GateEvaluatorCoverage.extended_agrees_on_covered_ids",
+        "Audit.Wire3.GateEvaluatorCoverage.validated_shape",
+        "Audit.Wire3.GateEvaluatorCoverage.validated_full_evaluation_exists",
+        "Audit.Wire3.GateEvaluatorCoverage.full_evaluation_constraint_count",
+        "Audit.Wire3.GateEvaluatorCoverage.configured_row_constraints_at_most_123",
+        "Audit.Wire3.GateEvaluatorCoverage.overflowing_row_passes_per_row_validation",
+        "Audit.Wire3.GateEvaluatorCoverage.overflowing_row_is_unconfigurable",
+        "Audit.Wire3.GateEvaluatorCoverage.base_sum_only_small_bases_are_configurable",
+        "Audit.Wire3.GateEvaluatorCoverage.configured_declared_degree_bound",
+        "Audit.Wire3.GateEvaluatorCoverage.family_polynomial_degree_is_declared",
+        "Audit.Wire3.GateEvaluatorCoverage.full_evaluator_keeps_filtered_values",
+        "Audit.Wire3.GateEvaluatorCoverage.extended_alpha_horner_degree",
+        "Audit.Wire3.GateEvaluatorCoverage.validated_full_evaluator_agrees",
+        "Audit.Wire3.GateEvaluatorCoverage.validated_contribution_via_full_evaluator",
+        "Audit.Wire3.GateEvaluatorCoverage.full_evaluation_length_within_envelope",
+        "Audit.Wire3.GateEvaluatorCoverage.coverage_table_columns",
+        "Audit.Wire3.GateEvaluatorCoverage.coverage_status",
+        "Audit.Wire3.GateEvaluatorCoverage.lookup_families_have_no_evaluator",
+        "Audit.Wire3.GateEvaluatorCoverage.example_full_evaluation_positive",
+        "Audit.Wire3.GateEvaluatorCoverage.example_short_wires_rejected"
+      ],
+      "sources": [
+        "mle/src/gate_ext3.rs",
+        "mle/contracts/src/Plonky2GateEvaluatorExt3.sol",
+        "mle/src/fixture.rs"
+      ],
+      "scope": "Gate-evaluator coverage fixed as theorems: the complete dispatcher the integrated verifier uses (GatesComplete.evaluateUnfiltered) evaluates all fourteen configured gate families and GateAllPolynomial bounds every family's degree, while the base Gates partial dispatcher covers only ids 0,1,2,3,6,7. The declared tables (constraint count, required wires, local constants, degree) are transcribed from gate_ext3.rs and Plonky2GateEvaluatorExt3.sol and proved equal to the adopted requirements, matching plonky2's per-gate num_constraints, num_wires and degree; the Rust admission enforces the same degree inequality from Gate::degree(), so there is no Rust/Solidity divergence on the degree check. Shape-checked per-family evaluators return none instead of silently evaluating short rows with default zeros, and the extended combined evaluator agrees with the complete dispatcher on every validated row at configured widths; the alpha-Horner root bound is family-agnostic. Findings: a RandomAccessGate row with 124 constraints passes the per-gate check at the widest configuration but is excluded by configuration validation and the 123 envelope (the generated MAX_GATE_CONSTRAINTS_V2, Poseidon's count; Rust also rejects it on width), with no effect on the sumcheck round degree; BaseSum bases 16 and above are unconfigurable because the family's degree is the base; lookup families have no gate id (ids at least 14 are rejected and Rust admission requires no lookup tables). Source-mirror semantics, not refinement; the shape guard is a model strengthening; circuit truth is not claimed; no probability; not the system's soundness error."
     }
   ]
 }

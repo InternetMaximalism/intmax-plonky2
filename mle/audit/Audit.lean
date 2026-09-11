@@ -116,3 +116,5 @@ import Audit.Wire3.ComposedEngine
 import Audit.Wire3.InstalledWhirParse
 import Audit.Wire3.IndexPointZeroCheck
 import Audit.Wire3.ExplicitEngine
+import Audit.Wire3.GateEvaluatorCoverage
+import Audit.Wire3.SoundnessAssembly

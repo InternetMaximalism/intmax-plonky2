@@ -1258,6 +1258,30 @@ refinementは未解決である。
 採用namespaceでの直接buildと全統合guardはPASS。全3864名の実定理/型/推移的公理、
 460 reviewed hashes、18表1147語、7依存5601fileを検査した。
 
+## 第26継続更新（c2141566以降）
+
+追跡版runnerでコミット`c2141566`の111モデル・3864定理を再検査しPASS（828.666秒、1441モジュール、
+manifest `5fe36c22f984e419977de0a973408e862ca4e0ffe231f7f74ab482c5b184dbb7`、receipt
+`84c157199baad093b2d86da3331f91f1e2feb4d80b499902b8de393f7f1a1cb7`、graph
+`072d5962e491dd939676706e1eedd675f78068f472afaee95b6aff983da8b52f`）。
+loop方式の9回目。監査の残余目録を1定理の仮定として固定する組み立てと、gate評価器の被覆を対象にした。
+
+- **gate評価器の被覆**: GateEvaluatorCoverageは、Integratedが使う完全dispatcherが14 family全てを評価し
+  次数上界も揃うことを定理として固定し（「id 0,1,2,3,6,7のみ」は基礎Gatesの部分dispatcherについてのみ
+  正しい）、宣言表の転記と一致証明、形状検査付き評価器、124制約行の排除、BaseSum大基数の設定不能を
+  示した。レビューは「次数にRust側の対応物がない」という記述が誤り（validate_gate_ext3_contextが
+  Gate::degree()で同じ不等式を検査）であることを指摘し訂正させた。
+- **組み立て**: SoundnessAssemblyは受理＋残余仮定構造体＋good draw条件から制約消失・per-column同定・
+  profile行・core一致を導く1定理を与える。初稿はindex bad eventが無ガードで結論が仮定と矛盾し、偽造前提が
+  残余に紛れていたためFable側の検証でFAIL（Leanで仮定からFalseを導出）となり、ガード付きに修正して攻撃を
+  条件付き系に分離、再レビューで反駁が型検査を通らないことと正直な抽出でbad eventが空になることを確認して
+  PASS-WITH-FIXESとなった。受理と残余の同時充足可能性は未提示で、名前も「good draw」とした。
+
+追加2モデルはいずれもFable側の敵対的検証を通した。SoundnessAssemblyの初稿棄却は、レビュー工程が
+「主定理が空虚である」という最も重い欠陥を検出した例であり、本更新の最重要の記録である。
+採用namespaceでの直接buildと全統合guardはPASS。全3962名の実定理/型/推移的公理、
+462 reviewed hashes、18表1147語、7依存5601fileを検査した。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

@@ -379,6 +379,16 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    接続済みで、Rust slot-first順序との可換とcurrent_roundのgrid転置も接続したが、
    補間呼出しの一本化・DenseMle endpoint由来・回路truth chainへの接続を完成したとはしない。
    PI cacheの証明済み同値、selector/lookupの入口接続も全体経路へ反映。
+   GateEvaluatorCoverageで被覆を定理として固定した。Integratedが使う完全dispatcherは14 family全てを
+   評価し次数上界も揃う（基礎Gatesの部分dispatcherはid 0,1,2,3,6,7のみ。ExplicitEngineの注記はこの
+   区別を誤っており、次回のdoc更新で訂正する）。宣言表はgate_ext3.rsとPlonky2GateEvaluatorExt3.solから
+   転記し採用済みrequirementsと一致、plonky2の各gateのnum_constraints/num_wires/degreeとも一致する。
+   次数はRustでもvalidate_gate_ext3_contextがGate::degree()で同じ不等式を検査するので乖離はない。
+   形状検査付き評価器で短い行の既定値評価を内在的に排除し、検証済み行では完全dispatcherと一致する。
+   所見: RandomAccessGateの124制約行（bits 1・copies 18・extra 70）は個別検査を通るが設定検証と
+   envelope 123（MAX_GATE_CONSTRAINTS_V2）で排除される（sumcheckのround次数には影響せず、alpha-Hornerの
+   根上界を1増やすだけ）。BaseSumのbase 16以上は次数＝baseの会計で設定不能。Lookup系はgate idを持たない。
+   回路真理（制約消失＝実witnessによる充足）は依然主張しない。
 3. setup/VK/config生成、immutable store、全compact decoder、metadata decoder、
    初期transcript・真のchallenge・public-input hashをIntegratedへ接続。
    現在別モジュールのWhirFinal/Merkleを、全whirTailの代替と誤認しない。
@@ -628,6 +638,17 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    （Solidityではimmutableで固定、モデルでは攻撃者が選ぶtranscript入力で、半分(B)の自由度に属する）。
    gateRowsは非符号化だが受理でdecodeされたgatesの長さに固定される。hash/thash/khashは任意の決定的関数で、
    衝突型の結論は全て明示的な選言である。
+   これらの結果はSoundnessAssemblyで1定理に組み立てた。explicit engineの受理、残余仮定の名前付き構造体
+   （表の意味論と転記行、配備digestと有界性、fold水準のopening、抽出列の高さとcommitted幅、
+   GateDerivedRejectionの9フィールド、slot係数）、実digest drawが4族のbad event外、実index drawが
+   ガード付きindex bad event外、から全行の選択gate制約消失・per-column同定・pinned profile行・
+   core一致（衝突を除く）を導く。質量はjoint spaceで≤combinedBound+tauTerm d（≤2^-171）、index spaceで
+   ≤2·tauTerm bits（≤2^-187）で、別空間なので加算しない。初稿はindex bad eventが無ガードで結論が仮定と
+   矛盾し（レビューがFalseを導出）、偽造前提が残余に紛れていたため棄却され、修正後の再レビューで
+   反駁が型検査を通らないこと、正直な抽出ではbad eventが空になることを確認した。**残る限定**: 受理と
+   残余仮定の同時充足可能性はexplicit engineで受理されるproofを構成しない限り提示できない；結論は
+   good draw条件付きの制約消失と同定であって回路真理・WHIR近接性・hash安全性ではない；R1b・R2・
+   half (B)・circuitDigest/circuitConfigDigest・Solidity限定の配備意味論は残る。
 
 現target105の約101.5-bit値はリポジトリのgeneric-work見積もりで、Leanが証明した
 128-bit/end-to-end安全性ではありません。実装変更・デプロイ承認もこの更新には含みません。
