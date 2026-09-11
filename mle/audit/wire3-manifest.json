@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "6ca0b8d12583d9fc371f2b1a32e90b6b52995163784e5afd50b419270c6fe8ef",
+      "sha256": "0882451a7053c3c17fc5847f8828574b01990288be4395540a0cd5661d84acda",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "626402fbb11aac2240ac5d739dc637b855de9bfd778308e4c2cc30e876939712",
+      "sha256": "5d13f2be3728d3caf2af8b1a8c5fe08f0dee7b86002305231f551ff03b7b36e8",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "96062e40c660cbac4202a40a978d8e3541988ace2df23d96877b5d01c3ef62d6",
+      "sha256": "c1bb9c9b9663a27ad4bbc6bd932646825e29aa6fe303407d345d8d7c76ee0721",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "50239401cc7e08cb79ee866b704fb034c1593f6021d01c62db52b9bcd3328021",
+      "sha256": "34540f8984a664192a63af65075b7c72a5c410b845ac543b2ba5443b4843d880",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "ca3820399a93a941cecc59fa2d8cc5eb10ccab3f686c957fc7f18e14b9d0389d",
+      "sha256": "26ef6c987f60151fc8c2b20703b88a6123f122b5404e571d9dd37d4949228b0f",
       "kind": "spec"
     },
     {
@@ -2386,6 +2386,21 @@
     {
       "path": "mle/audit/Audit/Wire3/OuterLaneTransport.lean",
       "sha256": "6a3619c931ee3da0d4e8f2bbf0a0c19c221c05643e77158afc2d5e72b41cb826",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/IndexGuardLiveness.lean",
+      "sha256": "df956355eaeb1335b0bde6fe0f51fdde5faf0268b76b4c3a005ccbaf35ba1211",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/GrindingLinearBound.lean",
+      "sha256": "d3afd516e6cbd42c07de77c2b252441905d00bd44ab8adb9458f31aaa86bbda3",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/ReducedFullTransport.lean",
+      "sha256": "769f8795291e512681a50420626836f24ce013f5af7ad3b74cde343ce00e539b",
       "kind": "current-model"
     }
   ],
@@ -8667,6 +8682,145 @@
         "mle/contracts/src/OuterLogupExt3Verifier.sol"
       ],
       "scope": "Transports OuterSequentialConditioning's prefix-dependent per-round conditioning from the ideal joint space to the oracle table along a strategy-driven chain. The technical core is a diagonal fresh step: the conditioning event is partitioned by the value of a table-dependent target, the target is constant on each block, and three sequential counter peels give the count of tables whose stage triple lands in their own target at most the target size times the event size over the triple alphabet; the lane state before a round is a function of strictly earlier stage answers (the transported prefix dependence), the no-clash events are nested, and the per-round adopted cardinality bounds sum to the exact adopted outer term. The general headline bounds, for every transcript-restricted strategy and every pair of lanes meeting the degree bounds, quantified independently, the mass that a strategy-driven chain's challenge lands in a lane's per-round bad set by outerTerm plus the chain clash term; this is prefix-dependent lane transport, not the adaptive union bound, because a lane's message is a function of the reduced challenge prefix while a strategy reads raw blocks at every stage and counter and the reduction is not injective, so no lane realizes a general strategy's messages (the adopted truncated-message strategy included). The reduced-history subclass of strategies, whose round message is a function of the reduced round-challenge history alone, is embedded into the adopted strategies with matching lanes, the lane's round message is proved equal to the strategy's realized message, and for that subclass the bound is a genuine adaptive union bound, closing the adopted strategy module's open item for that subclass only. Emptiness and non-emptiness of round bad sets are recorded as theorems (empty at the closed instance's early rounds; non-empty at a separated lane). Random-oracle model, not keccak; transcript-restricted prover, grinding excluded; outer lanes only; the constant is the outer term alone; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.IndexGuardLiveness",
+      "theorems": [
+        "Audit.Wire3.IndexGuardLiveness.cells_differ_iff",
+        "Audit.Wire3.IndexGuardLiveness.guard_dead_iff_cube_agreement",
+        "Audit.Wire3.IndexGuardLiveness.guard_dead_iff_equal",
+        "Audit.Wire3.IndexGuardLiveness.guard_live_iff_ne",
+        "Audit.Wire3.IndexGuardLiveness.cells_differ_singleton_iff",
+        "Audit.Wire3.IndexGuardLiveness.guard_dead_iff_every_index_point_agrees",
+        "Audit.Wire3.IndexGuardLiveness.dead_guard_means_claim_true",
+        "Audit.Wire3.IndexGuardLiveness.dead_guard_kills_index_event",
+        "Audit.Wire3.IndexGuardLiveness.eqAtZero_nil",
+        "Audit.Wire3.IndexGuardLiveness.eqAtZero_cons",
+        "Audit.Wire3.IndexGuardLiveness.rowProdFrom_at_zero",
+        "Audit.Wire3.IndexGuardLiveness.spikeColumn_length",
+        "Audit.Wire3.IndexGuardLiveness.spikeColumn_getD_zero",
+        "Audit.Wire3.IndexGuardLiveness.spikeColumn_getD_of_pos",
+        "Audit.Wire3.IndexGuardLiveness.spikeColumn_self",
+        "Audit.Wire3.IndexGuardLiveness.spike_column_not_constant",
+        "Audit.Wire3.IndexGuardLiveness.extensionOf_const",
+        "Audit.Wire3.IndexGuardLiveness.extensionOf_indicator_at_zero",
+        "Audit.Wire3.IndexGuardLiveness.extension_spikeColumn",
+        "Audit.Wire3.IndexGuardLiveness.openedCells_at_spike_column",
+        "Audit.Wire3.IndexGuardLiveness.guard_live_at_nonconstant_column_iff",
+        "Audit.Wire3.IndexGuardLiveness.guard_dead_at_nonconstant_column_iff",
+        "Audit.Wire3.IndexGuardLiveness.guard_dead_at_nonconstant_column_iff_ratio",
+        "Audit.Wire3.IndexGuardLiveness.guard_live_at_nonconstant_column_of_ne",
+        "Audit.Wire3.IndexGuardLiveness.guard_dead_at_a_supplied_cell_outside_the_column_values",
+        "Audit.Wire3.IndexGuardLiveness.row_point_lift_length",
+        "Audit.Wire3.IndexGuardLiveness.guard_dead_at_the_outer_draw_iff",
+        "Audit.Wire3.IndexGuardLiveness.dead_outer_draws_eq_level_set",
+        "Audit.Wire3.IndexGuardLiveness.eqAtZero_replicate_zero",
+        "Audit.Wire3.IndexGuardLiveness.eqAtZero_eq_zero_of_one_mem",
+        "Audit.Wire3.IndexGuardLiveness.live_supplied_cell",
+        "Audit.Wire3.IndexGuardLiveness.live_guard_at_the_all_zero_row_iff",
+        "Audit.Wire3.IndexGuardLiveness.live_guard_is_live_at_the_all_zero_row",
+        "Audit.Wire3.IndexGuardLiveness.live_guard_is_dead_at_a_row_with_a_one",
+        "Audit.Wire3.IndexGuardLiveness.index_event_not_killed_at_the_spike_column"
+      ],
+      "sources": [
+        "mle/contracts/src/MleVerifierV2.sol",
+        "mle/src/verifier_v2.rs"
+      ],
+      "scope": "Explains the adopted index guard and changes no bound. The guard holds exactly when some cube position has different supplied and committed cells (zero-padded), so at a common width fitting the cube it is dead exactly when the claimed cell equals the committed column's extension at the row point \u2014 the honest case \u2014 and then the guarded index event is empty. For the non-constant column that is one value at vertex zero and another elsewhere, the multilinear extension is the constant plus the difference times the eq-weight at vertex zero, so the guard is dead exactly when that eq-weight equals a fixed ratio; a supplied cell outside the column's two values does not guarantee liveness (a row point is exhibited that kills it). The dead outer draws form a level set of the row point; no Schwartz\u2013Zippel mass bound is attempted, and the exhibited row points are not shown to be realized by any outer draw. Concrete instances at the live closed witness: live at the all-zero row unless the claim equals one, dead at a row containing one when the claim is zero. Random-oracle and fixed-prover context inherited; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.GrindingLinearBound",
+      "theorems": [
+        "Audit.Wire3.GrindingLinearBound.state_target_card_le",
+        "Audit.Wire3.GrindingLinearBound.mem_state_target",
+        "Audit.Wire3.GrindingLinearBound.slot_pos_lt_of_div",
+        "Audit.Wire3.GrindingLinearBound.grind_state_reassign",
+        "Audit.Wire3.GrindingLinearBound.state_target_fresh_step",
+        "Audit.Wire3.GrindingLinearBound.state_target_step_bound",
+        "Audit.Wire3.GrindingLinearBound.state_hit_event_succ",
+        "Audit.Wire3.GrindingLinearBound.mem_state_hit_event",
+        "Audit.Wire3.GrindingLinearBound.state_hit_probability_le_sum",
+        "Audit.Wire3.GrindingLinearBound.two_mul_sum_slot_card",
+        "Audit.Wire3.GrindingLinearBound.sum_slot_card_rat",
+        "Audit.Wire3.GrindingLinearBound.state_hit_probability_le",
+        "Audit.Wire3.GrindingLinearBound.exists_first_occurrence",
+        "Audit.Wire3.GrindingLinearBound.grind_sel_seq_frame",
+        "Audit.Wire3.GrindingLinearBound.frame_digest_at_congr",
+        "Audit.Wire3.GrindingLinearBound.frame_digest_at_absorb",
+        "Audit.Wire3.GrindingLinearBound.clash_state_hit_aux",
+        "Audit.Wire3.GrindingLinearBound.grinding_clash_state_framed_subset",
+        "Audit.Wire3.GrindingLinearBound.state_framed_of_probes",
+        "Audit.Wire3.GrindingLinearBound.state_framed_no_probes",
+        "Audit.Wire3.GrindingLinearBound.grinding_chain_clash_probability_le_linear",
+        "Audit.Wire3.GrindingLinearBound.mem_off_state_frame_event",
+        "Audit.Wire3.GrindingLinearBound.grinding_chain_clash_probability_le_linear_residual",
+        "Audit.Wire3.GrindingLinearBound.grinding_chain_clash_probability_le_linear_no_probes",
+        "Audit.Wire3.GrindingLinearBound.linear_constant_at_no_probes",
+        "Audit.Wire3.GrindingLinearBound.linear_constant_le_all_pairs_constant",
+        "Audit.Wire3.GrindingLinearBound.probe_grinder_state_framed",
+        "Audit.Wire3.GrindingLinearBound.grinding_of_strategy_state_framed",
+        "Audit.Wire3.GrindingLinearBound.probe_grinder_chain_clash_probability_le_linear",
+        "Audit.Wire3.GrindingLinearBound.grinding_chain_clash_at_eighty_seven_linear",
+        "Audit.Wire3.GrindingLinearBound.grinding_chain_clash_at_eighty_seven_linear_no_probes",
+        "Audit.Wire3.GrindingLinearBound.grinding_chain_clash_at_eighty_seven_many_probes_linear",
+        "Audit.Wire3.GrindingLinearBound.grinding_chain_clash_at_eighty_seven_many_probes_linear_tiny",
+        "Audit.Wire3.GrindingLinearBound.constant_table_state_hit",
+        "Audit.Wire3.GrindingLinearBound.probe_grinder_clash_event_not_empty"
+      ],
+      "sources": [
+        "mle/src/transcript_v2.rs",
+        "mle/contracts/src/TranscriptV2.sol"
+      ],
+      "scope": "Makes the grinding chain clash bound linear in the probe count for state-framed grinding provers, whose probes frame at stage digests the chain has already formed (absorbs do so by construction): the first-occurrence push-down is restated on the query string, a position-dependent target of already-formed stage digests (at most n+1, depending only on earlier answers, an instance of the adopted table-dependent fresh step) is charged per position, the triangular count gives (q+1)n(n+1)/2 over the block count, and a strong induction on the later stage places every stage clash in the counted event. At zero probes the constant equals the adopted one with no restriction; for every q and n the linear constant is at most the all-pairs one; it exceeds the heuristic q\u00b7n by about n/2. Excluded: a prover that forms digests of probe answers without absorbing them and simulates candidate chains inside its probe budget (two colliding answers may both be probes); bounding it needs a count over the prover's query graph, not attempted, while the adopted quadratic bound still covers it. A residual form for every strategy carries an unbounded off-state-frame term and is disclosed as possibly empty. At eighty-seven stages and a million probes per stage the mass is at most 2^-220 symbolically; the adopted probe-reading grinder is state-framed and the constant table lies in the bounded event. Random-oracle model, not keccak; the chain's clash event only; outer lanes only; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.ReducedFullTransport",
+      "theorems": [
+        "Audit.Wire3.ReducedFullTransport.alpha_base_is_source_counter",
+        "Audit.Wire3.ReducedFullTransport.tau_base_is_source_counter",
+        "Audit.Wire3.ReducedFullTransport.alpha_counter_lt",
+        "Audit.Wire3.ReducedFullTransport.tau_counter_lt",
+        "Audit.Wire3.ReducedFullTransport.tau_counter_mem_lt",
+        "Audit.Wire3.ReducedFullTransport.tau_counters_disjoint",
+        "Audit.Wire3.ReducedFullTransport.thirteen_counter_budget",
+        "Audit.Wire3.ReducedFullTransport.peel_pow",
+        "Audit.Wire3.ReducedFullTransport.mem_gate_alpha_bad_event",
+        "Audit.Wire3.ReducedFullTransport.gate_alpha_bad_event_congr",
+        "Audit.Wire3.ReducedFullTransport.gate_alpha_no_clash_mass_le",
+        "Audit.Wire3.ReducedFullTransport.tau_fibre_zero",
+        "Audit.Wire3.ReducedFullTransport.tau_fibre_succ",
+        "Audit.Wire3.ReducedFullTransport.mem_tau_fibre",
+        "Audit.Wire3.ReducedFullTransport.tau_fibre_stable",
+        "Audit.Wire3.ReducedFullTransport.tau_fibre_card",
+        "Audit.Wire3.ReducedFullTransport.tau_extend_apply",
+        "Audit.Wire3.ReducedFullTransport.tau_fibre_at_extend",
+        "Audit.Wire3.ReducedFullTransport.tau_target_card",
+        "Audit.Wire3.ReducedFullTransport.triple_tuple_card_as_triples",
+        "Audit.Wire3.ReducedFullTransport.tau_target_mass_le",
+        "Audit.Wire3.ReducedFullTransport.mem_gate_tau_bad_event",
+        "Audit.Wire3.ReducedFullTransport.gate_tau_bad_event_congr",
+        "Audit.Wire3.ReducedFullTransport.gate_tau_no_clash_mass_le",
+        "Audit.Wire3.ReducedFullTransport.mem_full_bad_event",
+        "Audit.Wire3.ReducedFullTransport.full_bad_draw_probability_le",
+        "Audit.Wire3.ReducedFullTransport.full_bad_draw_probability_le_combined",
+        "Audit.Wire3.ReducedFullTransport.reduced_full_bad_draw_probability_le",
+        "Audit.Wire3.ReducedFullTransport.reduced_full_bound_at_thirteen",
+        "Audit.Wire3.ReducedFullTransport.reduced_full_bound_at_thirteen_lt_one",
+        "Audit.Wire3.ReducedFullTransport.realizable_history_length_even",
+        "Audit.Wire3.ReducedFullTransport.previous_challenge_message_depends_at_realizable_history",
+        "Audit.Wire3.ReducedFullTransport.reduced_event_nonempty",
+        "Audit.Wire3.ReducedFullTransport.reduced_event_nonempty_at_previous_challenge",
+        "Audit.Wire3.ReducedFullTransport.derive_stage_is_derive_digest",
+        "Audit.Wire3.ReducedFullTransport.gate_tau_bad_event_is_pullback",
+        "Audit.Wire3.ReducedFullTransport.gate_alpha_bad_event_is_pullback"
+      ],
+      "sources": [
+        "mle/src/transcript_v2.rs",
+        "mle/contracts/src/TranscriptV2.sol",
+        "mle/src/verifier_v2.rs",
+        "mle/contracts/src/OuterLogupExt3Verifier.sol"
+      ],
+      "scope": "Extends the reduced-history adaptive bound of OuterLaneTransport from the outer term alone to the full combinedBound by adding the block-zero gate-tau and gate-alpha events squeezed at the derivation digest, stage twenty-two of the strategy chain. The adopted tau and alpha bad events are indexed by fixed data (the zero-check table and the gate coefficients) and mention no round message, lane, strategy or table, so the fixed-target mass lemma applies at the stage-twenty-two digest with no diagonal; the tau event is not a coordinate product, so the whole block of three-times-d counters is peeled jointly with an exact fibre count; the three events are joined with a single shared clash term through the nested no-clash events. For every strategy and lane pair the generic form holds, and for the reduced-history subclass the bound is combinedBound plus the chain clash term, with a closed instance at thirteen rounds below one. Not included: the index lanes, whose used claims are absorbed after the rounds and are functions of the table for an adaptive prover, so the fixed-target route does not extend and a diagonal form would be needed; the identification of the zero-check table and gate coefficients with the deployed tables is not claimed. Reduced-history transcript-restricted provers only; grinding and raw-block strategies excluded; random-oracle model, not keccak; not the system's soundness error."
     }
   ]
 }

@@ -1482,6 +1482,28 @@ loop方式の17回目。TwoStageConditionalCountが契約として残した索�
   raw block読みの戦略への適応的上界、tauTerm/alphaTermの輸送、grindingの和集合上界、非定数列でのguard生存性、R1b、回路の真値、
   受理の提示。
 
+## 第34継続更新（63722788以降）
+
+追跡版runnerでコミット`63722788`の128モデル・4895定理を再検査しPASS（900.365秒、1458モジュール、
+manifest `80c5a0ac065ce87206d173e1136033167eac1fd4a95c1f9179c54234ecf6b61d`、receipt
+`1b84c594fd49c83780b75d77ef449323949a65e5da1ba314c94e5a0efa6a9623`、graph
+`605078e3db6f3659a66ee5baad7fcacdd4c8975f0096c00a024761ee82b5cc7e`）。
+loop方式の19回目。OuterLaneTransportの縮約部分クラス上界の定数拡張、grinding上界のq線形化、索引guardの生死の説明を対象にした。
+
+- **縮約部分クラス上界の完成**: ReducedFullTransportはderive digestでのgate tau/gate alpha事象を固定targetとして加え（採用済みtau/alpha
+  bad事象はg/coeffsOfのみに依存し表を読まない）、3dカウンタの同時剥離と入れ子no-clashによる共有衝突項で
+  `reduced_full_bad_draw_probability_le ≤ combinedBound + chain衝突項` を得た（閉実例でRHS<1）。索引laneは適応的プローバでは使用claim
+  が表の関数になるため含まず、その理由を明記。レビューはgate tau/gate alphaの読み取りが採用済みsourceCounter（12+3d+3i, 9+3d）でderive digestを読むこと、事象が採用済みtauBadEvent/alphaBadEventの引き戻しであること、衝突項が1つであることを確認しPASS-WITH-FIXESとし、「22段目 = derive digest」と2つの引き戻しを散文でなく定理にさせた（`derive_stage_is_derive_digest`、`gate_tau_bad_event_is_pullback`、`gate_alpha_bad_event_is_pullback`）。
+- **grinding上界の線形化**: GrindingLinearBoundは押し下げを問合せ文字列上で言い直し、形成済み段digestを位置依存targetとして
+  (q+1)n(n+1)/2/|Block| を得た。ただしprobeが形成済み段digestでframeするstate-framedプローバに限り、probe予算内で候補chainを
+  模擬する攻撃者は除外（GQBの2次上界は覆う）と明示。q=0では制限なしで採用済み定数に一致。レビューは包含（後段についての強帰納法。段rは段r−1のabsorbで形成されるため進行は自動）、計数、戦略水準仮定、残差形、数値を確認しPASS-WITH-FIXES（文言: defs数、StateFramedは「以後のabsorbが問う文字列」に限る制約、残差項は「ほぼ全空間」）とした。
+- **索引guardの生死**: IndexGuardLivenessはguardが共通幅で「主張cell = committed cell」のときに限り死ぬこと（正直な場合。索引事象は∅）と、
+  非定数列（spikeColumn）ではdead ↔ eqAtZero(row) = (x−v)/(w−v) という単一の体方程式であることを定理化し、ISFSの未解決項目を
+  説明として閉じた（上界は不変）。レビューは特徴づけと拡張の索引規約を確認しPASS-WITH-FIXESとし、「下流の消費者は皆1cell形」（誤り: ISFSのindexBadAtは幅の一致を仮定しない。dead条件は0詰め一致）と見出しの「非空」主張（未証明）を訂正させた。
+  三モジュール合わせて131モデル・5002定理。今回もROMの法則下の結果であり、keccakの性質でも系の健全性誤差でもない。残るのは
+  索引laneの適応的扱い（対角形）、raw block読み戦略、probe予算内でchainを模擬する攻撃者、g/coeffsOfと配備表の結合、R1b、回路の真値、
+  受理の提示。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

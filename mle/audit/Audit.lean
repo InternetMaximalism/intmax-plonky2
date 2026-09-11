@@ -133,3 +133,6 @@ import Audit.Wire3.GrindingQueryBound
 import Audit.Wire3.TwoStageConditionalCount
 import Audit.Wire3.IndexStageFinerSplit
 import Audit.Wire3.OuterLaneTransport
+import Audit.Wire3.IndexGuardLiveness
+import Audit.Wire3.GrindingLinearBound
+import Audit.Wire3.ReducedFullTransport

@@ -734,6 +734,15 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    独立に量化しており（prefix依存lane輸送。raw blockを読む一般のStrategyにはlaneOfStrategyが構成不能）、SCB (iii)を閉じるのは
    縮約履歴部分クラス（ReducedStrategy、lane messageと実現メッセージの一致を証明）に限る。残るのはraw block読みの戦略、
    tauTerm/alphaTermの輸送、grindingプローバの和集合上界。
+   索引guardの生死はIndexGuardLivenessで特徴づけた: 共通幅ではdead ↔ 主張cell = committed cell（正直な場合）で索引事象は∅、
+   非定数列（spikeColumn）ではdead ↔ eqAtZero(row) = (x−v)/(w−v) という単一の体方程式。dead な外側drawの質量上界
+   （Schwartz–Zippel型）と、提示した行点の外側drawによる実現は未着手。
+   grinding上界のq線形化はGrindingLinearBoundで、probeが形成済み段digestでframeするstate-framedプローバに対して (q+1)n(n+1)/2/|Block|
+   を得た（q=0で採用済み定数に一致）。probe予算内で候補chainを模擬する攻撃者は除外（問合せグラフ上の計数が未着手。GQBの2次上界は
+   彼も覆う）。
+   縮約履歴部分クラスの適応的上界はReducedFullTransportでblock-0のgate tau/gate alpha事象（derive digestでの固定target）を加え、
+   完全なcombinedBound + chain衝突項に到達した（閉実例でRHS<1）。索引laneは適応的プローバでは使用claimが表の関数になるため未含
+   （対角形が必要）。g/coeffsOfが配備表であることの結合は未了。
    これらの結果はSoundnessAssemblyで1定理に組み立てた。explicit engineの受理、残余仮定の名前付き構造体
    （表の意味論と転記行、配備digestと有界性、fold水準のopening、抽出列の高さとcommitted幅、
    GateDerivedRejectionの9フィールド、slot係数）、実digest drawが4族のbad event外、実index drawが
