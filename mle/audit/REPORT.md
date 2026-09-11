@@ -1177,6 +1177,32 @@ loop方式の5回目。InstalledWhirTailが残した「`wp`が自由」「index�
 採用namespaceでの直接buildと全統合guardはPASS。全3575名の実定理/型/推移的公理、
 454 reviewed hashes、18表1147語、7依存5601fileを検査した。
 
+## 第23継続更新（bdfa02e2以降）
+
+追跡版runnerでコミット`bdfa02e2`の105モデル・3575定理を再検査しPASS（808.547秒、1435モジュール、
+manifest `a9e492060bd42f74a1b51d81f2edf3f61c6ab5d56964b9ad821890db757313f6`、receipt
+`d9e26bb39f4f278c246f82575e3d86b62640a97ab4524786e34e193e8f227f3b`、graph
+`ce026c0feebded75d5819c5b84bb3d623459f3348a94d265495b702d74804af8`）。
+loop方式の6回目。engineに残る観測のうち初期transcript／公開入力hashとround commitを対象にした。
+
+- **初期transcriptの据え付け**: InstalledInitialTranscriptはsampler engineの上に`OuterInitial.derive`と
+  `hashNoPad`を置き、8フィールドが同時に具体化された1つのengineを与える。`DerivedInitial`自体は採用済み
+  `withInitial_derived`がrflで与えていたため新規性は合成にあり（レビューで過大な新規性主張を修正）、
+  この engine では下流36箇所の`hderiv`とPublicInputHashBindingの`hsub`が無条件化する。主要定理を
+  `hderiv`なしで再述し、prefixがCommitmentOrderの22 frameであることをengine自身のtranscriptに対して
+  示した。受理proofの公開入力がSolidityのcapと語検査を満たすことも定理化した。
+- **round commitの据え付け**: InstalledRoundCommitは採用済みの検査付きround commitを全域化して据え付け、
+  `CommitAgrees`を定理化、導出roundが採用済みexecuteと一致すること（残る仮定は初期transcript観測と
+  degreeBits≤13）、decode仮定の無条件化、round digestが22 frame prefixの後に5 frameずつ連鎖して
+  counter 0/3から引かれること、round messageの非可鍛性を証明した。RES-4とJCSのcounterラベルはこの
+  engineでは定理になり、実digestを座標とするdrawでのDrawEncodesRunの実例も証明した。レビューはenvelopeがwidth c=1でindexBits=0を許す点を指摘し、その設定では
+  decode失敗経路をindex長guardが通す限界（ただし本モジュールの定理では到達不能）を定理として明記させた。
+
+追加2モデルはいずれもFable側の敵対的検証を通した（必須修正はいずれも新規性・被覆範囲・限界の記述と
+補題の追加で、健全性欠陥は検出されなかった）。
+採用namespaceでの直接buildと全統合guardはPASS。全3659名の実定理/型/推移的公理、
+456 reviewed hashes、18表1147語、7依存5601fileを検査した。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "03fc1e0a3492d656f4504b64cc154c40020378be4bbcd0c98c6ae38b0f475e05",
+      "sha256": "78ab6a6a5bff53437a2468c1f7aa9f205ac23bd61e940040e5e3cc7d05108212",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "8fe282a101b2650f1d89e130e8acaacf741503475be3237c061c6ebbe88e50c2",
+      "sha256": "380c2f9134a80138d752ac5497d8dfe80e22a7d1c93dbe11cc42180f1d7eab8d",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "c8a37e39f6fd8bb8c2da1e077cc095370d7640ae06b2959399931911fe6ed6a4",
+      "sha256": "25294194a25b5610c0b983463f7516ec904b5a907f08bd9fb7d58f184bb4f971",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "add65b801e132d06fc1dd3f76989733ae384dba013a2e284701d25e0687e11cc",
+      "sha256": "89f3159ce7cbd15308090de81b0b644591f8de15d34fb7303bffd957e0056ee7",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "1c9b77aaab60d52a18023093ffd54059f3d03efd0040cc5290aad7ca328e98f2",
+      "sha256": "48bf7818d42a029b1c6689669940be44c1f3bdc153a35639febbabac39b46d43",
       "kind": "spec"
     },
     {
@@ -2271,6 +2271,16 @@
     {
       "path": "mle/audit/Audit/Wire3/PinnedWhirProfile.lean",
       "sha256": "b6227a303cbc71bf375f00b7101916418725baa167786f409eb695d3b310a4e9",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/InstalledRoundCommit.lean",
+      "sha256": "dd72b0fce90f0348e79963e0bde2ad89780103249cec809c88c7ce431abdcaeb",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/InstalledInitialTranscript.lean",
+      "sha256": "1ec4dc4efc90559bf64ed12d1abdd590fb5e777e04989eb0f11b8537023a3b44",
       "kind": "current-model"
     }
   ],
@@ -6976,6 +6986,115 @@
         "mle/src/fixture_v2.rs"
       ],
       "scope": "Pins InstalledWhirTail's free WHIR parameter record to the configuration: CanonicalWhirProfileV2.validateCanonical's four constraints (1 <= numVariables <= 21, session id, keccak256(abi.encode(config.whir)) equal to the generated table row's first 32 bytes at offset (n-1)*96, protocol id equal to the row's remaining 64 bytes; MleVerifierV2.sol 150-153) are installed as the concrete deploymentValid check of a pinned engine (all other observations unchanged). Acceptance yields that the decoded record passes the canonical check, equals the record the tail ran under, and has numVariables = degreeBits + indexBits; two accepted runs under the same deployment share the record by decoder determinism. The source enforces no syntactic positivity of inDomainSamples anywhere; positivity and numRounds >= 1 are derived only under a named table-semantics assumption (row digests correspond, digest equality separates records, standing in for keccak injectivity) for the two transcribed rows n = 10 (29 samples, 1 round) and n = 21 (29 samples, 4 rounds), checked field by field against the fixtures and by keccak recomputation against the generated table, and discharge the round-one authentication theorem's hypotheses there; the other nineteen rows are digest-only and not covered. The conjunct equating the accepted configuration's WHIR encoding with the deployed one idealises _requirePinnedConfiguration under keccak injectivity and is named as a residue. keccak itself, the VK immutable store and the decoder's Rust/Solidity refinement are not modelled; no WHIR/PCS soundness or hash security; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.InstalledRoundCommit",
+      "theorems": [
+        "Audit.Wire3.InstalledRoundCommit.round_frame_count",
+        "Audit.Wire3.InstalledRoundCommit.round_committed_is_the_frame_fold",
+        "Audit.Wire3.InstalledRoundCommit.round_frames_get_index",
+        "Audit.Wire3.InstalledRoundCommit.round_frames_get_log_message",
+        "Audit.Wire3.InstalledRoundCommit.round_frames_get_gate_message",
+        "Audit.Wire3.InstalledRoundCommit.round_frames_brackets",
+        "Audit.Wire3.InstalledRoundCommit.failed_round_snapshot_does_not_decode",
+        "Audit.Wire3.InstalledRoundCommit.concrete_commit_on_decoded_snapshot",
+        "Audit.Wire3.InstalledRoundCommit.concrete_commit_rejects_malformed_snapshot",
+        "Audit.Wire3.InstalledRoundCommit.failed_path_pads_points_with_zero",
+        "Audit.Wire3.InstalledRoundCommit.envelope_admits_index_bits_zero_iff_width_one",
+        "Audit.Wire3.InstalledRoundCommit.example_test_config_is_admitted_with_zero_index_bits",
+        "Audit.Wire3.InstalledRoundCommit.concrete_commit_agrees",
+        "Audit.Wire3.InstalledRoundCommit.concrete_commit_challenges",
+        "Audit.Wire3.InstalledRoundCommit.installed_round_is_installed_sampler_of_recommitted",
+        "Audit.Wire3.InstalledRoundCommit.installed_round_keeps_initial_transcript",
+        "Audit.Wire3.InstalledRoundCommit.installed_round_installed_and_observed_fields",
+        "Audit.Wire3.InstalledRoundCommit.concrete_chain_step",
+        "Audit.Wire3.InstalledRoundCommit.concrete_chain_length",
+        "Audit.Wire3.InstalledRoundCommit.concrete_chain_get",
+        "Audit.Wire3.InstalledRoundCommit.round_step_on_decoded_snapshot",
+        "Audit.Wire3.InstalledRoundCommit.round_step_transcript_decodes",
+        "Audit.Wire3.InstalledRoundCommit.round_step_index",
+        "Audit.Wire3.InstalledRoundCommit.concrete_run_snapshot_decodes",
+        "Audit.Wire3.InstalledRoundCommit.concrete_run_points",
+        "Audit.Wire3.InstalledRoundCommit.derived_initial_snapshot_decodes",
+        "Audit.Wire3.InstalledRoundCommit.start_snapshot_decodes",
+        "Audit.Wire3.InstalledRoundCommit.decoded_snapshot_unconditional",
+        "Audit.Wire3.InstalledRoundCommit.decoded_snapshot_exists",
+        "Audit.Wire3.InstalledRoundCommit.sampled_indices_absorb_used_claims_unconditional",
+        "Audit.Wire3.InstalledRoundCommit.index_lanes_have_index_bits_length_unconditional",
+        "Audit.Wire3.InstalledRoundCommit.failed_path_passes_index_guard_at_index_bits_zero",
+        "Audit.Wire3.InstalledRoundCommit.installed_rounds_are_the_checked_execution",
+        "Audit.Wire3.InstalledRoundCommit.round_digests_chain_after_prefix",
+        "Audit.Wire3.InstalledRoundCommit.lane_challenges_concrete",
+        "Audit.Wire3.InstalledRoundCommit.lanes_are_concrete",
+        "Audit.Wire3.InstalledRoundCommit.drawn_at_of_chain",
+        "Audit.Wire3.InstalledRoundCommit.actual_digest_draw_encodes_run",
+        "Audit.Wire3.InstalledRoundCommit.round_message_fixed_before_round_challenges",
+        "Audit.Wire3.InstalledRoundCommit.changing_a_round_message_changes_the_round_digest_or_collides",
+        "Audit.Wire3.InstalledRoundCommit.run_round_digest_binds_the_round_message",
+        "Audit.Wire3.InstalledRoundCommit.run_round_digest_binds_the_round_message_of_a_shaped_proof",
+        "Audit.Wire3.InstalledRoundCommit.example_base_initial",
+        "Audit.Wire3.InstalledRoundCommit.example_fixture_round_shape",
+        "Audit.Wire3.InstalledRoundCommit.example_fixture_snapshot_decodes",
+        "Audit.Wire3.InstalledRoundCommit.example_fixture_index_lanes",
+        "Audit.Wire3.InstalledRoundCommit.example_fixture_lane_lengths",
+        "Audit.Wire3.InstalledRoundCommit.example_toy_round_challenge_values",
+        "Audit.Wire3.InstalledRoundCommit.example_concrete_commit_is_not_the_abstract_observation"
+      ],
+      "sources": [
+        "mle/src/transcript_v2.rs",
+        "mle/src/verifier_v2.rs",
+        "mle/contracts/src/TranscriptV2.sol",
+        "mle/contracts/src/MleVerifierV2.sol",
+        "mle/contracts/src/OuterLogupExt3Verifier.sol"
+      ],
+      "scope": "The per-round transcript commit, an engine observation until now, made concrete: the adopted checked round commit (five frames: a domain separator, the round index as a u64, the log and gate messages as tag-6 vector frames, a second separator; the coupled log and gate challenges squeezed at counters 0 and 3 of the round digest; checked against transcript_v2.rs 133-146 and TranscriptV2.sol 247-261) is totalised over the snapshot decoder and installed on the sampler engine, which is by rfl the sampler engine over a recommitted abstract engine, so adopted engine-quantified theorems apply at that engine. Proved: CommitAgrees for the concrete commit; the derived rounds, initial transcript, index points and context of the installed engine are those of the adopted checked execution, with only the initial-transcript observation and degreeBits <= 13 remaining; the decoded-snapshot hypothesis of the index sampler is discharged unconditionally; round digests chain after CommitmentOrder's twenty-two-frame prefix, each round's challenges being the counter-0 and counter-3 reductions of its own five-frame commit digest, so the round counter labels of GatePointZeroCheck and JointChallengeSpace become theorems for this engine (the block numerals remain labels); the lanes' challenge values are those reductions; changing a round message while keeping the round digest requires a concrete transcript collision. Limitation stated as theorems: the envelope admits indexBits = 0 exactly when the width is one, and there a non-decoding snapshot would produce all-zero challenges that the index-length guard accepts; under the initial-transcript observation and degreeBits <= 13 every snapshot decodes, so that path is unreachable in this module's theorems and live only for an engine whose initial observation is not the derived one. DrawEncodesRun remains a coordinate statement. Remaining observations: initialObservation and publicInputsHash (installed by the sibling module; composition is a later step), parseWhir, configurationHash, deploymentValid; no hash security, Fiat-Shamir or WHIR/PCS soundness; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.InstalledInitialTranscript",
+      "theorems": [
+        "Audit.Wire3.InstalledInitialTranscript.concrete_initial_is_the_adopted_derivation",
+        "Audit.Wire3.InstalledInitialTranscript.concrete_observation_at_statement",
+        "Audit.Wire3.InstalledInitialTranscript.concrete_public_inputs_hash_is_the_adopted_sponge",
+        "Audit.Wire3.InstalledInitialTranscript.installed_initial_is_sampler_of_with_initial",
+        "Audit.Wire3.InstalledInitialTranscript.installed_initial_is_its_own_model_engine",
+        "Audit.Wire3.InstalledInitialTranscript.installed_fields",
+        "Audit.Wire3.InstalledInitialTranscript.remaining_observations",
+        "Audit.Wire3.InstalledInitialTranscript.installed_initial_transcript_is_concrete",
+        "Audit.Wire3.InstalledInitialTranscript.installed_initial_is_derived",
+        "Audit.Wire3.InstalledInitialTranscript.installed_initial_columns",
+        "Audit.Wire3.InstalledInitialTranscript.installed_public_input_hash_is_concrete",
+        "Audit.Wire3.InstalledInitialTranscript.installed_public_input_hash_length",
+        "Audit.Wire3.InstalledInitialTranscript.installed_bound_terminal_is_engine_gate_terminal_concrete_hash",
+        "Audit.Wire3.InstalledInitialTranscript.installed_gate_terminal_uses_concrete_hash",
+        "Audit.Wire3.InstalledInitialTranscript.accepted_public_inputs_within_solidity_cap",
+        "Audit.Wire3.InstalledInitialTranscript.installed_derived_selected_gate_constraints_vanish",
+        "Audit.Wire3.InstalledInitialTranscript.installed_attached_seam",
+        "Audit.Wire3.InstalledInitialTranscript.installed_composed_gate_constraints_vanish_on_the_joint_space",
+        "Audit.Wire3.InstalledInitialTranscript.installed_derived_gate_slots_vanish",
+        "Audit.Wire3.InstalledInitialTranscript.installed_attached_all_rows_selected_constraints_vanish",
+        "Audit.Wire3.InstalledInitialTranscript.installed_provenanced_selected_gate_constraints_vanish",
+        "Audit.Wire3.InstalledInitialTranscript.installed_adopted_alpha_is_derived_alpha",
+        "Audit.Wire3.InstalledInitialTranscript.installed_adopted_tau_is_derived_tau",
+        "Audit.Wire3.InstalledInitialTranscript.installed_challenges_are_pinned_to_the_derivation",
+        "Audit.Wire3.InstalledInitialTranscript.installed_derived_norm_shape_valid",
+        "Audit.Wire3.InstalledInitialTranscript.installed_observation_only",
+        "Audit.Wire3.InstalledInitialTranscript.installed_initial_prefix_is_commitment_order",
+        "Audit.Wire3.InstalledInitialTranscript.installed_initial_gate_challenge_counters",
+        "Audit.Wire3.InstalledInitialTranscript.installed_deterministic_adaptivity",
+        "Audit.Wire3.InstalledInitialTranscript.installed_verifier_identity_with_assumed_prover_challenges",
+        "Audit.Wire3.InstalledInitialTranscript.Example.fixture_initial_shape",
+        "Audit.Wire3.InstalledInitialTranscript.Example.fixture_seven_challenges_exist",
+        "Audit.Wire3.InstalledInitialTranscript.Example.fixture_prefix",
+        "Audit.Wire3.InstalledInitialTranscript.Example.fixture_abstract_observation_differs",
+        "Audit.Wire3.InstalledInitialTranscript.Example.fixture_public_input_hash"
+      ],
+      "sources": [
+        "mle/src/verifier_v2.rs",
+        "mle/src/transcript_v2.rs",
+        "mle/contracts/src/MleVerifierV2.sol",
+        "mle/contracts/src/PoseidonPublicInputsHash.sol"
+      ],
+      "scope": "On top of the installed sampler engine, the initial-transcript observation is replaced by the adopted OuterInitial derivation on the verifier's statement and the public-input hash by the adopted concrete Poseidon hash-no-pad, giving one engine with eight concrete fields at once; the novelty is the composition, since the adopted withInitial_derived already gives DerivedInitial by rfl for any engine. For this engine DerivedInitial is a theorem for every configuration and proof, so the thirty-six downstream hderiv sites and the PublicInputHashBinding hsub sites become unconditional: the headline theorems of GateDerivedRejection, AttachedUnionBound, JointChallengeSpace's composed theorem, ConstantsProvenance and CommitmentOrder's deterministic adaptivity are restated without hderiv, with acceptance now under the concrete sampler/tail/initial engine (a stronger premise). The derivation reads no other engine hook (raw public inputs are absorbed at frame 3) and verify reads the hook only through initialTranscript. The absorbed prefix is CommitmentOrder's twenty-two frames with the roots at 13, 15 and 19 and gate alpha/tau at counters 9+3d and 12+3d+3i of the prefix digest; accepted proofs' public inputs satisfy the Solidity 256-word cap and per-word range check. Remaining observations: commitRound, parseWhir, configurationHash, deploymentValid; the prover-side challenge equality is a hypothesis about the prover's record and is not discharged. The hash stays an arbitrary deterministic function with no injectivity, uniformity or random-oracle property, so this is order-and-plumbing identity, not Fiat-Shamir soundness; not the system's soundness error."
     }
   ]
 }

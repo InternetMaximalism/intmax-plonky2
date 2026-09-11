@@ -555,7 +555,32 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    「indexはcellの後に引かれる」というR3の順序面は定理になったが、偽造cell族が新鮮なindex点で失敗する
    確率的段階は未証明でR1b/R3はそのまま。decode仮定は採用済みCommitAgrees下の実行とfixtureで可住。
    index点の座標空間は座標主張のみで法則は付けない。commitRound・parseWhir・configurationHash・
-   initialTranscript・publicInputsHashは観測のまま。
+   initialTranscript・publicInputsHashはInstalledInitialTranscriptで据え付けた。sampler engineの上に
+   `initialObservation := OuterInitial.derive`（`Verifier.statement p`に対する採用済み導出）と
+   `publicInputsHash := PublicInputHashBinding.hashNoPad`を置き、8フィールドが同時に具体化された1つの
+   engineを得る。`DerivedInitial`自体は採用済み`withInitial_derived`がrflで与えていたので新規性は合成に
+   あり、この engine では下流36箇所の`hderiv`とPublicInputHashBindingの`hsub`が無条件化する
+   （GateDerivedRejection・AttachedUnionBound・JointChallengeSpaceの合成定理・ConstantsProvenance・
+   CommitmentOrderの主要定理を再述。`hacc`は具体engine下の受理でより強い前提）。導出はengineの他の
+   hookを読まず（公開入力は生値をframe 3で吸収）、verifyはhookをinitialTranscript経由でのみ読む。
+   受理proofでは公開入力がSolidityの256語capと語ごとの<p検査を満たすことも導いた。残る観測は
+   commitRound・parseWhir・configurationHash・deploymentValid。prover側のchallenge一致（prover の
+   Prepared recordに関する仮定）はverifier側の据え付けでは消えない。hashは任意の決定的関数のままで、
+   単射性・一様性・random oracle性は使わない（順序と配管の同一性でありFiat–Shamir健全性ではない）。
+   round commitの観測はInstalledRoundCommitで具体化した。採用済みの検査付きround commit（5 frame：
+   domain separator、round index（u64）、log/gate messageのtag 6 frame、separator。round digestの
+   counter 0と3からlog/gate challenge。transcript_v2.rs 133-146とTranscriptV2.sol 247-261に一致）を
+   decode上で全域化してsampler engineに据え付け、`CommitAgrees`を定理化した。導出されたroundは採用済み
+   OuterAdapter.executeと一致し（残る仮定は初期transcript観測とdegreeBits≤13）、round digestが
+   CommitmentOrderの22 frame prefixの後に5 frameずつ連鎖してcounter 0/3から引かれること、laneの
+   challenge列が実digestの縮約であること、round messageの改変が具体的なtranscript衝突を要することを
+   証明した。これによりGatePointZeroCheckのRES-4とJointChallengeSpaceの外側counterラベルはこのengineでは
+   定理になった（sourceBlockの番号とindex blockの位置はラベルのまま）。**限界**: envelopeはwidth c=1のとき
+   indexBits=0を許し、その設定ではdecode失敗経路（challenge全零・空のindex lane）をindex長guardが通す。
+   ただし初期transcript観測とdegreeBits≤13の下では全snapshotがdecodeするため、本モジュールの定理では
+   その経路に到達しない（導出でないinitialObservationを持つengineでのみ生きる）。DrawEncodesRunは依然
+   座標主張で、laneの値が実digestの縮約であることまでを示す。初期transcriptとpublicInputsHashの据え付け
+   （InstalledInitialTranscript）との合成は次段。
 
 現target105の約101.5-bit値はリポジトリのgeneric-work見積もりで、Leanが証明した
 128-bit/end-to-end安全性ではありません。実装変更・デプロイ承認もこの更新には含みません。
