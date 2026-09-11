@@ -602,6 +602,32 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    preprocessedRootで、受理下ではshapeによりpinに一致する。ComposedEngineと合わせると残る観測は
    configurationHashのみ（本moduleは合成を行わない）。WhirContextのprotocolId/sessionId/parametersと`wp`は
    依然自由（ソースではprofile digestで固定、Leanでは観測）。R1b/R2/R3は不変。
+   R3（per-column同定）の確率的段階はIndexPointZeroCheckで二分法として与えた。packed foldと多重線形拡張の
+   橋渡し（cells長≤2^indexBits、両者LSB先頭で反転なし）により、2つのcell族のpacked foldが一致するindex点の
+   集合は差分の零点集合で密度≤indexBits/|F|、一様積法則上の質量≤tauTerm indexBits。fold水準の関係の下、
+   supplied cellsがcommitted列のopeningに一致する（HonestOpenings.openedそのもの）か、導出index点が明示的に
+   上界された集合に入るかのいずれかで、bound cell i∈Fin 5で両laneを被覆する。同じ幅なら一致集合が全体⇔列が
+   等しい（Boolean点補間による単射性）ので残余類は空。committed幅は仮定（HonestOpenings.capacityは≤のみを
+   与える）で、幅が異なればゼロ埋めで差が隠れうるため、capacityのみから末尾零を除いた同定を結論する
+   変種も定理化した。cellsは
+   index squeeze前に吸収される（InstalledIndexSamplerの順序）がhalf (B)は未形式化。IndexSpace上の
+   法則は結合形のみで逐次形はない。R1b（fold水準）とR2は不変。
+   最後の観測configurationHashはExplicitEngineで据え付け、抽象base engineを持たないverifierモデルを得た。
+   12フィールド全てが(gdec, hash, thash, khash, P, c₀)の関数である。config digestは`khash ∘ encodeConfig`で、
+   `encodeConfig`はSolidityの`abi.encode(VerificationConfig)`のフィールド順（8つの回路スカラー、
+   publicInputWireMap、kIs、subgroupGenPowers、gates、whir）を鏡写しにするが、offset語の省略・gates/whirの
+   不透明化・Nat対uint256の3点でバイト同一ではない（keccakは未モデル）。符号化は13フィールドのcore上で
+   単射（有界性は受理とgates/whirのバイト長上界から導出）で、digest一致はcore一致か具体的なkhash衝突を
+   強制する。受理下でdigestはpinのdigestに一致し、配備仮定`pin.configDigest = khash (encodeConfig c₀)`の下で
+   core c = core c₀（衝突を除く）。PinnedWhirProfileの理想化仮定（whirEncoding一致）は衝突を除き定理となり、
+   その仮定を落としたengineでも受理から回復する。`deploymentValid`は残りの配備検証（kIs/subgroup連鎖、
+   gate評価器・WHIRパラメータ検証、wire-map範囲）がSolidityではconstructor限定であることを根拠に
+   whirEncoding一致とprofileOkのみとした。**これはSolidity経路のモデルであり、Rustのmle_verify_v2は
+   kIs・subgroup powers・gates・circuit_config_digest・protocol/session idをcallごとに再検証する**。
+   gate評価器の検証は受理の帰結として残る。**残余**: circuitDigestとcircuitConfigDigestは符号化されず
+   （Solidityではimmutableで固定、モデルでは攻撃者が選ぶtranscript入力で、半分(B)の自由度に属する）。
+   gateRowsは非符号化だが受理でdecodeされたgatesの長さに固定される。hash/thash/khashは任意の決定的関数で、
+   衝突型の結論は全て明示的な選言である。
 
 現target105の約101.5-bit値はリポジトリのgeneric-work見積もりで、Leanが証明した
 128-bit/end-to-end安全性ではありません。実装変更・デプロイ承認もこの更新には含みません。

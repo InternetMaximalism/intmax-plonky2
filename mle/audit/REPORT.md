@@ -1229,6 +1229,35 @@ loop方式の7回目。据え付け済みフィールドの合成と、最後に
 採用namespaceでの直接buildと全統合guardはPASS。全3726名の実定理/型/推移的公理、
 458 reviewed hashes、18表1147語、7依存5601fileを検査した。
 
+## 第25継続更新（327d52da以降）
+
+追跡版runnerでコミット`327d52da`の109モデル・3726定理を再検査しPASS（818.525秒、1439モジュール、
+manifest `6f4ffcd8465c06a2c2a3999fb60bd8f91a0b8d68a3b7b46ae2ae699fe91187e6`、receipt
+`98d903428b68d3d5ff67a3249f9845864a3c2fc1e1984feeb8c485b08efc2f50`、graph
+`8df8d7d544dc4cbfc3c6e8e3b67b25b88e132025213f85db48b42b6aaf9ea319`）。
+loop方式の8回目。engineの最後の観測configurationHashと、R3の確率的段階を対象にした。
+
+- **index点上のzero-check**: IndexPointZeroCheckはR3の二分法を与える。packed foldと多重線形拡張の橋渡し
+  （反転なし、indexBits=2の数値probeで確認）、一致集合の密度≤indexBits/|F|、fold水準の関係の下で
+  per-column同定が成立するか導出index点が上界された集合に入るか、同じ幅なら残余類が空であることを証明した。
+  レビューはcommitted幅が導出できない（capacityは≤のみ）ため残余は「幅の不一致（末尾零を除く同定）」で
+  あることを明確化させ、存在しない定理の引用と無限定の表題を修正させた。
+- **明示的engine**: ExplicitEngineは最後の観測configurationHashを`khash ∘ encodeConfig`として据え付け、
+  抽象base engineを持たないverifierモデルを与えた（12フィールド全てが明示的パラメータの関数）。符号化は
+  coreの13フィールドで単射で、digest一致はcore一致か具体的khash衝突を強制し、PinnedWhirProfileの理想化仮定は
+  衝突を除き定理になった。レビューは符号化のフィールド順の忠実性を確認し、gateRowsが受理で固定される
+  ことから残余をcircuitDigest/circuitConfigDigestの2つに訂正させ、gate評価器の検証が受理の帰結として
+  残ることと、配備検証の扱いがSolidity経路のみのモデルであること（RustはcallごとにkIs等を再検証）を
+  明記させた。
+
+追加2モデルはいずれもFable側の敵対的検証を通した（必須修正は分類と文言、可住性補題の追加で、
+健全性欠陥は検出されなかった）。これで採用モデルのengineには観測フィールドが残っていないが、それは
+「hash類を任意の決定的関数、WHIR tailを手動モデルとした上で検査経路が全て明示的である」という意味に
+とどまり、R1b（WHIR近接性＋sumcheck健全性）、R2（抽出）、Fiat–Shamir半分(B)、回路真理、Rust/Solidity
+refinementは未解決である。
+採用namespaceでの直接buildと全統合guardはPASS。全3864名の実定理/型/推移的公理、
+460 reviewed hashes、18表1147語、7依存5601fileを検査した。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。
