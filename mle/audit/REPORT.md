@@ -1282,6 +1282,32 @@ loop方式の9回目。監査の残余目録を1定理の仮定として固定�
 採用namespaceでの直接buildと全統合guardはPASS。全3962名の実定理/型/推移的公理、
 462 reviewed hashes、18表1147語、7依存5601fileを検査した。
 
+## 第27継続更新（2016206f以降）
+
+追跡版runnerでコミット`2016206f`の113モデル・3962定理を再検査しPASS（833.92秒、1443モジュール、
+manifest `f15c914f43bfbdc698c28ea01516e58fc9ad6b866dd2b9cbb46347e59a696ca5`、receipt
+`1c16975af9aa7fef557a922bab3bf3cd7b1d7accc409f9376807fdb153aa9330`、graph
+`864d79f348c8413b23faa055d438874b20d89dad94554efd87c285e4435237ce`）。
+loop方式の10回目。ExplicitEngineに残った2つのdigest残余と、抽出接合（R2）の構成的消化を対象にした。
+
+- **正準proof検査**: CanonicalProofCheckはSolidityの`_requireCanonicalProof`をモデル化し、未モデルだった
+  circuitDigestのimmutable比較とtranscriptに吸収されるcircuitConfigDigestを配備値に固定した。受理は
+  全19フィールドについてc = c₀か具体的khash衝突を強制し、Configに自由フィールドは残らない。レビューは
+  10比較表と19フィールドの由来を追跡し、verifyCall読みでの位置づけとdigest語の正準性検査の引用を
+  求めた。
+- **抽出器の構成**: ExtractorConstructionは抽出状態を受理proofのused claimsとR1b抽出器の出力から定義し、
+  TruthChainが定義的であることを確認して、SoundnessAssemblyの残余19のうち10を構成またはR1bから定理化した。
+  残る仮定は受理・R1b・表と行・配備digestと有界性・gate復号・制約数正・active filterのみである。
+  レビューはfitColumnがhop.fullの下で恒等であること、laneの具体化の整合、反駁不能を確認し、初期状態の
+  rounds/pointを空にすること（採用済み意味論では束縛済み履歴）とroundBadSetの対角の記述を修正させた。
+
+追加2モデルはいずれもFable側の敵対的検証を通した（必須修正は定義の衛生と文書で、健全性欠陥は検出されな
+かった）。この更新で、Configに自由フィールドは残らず、抽出接合の大半は構成により消化された。残るのは
+R1b（WHIR近接性＋sumcheck健全性）、Fiat–Shamir半分(B)、回路真理、hash、Rust/Solidity refinement、
+および受理と残余仮定の同時充足可能性の提示である。
+採用namespaceでの直接buildと全統合guardはPASS。全4024名の実定理/型/推移的公理、
+464 reviewed hashes、18表1147語、7依存5601fileを検査した。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

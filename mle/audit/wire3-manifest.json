@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "5f9df49aea9d4b736d965532041da5bb439f61af7f08b0ff6666f31d0553b754",
+      "sha256": "494fb5b2d66e3f565c4ae2174fc511ef5492918b71114de3fba7439c1e1e05e1",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "1eda9b8492a3ff6cc583a9220378db11fb39cc9646e761791ddab95605e95660",
+      "sha256": "e93979c30e0390418e89f0d48f1a687b581f33504dacb6c35df22738aede83e6",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "3d6e069bcb1b8bfb8fb1df60bd3f0e928e1837eaa9b30f69fda751b46600cf6e",
+      "sha256": "53dfb1c9cd9f8ab73789e90b6269493bb5b43f2dac8e027275f3ecc6aeeb773c",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "41ff8e1fe1f52d4a1e7968d426f85283bb524b19f8409a8d03bda50d4548253f",
+      "sha256": "c1b6d780c12ccca508dcff54f71ef83ac8a40e2017072a4f6d687163080b1a0b",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "7e3e5eae139e1f72b1f869a9b9029e825bf0416fc858604ed5f3cd8515e91b0c",
+      "sha256": "5d2dd6b7778762573efeae906f90e2e2bb6108356d28c6a5a7edff74793fa901",
       "kind": "spec"
     },
     {
@@ -2311,6 +2311,16 @@
     {
       "path": "mle/audit/Audit/Wire3/GateEvaluatorCoverage.lean",
       "sha256": "af67f1d4604a7a9a62ae11dfdcff42fd5f82b2f9b8bab8056e8c199339c6ed20",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/ExtractorConstruction.lean",
+      "sha256": "9f8b38c01433e9c4a931ce2e663f3842f47ec78ba1e130ee6b4d2e5ddd9aff2a",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/CanonicalProofCheck.lean",
+      "sha256": "05e4d48868bf99ed1c1d8704eb071dba38cd82c24394c2cd3b065138a4749d8d",
       "kind": "current-model"
     }
   ],
@@ -7494,6 +7504,90 @@
         "mle/src/fixture.rs"
       ],
       "scope": "Gate-evaluator coverage fixed as theorems: the complete dispatcher the integrated verifier uses (GatesComplete.evaluateUnfiltered) evaluates all fourteen configured gate families and GateAllPolynomial bounds every family's degree, while the base Gates partial dispatcher covers only ids 0,1,2,3,6,7. The declared tables (constraint count, required wires, local constants, degree) are transcribed from gate_ext3.rs and Plonky2GateEvaluatorExt3.sol and proved equal to the adopted requirements, matching plonky2's per-gate num_constraints, num_wires and degree; the Rust admission enforces the same degree inequality from Gate::degree(), so there is no Rust/Solidity divergence on the degree check. Shape-checked per-family evaluators return none instead of silently evaluating short rows with default zeros, and the extended combined evaluator agrees with the complete dispatcher on every validated row at configured widths; the alpha-Horner root bound is family-agnostic. Findings: a RandomAccessGate row with 124 constraints passes the per-gate check at the widest configuration but is excluded by configuration validation and the 123 envelope (the generated MAX_GATE_CONSTRAINTS_V2, Poseidon's count; Rust also rejects it on width), with no effect on the sumcheck round degree; BaseSum bases 16 and above are unconfigurable because the family's degree is the base; lookup families have no gate id (ids at least 14 are rejected and Rust admission requires no lookup tables). Source-mirror semantics, not refinement; the shape guard is a model strengthening; circuit truth is not claimed; no probability; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.ExtractorConstruction",
+      "theorems": [
+        "Audit.Wire3.ExtractorConstruction.fit_column_length",
+        "Audit.Wire3.ExtractorConstruction.range_map_getD",
+        "Audit.Wire3.ExtractorConstruction.fit_column_of_full",
+        "Audit.Wire3.ExtractorConstruction.extracted_columns_length",
+        "Audit.Wire3.ExtractorConstruction.extracted_columns_shape",
+        "Audit.Wire3.ExtractorConstruction.extracted_columns_evals_map",
+        "Audit.Wire3.ExtractorConstruction.extracted_columns_evaluations",
+        "Audit.Wire3.ExtractorConstruction.extracted_state_eq_numvars",
+        "Audit.Wire3.ExtractorConstruction.extracted_eq_provenance",
+        "Audit.Wire3.ExtractorConstruction.extracted_state_consistent",
+        "Audit.Wire3.ExtractorConstruction.lift_toVerifier",
+        "Audit.Wire3.ExtractorConstruction.extracted_cells_match_claims",
+        "Audit.Wire3.ExtractorConstruction.state_round_total",
+        "Audit.Wire3.ExtractorConstruction.truth_chain_of_consistent_state",
+        "Audit.Wire3.ExtractorConstruction.slot_coefficients_total",
+        "Audit.Wire3.ExtractorConstruction.committed_columns_of_tail_extraction",
+        "Audit.Wire3.ExtractorConstruction.fold_level_of_openings",
+        "Audit.Wire3.ExtractorConstruction.committed_width_of_openings",
+        "Audit.Wire3.ExtractorConstruction.extracted_columns_take",
+        "Audit.Wire3.ExtractorConstruction.values_inj",
+        "Audit.Wire3.ExtractorConstruction.bound_columns_map",
+        "Audit.Wire3.ExtractorConstruction.step_challenges",
+        "Audit.Wire3.ExtractorConstruction.truth_chain_bind_all",
+        "Audit.Wire3.ExtractorConstruction.bound_cell_four",
+        "Audit.Wire3.ExtractorConstruction.bound_cell_three",
+        "Audit.Wire3.ExtractorConstruction.cell_row_gate",
+        "Audit.Wire3.ExtractorConstruction.extracted_tables_bind_to_claims",
+        "Audit.Wire3.ExtractorConstruction.assembly_residue_of_extraction",
+        "Audit.Wire3.ExtractorConstruction.explicit_good_draw_of_extraction"
+      ],
+      "sources": [
+        "mle/src/verifier_v2.rs",
+        "mle/src/sumcheck/gate_ext3_v2.rs",
+        "mle/contracts/src/MleVerifierV2.sol"
+      ],
+      "scope": "Constructive discharge of the extraction join: the extracted gate prover state is defined from the accepted proof's used claims (cell 3 the gate preprocessed table, cell 4 the gate witness) and the R1b extractor's committed columns, with the eq column the eq table at the derived tau and empty bound history; GateClaimChain's truth chain is a definitional predicate that never mentions the prover's messages, so it is constructed for any consistent state, message-truth disagreement being absorbed by the round bad set off the diagonal of running claims (empty on the diagonal by design). Ten of the nineteen residue fields of the good-draw assembly become theorems: consistency, the truth chain, the claims match, eq provenance, the slot coefficients and the binding structure by construction, and the fold-level opening, column height, committed width (the opened field is a map, so the widths agree; the width is irreducible only under the fold-level predicate) and the bound cells from the R1b honest-openings relation; without that relation the fitting function pads or truncates and identifies nothing. The remaining hypotheses of the good-draw theorem for the extracted state are acceptance, R1b for this run (from the tail extraction predicate with the table row), the table-semantics assumption and row, the deployment digest with its bounds, the gate decoding, positive constraint count and the active-filter exclusion; the truth data, last state and last challenge are outputs of the construction. R1b posits a fixed extractor from the run's three commitment roots and its round-one opening whose columns open the claims (WHIR proximity plus sumcheck soundness, probabilistic, absent); joint satisfiability with acceptance is not exhibited; the conclusion is good-draw-conditional constraint vanishing on the extracted tables, not circuit truth; no hash is modelled; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.CanonicalProofCheck",
+      "theorems": [
+        "Audit.Wire3.CanonicalProofCheck.canonical_digest_pin_exact",
+        "Audit.Wire3.CanonicalProofCheck.canonical_proof_check_exact",
+        "Audit.Wire3.CanonicalProofCheck.canonical_pin_is_digest_equality",
+        "Audit.Wire3.CanonicalProofCheck.canonical_proof_check_follows_from_the_pin",
+        "Audit.Wire3.CanonicalProofCheck.deployment_valid_is_a_configuration_predicate",
+        "Audit.Wire3.CanonicalProofCheck.call_boundary_ignores_the_deployment_predicate",
+        "Audit.Wire3.CanonicalProofCheck.canonical_deployment_exact",
+        "Audit.Wire3.CanonicalProofCheck.pinned_proof_is_explicit_with_stronger_deployment",
+        "Audit.Wire3.CanonicalProofCheck.pinned_engine_twelve_fields",
+        "Audit.Wire3.CanonicalProofCheck.pinned_engine_is_its_own_model_engine",
+        "Audit.Wire3.CanonicalProofCheck.pinned_deployment_implies_the_explicit_one",
+        "Audit.Wire3.CanonicalProofCheck.pinned_acceptance_is_explicit_acceptance",
+        "Audit.Wire3.CanonicalProofCheck.pinned_acceptance_summary",
+        "Audit.Wire3.CanonicalProofCheck.pinned_accepted_profile_is_canonical",
+        "Audit.Wire3.CanonicalProofCheck.pinned_verify_is_explicit_verify",
+        "Audit.Wire3.CanonicalProofCheck.pinned_accepted_verify_first_root_is_pinned",
+        "Audit.Wire3.CanonicalProofCheck.accepted_digests_are_the_deployed_ones",
+        "Audit.Wire3.CanonicalProofCheck.accepted_proof_circuit_digest_is_deployed",
+        "Audit.Wire3.CanonicalProofCheck.accepted_proof_digest_matches_the_four_immutables",
+        "Audit.Wire3.CanonicalProofCheck.accepted_transcript_absorbs_deployed_digests",
+        "Audit.Wire3.CanonicalProofCheck.config_eq_of_fields",
+        "Audit.Wire3.CanonicalProofCheck.ids_pinned_without_collision",
+        "Audit.Wire3.CanonicalProofCheck.no_free_config_field_remains",
+        "Audit.Wire3.CanonicalProofCheck.accepted_configuration_is_the_deployment",
+        "Audit.Wire3.CanonicalProofCheck.accepted_call_is_a_deployed_call",
+        "Audit.Wire3.CanonicalProofCheck.example_deployment_passes_its_own_pin",
+        "Audit.Wire3.CanonicalProofCheck.example_circuit_digest_variant_is_rejected",
+        "Audit.Wire3.CanonicalProofCheck.example_config_digest_variant_is_rejected",
+        "Audit.Wire3.CanonicalProofCheck.example_variant_proof_is_rejected",
+        "Audit.Wire3.CanonicalProofCheck.example_fixture_proof_passes_the_proof_check",
+        "Audit.Wire3.CanonicalProofCheck.example_variants_have_the_deployment_encoding",
+        "Audit.Wire3.CanonicalProofCheck.example_deployed_digests_are_the_fixture_ones",
+        "Audit.Wire3.CanonicalProofCheck.example_deployed_facts_inhabited"
+      ],
+      "sources": [
+        "mle/contracts/src/MleVerifierV2.sol",
+        "mle/src/verifier_v2.rs",
+        "mle/src/vk_v2.rs"
+      ],
+      "scope": "Closes ExplicitEngine's two-digest residue by modelling Solidity's per-call _requireCanonicalProof (MleVerifierV2.sol 551-587): of its ten comparisons only the proof's four circuit-digest words against the immutables (558-561) had no Lean counterpart, and the circuit-config digest is an immutable absorbed into the transcript at 430. A decidable pin equating both digests of the accepted configuration with the deployed ones is installed in deploymentValid (a direct proof-side comparison would need a thirteenth engine field, so the proof's digest is pinned through shape); Integrated.verify checks deploymentValid, and under the verifyCall reading the pin is part of the deployment invariant, justified because the two fields are immutables absent from the calldata configuration. Acceptance then forces the accepted configuration to equal the deployed one in all nineteen fields or a concrete khash collision (the two WHIR ids and the two digests without the disjunct), the initial transcript's frames 2 and 7 absorb the deployed digests, and no free configuration field remains; the deployer-side facts are collected in an inhabited structure. The constructor rejects non-canonical digest words, so the field-element model under-approximates the Solidity accept set. Of the proof, only the circuit digest, protocol version, preprocessed root and width are pinned; the roots, round polynomials, used claims and WHIR bytes remain attacker-chosen and constrained by shape lengths and the manual tail. Solidity-only deployment semantics (Rust re-validates and recomputes the config digest); R1b, R2, Fiat-Shamir half (B), circuit truth and refinement remain open; not the system's soundness error."
     }
   ]
 }

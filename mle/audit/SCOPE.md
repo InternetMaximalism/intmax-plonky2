@@ -638,6 +638,16 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    （Solidityではimmutableで固定、モデルでは攻撃者が選ぶtranscript入力で、半分(B)の自由度に属する）。
    gateRowsは非符号化だが受理でdecodeされたgatesの長さに固定される。hash/thash/khashは任意の決定的関数で、
    衝突型の結論は全て明示的な選言である。
+   残るcircuitDigest・circuitConfigDigestはCanonicalProofCheckで固定した。Solidityがcallごとに走らせる
+   `_requireCanonicalProof`の10比較のうち未モデルはproofのcircuitDigest 4語とimmutableの比較のみで、
+   circuitConfigDigestはimmutableを430でtranscriptに吸収する。両digestが配備値に等しいことを
+   `deploymentValid`に据え付け（Integrated.verifyはVerifier.verify経由でdeploymentValidを検査する。
+   verifyCall読みでは配備不変条件の一部であり、immutableがcalldataに無いことで正当化される）、受理は
+   全19フィールドについて`c = c₀`か具体的khash衝突を強制する（WHIRのid 2つとdigest 2つは選言なし）。
+   transcriptのframe 2/7は配備digestを吸収し、Configに自由フィールドは残らない。`_validateConfiguration`が
+   digest語の正準性を強制するため、`Fin modulus`モデルはSolidityの受理集合を下から近似する（安全側）。
+   proof側で固定されるのはcircuitDigest・protocolVersion・preprocessedRoot・widthで、witness/normInverse
+   root・round多項式・used・WHIRバイト列は攻撃者が選びshapeの長さとtailのみが制約する。
    これらの結果はSoundnessAssemblyで1定理に組み立てた。explicit engineの受理、残余仮定の名前付き構造体
    （表の意味論と転記行、配備digestと有界性、fold水準のopening、抽出列の高さとcommitted幅、
    GateDerivedRejectionの9フィールド、slot係数）、実digest drawが4族のbad event外、実index drawが
@@ -649,6 +659,17 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    残余仮定の同時充足可能性はexplicit engineで受理されるproofを構成しない限り提示できない；結論は
    good draw条件付きの制約消失と同定であって回路真理・WHIR近接性・hash安全性ではない；R1b・R2・
    half (B)・circuitDigest/circuitConfigDigest・Solidity限定の配備意味論は残る。
+   抽出接合はExtractorConstructionで構成的に消化した。抽出状態を受理proofのused claimsとR1b抽出器の出力から
+   定義し（eq列は導出tauのeq table、rounds/pointは空）、TruthChainがmessageに言及しない定義的述語である
+   ことから任意の整合状態に対して構成した（message≠truthはroundBadSetが運用claimの非対角で吸収する）。
+   SoundnessAssemblyの残余19のうち10（Consistent・TruthChain・cellsMatchClaims・eqProvenance・slotCoefficients・
+   eqCellBindingの構造は構成、foldLevelOpening・列高・committed幅・lastCellsはR1bのHonestOpeningsから）が
+   定理となり、残る仮定は受理、R1b、TableIsCanonicalと行、配備digestと有界性、gate復号、制約数正、
+   active filterのみになった。committed幅はHonestOpenings.openedがmapであることから導け、fold水準述語の
+   下でのみ既約である（IndexPointZeroCheckの記述と整合。SoundnessAssemblyのcommittedWidth注記は要更新）。
+   **残る限定**: R1bはWHIR近接性とsumcheck健全性を措定する未形式化の確率的主張であり、受理との同時充足
+   可能性はexplicit engineで受理されるproofを構成しない限り提示できない；結論は抽出表上のgood draw
+   条件付き制約消失で回路真理ではない；hashは未モデル。
 
 現target105の約101.5-bit値はリポジトリのgeneric-work見積もりで、Leanが証明した
 128-bit/end-to-end安全性ではありません。実装変更・デプロイ承認もこの更新には含みません。

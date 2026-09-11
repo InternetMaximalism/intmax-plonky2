@@ -118,3 +118,5 @@ import Audit.Wire3.IndexPointZeroCheck
 import Audit.Wire3.ExplicitEngine
 import Audit.Wire3.GateEvaluatorCoverage
 import Audit.Wire3.SoundnessAssembly
+import Audit.Wire3.CanonicalProofCheck
+import Audit.Wire3.ExtractorConstruction
