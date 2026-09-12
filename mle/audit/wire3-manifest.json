@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "af237ad5a7ba86cb4eb858c62d048b61e0c5e40cc4e7be6ee6f3c73a85aeb9a5",
+      "sha256": "ebe3e9cfd19481db24e06668852361eacbd6f6bfa0b0c084c9a987b3ff3151c1",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "0c4f1b7d775049b8624f9bd9240367c734d7b7291d8ebe5780932fa9079ac09d",
+      "sha256": "cd7fec9edf7b45cb6e719e7fd5540c797af07b09a48f5b266999104838a9a531",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "a7e77d6e1b2247113526aab5ae720ee4d62b4ab04c9b4c49fcd04d7664c7ec3e",
+      "sha256": "aa10defb4d7de3860fc8afd9339efe22bd19ca74d1582c160aeb402e16024be1",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "3163ea7c072c097886fe6516401caa2c2126d8c46db4fa3821987c618e8d8634",
+      "sha256": "c15f8d75c85e5ace83f82a27da99e84d658ac9071b8f5876689517da20dd235c",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "e0f5c724a55f8850f390c07add8eb5d455e294224d2c1d82477b36ea31e333ce",
+      "sha256": "423ea2e0b59a779b7e18630f7dd58c469dc8e6c88aa72daebdc9d99d3f43572c",
       "kind": "spec"
     },
     {
@@ -2446,6 +2446,16 @@
     {
       "path": "mle/audit/Audit/Wire3/EngineTauDiagonal.lean",
       "sha256": "6fca67b22b46f7ca53b912b17dedd9797ff97887628c2ae56c1e6fcac9d50e17",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/EngineOuterDiagonal.lean",
+      "sha256": "39522569906466959d655dda653714436c2ff39c5c03bf9b0b7e097f1c56d566",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/PreReadCharge.lean",
+      "sha256": "591673ddf972d78230c11f74cb3a75f6e13ccf5c03ca201a7faab0b0b445cf7a",
       "kind": "current-model"
     }
   ],
@@ -9436,6 +9446,133 @@
         "mle/src/transcript_v2.rs"
       ],
       "scope": "Closes the gap the survey's review exposed: the engine's own tau event, whose zero-check table reads the block-zero gate alpha, is the diagonal over the alpha triple, and its mass under the chain's no-clash event is at most the tau term for every strategy and every alpha-to-table map \u2014 the same constant as the fixed-table slice \u2014 by partitioning the conditioning event by the alpha triple, on each block of which the target is constant and the adopted joint peel of the tau counters applies (the alpha counter is disjoint from every tau counter), then summing with the adopted per-table density bound. The fixed-table tau event of the transport module is the constant slice by definition. The full bounds are restated with the engine's tau event, and the raw index route is rebuilt so that for every causal transcript-restricted strategy and claims choice the mass of the raw outer lanes, the engine's own tau event, the alpha lane and the engine's own index event is at most combinedBound plus twice the index tau term plus the chain clash term with one clash term. In the final theorem the tau and index events are the engine's own; the alpha event is the lane form (its coefficients read no challenge); the outer event is the lane form, and the engine's alpha-dependent outer diagonal, done for the fixed prover elsewhere, remains open for the adaptive line. A target that genuinely moves with the alpha is exhibited; closed instance below one. Random-oracle model, not keccak; transcript-restricted causal prover; committed-tables join inherited; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.EngineOuterDiagonal",
+      "theorems": [
+        "Audit.Wire3.EngineOuterDiagonal.engine_outer_bad_at_parts",
+        "Audit.Wire3.EngineOuterDiagonal.engine_outer_bad_event_depends_on_alpha_and_messages",
+        "Audit.Wire3.EngineOuterDiagonal.raw_extended_engine_outer_bad_event_depends_on_alpha_and_messages",
+        "Audit.Wire3.EngineOuterDiagonal.engine_outer_alpha_invariant",
+        "Audit.Wire3.EngineOuterDiagonal.engine_outer_target_reassign",
+        "Audit.Wire3.EngineOuterDiagonal.engine_outer_target_card_le",
+        "Audit.Wire3.EngineOuterDiagonal.engine_outer_round_mass_le",
+        "Audit.Wire3.EngineOuterDiagonal.engine_outer_bad_event_constant_slice",
+        "Audit.Wire3.EngineOuterDiagonal.engine_outer_upto_zero",
+        "Audit.Wire3.EngineOuterDiagonal.engine_outer_round_inter_subset",
+        "Audit.Wire3.EngineOuterDiagonal.succ_mul_split",
+        "Audit.Wire3.EngineOuterDiagonal.engine_outer_upto_no_clash_mass_le",
+        "Audit.Wire3.EngineOuterDiagonal.engine_outer_no_clash_mass_le",
+        "Audit.Wire3.EngineOuterDiagonal.engine_outer_bad_draw_probability_le",
+        "Audit.Wire3.EngineOuterDiagonal.mem_raw_engine_all_own_bad_event",
+        "Audit.Wire3.EngineOuterDiagonal.raw_engine_all_own_bad_event_constant_slice",
+        "Audit.Wire3.EngineOuterDiagonal.raw_engine_all_own_no_clash_mass_le",
+        "Audit.Wire3.EngineOuterDiagonal.raw_engine_all_own_block_bad_draw_probability_le",
+        "Audit.Wire3.EngineOuterDiagonal.raw_engine_all_own_index_bad_event_constant_slice",
+        "Audit.Wire3.EngineOuterDiagonal.raw_engine_all_own_bad_draw_probability_le",
+        "Audit.Wire3.EngineOuterDiagonal.mem_engine_round_bad_event",
+        "Audit.Wire3.EngineOuterDiagonal.mem_engine_outer_bad_event",
+        "Audit.Wire3.EngineOuterDiagonal.engine_outer_bad_event_is_run_level",
+        "Audit.Wire3.EngineOuterDiagonal.engine_outer_event_is_the_run_outer_event_at_the_engine_alpha",
+        "Audit.Wire3.EngineOuterDiagonal.drawn_at_realized_gate",
+        "Audit.Wire3.EngineOuterDiagonal.drawn_at_realized_log",
+        "Audit.Wire3.EngineOuterDiagonal.frozen_walk_of_realized_gate",
+        "Audit.Wire3.EngineOuterDiagonal.frozen_walk_of_realized_log",
+        "Audit.Wire3.EngineOuterDiagonal.sample_outer_lane_at_zero",
+        "Audit.Wire3.EngineOuterDiagonal.sample_outer_lane_causal",
+        "Audit.Wire3.EngineOuterDiagonal.sample_outer_lane_bounded",
+        "Audit.Wire3.EngineOuterDiagonal.raw_bad_set_zero_empty_of_eq",
+        "Audit.Wire3.EngineOuterDiagonal.raw_target_zero_card_eq_zero_of_eq",
+        "Audit.Wire3.EngineOuterDiagonal.sample_outer_target_depends_on_alpha",
+        "Audit.Wire3.EngineOuterDiagonal.engine_endpoint_is_the_gate_lane_truth_claim",
+        "Audit.Wire3.EngineOuterDiagonal.engine_gate_lane_of_strategy_causal",
+        "Audit.Wire3.EngineOuterDiagonal.engine_gate_lane_of_strategy_bounded",
+        "Audit.Wire3.EngineOuterDiagonal.engine_gate_lane_of_strategy_claim",
+        "Audit.Wire3.EngineOuterDiagonal.constant_log_lane_of_strategy_causal",
+        "Audit.Wire3.EngineOuterDiagonal.constant_log_lane_of_strategy_bounded",
+        "Audit.Wire3.EngineOuterDiagonal.constant_log_lane_of_strategy_claim",
+        "Audit.Wire3.EngineOuterDiagonal.raw_engine_all_own_bound_at_thirteen",
+        "Audit.Wire3.EngineOuterDiagonal.raw_engine_all_own_bound_at_thirteen_lt_one",
+        "Audit.Wire3.EngineOuterDiagonal.outer_closed_instance_hypotheses_satisfiable",
+        "Audit.Wire3.EngineOuterDiagonal.engine_outer_bound_at_constant_family"
+      ],
+      "sources": [
+        "mle/src/sumcheck/gate_ext3_v2.rs",
+        "mle/contracts/src/OuterLogupExt3Verifier.sol",
+        "mle/src/transcript_v2.rs"
+      ],
+      "scope": "The adaptive-line outer diagonal: the engine's outer bad event depends on the alpha only through the gate lane's initial truth claim, so alpha-indexed raw lane families define the engine's own outer event; since the alpha is read at the derive stage and every round's challenge cells come strictly later, the round targets are alpha-invariant under the round's own cells and the adopted diagonal fresh step applies unchanged with the per-round cardinality uniform in the alpha, giving the outer term for every strategy with no partition. Combined with the engine's own tau and index events and the challenge-free alpha coefficients, for every causal transcript-restricted strategy and claims choice all four events are the engine's own and their mass is at most combinedBound plus twice the index tau term plus the chain clash term with one clash term; closed instance below one. The bounded event is proved equal to the run's outer event at the realized proof and the engine's alpha. The corollary on the explicit assembly's failure set is not reached: the draw-encodes-run seam is adopted only at the canonical draw, not at the realized draw, and the realized lane lists are not identified with the engine's derived lanes; neither is assumed. Random-oracle model, not keccak; transcript-restricted causal prover; the committed-tables join remains the assumption; WHIR and Merkle excluded; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.PreReadCharge",
+      "theorems": [
+        "Audit.Wire3.PreReadCharge.probe_digest_at_absorb",
+        "Audit.Wire3.PreReadCharge.pre_read_sel_val",
+        "Audit.Wire3.PreReadCharge.pre_read_grinder_probe_history_only",
+        "Audit.Wire3.PreReadCharge.pre_read_grinder_absorb_pre_read_only",
+        "Audit.Wire3.PreReadCharge.echo_grinder_probe_history_only",
+        "Audit.Wire3.PreReadCharge.echo_grinder_absorb_pre_read_only",
+        "Audit.Wire3.PreReadCharge.grinding_of_strategy_probe_history_only",
+        "Audit.Wire3.PreReadCharge.grinding_of_strategy_absorb_pre_read_only",
+        "Audit.Wire3.PreReadCharge.mem_probe_fresh",
+        "Audit.Wire3.PreReadCharge.challenges_of_reassign_digest_ne",
+        "Audit.Wire3.PreReadCharge.pre_read_run_ans_stable",
+        "Audit.Wire3.PreReadCharge.pre_read_chain_val_stable",
+        "Audit.Wire3.PreReadCharge.pre_read_state_stable",
+        "Audit.Wire3.PreReadCharge.pre_read_probe_digest_stable",
+        "Audit.Wire3.PreReadCharge.pre_read_chain_stable_all",
+        "Audit.Wire3.PreReadCharge.pre_read_probe_mass_le",
+        "Audit.Wire3.PreReadCharge.probe_stage_succ",
+        "Audit.Wire3.PreReadCharge.probe_digest_at_round_stage",
+        "Audit.Wire3.PreReadCharge.round_stage_le_probe_stage",
+        "Audit.Wire3.PreReadCharge.message_stage_le_probe_stage",
+        "Audit.Wire3.PreReadCharge.grind_run_view_val",
+        "Audit.Wire3.PreReadCharge.grind_table_view_val",
+        "Audit.Wire3.PreReadCharge.chain_triple_val",
+        "Audit.Wire3.PreReadCharge.pre_read_run_view_stable",
+        "Audit.Wire3.PreReadCharge.pre_read_challenge_cell_stable",
+        "Audit.Wire3.PreReadCharge.pre_read_table_view_stable",
+        "Audit.Wire3.PreReadCharge.pre_read_triple_stable",
+        "Audit.Wire3.PreReadCharge.pre_read_raw_claims_stable",
+        "Audit.Wire3.PreReadCharge.candidate_probe_causal_of_causal",
+        "Audit.Wire3.PreReadCharge.lane_candidates_causal",
+        "Audit.Wire3.PreReadCharge.lane_candidates_bounded",
+        "Audit.Wire3.PreReadCharge.pre_read_cand_target_card_le",
+        "Audit.Wire3.PreReadCharge.pre_read_cand_target_reassign",
+        "Audit.Wire3.PreReadCharge.pre_read_probe_event_mass_le",
+        "Audit.Wire3.PreReadCharge.oracle_probability_range_bi_union_le",
+        "Audit.Wire3.PreReadCharge.digest_triple_term_nonneg",
+        "Audit.Wire3.PreReadCharge.pre_read_round_mass_le",
+        "Audit.Wire3.PreReadCharge.pre_read_outer_mass_le",
+        "Audit.Wire3.PreReadCharge.pre_read_grinder_stage_framed",
+        "Audit.Wire3.PreReadCharge.echo_grinder_stage_framed",
+        "Audit.Wire3.PreReadCharge.pre_read_position_frame",
+        "Audit.Wire3.PreReadCharge.block_digest_inj",
+        "Audit.Wire3.PreReadCharge.pre_read_cross_stage_sel_ne",
+        "Audit.Wire3.PreReadCharge.pre_read_stage_digest_ne",
+        "Audit.Wire3.PreReadCharge.pre_read_separation_charged",
+        "Audit.Wire3.PreReadCharge.pre_read_absorb_digest_charged",
+        "Audit.Wire3.PreReadCharge.pre_read_repeat_digest_eq",
+        "Audit.Wire3.PreReadCharge.pre_read_grinder_round_digest_is_probe_digest",
+        "Audit.Wire3.PreReadCharge.pre_read_grinder_probe_sel_val",
+        "Audit.Wire3.PreReadCharge.pre_read_grinder_run_probes_distinct",
+        "Audit.Wire3.PreReadCharge.pre_read_grinder_absorb_is_probe_one_when_unfavourable",
+        "Audit.Wire3.PreReadCharge.pre_read_absorb_slot_never_fresh",
+        "Audit.Wire3.PreReadCharge.echo_absorb_slot_never_fresh",
+        "Audit.Wire3.PreReadCharge.outer_term_nonneg",
+        "Audit.Wire3.PreReadCharge.outer_term_at_thirteen_numeric",
+        "Audit.Wire3.PreReadCharge.pre_read_many_probes_outer_tiny",
+        "Audit.Wire3.PreReadCharge.pre_read_many_probes_outer_lt_one",
+        "Audit.Wire3.PreReadCharge.pre_read_grinder_in_class",
+        "Audit.Wire3.PreReadCharge.pre_read_outer_bound_at_thirteen_many_probes",
+        "Audit.Wire3.PreReadCharge.pre_read_outer_bound_at_thirteen_many_probes_lt_one"
+      ],
+      "sources": [
+        "mle/src/transcript_v2.rs",
+        "mle/contracts/src/TranscriptV2.sol",
+        "mle/src/sumcheck/gate_ext3_v2.rs"
+      ],
+      "scope": "Charges the probe rather than the absorb: for grinding provers whose absorb reads challenges only at the digests of its own probes and earlier stage digests \u2014 a class containing the pre-reading selector the adopted union module excludes \u2014 each probe at a fresh string yields a fresh digest whose challenge cells are fresh, so the chance that the challenge at a probed digest lands in a candidate message's bad set is the per-round term, and summing over the q probes and the real round digest gives (q+1) times the outer term. The conditioning is derived from the complements of the two adopted all-pairs-charged clash events, and the absorb slot is not charged because it repeats a probe's string: on the favourable branch the round's challenge digest is the probe's digest itself, so charging the probes charges the attack. Closed instance at the adopted pre-reading grinder with a million probes per stage is below one. Not delivered: the pairing of the lane and candidate family with the grinder's own absorbed message, the tau, alpha and index lanes, and a single combined constant. Random-oracle model, not keccak; not the system's soundness error."
     }
   ]
 }

@@ -776,6 +776,12 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    （任意の戦略・任意のG）、RXL経路を再構築して engine 自身の tau+索引事象上で ≤ combinedBound + 2·tauTerm + chain衝突項。
    最終定理で∀-lane形のまま残るのは外側（`SoundnessAssembly.outerBadEvent`のalpha依存対角は適応系列で未解決。TSCCは固定プローバのみ）
    とalpha（対角不要）。
+   適応系列の外側alpha対角はEngineOuterDiagonalで完了し、transcript制限付き因果的プローバに対するROM適応的上界は外側・tau・alpha・索引
+   の**4事象すべてをengine自身のもの**として ≤ combinedBound + 2·tauTerm + chain衝突項（閉実例でRHS<1）になった。評価した事象は実現proof
+   の`actualDigestDraw`のouterEvent事象と一致（証明済み）。`explicit_good_draw_assembly`の失敗集合への系は、lane列の同定（実現lane列 = gateLaneOf at the realized run）1本が残るため未到達。
+   pre-read（FS challenge grinding）プローバはPreReadChargeで、probeをchargeする二段fresh peelにより ≤ (q+1)·outerTerm（一般のgrinding
+   プローバ、ChallengeRestricted不要）を得た。好都合な分岐ではroundのchallenge digestがprobeのdigestそのものなので、probeのchargeが攻撃を
+   chargeする。残るのは結合（grinder自身のメッセージ）、tau/alpha/索引lane、定数の統合。
    これらの結果はSoundnessAssemblyで1定理に組み立てた。explicit engineの受理、残余仮定の名前付き構造体
    （表の意味論と転記行、配備digestと有界性、fold水準のopening、抽出列の高さとcommitted幅、
    GateDerivedRejectionの9フィールド、slot係数）、実digest drawが4族のbad event外、実index drawが

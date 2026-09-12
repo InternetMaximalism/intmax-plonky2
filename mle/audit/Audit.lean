@@ -145,3 +145,5 @@ import Audit.Wire3.RunLevelTransportAudit
 import Audit.Wire3.CommitmentOrderSurvey
 import Audit.Wire3.GrindingUnionBound
 import Audit.Wire3.EngineTauDiagonal
+import Audit.Wire3.EngineOuterDiagonal
+import Audit.Wire3.PreReadCharge

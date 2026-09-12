@@ -1591,6 +1591,25 @@ loop方式の23回目。「固定データ」残余の分類、grindingプロー
   問合せ計数、grinder自身のメッセージとの結合、CommittedTablesJoin（rootDetermined・preprocessedPinned・configDeployed）、R1b、
   回路の真値、受理の提示。
 
+## 第39継続更新（be012e44以降）
+
+追跡版runnerでコミット`be012e44`の140モデル・5469定理を再検査しPASS（1433.378秒、1470モジュール、
+manifest `47e3a0c1cac5e6bc0573c674762d9a8a8ac1e521e0015b12a47c8a039b0dca59`、receipt
+`0130324cafcff44a7b19a8160e9f44205924a4e55df008caa03aaed0ac067e33`、graph
+`049d621b851d3edd1345b324fd008517201392ce5383f9547dbc9610d851e974`）。
+loop方式の24回目。適応系列の外側alpha対角と、pre-read grinding の問合せ計数を対象にした。
+
+- **外側alpha対角**: EngineOuterDiagonalはalphaが外側事象にgate laneの初期truth claim経由でのみ入ることを示し、alpha索引のraw lane族で
+  engine自身の外側事象を定義、alphaがround cellより厳密に前の段で読まれるためOLTの対角fresh stepが無変更で適用できて ≤ outerTerm を
+  得た。これで4事象すべてがengine自身のものとなり ≤ combinedBound + 2·tauTerm + chain衝突項（閉実例でRHS<1）。組立失敗集合への系は
+  DrawEncodesRunの実現drawでの成立とlane列の同定の2脚が残るため未到達と明記。レビューは全証明を確認し（alpha依存のrfl分解、22 < 27+5rによる不変性、一様基数ゆえ分割不要、ETDと同一仮定の全所有和集合）、「残る2脚」の診断を退けて（DrawnAtは実現laneで構成的に成立）lane列同定1本に縮め、要約文の過大表現（tables = s0.tables だけでない）を正した。PASS-WITH-FIXES。修正でDrawnAt/frozen walkの定理4本を追加（45定理）。
+- **pre-readのcharge**: PreReadChargeはprobeをchargeする二段fresh peelで、GUBが除外したpre-readプローバを含むクラスに (q+1)·outerTerm を
+  証明した。好都合な分岐ではroundのchallenge digestがprobeのdigestそのものであることを示し、absorb（反復）をchargeしない理由と、
+  probeのchargeが攻撃をchargeする理由を定理化した。結合（grinder自身のメッセージ）と他laneは未達。レビューは二段peelの健全性と算術を確認した上で、結合の隙間が「decoder不在」ではなく**構造的**（GrindLaneは段digestのcellしか読めず、pre-readの実現メッセージ・running claimを表現できない）であること、「bounds it」が候補族サロゲートの上界であること、absorbスロットが被験プローバでは空であることを正させた。修正で二分補題と緩いcutを追加（60定理）。
+  両モジュール合わせて142モデル・5574定理。EngineOuterDiagonalにより、transcript制限付き因果的プローバのROM適応的上界は4事象すべてを
+  engine自身のものとして述べられた（組立失敗集合への系は2脚が残る）。PreReadChargeにより、FS challenge grindingは予想通り係数(q+1)で
+  評価された（結合は未了）。今回もROMの法則下の結果であり、keccakの性質でも系の健全性誤差でもない。残るのはlane列同定（適応系列の組立系）、grinderのメッセージとの結合、CommittedTablesJoin、R1b、回路の真値、受理の提示。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。
