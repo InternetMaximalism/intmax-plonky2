@@ -110,6 +110,32 @@ Precisely, and nothing is hidden:
 * ACCEPTANCE IS NEVER EXHIBITED.  No accepting proof for the explicit engine is
   produced anywhere below; `adaptiveAssemblyFailureEvent` is a set defined by a
   NEGATED implication, so it is well defined whether or not any table accepts.
+* THE FAILURE EVENT IS EMPTY AT EVERY NON-DEGENERATE CONFIGURATION.
+  `adaptiveAssemblyFailureEvent` carries ACCEPTANCE as a conjunct: it is the
+  negation of an implication whose antecedent is `Integrated.verify ... =
+  Except.ok ()`.  The adopted `Integrated.verify` ends in `Verifier.verify`
+  (`Integrated.lean:59-66`), which rejects unless `Verifier.shape pin c p = true`
+  (`Verifier.lean:415`), and `Verifier.shape` demands
+  `p.used.logPreprocessed.length = c.numConstants + c.numRouted`,
+  `p.used.logWitness.length = c.numWires` and
+  `p.used.logNormInverse.length = 2 * c.numRouted` (`Verifier.lean:139-141`).  The
+  proof record this module quantifies over is
+  `RunLevelTransportAudit.realizedRunProof`, whose `used` field is the untouched
+  `Verifier.testProof.used` of lengths `1, 1, 0` (`Verifier.lean:596-600`,
+  `RunLevelTransportAudit.lean:582-587`).  Acceptance therefore forces
+  `numRouted = 0`, `numConstants = 1` and `numWires = 1`.  AT EVERY OTHER
+  CONFIGURATION `adaptiveAssemblyFailureEvent = ∅` AND EVERY BOUND BELOW IS
+  VACUOUSLY TRUE, including the closed instance `adaptive_assembly_bound_at_thirteen`
+  -- the adopted `IndexHalfTransport` records this as
+  `adaptive_assembly_failure_event_is_empty_at_nondegenerate_config`.  `degreeBits`
+  and `numPublicInputs` are NOT pinned by this (`logRounds`, `gateRounds` and
+  `publicInputs` are overridden by the adopted `realizedProof`), and at the
+  degenerate configuration `Verifier.width c = 1`, so the fixture's
+  `constituentWidth := 1` adds no further pin.  WHEREVER THIS MODULE SAYS ITS
+  HYPOTHESES ARE SATISFIABLE AND THEREFORE THAT NOTHING IS VACUOUS, THAT INFERENCE
+  IS INVALID: hypothesis satisfiability is not non-emptiness of the bounded event.
+  To obtain a non-vacuous statement the used claims must be a PARAMETER of the
+  event, as in the adopted `IndexHalfTransport.adaptiveAssemblyFailureEventWith`.
 * THE INDEX HALF'S MASS.  The adopted `RawIndexLanes` weighs the index event at the
   adopted `rawRealizedRun` -- the EXTENDED-shape chain, a proof record differing
   from `realizedRunProof` in its `used` field.  This module therefore carries the
@@ -1033,11 +1059,15 @@ theorem adaptive_assembly_bound_at_thirteen_lt_one :
   rw [hnum]
   linarith
 
-/-- (4) **THE HYPOTHESES OF THE PAYOFF ARE SATISFIABLE**, so nothing above is
-vacuous: the counter budget holds at thirteen coupled rounds, the empty
-coefficient family meets the coefficient-length budget, and the EMPTY truth list
-meets both degree budgets -- the same witnesses the adopted
-`EngineOuterDiagonal` closed instance uses. -/
+/-- (4) **THE HYPOTHESES OF THE PAYOFF ARE SATISFIABLE**: the counter budget holds
+at thirteen coupled rounds, the empty coefficient family meets the
+coefficient-length budget, and the EMPTY truth list meets both degree budgets --
+the same witnesses the adopted `EngineOuterDiagonal` closed instance uses.  THIS
+DOES NOT MAKE THE BOUNDS ABOVE NON-VACUOUS.  Hypothesis satisfiability is not
+non-emptiness of the bounded event, and the bounded event here IS empty at every
+configuration other than `numWires = 1`, `numRouted = 0`, `numConstants = 1` --
+see the emptiness bullet of the honesty header, and the adopted
+`IndexHalfTransport.adaptive_assembly_failure_event_is_empty_at_nondegenerate_config`. -/
 theorem adaptive_payoff_hypotheses_satisfiable :
     (12 + 6 * 13 < Transcript.u64Limit) ∧
       (∀ i, i < 2 ^ 13 → ((fun _ => ([] : List Element)) i).length ≤ 123) ∧

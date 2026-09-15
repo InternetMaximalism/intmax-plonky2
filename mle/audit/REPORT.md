@@ -1632,6 +1632,74 @@ loop方式の25回目。EngineOuterDiagonalが残したlane列の同定と、`Co
   一貫して「固定データ」と呼んでいた残余はR1bと2つの局所衝突に分解された。今回もROMの法則下の結果であり、keccakの性質でも系の
   健全性誤差でもない。残るのは索引半分の輸送、R1b（全列のroot決定性）、回路の真値、受理の提示、そしてgrindingプローバの結合。
 
+## 第41継続更新（cf5154da以降）
+
+追跡版runnerでコミット`cf5154da`の144モデル・5642定理を再検査しPASS（976.283秒、1474モジュール、
+manifest `c73e62e7fede78e845ce185f280ea96bfd89b1bef20e3b26dabc4ac250daa4a6`、receipt
+`dc57d67e22ea1d701164a0b9f09dd0d366c8710b7886e95877e1ec063385f6d6`、graph
+`1999c10334e6cd13ded4f935811c1dc7a9c67fd1df3eca43591d498d276629f7`）。
+## 第42継続更新（cf5154da以降）
+
+反復27では索引半分の輸送と2つの局所化衝突の質量計算を採用した。いずれもOpusによる敵対的レビューを経ており、
+**両方のレビューが実質的な欠陥を指摘した**。
+
+`Audit.Wire3.IndexHalfTransport`（38定理・8定義）: AdaptiveAssemblyFailureが未評価の`oracleProbability`として
+運搬していた索引項を評価し、適応系列の組立失敗上界を単一定数にした。要は2つの`rfl`である —
+`realized_run_proof_used`（実現runの`used`は`defaultClaims`）と、鎖の比較`raw_extended_no_clash_subset`
+（拡張shapeの無衝突事象は採用済みstrategic shapeの`22+5d`段のそれに含まれる）。補集合は1つだけ課金され、
+結果は`combinedBound + 2·tauTerm + indexStage(indexStage+1)/2/|Block|`、右辺に`oracleProbability`は残らない。
+**レビューが採用済みツリーに遡る空虚性を発見した**: `adaptiveAssemblyFailureEvent`は受理を連言項に持つ
+（含意の否定でその前件が`Integrated.verify … = .ok ()`）。採用済み`Integrated.verify`は`Verifier.verify`に終わり
+（`Integrated.lean:59-66`）、`Verifier.shape pin c p = true`でなければ拒否し（`Verifier.lean:415`）、shapeは
+`p.used`の3つの長さを構成に固定する（`Verifier.lean:139-141`）。ところが実現runの`used`はfixtureの
+`Verifier.testProof.used`（長さ`1, 1, 0`）のままである（`Verifier.lean:596-600`、`RunLevelTransportAudit.lean:582-587`）。
+したがって受理は`numRouted = 0 ∧ numConstants = 1 ∧ numWires = 1`を強制し、**それ以外のあらゆる構成で失敗事象は空**、
+採用済みAAFの閉実例`adaptive_assembly_bound_at_thirteen`を含め上界は空虚に真だった。`degreeBits`と`numPublicInputs`は
+固定されない（`logRounds`/`gateRounds`/`publicInputs`は上書きされる）、退化構成では`Verifier.width c = 1`なので
+`constituentWidth := 1`は追加の固定を与えない。本モジュールは両方向で処理した。第一に空虚性を定理として記録する
+（`shape_forces_degenerate_config_at_fixture_claims`、`acceptance_forces_degenerate_config_at_fixture_claims`、
+`adaptive_assembly_failure_event_is_empty_at_nondegenerate_config`）。第二に`used`をパラメータにして障害を除去する:
+`realizedRunProofWith u`は`defaultClaims`で採用済み`realizedRunProof`と、`constantClaims u`で採用済み`rawRealizedRun`と
+**定義的に一致**する（ともに`rfl`）ので採用済み補題がそのまま転送し、外側半分は`used`を読まないため無改修である
+（`outer_bad_event_at_claims`）。payoffは`shape_satisfiable_at_matching_claims` — `matchingClaims c`ではshapeの
+**5つの`used`連言すべて**が`c`自身で成立し、長さによる障害は消える。受理が提示されたとは主張しない（残るshape連言と
+`Verifier.envelope`は未決として明示）。適応プローバの自由度は結合round messageと statement 5欄のみであり、
+`used`/`whirTranscript`/`whirHints`/`protocolVersion`/`constituentWidth`はfixture定数である。
+
+`Audit.Wire3.LocalizedCollisionMasses`（80定理・19定義＋4略記）: CommittedTablesClausesが残した2つの局所化衝突の
+ROM質量を計算した。固定ペアの衝突質量は**ちょうど**`1/|Block|`である（`adaptive_fresh_step_card`自体が等号で標的が単集合。
+片側版は`fresh_coordinate_probability`）。退化枝は実在し、ROM oracleの`Q`外既定値が`zeroDigest`であるため両文字列が`Q`外なら
+質量は1になる（`degenerate_branch_has_mass_one`）。**レビューはより強い定理を証明して返し、それを採用した**:
+和集合のサロゲートは構成の族`F`ではなく**クエリ集合**である。符号化クエリが`Q`内に落ちる構成は`Q.erase (configQuery c₀)`で
+添字付けられ各項は`≤ 1/|Block|`、`Q`外に落ちる構成はoff-`Q`既定値により**単一の固定事象**へ潰れる。よって
+`any_config_collision_mass_le`は「**何らかの**構成が配備済み`c₀`と衝突する」質量を`≤ (Q.card + 1)/|Block|`で抑える —
+`Verifier.Config`全体で量化し、族を一切名指ししない。前提は`configQuery c₀ ∈ Q`のみである。
+`any_config_collision_mass_le_at_the_bounded_queries`が`Q := boundedQueries L`を代入して既存の
+`config_query_mem_bounded_queries`で仮定を落とし、和集合項は採用済みのクエリ長モデルが所有する量になる。行側も
+`hR : R ⊆ Q`から同様に従う。`F`版は「粗い族ごとの読み」として残置し、`config_family_collision_event_subset_any`により
+損失なく捨てられることを示した。**負の結果も記録した**: `joinFailureEvent`は`CanonicalProofCheck.DeployedFacts`を
+連言項に持ち、その`pinnedDigest`欄が表座標を`configQuery c₀`に固定するので、**任意の**述語`X`に対して
+`deployed_facts_alone_costs_the_whole_birthday_term`が質量`≤ 1/|Block|`を与える。`X := True`でも看板は成り立つ以上、
+`fixed_tables_costs_a_birthday_term`の数値はbirthday項ではなく条件付けから来ており、その節の実質は包含
+`join_failure_event_subset`の側にある。R1bは常に仮定のままで証明も弱化も供給もせず、joinは主張せず、`joinFailureEvent`が
+非空とも主張しない。`hc₀ : configQuery c₀ ∈ Q`は採用済み対応物のない**追加仮定**である（採用済み
+`committed_tables_join_up_to_collisions`はkhashにクエリ集合側の条件を課さない)。
+
+本バッチは採用済み2モジュールの文言も訂正した。`RunLevelTransportAudit`の honesty 項目(vii)は
+「以下のすべての定理はproofを`Verifier.statement`と`roundMessages`経由でしか読まない……`Verifier.shape`はこれに対して
+一度も主張されない」と述べていたが、これは当該モジュール自身の定理については真でも**下流では破れている**。破れは2種類あり、
+(a) fixture欄が読まれる（AAFの`suppliedCellsAt`が`p.used`を読む）、(b) shapeが主張される（失敗事象が受理を連言項に持ち、
+受理はshapeを含意する）。(vii)を全面差し替えし、fixture継承欄を読むか shape/受理を主張する下流モジュールは当該欄を
+パラメータ化するか空虚性を開示せよと明記した。`AdaptiveAssemblyFailure`には空虚性の項目を追加し、
+`adaptive_payoff_hypotheses_satisfiable`の「したがって上記のどれも空虚ではない」という**推論そのものが無効**である
+（仮定の充足可能性は上界を付けた事象の非空性ではない）ことを明記した。
+
+両モジュール合わせて146モデル・5760定理。今回もROMの法則下の結果であり、keccakの性質でも系の健全性誤差でもない。
+残るのはR1b（全列のroot決定性）、回路の真値、受理の提示、そしてgrindingプローバの結合である。
+
+%%B38%%
+
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

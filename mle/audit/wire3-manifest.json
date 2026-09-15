@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "f02dde6f9b0102cf5d1c81c515e8846dc311d3ba7a68ef97f74db9c8c09f331f",
+      "sha256": "11cdee399aee53ee8059ad8452aca51a7623f4391b4dc726cb8139a4a1aecbcb",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "59a23fca70331dbf23e4d803b2d2b03ab43dfed8cfddb9c1fd36e90f15a11e44",
+      "sha256": "2b7ef4bbda5fff56fed16d53a86d2ebcc0bf3176e1c25200f1ae8ecca66ace00",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "5195c494efaa6217ca5d6dbdead6757fa3b0f2f07d1258d688cae06cfed01ea9",
+      "sha256": "271059b14f0c52613d61ad5c448924b891ef53aa0a637c580cd0330cad6150b2",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "2e78d37008fdd59efeeea60d7591c94fb77ca4b9ec25fb2538b67fe536360c58",
+      "sha256": "14fad5b8289e5f66b2ab02880f81c3d79e25fdb7ef517439664a2b666a75ba82",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "3048c7f3bce443026eefb506cd14b1468f7fa207d80fbcf4e74098cb8a13b3ab",
+      "sha256": "ddc86f94f2a4f85c9448d1422dd8c234fbb55aa36d123ea4c8ede1d077bb4cbc",
       "kind": "spec"
     },
     {
@@ -2430,7 +2430,7 @@
     },
     {
       "path": "mle/audit/Audit/Wire3/RunLevelTransportAudit.lean",
-      "sha256": "ce4946a73a7d5d93f7b0db16e1612bcbfd0aed4e52e3aceec50db89293d9bcc7",
+      "sha256": "363ae6e2613451934ef919278d96c86bfd8668ea32b1c65a1d28a22a45e7a7aa",
       "kind": "current-model"
     },
     {
@@ -2460,12 +2460,22 @@
     },
     {
       "path": "mle/audit/Audit/Wire3/AdaptiveAssemblyFailure.lean",
-      "sha256": "bdfe11b55d2984681a2c4da89e8c34b9db4281600d00bba2a6f19cff6d4299dd",
+      "sha256": "4d06819ec43bebdb83a39169f927396443d7835f0379282044286e4621216d51",
       "kind": "current-model"
     },
     {
       "path": "mle/audit/Audit/Wire3/CommittedTablesClauses.lean",
       "sha256": "d905e308f9f0b0b8bfeda557e5d991c5231f81f7d29eb5945789879779ea887b",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/IndexHalfTransport.lean",
+      "sha256": "0a2ac2ceafd0d25a153e1cf68d23f67ce2f9682ce55af88678d085167c48cc08",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/LocalizedCollisionMasses.lean",
+      "sha256": "840b1c7f14f7bd2a3d3713618a94337761bb803148276473311f23650bbb3660",
       "kind": "current-model"
     }
   ],
@@ -9674,6 +9684,147 @@
         "mle/contracts/src/spongefish/SpongefishWhirVerify.sol"
       ],
       "scope": "Decides the three clauses of the committed-tables join one at a time. The preprocessed pin is derived outright: it is a conjunct of the adopted shape predicate that every accepted call returns, for an arbitrary engine; the witness and norm-inverse roots are not pinned by it, and its circuit-digest conjunct names the called configuration, not the deployment. The deployed-configuration clause is derived on the Solidity route up to one localized configuration-encoding collision, a falsifiable predicate rather than the pigeonhole one, and the Rust converse fails on a core field. The root-determination clause is R1b and is worse than open: at an opening-reading extractor no table map satisfies the clause at two different openings, so the earlier degenerate constant-extractor witness was forced; root determination is exactly opening independence. The adopted binding lemmas reach only the opened cells, giving equal opened rows and dot values at equal roots or a localized leaf collision on the two named rows, discharged at a fixture on two different hint buffers and falsified at a clash fixture; the unopened cells lie outside every binding argument and no root-to-column map is definable at this level, so full-column root determination is R1b proper. Consequently the random-oracle line's fixed-table sentence reduces, for its table argument, to R1b plus a localized configuration-encoding collision plus a localized leaf collision for the opened cells; the zero-check table remains a function of the block-zero gate alpha and is still not fixed data. No random-oracle masses are computed here; acceptance and R1b are inherited, unexhibited hypotheses; nothing here changes a bound."
+    },
+    {
+      "module": "Audit.Wire3.IndexHalfTransport",
+      "theorems": [
+        "Audit.Wire3.IndexHalfTransport.default_claims_bounded",
+        "Audit.Wire3.IndexHalfTransport.constant_claims_causal",
+        "Audit.Wire3.IndexHalfTransport.constant_claims_extended_bounded",
+        "Audit.Wire3.IndexHalfTransport.default_claims_extended_bounded",
+        "Audit.Wire3.IndexHalfTransport.shape_forces_degenerate_config_at_fixture_claims",
+        "Audit.Wire3.IndexHalfTransport.acceptance_forces_degenerate_config_at_fixture_claims",
+        "Audit.Wire3.IndexHalfTransport.shape_satisfiable_at_matching_claims",
+        "Audit.Wire3.IndexHalfTransport.matching_claims_bounded",
+        "Audit.Wire3.IndexHalfTransport.matching_claims_extended_bounded",
+        "Audit.Wire3.IndexHalfTransport.realized_run_proof_used",
+        "Audit.Wire3.IndexHalfTransport.raw_realized_run_is_realized_run_proof",
+        "Audit.Wire3.IndexHalfTransport.adaptive_index_bad_event_is_raw_engine_index_bad_event",
+        "Audit.Wire3.IndexHalfTransport.realized_run_proof_with_at_default_claims",
+        "Audit.Wire3.IndexHalfTransport.raw_realized_run_at_constant_claims",
+        "Audit.Wire3.IndexHalfTransport.outer_bad_event_at_claims",
+        "Audit.Wire3.IndexHalfTransport.mem_adaptive_index_bad_event_with",
+        "Audit.Wire3.IndexHalfTransport.adaptive_index_bad_event_with_is_raw_engine_index_bad_event",
+        "Audit.Wire3.IndexHalfTransport.adaptive_assembly_failure_event_with_at_default_claims",
+        "Audit.Wire3.IndexHalfTransport.adaptive_assembly_failure_with_subset",
+        "Audit.Wire3.IndexHalfTransport.strategy_sel_of_agree",
+        "Audit.Wire3.IndexHalfTransport.stage_no_clash_of_agree",
+        "Audit.Wire3.IndexHalfTransport.raw_extended_no_clash_subset",
+        "Audit.Wire3.IndexHalfTransport.adaptive_index_half_mass_le_at_claims",
+        "Audit.Wire3.IndexHalfTransport.adaptive_index_half_mass_le",
+        "Audit.Wire3.IndexHalfTransport.adaptive_assembly_failure_mass_le_single_constant_at_claims",
+        "Audit.Wire3.IndexHalfTransport.adaptive_assembly_failure_mass_le_single_constant",
+        "Audit.Wire3.IndexHalfTransport.adaptive_single_constant_at_thirteen_lt_one",
+        "Audit.Wire3.IndexHalfTransport.adaptive_assembly_bound_at_thirteen",
+        "Audit.Wire3.IndexHalfTransport.adaptive_single_constant_hypotheses_satisfiable",
+        "Audit.Wire3.IndexHalfTransport.adaptive_assembly_bound_at_thirteen_at_matching_claims",
+        "Audit.Wire3.IndexHalfTransport.adaptive_assembly_failure_event_is_empty_at_nondegenerate_config",
+        "Audit.Wire3.IndexHalfTransport.five_union_subset",
+        "Audit.Wire3.IndexHalfTransport.five_union_inter_mass_le",
+        "Audit.Wire3.IndexHalfTransport.adaptive_all_cells_failure_mass_le_at_claims",
+        "Audit.Wire3.IndexHalfTransport.adaptive_all_cells_failure_mass_le",
+        "Audit.Wire3.IndexHalfTransport.adaptive_all_cells_constant_at_thirteen_lt_one",
+        "Audit.Wire3.IndexHalfTransport.adaptive_all_cells_bound_at_thirteen",
+        "Audit.Wire3.IndexHalfTransport.adaptive_all_cells_bound_at_thirteen_at_matching_claims"
+      ],
+      "sources": [
+        "mle/src/transcript_v2.rs",
+        "mle/contracts/src/TranscriptV2.sol",
+        "mle/src/verifier_v2.rs",
+        "mle/contracts/src/MleVerifierV2.sol"
+      ],
+      "scope": "Evaluates the index term the adaptive assembly-failure module carried as an unevaluated mass, making the adaptive-line bound a single constant. Two definitional identities do the work: the realized run's used-claims record is the default one, and the extended-shape chain's no-clash event is contained in the strategic shape's own no-clash event at the index stage, so exactly one complement is charged and the bound is the combined bound plus twice the index tau term plus the index stage's birthday term, with no mass left on the right. An adversarial review then found a vacuity reaching back into the adopted line: the failure event carries acceptance as a conjunct, acceptance subsumes the shape predicate, and the shape predicate pins the three used-claim list lengths to the configuration, while the realized record inherits the fixture's all-zero claims of lengths one, one and zero. Acceptance therefore forces one wire, no routed wires and one constant, so at every other configuration the failure event is empty and the adopted closed instance was vacuously true; the round counts and public-input count are not pinned, and the width follows from the other pins. This module handles that both ways. It records the emptiness as theorems, and it removes the obstruction by making the used claims a parameter: the parameterized record is definitionally the adopted realized record at the default claims and definitionally the adopted raw realized run at a constant claims choice, so every adopted lemma transports and the outer half needs no rework because it never reads that field. At a matching claims choice all five used-claim conjuncts of the shape predicate hold at the configuration itself. Acceptance is still not exhibited: the remaining shape conjuncts and the deployment envelope are disclosed as undischarged. The adaptive prover's freedom is the coupled round messages and five statement fields only; the used claims, WHIR transcript, WHIR hints, protocol version and constituent width are fixture constants inherited from the adopted run-level transport module, whose own justification for that fixture is corrected in this batch. Random-oracle model, not keccak; transcript-restricted causal prover; good-draw-conditional, not circuit truth; R1b and the committed-tables join remain; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.LocalizedCollisionMasses",
+      "theorems": [
+        "Audit.Wire3.LocalizedCollisionMasses.mem_all_tables",
+        "Audit.Wire3.LocalizedCollisionMasses.all_tables_card",
+        "Audit.Wire3.LocalizedCollisionMasses.oracle_probability_all_tables",
+        "Audit.Wire3.LocalizedCollisionMasses.block_digest_injective",
+        "Audit.Wire3.LocalizedCollisionMasses.digest_block_injective",
+        "Audit.Wire3.LocalizedCollisionMasses.root_word_injective",
+        "Audit.Wire3.LocalizedCollisionMasses.to_transcript_bytes_injective",
+        "Audit.Wire3.LocalizedCollisionMasses.leaf_hash_of_eq_iff",
+        "Audit.Wire3.LocalizedCollisionMasses.khash_of_eq_iff",
+        "Audit.Wire3.LocalizedCollisionMasses.block_digest_eq_iff",
+        "Audit.Wire3.LocalizedCollisionMasses.mem_filter_tables",
+        "Audit.Wire3.LocalizedCollisionMasses.oracle_probability_union_tables_le",
+        "Audit.Wire3.LocalizedCollisionMasses.oracle_probability_union_le",
+        "Audit.Wire3.LocalizedCollisionMasses.mem_pair_collision_event",
+        "Audit.Wire3.LocalizedCollisionMasses.pair_collision_event_symm",
+        "Audit.Wire3.LocalizedCollisionMasses.invariant_at_all_tables",
+        "Audit.Wire3.LocalizedCollisionMasses.mem_pair_collision_event_inside",
+        "Audit.Wire3.LocalizedCollisionMasses.hash_of_outside",
+        "Audit.Wire3.LocalizedCollisionMasses.pair_collision_card_inside",
+        "Audit.Wire3.LocalizedCollisionMasses.fixed_pair_collision_mass",
+        "Audit.Wire3.LocalizedCollisionMasses.pair_collision_mass_left",
+        "Audit.Wire3.LocalizedCollisionMasses.pair_collision_mass_right",
+        "Audit.Wire3.LocalizedCollisionMasses.pair_collision_mass_outside",
+        "Audit.Wire3.LocalizedCollisionMasses.pair_collision_mass_le",
+        "Audit.Wire3.LocalizedCollisionMasses.one_div_block_card_nonneg",
+        "Audit.Wire3.LocalizedCollisionMasses.empty_event_mass",
+        "Audit.Wire3.LocalizedCollisionMasses.mem_config_collision_event",
+        "Audit.Wire3.LocalizedCollisionMasses.config_collision_event_is_empty_on_equal_encodings",
+        "Audit.Wire3.LocalizedCollisionMasses.config_query_ne",
+        "Audit.Wire3.LocalizedCollisionMasses.config_collision_event_eq",
+        "Audit.Wire3.LocalizedCollisionMasses.config_encoding_collision_mass",
+        "Audit.Wire3.LocalizedCollisionMasses.config_encoding_collision_mass_le",
+        "Audit.Wire3.LocalizedCollisionMasses.config_family_collision_mass_le",
+        "Audit.Wire3.LocalizedCollisionMasses.zero_sink_event_mass",
+        "Audit.Wire3.LocalizedCollisionMasses.mem_any_config_collision_event",
+        "Audit.Wire3.LocalizedCollisionMasses.any_config_collision_subset",
+        "Audit.Wire3.LocalizedCollisionMasses.any_config_collision_mass_le",
+        "Audit.Wire3.LocalizedCollisionMasses.config_family_collision_event_subset_any",
+        "Audit.Wire3.LocalizedCollisionMasses.mem_leaf_collision_event",
+        "Audit.Wire3.LocalizedCollisionMasses.leaf_collision_event_is_empty_on_equal_rows",
+        "Audit.Wire3.LocalizedCollisionMasses.leaf_collision_event_eq",
+        "Audit.Wire3.LocalizedCollisionMasses.leaf_collision_mass",
+        "Audit.Wire3.LocalizedCollisionMasses.leaf_collision_mass_le",
+        "Audit.Wire3.LocalizedCollisionMasses.distinct_row_pairs_card_le",
+        "Audit.Wire3.LocalizedCollisionMasses.mem_distinct_row_pairs",
+        "Audit.Wire3.LocalizedCollisionMasses.opened_rows_collision_mass_le",
+        "Audit.Wire3.LocalizedCollisionMasses.opened_rows_collision_mass_le_by_query_size",
+        "Audit.Wire3.LocalizedCollisionMasses.mem_join_failure_event",
+        "Audit.Wire3.LocalizedCollisionMasses.join_failure_event_subset",
+        "Audit.Wire3.LocalizedCollisionMasses.fixed_tables_costs_a_birthday_term",
+        "Audit.Wire3.LocalizedCollisionMasses.fixed_tables_costs_a_birthday_term_over_a_family",
+        "Audit.Wire3.LocalizedCollisionMasses.mem_root_word_fiber",
+        "Audit.Wire3.LocalizedCollisionMasses.root_word_fiber_card_le_one",
+        "Audit.Wire3.LocalizedCollisionMasses.khash_at_deployed_is_root_word",
+        "Audit.Wire3.LocalizedCollisionMasses.deployed_facts_alone_costs_the_whole_birthday_term",
+        "Audit.Wire3.LocalizedCollisionMasses.const_table_hash_of",
+        "Audit.Wire3.LocalizedCollisionMasses.const_table_mem_pair_collision_event",
+        "Audit.Wire3.LocalizedCollisionMasses.const_table_mem_leaf_collision_event",
+        "Audit.Wire3.LocalizedCollisionMasses.const_table_mem_config_collision_event",
+        "Audit.Wire3.LocalizedCollisionMasses.const_table_mem_pair_collision_event_outside",
+        "Audit.Wire3.LocalizedCollisionMasses.short_strings_distinct",
+        "Audit.Wire3.LocalizedCollisionMasses.short_one_mem",
+        "Audit.Wire3.LocalizedCollisionMasses.short_two_mem",
+        "Audit.Wire3.LocalizedCollisionMasses.not_mem_bounded_queries_of_long",
+        "Audit.Wire3.LocalizedCollisionMasses.fixed_pair_hypotheses_are_satisfiable",
+        "Audit.Wire3.LocalizedCollisionMasses.fixed_pair_collision_mass_at_the_bounded_queries",
+        "Audit.Wire3.LocalizedCollisionMasses.config_query_mem_bounded_queries",
+        "Audit.Wire3.LocalizedCollisionMasses.any_config_collision_mass_le_at_the_bounded_queries",
+        "Audit.Wire3.LocalizedCollisionMasses.config_query_mem_set_left",
+        "Audit.Wire3.LocalizedCollisionMasses.config_query_mem_set_right",
+        "Audit.Wire3.LocalizedCollisionMasses.config_encoding_hypothesis_is_satisfiable",
+        "Audit.Wire3.LocalizedCollisionMasses.mem_pair_query_set_left",
+        "Audit.Wire3.LocalizedCollisionMasses.mem_pair_query_set_right",
+        "Audit.Wire3.LocalizedCollisionMasses.pair_collision_event_nonempty_at_a_two_element_query_set",
+        "Audit.Wire3.LocalizedCollisionMasses.fixed_pair_collision_mass_at_a_two_element_query_set",
+        "Audit.Wire3.LocalizedCollisionMasses.config_collision_event_is_inhabited_with_the_stated_mass",
+        "Audit.Wire3.LocalizedCollisionMasses.leaf_collision_event_is_inhabited_with_the_stated_mass",
+        "Audit.Wire3.LocalizedCollisionMasses.rows_subset_bounded_queries",
+        "Audit.Wire3.LocalizedCollisionMasses.opened_rows_collision_mass_le_at_the_bounded_queries",
+        "Audit.Wire3.LocalizedCollisionMasses.degenerate_branch_has_mass_one"
+      ],
+      "sources": [
+        "mle/contracts/src/MleVerifierV2.sol",
+        "mle/src/verifier_v2.rs",
+        "mle/src/vk_v2.rs"
+      ],
+      "scope": "Computes the random-oracle masses of the two localized collisions the committed-tables clause module left. A fixed pair's collision mass is exactly one over the block count, from the adopted diagonal fresh step, which is itself an equality, at a singleton target; the one-sided variants use the adopted fresh-coordinate probability against a fixed block. The degenerate branch is real rather than an artifact: the oracle's default outside the query set is the zero digest, so two strings both outside it collide with mass one, and the membership hypothesis that rules this out is load-bearing. An adversarial review supplied, and this module adopts, a strictly stronger union statement: the surrogate for the adversary's freedom is the QUERY SET, not a finite family of configurations. Configurations whose encoding query lands inside the query set are re-indexed by that set with the deployed query removed, each contributing at most one over the block count; configurations whose query lands outside collapse, through the very default above, into a single fixed event. Hence the mass that SOME configuration whatsoever collides with the deployed one \u2014 quantified over the whole configuration type, with no family named \u2014 is at most the query count plus one over the block count, and instantiating at the adopted bounded query set turns that union term into a quantity the adopted query-length model owns. The rows side follows from its existing subset hypothesis. The family-indexed statements are kept as the crude per-family reading and shown discardable without loss. A negative result is recorded alongside: the join-failure event carries the deployed-facts structure as a conjunct, whose pinned-digest field fixes one table coordinate, so ANY event containing that conjunct already has mass at most one over the block count for an arbitrary second conjunct. The birthday number of that section is therefore earned by the conditioning, not by the collision analysis, and what the section contributes is the containment that names the disjunct. R1b is only ever a hypothesis, never proved, weakened or supplied; the join is never claimed and the failure event is never asserted inhabited; the query-membership hypothesis is an addition with no adopted counterpart, since the adopted join lemma imposes no query-set condition. Random-oracle model, not keccak; nothing here changes a bound."
     }
   ]
 }

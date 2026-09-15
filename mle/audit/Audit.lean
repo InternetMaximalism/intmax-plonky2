@@ -149,3 +149,5 @@ import Audit.Wire3.EngineOuterDiagonal
 import Audit.Wire3.PreReadCharge
 import Audit.Wire3.CommittedTablesClauses
 import Audit.Wire3.AdaptiveAssemblyFailure
+import Audit.Wire3.IndexHalfTransport
+import Audit.Wire3.LocalizedCollisionMasses

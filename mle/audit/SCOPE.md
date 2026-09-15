@@ -751,7 +751,16 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    一般grindingプローバの線形上界はこの方式の外側にある。
    適応系列の組立失敗上界はAdaptiveAssemblyFailureでlane列の同定を閉じ、EODの全所有事象が実現runでの`SoundnessAssembly.outerBadEvent`と
    Finsetとして一致することを示して、組立失敗集合 ⊆ その事象 ∪ 索引事象、質量 ≤ combinedBound + chain衝突項 + P[索引事象] を得た。
-   索引半分の質量は運搬のままで、RawIndexLanesの評価地点（拡張shapeのchain）への証明記録の輸送が残る一歩。
+   索引半分の質量はIndexHalfTransportで輸送を実施し、鎖の比較（拡張shapeの無衝突事象 ⊆ strategic shapeの22+5d段のそれ）により
+   単一定数 combinedBound + 2·tauTerm + 索引段の birthday 項に閉じた。同モジュールのレビューが採用済みツリーに遡る空虚性を発見した:
+   組立失敗事象は受理を連言項に持ち、受理はshapeを含意し、shapeはfixtureの`used`（長さ1,1,0）を通じて
+   `numRouted = 0 ∧ numConstants = 1 ∧ numWires = 1`を強制するので、それ以外の構成では事象は空で上界は空虚に真だった。
+   これを定理として記録し、かつ`used`をパラメータ化して障害を除去した（matching claimsではshapeの5連言が構成自身で成立）。
+   受理そのものの提示は依然として未了である。
+   2つの局所化衝突のROM質量はLocalizedCollisionMassesで計算した: 固定ペアはちょうど`1/|Block|`、和集合のサロゲートは構成の族ではなく
+   クエリ集合で、「何らかの構成が配備済み構成と衝突する」質量が`(Q.card + 1)/|Block|`以下（族を名指ししない）、`Q := boundedQueries L`で
+   採用済みモデルに接続する。ただし`joinFailureEvent`は`DeployedFacts`を連言項に持ちそれだけで質量が`1/|Block|`以下になるため、
+   その看板の数値は衝突解析が稼いだものではなく、実質は包含の側にある（negativeな事実として定理化）。
    `CommittedTables`結合はCommittedTablesClausesで節ごとに判定した: preprocessedPinnedは受理から任意のengineで導出、configDeployedは
    Solidity経路で局所的な構成符号化衝突1つまで導出、rootDeterminedはR1bそのもので、開示を読む抽出器では節を満たす写像が存在しないため
    COSの退化した証人は強制されていた。採用済みbinding補題が届くのは開かれたcellのみ（局所leaf/path衝突まで）で、開かれないcellと全列の

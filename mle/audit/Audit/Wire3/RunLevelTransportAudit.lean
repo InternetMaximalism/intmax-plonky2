@@ -183,14 +183,28 @@ header says, and the adopted
 survive a table-dependent proof -- is NOT used anywhere below.  NOTHING BELOW IS A
 CLAIM THAT ADAPTIVE FIAT--SHAMIR SOUNDNESS HAS BEEN ESTABLISHED.
 
-(vii) THE REALIZED PROOF IS A WITNESS, NOT THE WHOLE PROVER.  `realizedProof`
-carries the statement `s` and the coupled round messages the strategy produced; the
-fields no frame of the outer chain reads -- the used-claims record, the WHIR
-transcript and the WHIR hints -- are the adopted `Verifier.testProof`'s.  That is
-sound for every theorem below, because every one of them reads the proof only
-through `Verifier.statement` and `BirthdayClashBound.roundMessages`, but it means
-`realizedProof` is NOT a model of an adversary's WHIR behaviour and no theorem
-below says anything about those fields.  `Verifier.shape` is never asserted for it.
+(vii) THE REALIZED PROOF IS A WITNESS, NOT THE WHOLE PROVER.  `realizedProof` is
+`{ Verifier.testProof with ... }`: it overrides `circuitDigest`, `publicInputs`,
+`preprocessedRoot`, `witnessRoot`, `normInverseRoot`, `logRounds` and `gateRounds`,
+and INHERITS `used`, `whirTranscript`, `whirHints`, `protocolVersion` and
+`constituentWidth` from the fixture.  So it is NOT a model of an adversary's WHIR
+behaviour.  That is sound FOR THE THEOREMS OF THIS MODULE, every one of which reads
+the proof only through `Verifier.statement` and `BirthdayClashBound.roundMessages`,
+and none of which asserts `Verifier.shape` for it.  IT IS NOT SOUND DOWNSTREAM, AND
+THE ADOPTED `AdaptiveAssemblyFailure` BREACHES IT IN TWO SEPARATE WAYS.  FIRST, A
+FIXTURE FIELD IS READ: that module's `suppliedCellsAt` reads `p.used` of this
+record, so its index bad event depends on a constant the fixture supplies rather
+than on anything a prover chooses.  SECOND, THE SHAPE IS ASSERTED: its
+`adaptiveAssemblyFailureEvent` has `Integrated.verify ... = Except.ok ()` as a
+conjunct, and acceptance subsumes `Verifier.shape pin c p = true`
+(`Integrated.lean:59-66`, `Verifier.lean:415`) -- which at the inherited `used`
+record forces `numWires = 1`, `numRouted = 0`, `numConstants = 1`
+(`Verifier.lean:139-141`, `Verifier.lean:596-600`) and so empties that event at
+every other configuration.  ANY DOWNSTREAM MODULE THAT READS A FIXTURE-INHERITED
+FIELD OF THIS RECORD, OR THAT ASSERTS SHAPE OR ACCEPTANCE FOR IT, MUST MAKE THAT
+FIELD A PARAMETER OR DISCLOSE THE RESULTING VACUITY.  The adopted
+`IndexHalfTransport` does the former (`realizedRunProofWith`) and records the
+latter.
 
 (viii) THE CONFIGURATION DATA IS FIXED DATA.  `g`, `coeffsOf` and `rows` are bound
 OUTSIDE the oracle law in every theorem, and no theorem lets the prover choose them
