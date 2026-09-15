@@ -147,3 +147,5 @@ import Audit.Wire3.GrindingUnionBound
 import Audit.Wire3.EngineTauDiagonal
 import Audit.Wire3.EngineOuterDiagonal
 import Audit.Wire3.PreReadCharge
+import Audit.Wire3.CommittedTablesClauses
+import Audit.Wire3.AdaptiveAssemblyFailure

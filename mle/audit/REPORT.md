@@ -1610,6 +1610,28 @@ loop方式の24回目。適応系列の外側alpha対角と、pre-read grinding 
   engine自身のものとして述べられた（組立失敗集合への系は2脚が残る）。PreReadChargeにより、FS challenge grindingは予想通り係数(q+1)で
   評価された（結合は未了）。今回もROMの法則下の結果であり、keccakの性質でも系の健全性誤差でもない。残るのはlane列同定（適応系列の組立系）、grinderのメッセージとの結合、CommittedTablesJoin、R1b、回路の真値、受理の提示。
 
+## 第40継続更新（ac1fb665以降）
+
+追跡版runnerでコミット`ac1fb665`の142モデル・5574定理を再検査しPASS（1362.576秒、1472モジュール、
+manifest `ceca92d3edcf8dc73203c659e4f6cd71321628596569308a57a3e8a8dc72d53b`、receipt
+`50176f39ed12391bb75edbefe9ce91e6c580b8b7eaeb274739bc03997ddd01bc`、graph
+`82d864633ee6423d5f8c76e9934c678e6a195337c3137f73c5ab16e49bed6cd3`）。
+loop方式の25回目。EngineOuterDiagonalが残したlane列の同定と、`CommittedTables`結合の節ごとの判定を対象にした。
+
+- **適応系列の組立失敗上界**: AdaptiveAssemblyFailureは実現lane列と採用済みengine lane列が`frozenLane`の読む射影で一致することを示して
+  EODの最後の脚を閉じ、全所有事象が実現runでの`SoundnessAssembly.outerBadEvent`とFinsetとして一致することを証明した。これにより
+  組立失敗集合は仮定なしにその事象と索引事象の和に含まれ、質量は ≤ combinedBound + chain衝突項 + P[索引事象]。索引半分の質量は
+  運搬のままで、採用済み索引モジュールの評価地点（拡張shapeのchain・異なるused記録）への証明記録の輸送が残る一歩である旨を見出しに
+  明記した。レビュー（Opusによる敵対的検証）はfrozenLaneが`.message`/`.truth`しか読まないこと、truth列に添字のずれがないこと、engineが自由であること、`thash`が`gateAlphaElement`以外の経路で入らないこと（公開入力ハッシュはhash非依存）、payoffが採用済み組立定理の対偶そのものであることを独立に再導出し、PASS-WITH-FIXESとした。閉実例の見出しが**最初の2項のみ**を覆う（索引項を含めると mass < 1 + P[索引事象] しか従わない）ことを明記させた。
+- **`CommittedTables`結合の節ごとの判定**: CommittedTablesClausesはpreprocessedPinnedを受理から任意のengineで導出し、configDeployedを
+  Solidity経路で局所的な構成符号化衝突1つまで導出し、rootDeterminedがR1bそのものであるばかりか、開示を読む抽出器では節を満たす表写像が
+  存在しないこと（従ってCOSの退化した証人は強制されていたこと）を示した。採用済みbinding補題が届くのは開かれたcellだけで、そこでは
+  局所leaf/path衝突までroot決定性が成り立つ。結論として「tablesは固定データ」はR1b + 2つの局所衝突に還元され、`g`は依然として
+  固定データではない（block-0のalphaを読む）。レビュー（Opusによる敵対的検証）は節1・節2の導出が厳密であること、節3の不可能性が採用済み抽出器で真正（`0 < numWires`が実効的）であることを確認しPASS-WITH-FIXESとし、tau表系の受理・衝突仮定が不活性であること（R1bのみから従う）、fixture定理が自明に真であること、「2つの異なるhint buffer」が消費されない末尾バイト差でしかないこと、修正文がSolidity経路の限定と局所衝突の但し書きを落としていたこと、「何も再掲していない」が誤りであることを正させた（35定理）。
+  両モジュール合わせて144モデル・5642定理。これで適応系列の組立失敗集合には（索引半分の質量を運搬したまま）上界が付き、ROM系列が
+  一貫して「固定データ」と呼んでいた残余はR1bと2つの局所衝突に分解された。今回もROMの法則下の結果であり、keccakの性質でも系の
+  健全性誤差でもない。残るのは索引半分の輸送、R1b（全列のroot決定性）、回路の真値、受理の提示、そしてgrindingプローバの結合。
+
 ## 次工程
 
 [SCOPE.md](SCOPE.md)の未完了一覧を順に進める。

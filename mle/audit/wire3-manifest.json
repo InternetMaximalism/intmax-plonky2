@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "ebe3e9cfd19481db24e06668852361eacbd6f6bfa0b0c084c9a987b3ff3151c1",
+      "sha256": "f02dde6f9b0102cf5d1c81c515e8846dc311d3ba7a68ef97f74db9c8c09f331f",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "cd7fec9edf7b45cb6e719e7fd5540c797af07b09a48f5b266999104838a9a531",
+      "sha256": "59a23fca70331dbf23e4d803b2d2b03ab43dfed8cfddb9c1fd36e90f15a11e44",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "aa10defb4d7de3860fc8afd9339efe22bd19ca74d1582c160aeb402e16024be1",
+      "sha256": "5195c494efaa6217ca5d6dbdead6757fa3b0f2f07d1258d688cae06cfed01ea9",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "c15f8d75c85e5ace83f82a27da99e84d658ac9071b8f5876689517da20dd235c",
+      "sha256": "2e78d37008fdd59efeeea60d7591c94fb77ca4b9ec25fb2538b67fe536360c58",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "423ea2e0b59a779b7e18630f7dd58c469dc8e6c88aa72daebdc9d99d3f43572c",
+      "sha256": "3048c7f3bce443026eefb506cd14b1468f7fa207d80fbcf4e74098cb8a13b3ab",
       "kind": "spec"
     },
     {
@@ -2456,6 +2456,16 @@
     {
       "path": "mle/audit/Audit/Wire3/PreReadCharge.lean",
       "sha256": "591673ddf972d78230c11f74cb3a75f6e13ccf5c03ca201a7faab0b0b445cf7a",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/AdaptiveAssemblyFailure.lean",
+      "sha256": "bdfe11b55d2984681a2c4da89e8c34b9db4281600d00bba2a6f19cff6d4299dd",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/CommittedTablesClauses.lean",
+      "sha256": "d905e308f9f0b0b8bfeda557e5d991c5231f81f7d29eb5945789879779ea887b",
       "kind": "current-model"
     }
   ],
@@ -9573,6 +9583,97 @@
         "mle/src/sumcheck/gate_ext3_v2.rs"
       ],
       "scope": "Charges the probe rather than the absorb: for grinding provers whose absorb reads challenges only at the digests of its own probes and earlier stage digests \u2014 a class containing the pre-reading selector the adopted union module excludes \u2014 each probe at a fresh string yields a fresh digest whose challenge cells are fresh, so the chance that the challenge at a probed digest lands in a candidate message's bad set is the per-round term, and summing over the q probes and the real round digest gives (q+1) times the outer term. The conditioning is derived from the complements of the two adopted all-pairs-charged clash events, and the absorb slot is not charged because it repeats a probe's string: on the favourable branch the round's challenge digest is the probe's digest itself, so charging the probes charges the attack. Closed instance at the adopted pre-reading grinder with a million probes per stage is below one. Not delivered: the pairing of the lane and candidate family with the grinder's own absorbed message, the tau, alpha and index lanes, and a single combined constant. Random-oracle model, not keccak; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.AdaptiveAssemblyFailure",
+      "theorems": [
+        "Audit.Wire3.AdaptiveAssemblyFailure.option_map_message",
+        "Audit.Wire3.AdaptiveAssemblyFailure.option_map_truth",
+        "Audit.Wire3.AdaptiveAssemblyFailure.get_map_laneData",
+        "Audit.Wire3.AdaptiveAssemblyFailure.get_laneData",
+        "Audit.Wire3.AdaptiveAssemblyFailure.frozen_lane_congr",
+        "Audit.Wire3.AdaptiveAssemblyFailure.data_rounds_succ",
+        "Audit.Wire3.AdaptiveAssemblyFailure.data_rounds_congr",
+        "Audit.Wire3.AdaptiveAssemblyFailure.tail_drop",
+        "Audit.Wire3.AdaptiveAssemblyFailure.lane_cons",
+        "Audit.Wire3.AdaptiveAssemblyFailure.lane_map_is_data_rounds",
+        "Audit.Wire3.AdaptiveAssemblyFailure.realized_rounds_map_is_data_rounds",
+        "Audit.Wire3.AdaptiveAssemblyFailure.truth_column_causal",
+        "Audit.Wire3.AdaptiveAssemblyFailure.head_drop_cases",
+        "Audit.Wire3.AdaptiveAssemblyFailure.truth_column_length",
+        "Audit.Wire3.AdaptiveAssemblyFailure.engine_gate_lane_causal",
+        "Audit.Wire3.AdaptiveAssemblyFailure.constant_log_lane_causal",
+        "Audit.Wire3.AdaptiveAssemblyFailure.engine_gate_lane_bounded",
+        "Audit.Wire3.AdaptiveAssemblyFailure.constant_log_lane_bounded",
+        "Audit.Wire3.AdaptiveAssemblyFailure.realized_gate_rounds_are_engine_gate_lane",
+        "Audit.Wire3.AdaptiveAssemblyFailure.realized_log_rounds_are_constant_log_lane",
+        "Audit.Wire3.AdaptiveAssemblyFailure.engine_public_hash_is_hash_free",
+        "Audit.Wire3.AdaptiveAssemblyFailure.assembly_gate_lane_is_frozen_realized",
+        "Audit.Wire3.AdaptiveAssemblyFailure.assembly_log_lane_is_frozen_realized",
+        "Audit.Wire3.AdaptiveAssemblyFailure.mem_adaptive_engine_outer_bad_event",
+        "Audit.Wire3.AdaptiveAssemblyFailure.engine_outer_bad_event_is_assembly_adaptive_outer_event",
+        "Audit.Wire3.AdaptiveAssemblyFailure.engine_all_own_bad_event_is_assembly_outer_bad_event",
+        "Audit.Wire3.AdaptiveAssemblyFailure.mem_adaptive_index_bad_event",
+        "Audit.Wire3.AdaptiveAssemblyFailure.adaptive_assembly_failure_subset",
+        "Audit.Wire3.AdaptiveAssemblyFailure.adaptive_assembly_failure_mass_le",
+        "Audit.Wire3.AdaptiveAssemblyFailure.adaptive_index_bad_event_subset_live_guard",
+        "Audit.Wire3.AdaptiveAssemblyFailure.adaptive_assembly_bound_at_thirteen_lt_one",
+        "Audit.Wire3.AdaptiveAssemblyFailure.adaptive_payoff_hypotheses_satisfiable",
+        "Audit.Wire3.AdaptiveAssemblyFailure.truth_column_at_empty_list"
+      ],
+      "sources": [
+        "mle/src/verifier_v2.rs",
+        "mle/contracts/src/MleVerifierV2.sol",
+        "mle/src/sumcheck/gate_ext3_v2.rs"
+      ],
+      "scope": "Closes the single leg the outer-diagonal module named and states the adaptive-line assembly-failure bound. The realized lane lists and the adopted engine lane lists agree on the message-and-truth projection the frozen lane consumes, with the engine free because it reaches the lane only through the challenge field; hence the all-own bad event of the outer-diagonal module is, as a finset, the event that the run's own draw at the realized proof lands in the adopted assembly outer bad event, whose three families (outer, tau at the realized alpha, alpha at the full row count) match one for one. The tables on which the adopted explicit good-draw assembly conclusion can fail at the realized run are therefore contained, with no hypothesis, in that event together with the index event, and their mass is at most combinedBound plus the chain clash term plus the index event's mass. The index half's mass is carried, not bounded: the adopted index module weighs it at a different chain shape and used-claims record, and restating the identification there is a proof-record transport, not a new probabilistic argument. Closed instance below one; the index half sits where the adopted guard is live. Random-oracle model, not keccak; transcript-restricted causal prover; the conclusion is good-draw-conditional constraint vanishing and identification, not circuit truth; the committed-tables join, the coefficient family, the truth columns, R1b and never-exhibited acceptance all remain; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.CommittedTablesClauses",
+      "theorems": [
+        "Audit.Wire3.CommittedTablesClauses.config_deployed_of_acceptance_or_collision",
+        "Audit.Wire3.CommittedTablesClauses.config_deployed_and_preprocessed_pinned_of_acceptance_or_collision",
+        "Audit.Wire3.CommittedTablesClauses.config_deployed_collision_disjunct_is_falsifiable",
+        "Audit.Wire3.CommittedTablesClauses.deployment_hypotheses_are_inhabited",
+        "Audit.Wire3.CommittedTablesClauses.config_deployed_is_blind_to_the_six_residue_fields",
+        "Audit.Wire3.CommittedTablesClauses.rust_deployment_of_solidity_acceptance_or_collision",
+        "Audit.Wire3.CommittedTablesClauses.config_deployed_is_not_implied_by_the_rust_checks",
+        "Audit.Wire3.CommittedTablesClauses.rust_deployment_hypothesis_is_inhabited",
+        "Audit.Wire3.CommittedTablesClauses.preprocessed_pinned_of_shape",
+        "Audit.Wire3.CommittedTablesClauses.preprocessed_pinned_of_acceptance",
+        "Audit.Wire3.CommittedTablesClauses.shape_ignores_the_witness_root",
+        "Audit.Wire3.CommittedTablesClauses.shape_ignores_the_norm_inverse_root",
+        "Audit.Wire3.CommittedTablesClauses.shape_pins_the_circuit_digest_to_the_called_configuration",
+        "Audit.Wire3.CommittedTablesClauses.opening_free_extraction_is_root_determined",
+        "Audit.Wire3.CommittedTablesClauses.root_determined_of_opening_free_extractor",
+        "Audit.Wire3.CommittedTablesClauses.demo_extractor_is_not_opening_free",
+        "Audit.Wire3.CommittedTablesClauses.extracted_wire_table_head",
+        "Audit.Wire3.CommittedTablesClauses.demo_extracted_wire_tables_move_with_the_opening",
+        "Audit.Wire3.CommittedTablesClauses.root_determined_clause_has_no_tables_map_for_the_reading_extractor",
+        "Audit.Wire3.CommittedTablesClauses.positive_wire_width_at_the_fixture",
+        "Audit.Wire3.CommittedTablesClauses.executed_merkle_inputs_empty_at_depth_zero",
+        "Audit.Wire3.CommittedTablesClauses.opened_cells_root_determined_or_collision",
+        "Audit.Wire3.CommittedTablesClauses.opened_dot_root_determined_or_collision",
+        "Audit.Wire3.CommittedTablesClauses.root_determination_hypotheses_hold_at_the_fixture",
+        "Audit.Wire3.CommittedTablesClauses.fixture_decoded_dot_is_defined",
+        "Audit.Wire3.CommittedTablesClauses.opened_dot_root_determination_instantiates_at_the_fixture",
+        "Audit.Wire3.CommittedTablesClauses.fixture_dot_equality_needs_no_binding_lemma",
+        "Audit.Wire3.CommittedTablesClauses.opened_cells_root_determination_can_fail",
+        "Audit.Wire3.CommittedTablesClauses.opening_relation_is_root_blind",
+        "Audit.Wire3.CommittedTablesClauses.unopened_cells_are_outside_every_binding_argument",
+        "Audit.Wire3.CommittedTablesClauses.full_columns_root_determined_follows_from_r1b",
+        "Audit.Wire3.CommittedTablesClauses.committed_tables_join_up_to_collisions",
+        "Audit.Wire3.CommittedTablesClauses.tau_table_is_fixed_data_from_r1b_at_the_two_runs_alone",
+        "Audit.Wire3.CommittedTablesClauses.tau_table_is_fixed_data_up_to_r1b_and_one_localized_collision",
+        "Audit.Wire3.CommittedTablesClauses.committed_tables_clauses_verdict"
+      ],
+      "sources": [
+        "mle/contracts/src/MleVerifierV2.sol",
+        "mle/src/verifier_v2.rs",
+        "mle/src/vk_v2.rs",
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol"
+      ],
+      "scope": "Decides the three clauses of the committed-tables join one at a time. The preprocessed pin is derived outright: it is a conjunct of the adopted shape predicate that every accepted call returns, for an arbitrary engine; the witness and norm-inverse roots are not pinned by it, and its circuit-digest conjunct names the called configuration, not the deployment. The deployed-configuration clause is derived on the Solidity route up to one localized configuration-encoding collision, a falsifiable predicate rather than the pigeonhole one, and the Rust converse fails on a core field. The root-determination clause is R1b and is worse than open: at an opening-reading extractor no table map satisfies the clause at two different openings, so the earlier degenerate constant-extractor witness was forced; root determination is exactly opening independence. The adopted binding lemmas reach only the opened cells, giving equal opened rows and dot values at equal roots or a localized leaf collision on the two named rows, discharged at a fixture on two different hint buffers and falsified at a clash fixture; the unopened cells lie outside every binding argument and no root-to-column map is definable at this level, so full-column root determination is R1b proper. Consequently the random-oracle line's fixed-table sentence reduces, for its table argument, to R1b plus a localized configuration-encoding collision plus a localized leaf collision for the opened cells; the zero-check table remains a function of the block-zero gate alpha and is still not fixed data. No random-oracle masses are computed here; acceptance and R1b are inherited, unexhibited hypotheses; nothing here changes a bound."
     }
   ]
 }

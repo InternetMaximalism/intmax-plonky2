@@ -749,6 +749,13 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    chain模擬grindingプローバはGrindingGraphBoundで扱い、否定的結論を定理化した: 統一charging定理はGQB/GLB/graph-framedの3実例を
    持つが、chainSimulatorでは eligible 集合が全対に一致し、この方式では全対定数を超えて改善しない（衝突質量の下界は主張しない）。
    一般grindingプローバの線形上界はこの方式の外側にある。
+   適応系列の組立失敗上界はAdaptiveAssemblyFailureでlane列の同定を閉じ、EODの全所有事象が実現runでの`SoundnessAssembly.outerBadEvent`と
+   Finsetとして一致することを示して、組立失敗集合 ⊆ その事象 ∪ 索引事象、質量 ≤ combinedBound + chain衝突項 + P[索引事象] を得た。
+   索引半分の質量は運搬のままで、RawIndexLanesの評価地点（拡張shapeのchain）への証明記録の輸送が残る一歩。
+   `CommittedTables`結合はCommittedTablesClausesで節ごとに判定した: preprocessedPinnedは受理から任意のengineで導出、configDeployedは
+   Solidity経路で局所的な構成符号化衝突1つまで導出、rootDeterminedはR1bそのもので、開示を読む抽出器では節を満たす写像が存在しないため
+   COSの退化した証人は強制されていた。採用済みbinding補題が届くのは開かれたcellのみ（局所leaf/path衝突まで）で、開かれないcellと全列の
+   root決定性はR1bに残る。従って「tablesは固定データ」はR1b + 2つの局所衝突に還元され、`g`は依然固定データではない。
    RILの転送はReducedEngineIndexで実施した: 二戦略・同一表の合同補題、OLT §6の実現proofでのdraw同定、TSCCのrow点定理により
    committed cellが縮約履歴の関数であることを示し、engine自身の索引bad事象との Finset 恒等式を経て縮約適応上界
    ≤ combinedBound + 2·tauTerm + chain衝突項（多cell版は5·2·tauTerm）を得た（閉実例でRHS<1）。残るのは列とg/coeffsOfの配備との
