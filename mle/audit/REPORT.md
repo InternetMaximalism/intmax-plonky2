@@ -1787,7 +1787,22 @@ GUBのpre-readの穴はそのまま残る。
 両モジュール合わせて148モデル・5930定理。今回もROMの法則下の結果であり、keccakの性質でも系の健全性誤差でもない。
 残るのはR1b（全列のroot決定性）、回路の真値、明示engineでの受理、そしてFiat–Shamirのchallenge grindingの課金である。
 
+## 第45継続更新（d0f31900以降）
+
+追跡版runnerでコミット`d0f31900`の148モデル・5930定理を再検査しPASS（997.077秒、1478モジュール、
+manifest `5a9f257ef5c0cd88f5b0182aa54df1bca5639a09d90ae71b1480453adaa41c5e`、receipt
+`eb84d036965584f4e411e8587db562c73f9234e5989045fc18e08c6fb78636c6`、graph
+`8d2eb3616f040965d20fbcaef6c4e6843e832f37887506515e64e16976c93017`）。
+
+この更新の時点で、受理はenvelopeの上限構成で提示されているが、**修復されたのはlaneの長さであってlaneの中身ではない**。
+受理実例の導出トランスクリプトは任意の構成・proofで空のバイト列であり、Fiat–Shamir依存性が一切ない。また索引サンプラは
+全ゼロの索引点を返す。したがって次の実質的な一歩は、`initialTranscript`と`sampleIndices`がproofの真の関数であるengine
+（明示engineでなくてよい）で受理を出し直すことであり、そのうえで初めてWHIR tailと実gate評価を要する明示engineでの受理が
+射程に入る。明示engineの`deploymentValid`のうち数値部分（`1 ≤ degreeBits + indexBits ≤ 21`）は上限構成で充足可能と
+分かっている。
+
 %%B39%%
+
 
 
 
