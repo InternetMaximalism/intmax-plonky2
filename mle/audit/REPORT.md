@@ -1697,7 +1697,29 @@ ROM質量を計算した。固定ペアの衝突質量は**ちょうど**`1/|Blo
 両モジュール合わせて146モデル・5760定理。今回もROMの法則下の結果であり、keccakの性質でも系の健全性誤差でもない。
 残るのはR1b（全列のroot決定性）、回路の真値、受理の提示、そしてgrindingプローバの結合である。
 
+## 第43継続更新（9c52fd74以降）
+
+追跡版runnerでコミット`9c52fd74`の146モデル・5760定理を再検査しPASS（1001.957秒、1476モジュール、
+manifest `4da8af10a07d7d36376d43c85863112e52f0c4e19939fd293c3e62bb6420f95a`、receipt
+`595a8b2ff9be2ca8ba49a9cf3aa8e24b3a2bce2cc8d68479e1c90e50ddb5c480`、graph
+`10ab26d5cd043f6b9096a619648f4e645ef28f0bff86034ca1949252dadf3fc2`）。
+
+この更新の時点で、適応系列の受理前件について**退化の原因が2つ独立にある**ことが分かっている。
+第一は`used`主張のfixture（本バッチのレビューが発見）で、shapeが3つの主張リスト長を構成に固定するため
+`numWires = 1 ∧ numRouted = 0 ∧ numConstants = 1`を強制する。これはIndexHalfTransportの`realizedRunProofWith` /
+`matchingClaims`で除去した。第二は自明なengineの索引サンプリングであり、こちらは未除去である:
+`Verifier.testEngine.sampleIndices = fun _ _ _ => ⟨[], []⟩`（`Verifier.lean:605`）で
+`derivedIndices e c p = e.sampleIndices … c.indexBits`（`:389-391`）であるところ、`verify`は
+`idx.log.length = c.indexBits ∧ idx.gate.length = c.indexBits`でなければ拒否する（`:420-421`）ので`c.indexBits = 0`が強制される。
+ところが`envelope`は`width c ≤ 2 ^ c.indexBits`を要求する（`:104`、`:413`で検査）ので、`indexBits = 0 ⇒ width c ≤ 1 ⇒ numWires ≤ 1`と
+なり、`used`に一切触れずに同じ退化へ到達する。したがって非退化構成での受理の提示には、パラメータ化された`used`記録と、
+`c.indexBits`長のリストを返すengineの**両方**が要る。`sampleIndices`は`c.indexBits`を引数として受け取るので、
+モデルengineについては第二の原因は安価に外れる見込みである。採用済みの唯一の受理実例`positive_model_verification`
+（`Verifier.lean:612`）は`testConfig`（degreeBits 1・numWires 1・indexBits 0）での成立であり、明示engine
+（`SoundnessAssembly.engine`）での受理はWHIR tailとgate評価を要する別格の目標である。
+
 %%B38%%
+
 
 
 ## 次工程
