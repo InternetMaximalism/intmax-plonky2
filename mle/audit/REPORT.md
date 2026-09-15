@@ -1875,7 +1875,23 @@ gate側を**黙らせている**からであって、プロトコルの第二メ
 残るのはWHIR tailの成功witness、R1b（全列のroot決定性）、回路の真値、`numRouted > 0`での受理、そしてFiat–Shamirの
 challenge grindingの課金である。
 
+## 第47継続更新（175c8a4e以降）
+
+追跡版runnerでコミット`175c8a4e`の150モデル・6125定理を再検査しPASS（1340.382秒、1480モジュール、
+manifest `55fc196a60662092fcdd3f40c68b8570f716a5b6629df39fa26c07e8c682f773`、receipt
+`e6288e36a10df0e5736f29ac0957ea34208e01935845f1837fec7c4f9f3469d4`、graph
+`36e5aea3a308a618d6f68274883f857edd23da4d028183e47699712f1f298823`）。
+
+この更新の時点で、受理ラインに残る障害は**WHIR parse/tailただ1つ**である。次工程はその成功witness、すなわちマスク`[⟨31⟩]`で
+5主張を担う文脈での`InstalledWhirTail.tailRun … .isSome = true`（`InstalledWhirTail.lean:1122-1130`の`= none`の双対）である。
+既知の障害は、両ストリームの厳密なEOF（`WhirFinal.exhausted`）、3つのpinされたrootがトランスクリプトにliteralに現れ
+`Merkle.verify`を通ること、そして配備プロファイルの実PoW閾値が実際のnonceを要することである。
+**あらかじめ記録しておくべき緊張がある**: `WhirInitial.readClaims`はトランスクリプトを当の検証器自身の`packedFold`値
+（導出索引点での値）に束縛するので、そのようなwitnessは必ず`thash`依存になる。したがってWHIR完全な実例は
+DerivedAcceptanceの`thash`全称量化を**保てない**。次の反復では両者のどちらを取るかを選び、その選択を明示することになる。
+
 %%B40%%
+
 
 
 
