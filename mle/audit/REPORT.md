@@ -1718,7 +1718,77 @@ manifest `4da8af10a07d7d36376d43c85863112e52f0c4e19939fd293c3e62bb6420f95a`、re
 （`Verifier.lean:612`）は`testConfig`（degreeBits 1・numWires 1・indexBits 0）での成立であり、明示engine
 （`SoundnessAssembly.engine`）での受理はWHIR tailとgate評価を要する別格の目標である。
 
-%%B38%%
+## 第44継続更新（9c52fd74以降）
+
+反復28では受理の提示とgrindingプローバのlane対応付けを採用した。いずれもOpusによる敵対的レビューを経ており、
+**両方のレビューがモジュール自身より強い定理を証明して返し、同時に誤りを指摘した**。
+
+`Audit.Wire3.NonDegenerateAcceptance`（68定理・15定義）: 適応系列の受理前件が現実的な構成で充足不能だった理由は、
+第43継続更新の時点では2つと見ていたが、**実際には4つあった**。(1) `used`のfixture、(2) 自明engineの索引サンプリング、
+(3) fixtureの`initialObservation`が1要素の`logTau`/`gateTau`を返すこと（`verify`は`i.logTau.length = c.degreeBits`でなければ
+拒否する（`Verifier.lean:420`）ので`degreeBits = 1`が強制される）、そして(4) integrated経路では`Norm.checkedNormEvaluation`が
+`logChallenges.length = 7`を要求する（`Norm.lean:353`）一方でfixtureのリストは空なので、
+`Integrated.verify Verifier.testEngine … = .error .configuration`が**無条件に**成立する。(4)は既知のどの原因よりも強い事実である。
+(1)(2)(3)は任意のengine・pin・chain・構成・proofで定理化した。
+
+payoffは`model_acceptance_at_the_maximal_config`（`rfl`）である。動かしたengine欄は`sampleIndices`と`initialObservation`の
+**2つだけ**で、`degreeBits 13`・`numConstants 80`・`numRouted 80`・`numWires 160`・`numSelectors 4`・`numGateConstraints 123`・
+`quotientDegree 8`・`gateRows 255`・`indexBits 8`（width 160）という**`Verifier.envelope`の上限そのもの**の構成で
+`Verifier.verify`が受理する。`degreeBits + indexBits = 21`は`PinnedWhirProfile.maxProfileVariables`にちょうど一致する。
+この実例は同時に、動かさなかったfixture欄のどれも`Verifier.verify`内で構成量を固定していないことの**構成的**証明でもあり、
+欄ごとの列挙よりも強い。採用済みツリーにあった destructor `Verifier.verify_success_checks`に対する**構成子**`verify_of_checks`を
+新設し、それにより上限内の全WHIRトランスクリプト・ヒント列に対するパラメトリック受理も与えた。`Integrated.verify`も
+同じengineと同じ代用デコーダのまま15 wiresまで届く。
+
+限定は厳格である。これらはモデルengineであり、採用済み`SoundnessAssembly.engine`ではない。`Verifier.verify`の9ゲートのうち
+§5で**実計算は3つだけ**（envelope、shape、tau/index長）であり、6つはfiatである（chainId、`configurationHash`は定数`testRoot`、
+`deploymentValid`は定数`true`、log/gate terminalは任意の引数で定数`zero`、`whirTail`は定数`true`）。さらにどのゲートも見ない退化が
+2つある: 導出トランスクリプトは任意の構成・proofで**空のバイト列**であり、この実例にはFiat–Shamir依存性が一切ない。
+また修復後のサンプラは**全ゼロの索引点**を返す — 修復したのはlaneの**長さ**であって**中身**ではない。§6は11ゲート中7つが
+実計算で、`normResult`と`gateResult`は実際に計算され、ゼロのnorm helperでは実際に失敗した（`Norm.one`が現れる理由である）が、
+そのWHIRゲートは構成上反証不能である（echoする`parseWhir`は任意のcontextと任意のproofで`verifyWhir`を真にする）。
+したがって本モジュールは採用済み`AdaptiveAssemblyFailure.adaptiveAssemblyFailureEvent`を非空にはせず、
+`IndexHalfTransport`が記録した空虚性も解除しない。主張は「**`Verifier.shape`の長さ固定と`Verifier.envelope`だけでは、
+非退化構成での受理を不可能にしなくなった**」ことに限る。残る障害を明示engineについて局在化することも主張しない:
+その`deploymentValid`（`PinnedWhirProfile.canonicalProfileCheck`）は`1 ≤ numVariables ≤ 21`という**数値**制約を含んでおり、
+envelopeと同種の算術だからである。レビューは9ゲートの内訳を数え上げ、「独立に証明した」（実際は採用済み定理の定義的な転記で、
+採用済みツリーに何も足していない）と「パラメトリック版はLeanの再帰深度を超えるため出せない」という**2つの偽の主張**を
+指摘して撤回させた。後者はレビュア自身が`set_option`なしで証明して反証した。**Leanに証明できないという否定的主張は
+kernelで検査されない** — 「自分のスクリプトでは閉じなかった」はスクリプトについての証拠であって、証明可能性についての証拠ではない。
+
+`Audit.Wire3.GrindLanePairing`（102定理・15定義）: 採用済み`GrindingUnionBound`が自ら「未提供」と明記していた2つの穴を閉じた。
+**(A) q=0の同一性**: probeを行わないgrindingプローバは採用済みraw戦略と一致し、GUBの見出しから採用済み
+`RawBlockLanes.raw_full_bad_draw_probability_le_combined`が**導出される**（衝突項は`(22+5d)(0+1) = 22+5d`に潰れる）。
+無衝突事象の一致は合同ではない: 採用済み`stageNoClash`は鎖の`n`個の**答ブロック**の`noClash`に`avoidBase`節を加えたものであり、
+`grindingNoClash`は`n+1`個の**段ダイジェスト**の対ごとの相異であって、両者は添字シフトと`digestBlock`の単射性を経て初めて一致する。
+この還元が循環していないことは、保存された証明項に対する**推移的定数依存走査**で確認した: 採用済みraw上界には到達せず、
+GUBの見出しには到達する（触れる`RawBlockLanes`の定数は文中に現れる`rawFullBadEvent`だけである）。
+**(B) 対応付け**: 採用済みの部分デコーダ`Spongefish.decodeCanonicalExt3`を全域化した`elementOfBytes`により、
+laneのround `r`メッセージがgrinderの段`22+5r`における吸収ペイロード**そのもの**であることを示した。走行が実際に問うバイト列の
+中身であって再符号化ではない。しかも**条件付け事象を要しない**: 段`j`の列は段`j`ダイジェストに沿ったoracleの引き戻しであり（`rfl`）、
+ダイジェストが衝突しても情報は失われないからである（ハッシュ衝突とは構造が異なる）。ダイジェスト添字と段添字の型の不整合は
+`digestLookup`の全域性が定義だけで閉じるが、その**正しさ**は`grinder_table_view_determined`が担っており、反例によりそれが
+本質的であることも示した。
+
+適用範囲は正確に確定した: `ChallengeRestricted`であって全段で吸収ペイロードが`min 120 (24*(quo+2))`バイト以下のgrinderである。
+採用済み`quo = 8`では120バイト、すなわち**5個の符号化元**であり、予算は採用済みの次数予算そのものである。6個を吸収する
+`longMessageGrinder`はちょうど1元だけ外側で、そのペアlaneの質量は何も抑えていない。ペイロード上界は**結合段でのみ**必要であり、
+非結合段で144バイトを吸収する`mixedGrinder`は一様な仮定では除外され結合段限定の仮定では覆われる — 非結合段でWHIRのMerkle rootや
+最終多項式を吸収する現実的なプローバがこれに当たる。**バイト予算より大きな制限**も記録した: `grinderLane`が入れるメッセージは
+段`22+5r`の唯一のペイロードなので、log laneとgate laneは**同一の**roundメッセージを運ぶ。プロトコルではこの2つは別個の
+結合プローバメッセージである。`truth`と`claim`は採用済み`RawBlockLanes`と同様に自由なままである。デコーダの採用済み部分デコーダとの
+一致は**一方向**であり、その定義域（長さがちょうど24かつ3つのlimbすべてがmodulus未満）の外では全域化が値を発明する:
+配備パーサが拒否する2つの異なるペイロードが同一の非空メッセージを得る。これは保守的であって不健全ではないが、
+定義域外でのlaneメッセージはモデル上の選択であってverifierの読みではない。`selectorGrinder`は**攻撃ではない**:
+probe 0を読んで2つの定数メッセージに分岐するだけで、再探索も検索もしない（GUB自身が自らの`probeGrinder`について同じことを
+述べている）。検索するプローバ`preReadGrinder`を除外しているのはバイト予算ではなく`ChallengeRestricted`であり、
+GUBのpre-readの穴はそのまま残る。
+
+両モジュール合わせて148モデル・5930定理。今回もROMの法則下の結果であり、keccakの性質でも系の健全性誤差でもない。
+残るのはR1b（全列のroot決定性）、回路の真値、明示engineでの受理、そしてFiat–Shamirのchallenge grindingの課金である。
+
+%%B39%%
+
 
 
 

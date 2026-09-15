@@ -151,3 +151,5 @@ import Audit.Wire3.CommittedTablesClauses
 import Audit.Wire3.AdaptiveAssemblyFailure
 import Audit.Wire3.IndexHalfTransport
 import Audit.Wire3.LocalizedCollisionMasses
+import Audit.Wire3.NonDegenerateAcceptance
+import Audit.Wire3.GrindLanePairing

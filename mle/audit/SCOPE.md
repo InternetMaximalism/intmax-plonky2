@@ -761,6 +761,18 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    クエリ集合で、「何らかの構成が配備済み構成と衝突する」質量が`(Q.card + 1)/|Block|`以下（族を名指ししない）、`Q := boundedQueries L`で
    採用済みモデルに接続する。ただし`joinFailureEvent`は`DeployedFacts`を連言項に持ちそれだけで質量が`1/|Block|`以下になるため、
    その看板の数値は衝突解析が稼いだものではなく、実質は包含の側にある（negativeな事実として定理化）。
+   受理の提示はNonDegenerateAcceptanceで実施した。退化の原因は結局**4つ**あり（usedのfixture、自明engineの索引サンプリング、
+   fixtureの1要素logTau、そしてintegrated経路でのlogChallengesの空リスト — 最後のものは採用済みテストengineが無条件に
+   `.error .configuration`を返すという、既知のどれより強い事実）、いずれも任意のengineで定理化した。そのうえで、動かしたengine欄は
+   2つだけのまま、envelopeの上限構成（degreeBits 13・numRouted 80・numWires 160・gateRows 255・quotientDegree 8・indexBits 8、
+   degreeBits + indexBits = 21はprofileの上限ちょうど）で`Verifier.verify`が受理することを`rfl`で示し、上限内の全WHIRバイト列に対する
+   パラメトリック版も与えた。ただしこれらはモデルengineであり、9ゲート中実計算は3つで導出トランスクリプトは常に空である。
+   したがって採用済み適応事象を非空にはせず、明示engineへの局在化も主張しない（その`deploymentValid`は
+   `1 ≤ numVariables ≤ 21`という数値制約を含む）。主張はshapeとenvelopeが受理を妨げなくなったことに限る。
+   grindingプローバのlane対応付けはGrindLanePairingで実施した: q=0で採用済みraw上界がGUBの見出しから導出され（非循環性は
+   推移的定数依存走査で確認）、laneのメッセージがgrinderの吸収ペイロードそのものであることを条件付け事象なしで示した。
+   適用範囲は結合段のペイロードが5元以下のgrinderで、log laneとgate laneが同一メッセージを運ぶという制限が残る。
+   検索するプローバの除外は`ChallengeRestricted`が担っており、GUBのpre-readの穴はそのままである。
    `CommittedTables`結合はCommittedTablesClausesで節ごとに判定した: preprocessedPinnedは受理から任意のengineで導出、configDeployedは
    Solidity経路で局所的な構成符号化衝突1つまで導出、rootDeterminedはR1bそのもので、開示を読む抽出器では節を満たす写像が存在しないため
    COSの退化した証人は強制されていた。採用済みbinding補題が届くのは開かれたcellのみ（局所leaf/path衝突まで）で、開かれないcellと全列の
