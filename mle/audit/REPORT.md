@@ -1801,7 +1801,82 @@ manifest `5a9f257ef5c0cd88f5b0182aa54df1bca5639a09d90ae71b1480453adaa41c5e`、re
 射程に入る。明示engineの`deploymentValid`のうち数値部分（`1 ≤ degreeBits + indexBits ≤ 21`）は上限構成で充足可能と
 分かっている。
 
-%%B39%%
+## 第46継続更新（d0f31900以降）
+
+反復29では受理実例を明示engineまで押し上げ、grindingのlane対応付けを2本に分けた。いずれもOpusによる敵対的レビューを経ており、
+**両方のレビューがモジュール自身より強い結果を証明して返し、同時に誤りを指摘した**。
+
+`Audit.Wire3.DerivedAcceptance`（104定理・16定義）: 第45継続更新は「修復されたのはlaneの長さであってlaneの中身ではない」と記した。
+本モジュールはそれを解消する。受理しているengineは`ExplicitEngine.explicitEngine`から`parseWhir`と`whirTail`の**2欄だけ**を
+fixtureに戻したものであり、これは`rfl`で成立する（`derived_engine_is_the_explicit_engine_minus_the_whir_pair`）。12欄中10欄が
+採用済みの実コンポーネントである。見出し`derived_acceptance`は`thash`と`khash`を**全称量化**し、ハッシュの性質を一切使わない。
+`Integrated.verify`経由の版も成立する。依存性は4つの定理で記録した。うち`derived_transcript_depends_on_the_proof`は
+「または`thash`が衝突する」形で出荷しており、無条件版が`constantHash`で**反証される**ことをwitnessによって**肯定的に**記録する
+（否定を主張として書かないための作法であり、レビューはこれを本監査で最良の開示実践と評した）。
+
+**誠実なゲート数は9中4である。** 実際に失敗し得た算術を持つのは(3)envelope、(5)shape、(6)tau/index長、(9)gate dispatcherだけである。
+(2)と(4)は`rfl`で閉じる: `derivedPin`が`khash (encodeConfig derivedConfig)`として**定義されている**以上、構成ハッシュのゲートは
+失敗しようがなく、配備ピンも`c = derivedConfig`では反射的である。さらに(2)の束縛性には**本モジュール自身の量化子の内側に抜け道**が
+あり、定数`khash`では`derivedConfig`から計算したpinが**異なる構成**を受理する。(7)は`numRouted = 0`のため`Norm.runWires`が
+0回しか走らず、`denominatorTerms`・`formalNorm`・`formalAdjugate`・logup対・λ梯子のいずれも実行されない。結果として終端は
+**あらゆる**観測・点・主張記録でゼロであり、**どの2つのproofも区別できない** — 2つのproofを区別できないものはガードではない。
+(9)は実際に走るが最小である（14 gate族中1、255行中2、123制約中1）。全称量化は論理的には任意の代入より強いが、
+同時にハッシュ依存ゲートを**非束縛**にする。「あらゆるトランスクリプト・構成ハッシュで」は受理の一般性についての主張であって、
+ガードの強度についての主張ではない。
+
+構成は`degreeBits 13`・`numWires 160`・`numConstants 80`・`indexBits 8`・`quotientDegree 8`（envelope上限、採用済み
+`maximalConfig`と同値）まで達するが、**`numRouted = 0`**である。これは元の退化が強制した3つのピン
+（`numWires = 1 ∧ numRouted = 0 ∧ numConstants = 1`）の1つへの**復帰**であり、採用済みツリーが特に修復した退化に戻っている。
+したがって**本実例は採用済み`maximalConfig`を支配せず、両者は比較不能である**。本モジュールはengineで優り、採用済み実例は
+`numRouted`・`numSelectors`・`numGateConstraints`・`gateRows`で優る。両者を組み合わせて結論を導くことはできない。
+レビューは後退がむしろ**過大申告**であることも示した: 同じengine・同じ全ゼロ主張記録のまま`numPublicInputs = 3`でも
+`quotientDegree = 8`でも受理が再提示され、後者は`derivedConfig`自体に取り込んだ。実コンポーネントが強制するのは`numRouted = 0`
+だけで、`numPublicInputs = 0`は`Integrated.verify`に限り、しかも`numRouted = 0`の**下流の帰結**として強制される
+（`Norm.shapeValid`の`column < c.numRouted`が0では充足不能）。`gateRows`・`numSelectors`・`numGateConstraints`は
+**代用デコーダ**由来であって実コンポーネント由来ではない。
+
+`numRouted = 1`での受理は「実例が見つからなかった」ではなく**定理**にした: `matchingClaims`の全ゼロ列により
+`idHelper = sigmaHelper = 0`、よって`idZero = sigmaZero = -1`、`logupSum = 0`となり、終端は`eq(τ,point)·(-(1+ρ))`で
+恒等的にゼロではない。ゆえに受理は**導出challenge間の偶然の一致と同値**である。抜け道（`denominatorTerms.1`を反転する非ゼロ列）は
+ゲート8が導出索引点で`packedFold p.used.logNormInverse (width c) idx.log = zero`を強制するため塞がれており、修復には
+`thash`依存の点で消えるpacked foldを持つ非ゼロ列が要る。
+
+残る障害はWHIR parse/tailのみである。採用済みツリーには`InstalledWhirTail.tailRun`が呼ぶ`WhirConfigured.run`の具体的な
+`rfl`成功例が**実在する**（`WhirConfigured.lean:637,646`、`WhirTail.lean:902,921`）。ただしそれらはマスク`[⟨7⟩]`・3主張で走っており、
+`tailRun`のマスクは`[⟨31⟩]`に固定され本文脈は5主張を担うので**再利用できない**。欠けている補題を名指しした。加えて重要な緊張も
+記録した: `WhirInitial.readClaims`はトランスクリプトを当の検証器自身の`packedFold`値（導出索引点での値）に束縛するので、
+そのようなwitnessは`thash`依存であり、**WHIR完全な実例は本モジュールの`thash`全称量化を保てない**。
+本モジュールは採用済み`AdaptiveAssemblyFailure.adaptiveAssemblyFailureEvent`を非空にはせず、`IndexHalfTransport`が記録した
+空虚性も解除しない。当該事象は明示engineと fixture used-claims の**両方**で添字付けられており、本モジュールは`matchingClaims`を
+使い、WHIR対はfixtureのものなので、**両方の添字を外している**。
+
+`Audit.Wire3.TwoLaneMessages`（91定理・13定義）: 採用済み`GrindLanePairing`のhonesty項目(v)を撤去する。ただし本モジュールが
+運ぶ最も重要な内容は**採用済みgrindingモデルについての発見**である。トランスクリプト鎖では2つの結合セルは別個の吸収であり
+（`BirthdayClashBound.roundShapeAt`のframe 2が段`22+(5r+2)`のLOG、frame 3が`22+(5r+3)`のGATE）、しかしlane層では両者は
+同一の`S r ch : CoupledMessage`の射影である。そして`GrindCausal`の切断は round `r`のlaneに**どちらのセル段も読ませない**。
+したがってgrindingのlineはプロトコルより**厳密に粗い粒度**にあり、単一ペイロードをどう分割してもそれは直らない — 分割はそれを
+モデル化できるだけである。欠けている補題は`roundStage r * (q+1)`で切るGUB見出しであり、GUB自身の注記が
+`grind_run_view_reassign_lower`は`22+5r < j`しか要らないと記録しているので対角段は生き残る。切断のどの部分が効くかも特定した:
+履歴側は段`22+5r+1`を許容し、challenge側（`digestLookup`）が、そして`0 < q`ではprobe側も、切断を強制する。
+
+分割自体は`logHalf = take 120`・`gateHalf = drop 120`で、両laneの対応付けを**条件付け事象なしで**全表について証明する。
+`hfitlog`は**消滅**し（log側の半分は構成上120バイト以下）、予算は`p ≤ 360`に**上がる**（5元から15元へ。半分どうしが互いに素なため）。
+定数はGLPと項ごとに同一で、結合段限定の`hp`も維持する。**ただし2 laneが分離するのは120バイト超のときだけである。**
+それ以下ではgate側のメッセージが**空**になり、すなわちGLPが覆うクラス全体（GLP自身のwitnessを含む）では、2 laneが異なるのは
+gate側を**黙らせている**からであって、プロトコルの第二メッセージを与えているからではない。空のgateセルは合法なroundメッセージでは
+ない（受理からgate roundは長さ`quotientDegree + 2`、log roundは5が従う）。両方が合法長になるのは360バイトちょうどのときだけで、
+そこでの閉実例も出した。この長さ不正はGLPからの**継承**であって本モジュールが開いたものではない（`GrindLaneBounded`は`≤`である）。
+因果性についての否定は**全称ではなく存在**の主張に直した: `blindGrinder`ではあらゆる段関数で因果的なので、後段を読むlaneが
+因果的でないという全称主張は偽である。存在の形でも一様構成を採用済み見出しに渡せないことを示すには十分であり、障害は特定の
+オフセットの人工物でもない（段24以上すべて、gateセル自身の段を含む）。witnessは検索しない（probe 0の答えのみの関数であることを
+定理化した）。
+
+両モジュール合わせて150モデル・6125定理。今回もROMの法則下の結果であり、keccakの性質でも系の健全性誤差でもない。
+残るのはWHIR tailの成功witness、R1b（全列のroot決定性）、回路の真値、`numRouted > 0`での受理、そしてFiat–Shamirの
+challenge grindingの課金である。
+
+%%B40%%
+
 
 
 

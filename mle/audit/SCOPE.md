@@ -773,6 +773,17 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    推移的定数依存走査で確認）、laneのメッセージがgrinderの吸収ペイロードそのものであることを条件付け事象なしで示した。
    適用範囲は結合段のペイロードが5元以下のgrinderで、log laneとgate laneが同一メッセージを運ぶという制限が残る。
    検索するプローバの除外は`ChallengeRestricted`が担っており、GUBのpre-readの穴はそのままである。
+   受理はDerivedAcceptanceで明示engineまで押し上げた: 受理しているengineは`ExplicitEngine.explicitEngine`から`parseWhir`と
+   `whirTail`の2欄だけfixtureに戻したもので（`rfl`）、12欄中10欄が採用済みの実コンポーネント、`thash`と`khash`は全称量化される。
+   残る障害はWHIR parse/tailのみで、採用済みツリーには`WhirConfigured.run`の具体的成功例が実在するがマスクと主張数が合わず
+   再利用できない。欠けている補題は名指しした。ただし誠実なゲート数は9中4であり、(2)と(4)は`rfl`で閉じ、(7)は`numRouted = 0`のため
+   どの2つのproofも区別できない。構成は`quotientDegree`まで上限だが`numRouted = 0`で、これは元の退化ピンへの復帰である。
+   採用済み`maximalConfig`とは比較不能で、どちらも他方を支配しない。`numRouted = 1`での受理は導出challenge間の偶然の一致と
+   同値であることを定理化し、抜け道もゲート8が塞ぐことを示した。WHIR完全な実例は`thash`全称量化を保てないという緊張も記録した。
+   TwoLaneMessagesはGLPのhonesty項目(v)を撤去したが、より重要なのは採用済みgrindingモデルについての発見である:
+   プロトコルは1段離れた2つの結合セルを持つのに`GrindCausal`はそのどちらにも届かせないため、grindingのlineは厳密に粗い粒度にあり、
+   単一ペイロードの分割では直らない。分割自体は予算を5元から15元に上げるが、2 laneが分離するのは120バイト超のときだけで、
+   それ以下ではgate側が空になる（空のgateセルは合法なroundメッセージではない）。この長さ不正はGLPからの継承である。
    `CommittedTables`結合はCommittedTablesClausesで節ごとに判定した: preprocessedPinnedは受理から任意のengineで導出、configDeployedは
    Solidity経路で局所的な構成符号化衝突1つまで導出、rootDeterminedはR1bそのもので、開示を読む抽出器では節を満たす写像が存在しないため
    COSの退化した証人は強制されていた。採用済みbinding補題が届くのは開かれたcellのみ（局所leaf/path衝突まで）で、開かれないcellと全列の
