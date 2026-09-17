@@ -2067,7 +2067,80 @@ manifest `898d80048d4b1ef366f5f401053ea9c130f80eab38d16eb47901b442022c8476`、re
 非ゼロnorm-inverse列）またはinstalled WHIR parseによる、2つの具体的proofの分離 — と、状態幅を広げたハッシュ、
 21変数のWHIR成功witness、R1b、回路の真値、Fiat–Shamirのchallenge grindingの課金である。
 
-%%B43%%
+## 第51継続更新（c7d285b0以降）
+
+反復32は利用者の指示（「実務上必要」な3証明を終わらせる）による3候補並列で、いずれもOpusによる敵対的レビューと修復を経た。
+方針は利用者と確定済み: WHIRプロトコルの数学は文献が担保し、Lean監査は実装忠実性を担う。
+
+`Audit.Wire3.RejectionWitness`（29定理・7定義）: **このツリー初の拒否定理。**
+`installed_engine_rejects_the_wrong_root_proof`は、WhirTailWitnessの`sixEngine`（parse/tail両方が採用済みの実物インストール）で、
+`sixProof`の`normInverseRoot`だけを変えた偽proofが`.error .invalidProof`になることを`rfl`で示す。locator定理が
+`Verifier.verify`の他の全ゲート通過を1連言で特定し、失敗はWHIRゲート、その内部ではparseのroot照合である
+（installed parseはトランスクリプトのliteralなcommitmentバイトを文脈のrootと比較する — fixtureのparseは文脈のrootを
+echoしており、それがDigestRoutedAcceptanceの`alt_proof_is_still_accepted`の原因だった）。交絡の不在は定理:
+`runPrefix`に渡る引数のうちrootリスト以外のすべてが受理時と文字通り同一で、rootを戻すとparseは復活する。もう1つの
+非固定root（`witnessRoot`）でも拒否され、fixture対はそれも受理する。**帰属はレビューにより先鋭化した**: WHIR対の各半分が
+単独でも偽proofを拒否して正直proofを受理し（4つのhalf-install定理）、偽造の受理には両方の半分がfixtureであることを要する。
+量化版として、このengineで受理される任意のproofについて読まれたroot（actualとbound）が
+`[testRoot, p.witnessRoot, p.normInverseRoot]`のdigestに固定されることも示した（`rootDigest`は単射）。
+r族形（root値の全域で拒否）は未了で、欠落補題を名指しした: `WhirInitial.receiveOne`はexpected = rootを強制するが
+`receive_one_success`がそのバイト等式を輸出していない。スコープ: `Verifier.testConfig`（1変数）・定数toyハッシュ・
+4欄は抽象観測のまま・installed parseのモデルについての言明であり配備Solidityについてではない。
+
+`Audit.Wire3.R1bBridge`（28定理・15定義＋2構造）: R1b（`rootDetermined`節）を**証明ではなく橋として**閉じる。
+初版は無衝突要求を構造の中に全実行∀量化で置いたが、**その形はレビューが本ツリー自身の深さ1 fixtureで`decide`により反証した**
+（`Merkle.exampleHash`は`take 32`で、奇数索引1の圧縮入力は`sibling ++ current` — 深さ1のrootは葉に依存せず、同じrootに対して
+第2の行が開き、2走行の実行入力が衝突する）。修復後の形が計算論的に正しいスコープである:
+`RunPairNoCollision r₁ r₂`（**比較する2つの走行**が実際にハッシュした入力上の無衝突。`Run`構造がhints/startを露出する —
+existentialな隠蔽が誤った∀形を強制していた）を各橋定理のper-pair仮説として可視的に運び、構造は1欄の
+`WhirDecodeUniqueness`（列は開示をその行バイト経由でしか読まない。走行上で量化。文献引用付き・仮定であり証明せず・
+Leanのaxiomではない）に縮む。反証された旧形は削除せず§7に定理として保存し、per-pair形もその特定のfixture対では反証される
+ことを注記した — そのcommitmentは実際に束縛的でないのだから、そうあるべきである。橋の実質は
+`opened_rows_determined_of_pairwise_no_collision`（採用済み`opened_cells_root_determined_or_collision`のセル単位の一致を、
+`group_success_contiguous_rows`の長さ等式と`List.ext_getElem`で行リスト全体の一致に閉じる）。消費は採用済み
+`committed_tables_join_up_to_collisions`のhr1b枠に**引数単位で一致**して差し込まれ（レビューが署名を読んで確認 — 当該枠は
+1つのopeningを取り、OpeningFreeExtractorを要求しない）、tau表の2枠も単一の`tablesOf`から放電される。帰結の条件文:
+同一rootの2つの受理済み走行についてRunPairNoCollisionと復号一意性の下で、受理されたSolidity呼び出しごとに
+`CommittedTablesJoin`全体を満たす`tablesOf`が存在する — 例外は`ConfigEncodingCollision`と、実際に開かれた2行上の
+`OpenedLeafCollision`のみ。価格付けは一部接続した（サンプル表自身の`leafHashOf Q T`での実例化＋`boundedQueries L`での
+クエリ所属）。未確立と明記: 配備ハッシュとサンプル表ハッシュの同定、配備行の行長上界。root命名の但し書き
+（`opening_relation_is_root_blind`）・非走行opening・単一rootのスコープは継承。
+
+`Audit.Wire3.DeployedWhirWitness`（49定理・31定義）: WHIR実行witnessが**完全な21変数**（配備の変数数）に達した。
+`configured_twenty_one_variable_execution_example`は、実転写`canonicalRow21`のスケジュール（4 | 4,4,4,4 | 1、残差17/13/9/5、
+interleaving深さ16）での実折り畳み4ラウンド、配備マスク`[⟨31⟩]`下の6主張、1904トランスクリプトバイト
+（shapeの上限ちょうど）/1976ヒントバイト・両ストリーム厳密EOFで、`WhirConfigured.run`の成功を`rfl`で示す。
+`installed_tail_succeeds_at_twenty_one_variables`と`deployed_verify_whir_is_true`（parse/tail両方実物）が続く。
+パラメータ許可は実物の転写行そのもので行い、非空虚対照も定理化した: 転写行はpointsが空で出荷されるため6主張では
+rejectされ、実2^23ドメインと29クエリ数は全構造検査を通過する — 障害はpointsだけである。
+
+**規模の開示（見出しの重み、定理として）**: 正典row-21のin-domainクエリ予算は5段で84（29/19/14/12/10）、本witnessは5 —
+16.8倍の削減であり、WHIRのlist-decoding健全性余裕については何も述べない。代用ドメインは`merkleDepth = 0`/
+`codewordLength = 1`で、1976ヒントバイト中のMerkle認証パスは**すべて空**である（正典なら深さ23/22/21/20/19で約54kBの
+兄弟ハッシュ＋実パス検証）。代用はこの2族のみで、全6 PoW閾値を含む他の全欄は転写値である。
+
+**モデル忠実性の確定（レビューの最重要問への答え）**: 中間sumcheckラウンドが等式を課さないのはモデルの欠落ではなく
+配備ワイヤ形式の忠実な転写である。プローバは3つの二次係数のうち2つ（c0, c2）だけを送り、検証器が
+`c1 = claim − 2c0 − c2`を**再構成**する（`WhirFinal.lean:144-146`・`SpongefishWhirVerify.sol:454`・vendored
+`whir/sumcheck.rs:124` — 3層照合、48バイト/ラウンドの一致まで）。よって`h(0)+h(1) = claim`は恒等的に成立し、検査対象が
+存在しない。健全性は係数の自由度が3→2に減ることで保たれる。唯一の照合は最終RLC等式（`sol:737`／
+`WhirFinal.finalClaim`）である。`roundStep`の成功がrunning claimに証明可能に非依存であることも定理化した。
+
+PoW: 実正典閾値5つ（非sentinel）を運び40 nonceバイトを実際に消費するが、定数ハッシュでは`powValue = 0`で比較は
+証明可能に空虚（別の定数ハッシュではgrindingが効く対照付き — 空虚性はモデルではなく`toyHash`の性質）。
+`derivedConfig`の導出文脈との同定は7欄中5欄（6主張セル・protocol id・session id・encoding・変数数・3root、
+全thash/khash/Pで）。残る2欄はpacked pointsで、これはheartbeat予算の記録であって証明可能性の主張ではなく、欠落補題
+（`derived_expected_claims_are_zero`のpoints版）を名指しした。6主張セルはゼロproof由来で全てゼロである（採用済み
+DerivedAcceptanceから継承する玩具性 — 非自明な主張と読んではならない）。正直な一行要約: 配備検証器が検査する唯一の
+等式を、退化ハッシュ・空パスドメイン・84中5クエリで満たすトランスクリプト — 真正の実行witnessでありそれ以上ではない。
+
+3モジュール合わせて156モデル・6517定理。受理ラインの誠実性の弧は完結した: 検証器は実行し、proofに依存し、
+**誤ったproofを拒否する**。今回もROMの法則下の結果であり、keccakの性質でも系の健全性誤差でもない。
+残るのは、r族の拒否形（receiveOneのバイト等式の輸出）、配備ハッシュとサンプル表ハッシュの同定、packed pointsの2欄、
+状態幅を広げたハッシュ、回路の真値、そしてFiat–Shamirのchallenge grindingの課金である。
+
+%%B44%%
+
 
 
 

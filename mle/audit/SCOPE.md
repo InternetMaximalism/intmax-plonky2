@@ -811,6 +811,17 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    （末尾31バイトは全導出でゼロ、連鎖は高々256 digest）。復元はFiat–Shamir依存の構造であって量的衝突耐性ではない。
    分離はfold特異的（foldが等しいroot対はトランスクリプト全体が一致）で、altProofは依然受理される — 2つのproofの
    分離には非ゼロnorm-inverse列かinstalled WHIR parseが要る。`thash`は代入であり全称ではない。
+   その分離はRejectionWitnessで達成した — このツリー初の拒否定理: installed WHIR対のengineで、rootを1つ変えた偽proofが
+   `.error .invalidProof`になり（他の全ゲート通過をlocatorが特定、失敗はparse内のroot照合）、同じ偽proofをfixture対は受理する。
+   WHIR対の各半分が単独でも拒否し、偽造の受理には両方の半分がfixtureであることが必要。ただしtestConfig（1変数）・toyハッシュ・
+   modelでの話であり、r族形は未了（receiveOneのバイト等式が未輸出）。
+   R1bはR1bBridgeで橋として閉じた: 比較する2つの走行の実行入力上の無衝突（per-pair — ∀形は本ツリーの深さ1 fixtureで反証される
+   ことを定理として保存）＋復号一意性（文献引用付き仮定）から、opening-freeな tablesOf での完全なrootDetermined節が、開かれた
+   2行上の局所衝突を除いて従い、採用済みcommitted_tables_joinのhr1b枠に引数単位で差し込まれる。
+   WHIR実行witnessはDeployedWhirWitnessで完全な21変数に達した: 実転写canonicalRow21のスケジュールでの実折り畳み4ラウンド・
+   実PoW閾値（定数ハッシュでは比較が空虚と定理化）・1904/1976バイト厳密EOF。代用は2族のみ（RSドメインとクエリ数84→5、
+   Merkle認証パスはすべて空 — 見出しの重みで開示）。中間sumcheckに等式がないのは配備ワイヤ形式の忠実な転写であることを
+   Lean/Solidity/Rustの3層照合で定理化した。導出文脈との同定は7欄中5欄で、packed pointsの2欄が残る。
    `CommittedTables`結合はCommittedTablesClausesで節ごとに判定した: preprocessedPinnedは受理から任意のengineで導出、configDeployedは
    Solidity経路で局所的な構成符号化衝突1つまで導出、rootDeterminedはR1bそのもので、開示を読む抽出器では節を満たす写像が存在しないため
    COSの退化した証人は強制されていた。採用済みbinding補題が届くのは開かれたcellのみ（局所leaf/path衝突まで）で、開かれないcellと全列の

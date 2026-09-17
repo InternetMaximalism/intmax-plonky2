@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "2d0ecd10dec5b63f6ae9282b7b08022f8025be47fd08b10437d19b5ebfa34896",
+      "sha256": "fddc6b4d444474fdc4495b7e7ac11c6e1c29a4097a8b99e168b7f6c201038025",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "bd0d55e032616e08010d671e16d470c6a93445dc542d294be1cfc55e49f8b1db",
+      "sha256": "f45f61c73f4f5c176694abcc269c578aa5aaf0e56fad17a9ae6e1f59b71ec75f",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "997191ebfa7f330fae3797a861a5270a4b8b3a8fe12ba23b1856121cd90bb236",
+      "sha256": "e521153bf92477a4a5e82cc9289d893e10d41a517c70aa8cd26709013ca31ae5",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "d4c19e1b4c9db43ea0e74b93cf3056af518624871acc7ac7f5997274aefe5f44",
+      "sha256": "71cc7548ee3df8c4744842f02fcb751ada4bc194d6dd708d1c8f8acfc329868c",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "da601451c266c543313fba34b130d90ff810bef54d022a8a61680b628833d3ec",
+      "sha256": "0d977e4bcc803f562e195cd0ac09a5abf77c3a6cd34cd3871052d6cda46fe4d2",
       "kind": "spec"
     },
     {
@@ -2511,6 +2511,21 @@
     {
       "path": "mle/audit/Audit/Wire3/DigestRoutedAcceptance.lean",
       "sha256": "6ba5a3e7e9239af0d739d151c8e59afac7f709b81388f0dc5879b8a18fdf38da",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/RejectionWitness.lean",
+      "sha256": "ae518639a6adee16642288c3fcfcc23589756681224f7686db7371fe24462504",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/R1bBridge.lean",
+      "sha256": "8afc73c522e9135fea89606d9904dd36011508e53916a1c62dc20c278e828560",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/DeployedWhirWitness.lean",
+      "sha256": "160becd049d32ea1b1154d437b1382e4733aebba19db985753d5212a8a553abb",
       "kind": "current-model"
     }
   ],
@@ -10591,6 +10606,145 @@
         "mle/src/verifier_v2.rs"
       ],
       "scope": "Repairs the adopted routed-acceptance module's central defect, the digest-ignoring transcript hash. The repaired hash domain-separates frames from challenge inputs on the single byte where the two adopted prefixes differ, keeps a fixed answer only at the three challenge counters the acceptance argument needs, and reads the digest everywhere else. Acceptance at eighty routed wires is re-exhibited on the literal adopted configuration, proof, pin and claims record with only the hash swapped; the configuration hash and the profile stay universal, and the integrated entry point and the public-input configuration are carried over. The repair is certified by a contrast pair: at the old hash the derived initial transcripts of two proofs differing in the norm-inverse root are equal \u2014 the old hash's real degeneracy is on frames, so its whole chain is constant \u2014 and at the new hash they differ, with digest-injectivity of both branches proved. The residue is exact and disclosed: of the two hundred twenty-eight squeezes in the schedule, one hundred eighty read the chain and forty-eight stay counter-keyed, and counter-blindness statements are scoped to the eight-byte little-endian encoding, whose alias at two to the sixty-four plus three is unreachable within the squeeze range. The chain state is one byte wide: the hash reads all thirty-two digest bytes but writes one, so from the all-zero start the derivation moves through at most two hundred fifty-six distinct digests \u2014 what is restored is the structure of the Fiat-Shamir dependence, not quantitative collision resistance, and the hash is proved to still be a transcript collision. Separation is fold-specific: the exhibited pair separates, a pair with equal one-byte folds provably does not, and the altered proof is still accepted because the terminal reads only the zero column and the fixed rho while the fixture WHIR parse echoes the context roots. Separating two proofs still needs a non-zero norm-inverse column or an installed WHIR parse; neither is constructed and neither is claimed impossible. Random-oracle model, not keccak; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.RejectionWitness",
+      "theorems": [
+        "Audit.Wire3.RejectionWitness.wrong_root_is_not_the_pinned_root",
+        "Audit.Wire3.RejectionWitness.the_two_proofs_differ_in_exactly_one_field",
+        "Audit.Wire3.RejectionWitness.the_wrong_proof_passes_the_shape_gate",
+        "Audit.Wire3.RejectionWitness.wrong_root_changes_only_the_third_context_root",
+        "Audit.Wire3.RejectionWitness.the_accepting_context_roots_are_all_zero",
+        "Audit.Wire3.RejectionWitness.parse_of_the_wrong_root_proof_is_none",
+        "Audit.Wire3.RejectionWitness.prefix_run_of_the_wrong_root_proof_is_none",
+        "Audit.Wire3.RejectionWitness.engine_parse_field_is_none_on_the_wrong_root_proof",
+        "Audit.Wire3.RejectionWitness.whir_gate_is_false_on_the_wrong_root_proof",
+        "Audit.Wire3.RejectionWitness.probe_only_the_roots_change",
+        "Audit.Wire3.RejectionWitness.probe_the_root_list_differs",
+        "Audit.Wire3.RejectionWitness.probe_restoring_the_roots_restores_the_parse",
+        "Audit.Wire3.RejectionWitness.installed_engine_rejects_the_wrong_root_proof",
+        "Audit.Wire3.RejectionWitness.rejection_is_located_at_the_whir_gate",
+        "Audit.Wire3.RejectionWitness.the_separation_pair",
+        "Audit.Wire3.RejectionWitness.acceptance_pins_the_statement_roots_to_the_transcript",
+        "Audit.Wire3.RejectionWitness.acceptance_hypothesis_is_satisfiable",
+        "Audit.Wire3.RejectionWitness.probe_root_digest_is_injective",
+        "Audit.Wire3.RejectionWitness.fixture_engine_differs_only_in_the_whir_pair",
+        "Audit.Wire3.RejectionWitness.the_fixture_parse_echoes_the_context_roots",
+        "Audit.Wire3.RejectionWitness.fixture_whir_pair_accepts_the_wrong_root_proof",
+        "Audit.Wire3.RejectionWitness.fixture_whir_pair_accepts_the_honest_proof",
+        "Audit.Wire3.RejectionWitness.installing_the_whir_pair_is_what_rejects",
+        "Audit.Wire3.RejectionWitness.probe_installed_parse_alone_rejects",
+        "Audit.Wire3.RejectionWitness.probe_installed_parse_alone_accepts_the_honest_proof",
+        "Audit.Wire3.RejectionWitness.probe_installed_tail_alone_rejects",
+        "Audit.Wire3.RejectionWitness.probe_installed_tail_alone_accepts_the_honest_proof",
+        "Audit.Wire3.RejectionWitness.probe_wrong_witness_root_is_also_rejected",
+        "Audit.Wire3.RejectionWitness.probe_fixture_pair_accepts_the_wrong_witness_root_too"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol",
+        "mle/src/commitment/whir_pcs.rs",
+        "mle/src/verifier_v2.rs"
+      ],
+      "scope": "The first rejection theorem in this tree. On the engine whose WHIR parse and tail are both the adopted concrete installs, a proof differing from the accepted one only in the norm-inverse root is rejected with an invalid-proof error, by reflexivity. A locator theorem passes every other verifier gate in one conjunction and places the failure at the WHIR gate, inside the parse, whose installed form compares the transcript's literal commitment bytes against the context roots the proof supplies \u2014 the fixture parse echoed them, which is exactly why the earlier alternate proof stayed accepted. Absence of confounders is a theorem: every argument the prefix run receives other than the root list is literally the accepting one, and restoring the roots restores the parse. The other unpinned root rejects too, and the fixture pair accepts both forgeries, so the general statement is about the statement roots the parse reads. The attribution is sharpened to halves: each half of the WHIR pair alone already rejects the forgery while accepting the honest proof, and acceptance of the forgery requires both halves to be the fixture's. A quantified binding theorem pins the roots any accepted proof presents to the digests of its own statement roots, and the root digest is injective, so there is no same-digest edge case. The family form over all root values is not closed; the missing lemma is named \u2014 the byte equation the receive step forces is not exported by the adopted success lemma. Scope: the one-variable test configuration, a constant toy hash, four engine fields still abstract; a statement about the model of the installed parse, not the deployed Solidity. Random-oracle model, not keccak; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.R1bBridge",
+      "theorems": [
+        "Audit.Wire3.R1bBridge.run_is_group_run",
+        "Audit.Wire3.R1bBridge.run_of_opened_by_group_run",
+        "Audit.Wire3.R1bBridge.opened_leaf_collision_names_distinct_rows",
+        "Audit.Wire3.R1bBridge.opened_by_group_run_indices",
+        "Audit.Wire3.R1bBridge.executed_merkle_inputs_empty_at_depth_zero",
+        "Audit.Wire3.R1bBridge.run_pair_no_collision_at_depth_zero",
+        "Audit.Wire3.R1bBridge.whir_decode_uniqueness_is_satisfiable",
+        "Audit.Wire3.R1bBridge.base_row_fixture_is_a_group_run",
+        "Audit.Wire3.R1bBridge.opened_row_agrees_or_leaf_collision",
+        "Audit.Wire3.R1bBridge.opened_rows_determined_of_pairwise_no_collision",
+        "Audit.Wire3.R1bBridge.extract_agrees_on_the_two_runs",
+        "Audit.Wire3.R1bBridge.extracted_state_congr_of_extract",
+        "Audit.Wire3.R1bBridge.committed_tables_of_extract_agreement",
+        "Audit.Wire3.R1bBridge.r1b_clause_of_the_two_runs",
+        "Audit.Wire3.R1bBridge.root_determined_of_pairwise_no_collision",
+        "Audit.Wire3.R1bBridge.committed_tables_join_of_the_two_runs",
+        "Audit.Wire3.R1bBridge.tau_table_is_fixed_data_of_the_two_runs",
+        "Audit.Wire3.R1bBridge.bridge_leaf_disjunct_is_priced",
+        "Audit.Wire3.R1bBridge.bridge_leaf_disjunct_is_priced_at_the_bounded_queries",
+        "Audit.Wire3.R1bBridge.bridge_config_disjunct_is_priced",
+        "Audit.Wire3.R1bBridge.base_row_opens_at_the_depth_one_root",
+        "Audit.Wire3.R1bBridge.other_base_row_opens_at_the_depth_one_root",
+        "Audit.Wire3.R1bBridge.run_pair_no_collision_fails_at_the_depth_one_fixture",
+        "Audit.Wire3.R1bBridge.merkle_no_collision_for_all_executions_fails_at_depth_one",
+        "Audit.Wire3.R1bBridge.the_two_depth_one_runs_open_different_rows",
+        "Audit.Wire3.R1bBridge.rows_extract_is_decode_unique",
+        "Audit.Wire3.R1bBridge.rows_extract_is_not_opening_free",
+        "Audit.Wire3.R1bBridge.demo_extract_violates_rows_determine_columns"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol",
+        "mle/src/commitment/whir_pcs.rs",
+        "mle/contracts/src/MleVerifierV2.sol"
+      ],
+      "scope": "Closes full-column root determination as a bridge, not a proof. The assumption is scoped the way a computational collision-resistance assumption actually prices: a per-pair no-collision hypothesis over the byte strings the two compared runs actually hash, with the run's hint buffer and start state exposed, plus a one-field decode-uniqueness structure \u2014 columns read an opening only through its opened row bytes, quantified over runs, assumed and cited to the WHIR literature, never proven and never a Lean axiom. An earlier all-executions form is kept as refuted theorems: the tree's own depth-one fixture defeats it by decision procedure, because the example hash ignores the leaf at odd indices, so the root does not depend on the leaf and two accepting runs must collide \u2014 and the per-pair form is also refuted at that particular pair, as it should be, since that fixture's commitment really is not binding. From the two assumptions the full root-determination clause follows at an opening-free table map, at every accepted group run, up to a localized leaf collision on two rows the runs actually opened; the new content closes the adopted per-cell agreement into whole-row agreement through the group run's length equality. The consumption slots into the adopted committed-tables join argument for argument and discharges both tau slots from one table map. Pricing is partly connected, at a sampled table's own leaf hash and the bounded query set; the identification of the deployed hash and the row-length bound of deployed rows are stated as not established. The root-naming caveat, non-run openings and the single-root scope are inherited. Random-oracle model, not keccak; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.DeployedWhirWitness",
+      "theorems": [
+        "Audit.Wire3.DeployedWhirWitness.the_witness_hash_is_constant",
+        "Audit.Wire3.DeployedWhirWitness.the_witness_hash_ignores_every_input",
+        "Audit.Wire3.DeployedWhirWitness.the_witness_hash_is_the_adopted_toy_hash",
+        "Audit.Wire3.DeployedWhirWitness.canonical_row_twenty_one_is_twenty_one_variables",
+        "Audit.Wire3.DeployedWhirWitness.canonical_row_twenty_one_alone_has_no_evaluation_points",
+        "Audit.Wire3.DeployedWhirWitness.canonical_row_twenty_one_passes_six_claim_admission",
+        "Audit.Wire3.DeployedWhirWitness.canonical_row_twenty_one_admission_changes_only_the_points",
+        "Audit.Wire3.DeployedWhirWitness.deployed_shape_matches_canonical_row_twenty_one",
+        "Audit.Wire3.DeployedWhirWitness.deployed_shape_carries_the_canonical_grinding_thresholds",
+        "Audit.Wire3.DeployedWhirWitness.deployed_shape_has_five_non_sentinel_thresholds",
+        "Audit.Wire3.DeployedWhirWitness.deployed_shape_stands_in_for_two_canonical_families",
+        "Audit.Wire3.DeployedWhirWitness.query_budget_is_cut_from_eighty_four_to_five",
+        "Audit.Wire3.DeployedWhirWitness.stand_in_domain_has_no_merkle_path",
+        "Audit.Wire3.DeployedWhirWitness.deployed_shape_is_the_production_caller_profile",
+        "Audit.Wire3.DeployedWhirWitness.deployed_shape_passes_six_claim_admission",
+        "Audit.Wire3.DeployedWhirWitness.deployed_schedule_partitions_twenty_one_variables",
+        "Audit.Wire3.DeployedWhirWitness.deployed_schedule_has_four_phase_pairs",
+        "Audit.Wire3.DeployedWhirWitness.toy_grinding_value_is_zero",
+        "Audit.Wire3.DeployedWhirWitness.toy_grinding_accepts_every_nonce",
+        "Audit.Wire3.DeployedWhirWitness.sentinel_grinding_reads_nothing",
+        "Audit.Wire3.DeployedWhirWitness.deployed_context_shape_is_the_derived_shape",
+        "Audit.Wire3.DeployedWhirWitness.deployed_context_claims_are_the_derived_claims",
+        "Audit.Wire3.DeployedWhirWitness.deployed_context_supplies_two_packed_points",
+        "Audit.Wire3.DeployedWhirWitness.deployed_context_has_the_verifier_shape",
+        "Audit.Wire3.DeployedWhirWitness.deployed_context_variable_count_is_the_derived_configuration",
+        "Audit.Wire3.DeployedWhirWitness.deployed_context_claims_unmask_to_zero",
+        "Audit.Wire3.DeployedWhirWitness.deployed_context_roots_are_the_three_zero_digests",
+        "Audit.Wire3.DeployedWhirWitness.deployed_vk_is_the_context_substitution",
+        "Audit.Wire3.DeployedWhirWitness.deployed_vk_takes_its_points_from_the_context",
+        "Audit.Wire3.DeployedWhirWitness.deployed_vk_passes_six_claim_admission",
+        "Audit.Wire3.DeployedWhirWitness.deployed_streams_have_the_stated_lengths",
+        "Audit.Wire3.DeployedWhirWitness.configured_twenty_one_variable_execution_example",
+        "Audit.Wire3.DeployedWhirWitness.option_is_some_of_map_eq_some",
+        "Audit.Wire3.DeployedWhirWitness.deployed_tail_run_unfolds",
+        "Audit.Wire3.DeployedWhirWitness.installed_tail_succeeds_at_twenty_one_variables",
+        "Audit.Wire3.DeployedWhirWitness.installed_tail_returns_true_at_twenty_one_variables",
+        "Audit.Wire3.DeployedWhirWitness.deployed_execution_consumes_the_bytes",
+        "Audit.Wire3.DeployedWhirWitness.deployed_source_is_not_empty",
+        "Audit.Wire3.DeployedWhirWitness.round_step_success_ignores_the_running_claim",
+        "Audit.Wire3.DeployedWhirWitness.run_rounds_success_ignores_the_running_claim",
+        "Audit.Wire3.DeployedWhirWitness.sumcheck_identity_holds_by_construction",
+        "Audit.Wire3.DeployedWhirWitness.the_only_algebraic_equality_is_the_final_claim",
+        "Audit.Wire3.DeployedWhirWitness.list_of_length_six",
+        "Audit.Wire3.DeployedWhirWitness.deployed_prefix_bound_is_some",
+        "Audit.Wire3.DeployedWhirWitness.deployed_prefix_run_is_some",
+        "Audit.Wire3.DeployedWhirWitness.deployed_parse_matches_the_context",
+        "Audit.Wire3.DeployedWhirWitness.deployed_verify_whir_is_true",
+        "Audit.Wire3.DeployedWhirWitness.the_derived_engine_still_carries_the_fixture_whir_pair",
+        "Audit.Wire3.DeployedWhirWitness.this_witness_is_twenty_variables_above_the_adopted_one"
+      ],
+      "sources": [
+        "mle/contracts/src/spongefish/SpongefishWhirVerify.sol",
+        "mle/src/commitment/whir_pcs.rs",
+        "mle/src/vk_v2.rs"
+      ],
+      "scope": "Moves the WHIR execution witness from the toy shape to the full deployed variable count: a successful run at twenty-one variables with four real intermediate folding rounds on the transcribed canonical row's own schedule, six claim cells under the deployed mask, the transcript at exactly the shape cap, and exact end-of-file on both streams \u2014 through the installed tail and parse to a true WHIR gate. Parameter admission runs the transcribed canonical row itself, with the non-vacuity control that the row as transcribed is rejected because it ships with empty points while its real two-to-the-twenty-three domain and twenty-nine-query count pass every structural check. The magnitude of the two stand-in families is disclosed at headline weight and as theorems: the canonical in-domain query budget of eighty-four openings across five stages is cut to five, one per stage, a sixteen-point-eight-fold reduction saying nothing about list-decoding margins, and the stand-in domain has Merkle depth zero, so every authentication path in the hints is empty. Model fidelity is settled and proved: the deployed wire format sends two of the three quadratic sumcheck coefficients and the verifier reconstructs the third from the running claim, in the Lean model, the Solidity and the vendored Rust alike, so intermediate rounds impose no equality by construction and the single reconciliation is the final claim; the round step's success is provably independent of the running claim. The proof-of-work comparison carries the five real canonical thresholds and consumes the forty nonce bytes but is provably vacuous at the constant hash, with a contrast hash at which grinding bites. Five of the seven derived-context fields are identified with the derived configuration's context for every transcript hash, configuration hash and profile; the two packed points remain open as a heartbeat-budget record with the missing lemma named, and the six claim cells are all zero because the derived proof is a zero proof. An execution witness and nothing more. Random-oracle model, not keccak; not the system's soundness error."
     }
   ]
 }
