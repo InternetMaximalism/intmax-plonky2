@@ -803,6 +803,14 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    導出 challenge は statement に非依存（`rho_ignores_the_statement`）で、根だけ異なる2つの proof が両方受理される
    （`alt_proof_is_also_accepted`）。これは最後の退化ピンの除去ではなく、proof 依存 challenge との交換である。
    derived / routed / maximal の3実例はすべて比較不能。ゲート7は80回の wire loop を実行するが2つの proof を区別しない。
+   そのdigest無視はDigestRoutedAcceptanceで修復した: `fixedHash`はバイト15でフレーム/チャレンジをドメイン分離し、
+   受理の消滅論法が必要とするカウンタ3/4/5だけを固定して残りはdigestを実際に読む。採用済みのroutedConfig/routedProof/
+   routedPin/matchingClaimsを一切変えず、ハッシュだけ差し替えて`numRouted = 80`の受理が成立し（`fixed_acceptance`）、
+   root違いの2つのproofの導出トランスクリプトは旧ハッシュでは一致・新ハッシュでは分離することを対比定理対で示した。
+   残余は開示済み: 228回の絞り出し中180回がchainを読み48回は符号固定のまま、そしてchain状態は1バイト幅
+   （末尾31バイトは全導出でゼロ、連鎖は高々256 digest）。復元はFiat–Shamir依存の構造であって量的衝突耐性ではない。
+   分離はfold特異的（foldが等しいroot対はトランスクリプト全体が一致）で、altProofは依然受理される — 2つのproofの
+   分離には非ゼロnorm-inverse列かinstalled WHIR parseが要る。`thash`は代入であり全称ではない。
    `CommittedTables`結合はCommittedTablesClausesで節ごとに判定した: preprocessedPinnedは受理から任意のengineで導出、configDeployedは
    Solidity経路で局所的な構成符号化衝突1つまで導出、rootDeterminedはR1bそのもので、開示を読む抽出器では節を満たす写像が存在しないため
    COSの退化した証人は強制されていた。採用済みbinding補題が届くのは開かれたcellのみ（局所leaf/path衝突まで）で、開かれないcellと全列の

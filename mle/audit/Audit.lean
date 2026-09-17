@@ -157,3 +157,4 @@ import Audit.Wire3.DerivedAcceptance
 import Audit.Wire3.TwoLaneMessages
 import Audit.Wire3.WhirTailWitness
 import Audit.Wire3.RoutedAcceptance
+import Audit.Wire3.DigestRoutedAcceptance

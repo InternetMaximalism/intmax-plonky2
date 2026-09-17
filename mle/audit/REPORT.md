@@ -1992,7 +1992,67 @@ WHIR成功は installed 水準で具体化されたが、構成は`Verifier.test
 `thash`での`numRouted > 0`、ゲート7が2つのproofを区別する具体的拒否例、21変数のWHIR成功witness、
 R1b、回路の真値、そしてFiat–Shamirの challenge grinding の課金である。
 
-%%B42%%
+## 第49継続更新（057d4b98以降）
+
+反復31は利用者の指示（RoutedAcceptanceの取引を実際に修復せよ）による単一候補で、
+`Audit.Wire3.DigestRoutedAcceptance`（119定理・12定義）を採用した。Opusによる敵対的レビューを経ており、
+レビューは修復の核が本物であることを確認したうえで、散文の較正欠陥3件を指摘して直させた。
+
+**修復の中身。** `fixedHash`は採用済み`framePrefix`（長さ20）と`challengePrefix`（長さ24）がバイト15で異なることを使って
+フレーム/チャレンジ入力をドメイン分離する（`challenge_mark`/`frame_mark`は任意のdigest・タグ・payload・カウンタで`rfl`）。
+チャレンジ側はカウンタ3/4/5（受理の消滅論法が必要とするρ = −1とその隣接値）だけ固定し、それ以外は`mixFrom`がdigestを
+実際に読む。フレーム側は常にdigestを読む。設計中に2つの事実が確定した: (i) 旧`routedHash`の退化の本体はフレーム側であり、
+実質すべてのフレームが定数`twoDigest`に写るので**連鎖全体が定数**だった（`routed_hash_on_a_long_frame`。ラウンド3の
+コミットフレームは例外的に`minusOneDigest`へ潰れることも証明された）。(ii) カウンタ符号だけで分岐すると`commitRound`が
+吸収する`le 8 round`の末尾8バイトがちょうど`counterTag round`なのでラウンド3–5で連鎖が崩壊する — バイト15の判別子は
+装飾ではなく必要である。
+
+**見出し`fixed_acceptance`**: 採用済みの`routedConfig`・`routedProof`・`routedPin`・`matchingClaims`を一切変えず、
+ハッシュだけ差し替えて`numRouted = 80`で`Verifier.verify`が受理する。`khash`とプロファイル`P`は全称（stand-in/sharp両方で
+放電）、`Integrated.verify`版と`numPublicInputs = 3`構成も継承。組み立ては`verify_of_checks`でゲートごと、`set_option`なし。
+
+**修復が本物であることの対比定理対**: 旧ハッシュでは`routedProof`と`normInverseRoot`だけ違う`altProof`の導出初期
+トランスクリプトが**一致**し（`routed_initial_transcripts_do_not_separate_the_two_proofs`）、新ハッシュでは**分離**する
+（`fixed_initial_transcript_separates_the_two_proofs`、任意の構成・`khash`・`P`）。digest単射性は両枝とも定理
+（`fixed_hash_is_injective_in_the_digest`、`frame_hash_is_injective_in_the_digest` — mixByteはmod 256加法で左簡約可能、
+`clip 31`はちょうど31バイトのリストに適用され情報を落とさない。レビューが検証した）。
+
+**残余の台帳（レビューが検証の結果「正しい」と確認）**: 導出102回＋ラウンド78回＋索引48回 = 228回の絞り出しのうち、
+digest盲目なのはカウンタ3/4/5の48回（ρ・γと各段の3/4/5）で、180回がchainを読む（旧`routedHash`: 0/228）。
+最初の2つの和は定理化した（`derive_squeeze_counts`、`a_round_squeezes_six_from_counter_zero`）。カウンタ盲目性の記述は
+8バイトLE符号化にスコープする: `counterTag (2^64+3) = counterTag 3`だが（`le 8`はmod 2^64）、そのエイリアスは
+squeezeのカウンタ上限の外で到達不能（`the_aliased_counter_is_out_of_squeeze_range`）。
+
+**chain状態は1バイト幅である（見出しの重みで開示）**: `mixFrom`は32バイト読むが1バイトしか書かず、末尾31バイトは
+入力digestのものをそのまま持ち越す。開始状態は全ゼロなので、任意の構成・statementで導出chainのdigestは可変1バイト＋
+ゼロ31バイト（`derive_digest_tail_is_thirty_one_zero_bytes`）— 連鎖は高々**256個**のdigestしか通らない。
+「228中180がchainを読む」はその1バイト状態を読むという意味である。復元されたのはFiat–Shamir依存の**構造**
+（どのchallengeがどの吸収の関数か）であって量的衝突耐性ではない（`fixed_hash_is_still_a_transcript_collision`を
+敢えて証明し、衝突フリー性は主張しない）。
+
+**分離はfold特異的（対比の対の真隣に配置）**: 分離定理は fold 34対35の一対についての事実である。foldが等しい対
+（`normInverseRoot` 1と256、どちらもfold 35）は新ハッシュでも導出初期トランスクリプト全体が一致する
+（`fixed_hash_does_not_separate_the_other_root_pair`）。どの対が分離するかは1バイトfoldの性質であってstatementの
+相異の性質ではない。
+
+**正直な否定**: `alt_proof_is_still_accepted` — ゲート7はnorm-inverse列（両proofでゼロ）とρ（両方−1）しか読まず、
+ゲート8は`normInverseRoot`を比較するはずだがfixtureの`parseWhir`が文脈rootをechoする
+（`fixture_parse_echoes_the_context_roots`）。2つのproofの分離は経路(a)（非ゼロnorm-inverse列）かinstalled WHIR parseを
+要する — 構成していないし不可能とも主張しない。
+
+**取引台帳**: RoutedAcceptanceよりハッシュで厳密に良く、それ以外は同一（`same_instance_as_the_adopted_routed_acceptance`、
+全`rfl`）。DerivedAcceptanceとは依然比較不能（`thash`はここでは代入、あちらでは全称 — その量化子が依然価格であることを
+見出しの重みで明記）。maximalConfig台帳は再輸出のまま。**最後の退化ピンが除去されたとはどこにも書いていない**:
+正直な主張は「routed wiresと（228中180の）proof依存challengeが両立するようになった。残余48回と1バイト状態幅と
+fixture WHIR対を名指しのうえで」である。
+
+1モジュールで153モデル・6411定理。今回もROMの法則下の結果であり、keccakの性質でも系の健全性誤差でもない。
+残るのは、状態幅を広げたハッシュ（またはρの盲目性も外す具体連鎖プログラミング）、ゲート7が2つのproofを区別する
+具体的拒否例（経路(a)かinstalled WHIR parse）、21変数のWHIR成功witness、R1b、回路の真値、
+Fiat–Shamirのchallenge grindingの課金である。
+
+%%B43%%
+
 
 
 
