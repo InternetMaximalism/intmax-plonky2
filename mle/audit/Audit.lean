@@ -155,3 +155,5 @@ import Audit.Wire3.NonDegenerateAcceptance
 import Audit.Wire3.GrindLanePairing
 import Audit.Wire3.DerivedAcceptance
 import Audit.Wire3.TwoLaneMessages
+import Audit.Wire3.WhirTailWitness
+import Audit.Wire3.RoutedAcceptance

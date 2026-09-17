@@ -784,6 +784,13 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    プロトコルは1段離れた2つの結合セルを持つのに`GrindCausal`はそのどちらにも届かせないため、grindingのlineは厳密に粗い粒度にあり、
    単一ペイロードの分割では直らない。分割自体は予算を5元から15元に上げるが、2 laneが分離するのは120バイト超のときだけで、
    それ以下ではgate側が空になる（空のgateセルは合法なroundメッセージではない）。この長さ不正はGLPからの継承である。
+   WhirTailWitnessはinstalled水準のWHIR成功を初めて具体的に示した: 配備マスクと6主張での`WhirConfigured.run`成功、
+   および`parseWhir`/`whirTail`両方をinstalledにした`Verifier.verify`受理。ただし定数toyハッシュ・toy no-roundプロファイル・
+   `Verifier.testConfig`（1変数）であり、engineは`DerivedAcceptance`の補集合（4欄が抽象観測のまま）であって
+   `ExplicitEngine.explicitEngine`ではない。21変数のwitnessは未構成。マスク`[⟨31⟩]`対`[⟨7⟩]`はブロッカーではなく主張数が
+   実障害だった（前提の訂正）。RoutedAcceptanceは同じderived engineのまま`numRouted = 80`で受理するが、
+   `routedHash`はdigestを無視する。導出challengeはproofに非依存で、根だけ異なる2つのproofが両方受理される。
+   これは最後の退化ピンの除去ではなく、proof依存challengeとの交換である。derived / routed / maximal の3実例はすべて比較不能。
    `CommittedTables`結合はCommittedTablesClausesで節ごとに判定した: preprocessedPinnedは受理から任意のengineで導出、configDeployedは
    Solidity経路で局所的な構成符号化衝突1つまで導出、rootDeterminedはR1bそのもので、開示を読む抽出器では節を満たす写像が存在しないため
    COSの退化した証人は強制されていた。採用済みbinding補題が届くのは開かれたcellのみ（局所leaf/path衝突まで）で、開かれないcellと全列の

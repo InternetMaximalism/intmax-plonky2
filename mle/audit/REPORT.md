@@ -1890,7 +1890,36 @@ manifest `55fc196a60662092fcdd3f40c68b8570f716a5b6629df39fa26c07e8c682f773`、re
 （導出索引点での値）に束縛するので、そのようなwitnessは必ず`thash`依存になる。したがってWHIR完全な実例は
 DerivedAcceptanceの`thash`全称量化を**保てない**。次の反復では両者のどちらを取るかを選び、その選択を明示することになる。
 
-%%B40%%
+反復30は両方を取り、どちらを取ったかを定理として記録した。
+
+`Audit.Wire3.WhirTailWitness`（56定理・11定義）: installed水準のWHIR成功を初めて具体的に示す。採用済みの具体評価はすべて
+否定（`tailRun = none`）だった。本モジュールは3主張と、配備の主張数である6主張の両方で`WhirConfigured.run` /
+`InstalledWhirTail.tailRun`の成功を`rfl`で出す。前提の訂正として、マスク`[⟨31⟩]`対`[⟨7⟩]`はブロッカーではない
+（`readClaims`は`0..expected.length-1`しか見ず、そこでビット一致。`configured_run_mask_congruent`）。実障害は主張数であり、
+`configured_six_claim_execution_example`がそれを外す（408トランスクリプトバイト、72ヒントバイト、両ストリームexact EOF）。
+6主張文脈はouter verifierが導出する形そのもので、`installed_whir_pair_accepts_a_full_verification`は`parseWhir`と
+`whirTail`の両方をinstalledにした`Verifier.verify`受理である。**これは明示engineでの受理ではない。** engineは`sixEngine`
+（4欄が`Verifier.testEngine`の抽象観測のまま）で、構成は`Verifier.testConfig`（1変数）であり
+`DerivedAcceptance.derivedConfig`（21変数）ではない。ハッシュは定数toyで、追加72バイトのclaimはsponge digestを動かせない。
+プロファイルは`exampleNoRounds`（PoW閾値はすべて`maxCounter`）。`thash`は供給文脈では全称、導出文脈では`toyHash`に
+インスタンス化する。21変数のwitnessは未構成で、不可能とも主張しない。
+
+`Audit.Wire3.RoutedAcceptance`（111定理・13定義）: `numRouted = 80`での受理を、採用済み`DerivedAcceptance.derivedEngine`と
+採用済み`matchingClaims`のまま示す。経路は(b): 導出`rho = -1`になるよう`thash`を`routedHash`にインスタンス化し、
+採用済み障害の第2因子を消す。経路(a)は未発見。ゲート7は80回のwire loopと160回の`denominatorTerms`を実行する。
+**ただしこれは最後の退化ピンの除去ではない。** 敵対的レビューが確認し、モジュールへ採用した事実:
+`routedHash`はchallenge入力の末尾8バイト（カウンタ）だけを見てdigestを無視し、`TranscriptCollision`である。
+導出challengeはあらゆるstatementで一致する。`normInverseRoot`だけが異なる第2のproofも受理されるので、ゲート7は
+これら2つを区別しない。`DerivedAcceptance`が`constantHash`を依存の反証witnessとして使ったのと同じ退化したハッシュ族を、
+本モジュールは受理ハッシュとして使っている。**見出し: 受理ラインはいま routed wires と proof依存challengeの両方を
+持っていない。** `khash`は全称のまま。derived / routed / maximal の3実例はすべて比較不能。WHIR対は依然fixture。
+
+両モジュール合わせて152モデル・6292定理。今回もROMの法則下の結果であり、keccakの性質でも系の健全性誤差でもない。
+残るのは21変数のWHIR成功witness（derivedConfigへの接続）、digestを実際に使う`thash`での`numRouted > 0`、
+ゲート7が2つのproofを区別する具体的拒否例、R1b（全列のroot決定性）、回路の真値、そしてFiat–Shamirの
+challenge grindingの課金である。
+
+%%B41%%
 
 
 
