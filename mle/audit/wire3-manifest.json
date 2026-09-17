@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "514ef967d56a23f6ae04f17e1bc555849ed99b1cbcae668c4badafc704428048",
+      "sha256": "072f1b5c4f82c950d957e7d8bcfb1cb580a18c964a549b0e7c365f078769cf51",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "212138a2eb058fbf9e6946f033efda39aa7db9aa122bc1bda9c1beecdb5614ee",
+      "sha256": "307e11a7a53ac947d086497fa653125543cb61ac5ead2b9f0960597ed8bab313",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "74413e445fc736e50d8265c98789d1ce2606d949b3fad77a94c29962742b1592",
+      "sha256": "276e8b1ec611b2bdfa0e638b6350b27556a7f754b9d26d9858a34322da0a4688",
       "kind": "spec"
     },
     {

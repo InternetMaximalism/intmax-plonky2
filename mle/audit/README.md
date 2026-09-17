@@ -155,6 +155,8 @@
 | [RoutedAcceptance](Audit/Wire3/RoutedAcceptance.lean) | `numRouted = 80`（envelope上限、採用済み`maximalConfig`と同値）での受理を、採用済み`DerivedAcceptance.derivedEngine`と採用済み`matchingClaims`のまま示す。経路は(b): 導出`rho = -1`になるよう`thash`を`routedHash`にインスタンス化し、採用済み障害の第2因子を消す。経路(a)（非ゼロnorm-inverse列）は未発見で不可能とも主張しない。ゲート7は80回のwire loop・160回の`denominatorTerms`・80段のλ梯子を**実行する**。**ただしこれは最後の退化ピンの除去ではない。** `routedHash`はchallenge入力の末尾8バイト（カウンタ）だけを見てdigestを無視する（`routed_hash_is_a_transcript_collision`）。導出challengeはstatementに非依存（`rho_ignores_the_statement`）。`normInverseRoot`だけが異なる第2のproofも受理される（`alt_proof_is_also_accepted`）ので、ゲート7はこれら2つを区別しない。`DerivedAcceptance`が`constantHash`を依存の**反証witness**として使ったのと同じ退化したハッシュ族を、本モジュールは**受理ハッシュ**として使っている。見出し: 受理ラインはいま routed wires と proof依存challengeの**両方**を持っていない。`khash`は全称。3実例（derived / routed / maximal）はすべて比較不能。WHIR対は依然fixture。 | 111 |
 
 現行rootは152モデル・6292件の名付き定理です。
+バッチ40の見出し定理は [REPORT.md の主要定理の入口](REPORT.md#主要定理の入口) と第47継続更新に、
+各モジュールの「何を示し何を示さないか」は Lean ファイル先頭の `/-! … -/` にあります。
 **ConditionalSoundnessの数値2^-184を系の健全性誤差として引用しないでください。**
 これは外側sumcheckの一致事象のみを数えた値で、支配項であるWHIR/Merkleを含みません。
 gate laneは証明されておらず、抽出とcommitmentの接合も仮定のままです。直近の検査結果はREPORTとmanifestで管理します。

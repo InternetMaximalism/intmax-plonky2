@@ -174,16 +174,29 @@ raw認証成功とcanonical decode成功は別条件。final splitのdecode/集�
 | folding schedule projection | `WhirSchedule.accepted_schedule_partitions_original_variables`, `WhirSchedule.accepted_round_annotations_equal_remaining_suffix` |
 
 上表の名前は共通prefix `Audit.Wire3.` を省略。
+初期モジュールの見出しだけをここに置き、後続は各「第N継続更新」に記録する。
+直近バッチ40の見出しは次のとおり。
+
+| テーマ | 定理 |
+|---|---|
+| installed WHIR の具体成功 | `WhirTailWitness.configured_six_claim_execution_example`, `WhirTailWitness.installed_whir_pair_accepts_a_full_verification` |
+| 配備主張数での tailRun | `WhirTailWitness.installed_tail_succeeds_at_a_six_claim_context`, `WhirTailWitness.six_verify_whir_is_true` |
+| マスクは主張数までは一致 | `WhirTailWitness.configured_run_mask_congruent`, `WhirTailWitness.the_two_masks_agree_below_three` |
+| toy hash / 非 derivedConfig | `WhirTailWitness.the_witness_hash_ignores_every_input`, `WhirTailWitness.the_accepting_configuration_is_not_the_derived_one` |
+| `numRouted = 80` での受理 | `RoutedAcceptance.routed_acceptance`, `RoutedAcceptance.routed_integrated_acceptance` |
+| digest 無視と衝突 | `RoutedAcceptance.routed_hash_is_a_transcript_collision`, `RoutedAcceptance.rho_ignores_the_statement` |
+| ゲート7は根の差を区別しない | `RoutedAcceptance.alt_proof_is_also_accepted`, `RoutedAcceptance.routed_wire_loop_runs_eighty_times` |
+
 全名付き定理は[manifest](wire3-manifest.json)で管理し、検査は抜粋ではなく全件に対して行う。
 
 ## 全ソースの対応状況
 
 | このcheckout内のRust/Solidityファイル | 合計 | 部分的なモデル対応あり | モデル対応なし |
 |---|---:|---:|---:|
-| MLE Rust (`mle/src/`、旧実装を含む) | 35 | 10 | 25 |
-| MLE Solidity (`mle/contracts/src/`、旧実装を含む) | 33 | 18 | 15 |
-| その他（テスト・example・別crateを含む） | 222 | 2 | 220 |
-| 合計 | 290 | 30 | 260 |
+| MLE Rust (`mle/src/`、旧実装を含む) | 35 | 14 | 21 |
+| MLE Solidity (`mle/contracts/src/`、旧実装を含む) | 33 | 23 | 10 |
+| その他（テスト・example・別crateを含む） | 222 | 3 | 219 |
+| 合計 | 290 | 40 | 250 |
 
 「部分的なモデル対応あり」はファイル全体の翻訳・証明を意味しない。
 行数ベースのcoverageや安全性の達成率でもない。
@@ -1893,26 +1906,72 @@ DerivedAcceptanceの`thash`全称量化を**保てない**。次の反復では�
 反復30は両方を取り、どちらを取ったかを定理として記録した。
 
 `Audit.Wire3.WhirTailWitness`（56定理・11定義）: installed水準のWHIR成功を初めて具体的に示す。採用済みの具体評価はすべて
-否定（`tailRun = none`）だった。本モジュールは3主張と、配備の主張数である6主張の両方で`WhirConfigured.run` /
-`InstalledWhirTail.tailRun`の成功を`rfl`で出す。前提の訂正として、マスク`[⟨31⟩]`対`[⟨7⟩]`はブロッカーではない
-（`readClaims`は`0..expected.length-1`しか見ず、そこでビット一致。`configured_run_mask_congruent`）。実障害は主張数であり、
-`configured_six_claim_execution_example`がそれを外す（408トランスクリプトバイト、72ヒントバイト、両ストリームexact EOF）。
-6主張文脈はouter verifierが導出する形そのもので、`installed_whir_pair_accepts_a_full_verification`は`parseWhir`と
-`whirTail`の両方をinstalledにした`Verifier.verify`受理である。**これは明示engineでの受理ではない。** engineは`sixEngine`
-（4欄が`Verifier.testEngine`の抽象観測のまま）で、構成は`Verifier.testConfig`（1変数）であり
-`DerivedAcceptance.derivedConfig`（21変数）ではない。ハッシュは定数toyで、追加72バイトのclaimはsponge digestを動かせない。
-プロファイルは`exampleNoRounds`（PoW閾値はすべて`maxCounter`）。`thash`は供給文脈では全称、導出文脈では`toyHash`に
-インスタンス化する。21変数のwitnessは未構成で、不可能とも主張しない。
+否定（`InstalledWhirTail.example_empty_hints_fail_the_concrete_tail` の `tailRun = none`、
+`InstalledWhirParse.example_concrete_parse_rejects_the_empty_transcript`）だった。成功は仮説か受理前提の存在結論だけだった。
 
-`Audit.Wire3.RoutedAcceptance`（111定理・13定義）: `numRouted = 80`での受理を、採用済み`DerivedAcceptance.derivedEngine`と
-採用済み`matchingClaims`のまま示す。経路は(b): 導出`rho = -1`になるよう`thash`を`routedHash`にインスタンス化し、
-採用済み障害の第2因子を消す。経路(a)は未発見。ゲート7は80回のwire loopと160回の`denominatorTerms`を実行する。
-**ただしこれは最後の退化ピンの除去ではない。** 敵対的レビューが確認し、モジュールへ採用した事実:
-`routedHash`はchallenge入力の末尾8バイト（カウンタ）だけを見てdigestを無視し、`TranscriptCollision`である。
-導出challengeはあらゆるstatementで一致する。`normInverseRoot`だけが異なる第2のproofも受理されるので、ゲート7は
-これら2つを区別しない。`DerivedAcceptance`が`constantHash`を依存の反証witnessとして使ったのと同じ退化したハッシュ族を、
-本モジュールは受理ハッシュとして使っている。**見出し: 受理ラインはいま routed wires と proof依存challengeの両方を
-持っていない。** `khash`は全称のまま。derived / routed / maximal の3実例はすべて比較不能。WHIR対は依然fixture。
+**段1–2。** 3主張では `installed_tail_succeeds_on_a_concrete_transcript` と `witness_verify_whir_is_true` が
+`InstalledWhirTail.tailRun … .isSome = true` と `Verifier.verifyWhir = true` を出す。6主張（`Verifier.expectedClaims` の配備Arity）では
+`configured_six_claim_execution_example` が `WhirConfigured.run` の成功を `rfl` で出す（408トランスクリプトバイト、72ヒントバイト、
+両ストリーム exact EOF。レイアウトはコミット認証192ゼロバイト + 6主張144バイト + 初期sumcheck `(1,0)` + 終端ベクトル `1`）。
+それを `installed_tail_succeeds_at_a_six_claim_context` / `six_verify_whir_is_true` が `tailRun` と `verifyWhir` へ持ち上げる。
+`six_context_is_the_derived_context_of_the_installed_engine` により6主張文脈は `Verifier.testConfig` 上で outer verifier が導出する
+`derivedContext` そのものであり、`installed_whir_gate_is_true_at_its_own_derived_context` は手渡し文脈ではなく
+エンジン自身の WHIR ゲートが `true` を返す。
+
+**段3。** `installed_whir_pair_accepts_a_full_verification` は `parseWhir` と `whirTail` の両方を installed にした
+`Verifier.verify (sixEngine …) ⟨1, testRoot, testRoot⟩ 1 Verifier.testConfig sixProof = .ok ()` を `rfl` で出す。
+`set_option maxRecDepth 8192` / `maxHeartbeats 1000000` を当該宣言だけに狭めた（採用済みの同種定理は 65536）。
+
+**前提の訂正。** マスク `[⟨31⟩]` 対 `[⟨7⟩]` はブロッカーではない。`WhirInitial.readClaims` は `0..expected.length-1` しか見ず、
+0,1,2 でビット一致する（`the_two_masks_agree_below_three`）。`configured_run_mask_congruent` が一般形で、マスクが
+`WhirConfigured.run` に入るのは `checkBound` の長さガードと `readClaims` だけだと示す。実障害は主張数で、
+`the_two_masks_do_not_agree_below_six` が6主張では一致が壊れること、`configured_six_claim_execution_example` がそれを外すことを示す。
+
+**これは明示engineでの受理ではない。** `accepting_engine_field_ledger` が欄を列挙する: `sixEngine` は `testEngine` に
+`parseWhir` / `whirTail` / `commitRound` / `sampleIndices` を載せたもので、`foldClaim`・`normEvaluation`・`eqEvaluation` も具体だが、
+`initialObservation`・`publicInputsHash`・`configurationHash`・`deploymentValid` の4欄は抽象観測のまま。これは
+`DerivedAcceptance`（10欄具体、WHIR対が fixture）の**補集合**であり、どちらも12欄すべてではない。
+構成は `Verifier.testConfig`（`degreeBits = 1`、`indexBits = 0`）であり `DerivedAcceptance.derivedConfig`（21変数）ではない
+（`the_accepting_configuration_is_not_the_derived_one`）。ハッシュは定数 toy（`the_witness_hash_is_constant`、
+`the_witness_hash_ignores_every_input`: 追加72バイトの claim は sponge digest を動かせない）。
+プロファイルは `exampleNoRounds`（PoW閾値はすべて `maxCounter`。`the_witness_profile_is_not_the_deployed_shape`）。
+`thash` は供給文脈（`witness_verify_whir_is_true` / `six_verify_whir_is_true`）では `e`・`gdec`・`thash` を全称量化し、
+導出文脈では `InstalledRoundCommit.toyHash` にインスタンス化する。21変数の witness は未構成で、不可能とも主張しない。
+敵対的レビューは PASS-WITH-FIXES（見出しに NOT derivedConfig / NOT explicitEngine を先に書くこと、
+`the_witness_hash_ignores_every_input` の追加）。
+
+`Audit.Wire3.RoutedAcceptance`（111定理・13定義）: `numRouted = 80`（envelope 上限、採用済み `maximalConfig` と同値）での受理を、
+採用済み `DerivedAcceptance.derivedEngine` と採用済み `IndexHalfTransport.matchingClaims` のまま示す。見出しは
+
+    Verifier.verify (DerivedAcceptance.derivedEngine routedHash khash P) (routedPin khash) 1
+      routedConfig routedProof = .ok ()
+
+（`routed_acceptance`。`khash` とプロファイル `P` は全称、後者は `profileOk` 仮説の下。仮説は stand-in と sharp プロファイルで放電:
+`routed_acceptance_at_the_profile_witness` / `routed_acceptance_at_the_sharp_profile`）。`Integrated.verify` 版もある
+（`routed_integrated_acceptance`）。`routedConfig` は `derivedConfig` の `numRouted` だけ 0→80 し `kIs` を揃えたもので、
+他欄は動かしていない（`routed_config_agrees_with_the_derived_config_off_the_routed_wires`）。
+`numPublicInputs = 3` の第二実例（`routedPublicConfig`）は `numRouted > 0` でのみ可能で、`Norm.shapeValid` の
+`column < numRouted` を `routed_public_targets_are_in_range` が放電する。
+
+経路は(b): 採用済み `probe_acceptance_at_one_routed_wire_forces_a_challenge_coincidence` の第2因子 `1+ρ` を消す。
+`routedHash` は challenge 入力の末尾8バイト（カウンタ）だけを見て、カウンタ3で `modulus-1`、4と5で0、それ以外で2を返す。
+関係状態のカウンタ3,4,5が `ρ` なので、あらゆる構成・statement で `ρ = -1`（`routed_rho_is_minus_one`）。
+digest chain は評価されない。経路(a)（非ゼロ norm-inverse 列が導出索引点で fold 0）は未発見で不可能とも主張しない。
+
+ゲート7は80回の wire loop（`routed_wire_loop_runs_eighty_times`）、160回の `denominatorTerms`、80段の λ 梯子
+（`routed_lambda_ladder_runs`）を実行する。組み立ては `NonDegenerateAcceptance.verify_of_checks` でゲートごと、`set_option` なし。
+
+**ただしこれは最後の退化ピンの除去ではない。** 敵対的レビュー（PARTIAL。見出しの「last pin removed」読みは偽）が確認し、
+モジュールへ採用した事実: `routed_hash_is_a_transcript_collision`（digest を無視するので同じカウンタの異なる digest が衝突）、
+`rho_ignores_the_statement`、および `routed_lambda_is_two_everywhere` / `routed_kappa_is_two_everywhere` /
+`routed_beta_is_two_everywhere`（いずれも構成と statement で全称なので導出 challenge は statement に依らない）、
+`alt_proof_is_also_accepted`（`normInverseRoot` だけが異なる第2の proof も受理。`Verifier.shape` が pin するのは
+`preprocessedRoot` だけ）。`dependence_implication_holds_because_the_hash_collides` は採用済み依存含意の衝突選言がここで真だと示す。
+`DerivedAcceptance` が `constantHash` を依存の**反証 witness** として使ったのと同じ退化したハッシュ族を、本モジュールは
+**受理ハッシュ**として使っている。**見出し: 受理ラインはいま routed wires と proof依存challengeの両方を持っていない。**
+3実例はすべて比較不能: derived は `thash` 全称で本実例は collapsing hash を受理に使う。maximal は fixture engine で
+`numSelectors`/`numGateConstraints`/`gateRows` が上。WHIR対は依然 fixture。ゲート2は `routedPin` が `khash` から定義されるため
+依然 `rfl` で閉じる。
 
 両モジュール合わせて152モデル・6292定理。今回もROMの法則下の結果であり、keccakの性質でも系の健全性誤差でもない。
 残るのは21変数のWHIR成功witness（derivedConfigへの接続）、digestを実際に使う`thash`での`numRouted > 0`、
@@ -1927,6 +1986,7 @@ manifest `fdeb30545b31e6e7387c0eaea9789c11a3e60e0b8a990ca3e18855abfdb26469`、re
 `7be1b47866c711e4c5f9d813917ed8cc00167bd2125c64ea657b7682cf3b1854`）。
 
 この更新の時点で、受理ラインは routed wires と proof依存challengeの両方を持っていない。
+バッチ40の定理名・段・engine欄・ハッシュの定義は第47継続更新と「主要定理の入口」の直近表に書いた。
 WHIR成功は installed 水準で具体化されたが、構成は`Verifier.testConfig`（1変数）、ハッシュは定数toyであり、
 `DerivedAcceptance.derivedConfig`（21変数）への接続は未構成である。次工程は digest を実際に使う
 `thash`での`numRouted > 0`、ゲート7が2つのproofを区別する具体的拒否例、21変数のWHIR成功witness、
