@@ -822,6 +822,13 @@ Lean kernelが、**記述されたLean関数・型と明示的前提**から定�
    実PoW閾値（定数ハッシュでは比較が空虚と定理化）・1904/1976バイト厳密EOF。代用は2族のみ（RSドメインとクエリ数84→5、
    Merkle認証パスはすべて空 — 見出しの重みで開示）。中間sumcheckに等式がないのは配備ワイヤ形式の忠実な転写であることを
    Lean/Solidity/Rustの3層照合で定理化した。導出文脈との同定は7欄中5欄で、packed pointsの2欄が残る。
+   回路の真値はCircuitTruthで条件付き文に束ねた: 受理＋AssemblyResidue＋good draw＋復号一意性＋gates.Nodupの下で、
+   抽出表は対ごとに走行非依存（束縛イベント下で任意の第2走行の抽出表と等しい、局所衝突を除く）かつ全行×全選択gateで
+   evaluateGateFullの全constraint項がゼロ。一意選択はツリーのセレクタ意味論から証明し、定数列の中身だけを
+   SelectorRowIsPlonky2に分離した（u32::MAX照合済み）。旧見出しのCommittedTables存在文は恒真と判明し記録定理に降格、
+   一様tablesOf案は深さ1 fixtureで反証（∀-全実行の罠の再入場）。AssemblyResidueの実例は未提示であり、これが文の最深の
+   条件層である。残る欠落文は「コミットされた表が回路のroutingの各置換軌道上で一定」（copy制約）、公開入力束縛、
+   未選択行の拘束である。
    `CommittedTables`結合はCommittedTablesClausesで節ごとに判定した: preprocessedPinnedは受理から任意のengineで導出、configDeployedは
    Solidity経路で局所的な構成符号化衝突1つまで導出、rootDeterminedはR1bそのもので、開示を読む抽出器では節を満たす写像が存在しないため
    COSの退化した証人は強制されていた。採用済みbinding補題が届くのは開かれたcellのみ（局所leaf/path衝突まで）で、開かれないcellと全列の

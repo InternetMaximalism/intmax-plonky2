@@ -2146,7 +2146,52 @@ manifest `144da1b5e3f82f5cf5bf26520aff8f96c256e50dd819010566c0b3754315e0d0`、re
 `631c7824d1044b392781ed68cd99a582601558841ab066f0ca8909f17a35b6f5`、graph
 `058bac9228d4253e81196a1fb8171900e78022ab83ce697f5ce6a27d20d3e2b6`）。
 
-%%B44%%
+## 第53継続更新（5b1d26f2以降）
+
+反復33は利用者の指示（回路の真値を進める）による単一候補で、`Audit.Wire3.CircuitTruth`（25定理・10定義＋1構造）を採用した。
+Opusによる敵対的レビューと修復を経ている。レビューは証明がすべて正しいことを確認したうえで、**見出しのコミットメント側の
+連言が恒真である**ことをコンパイルで示した: `CommitmentOrder.CommittedTables`は`rfl`で埋まる2欄しか持たないため
+`∃ tablesOf, CommittedTables tablesOf s t`は無仮定で証明可能であり、橋を全部削除しても旧結論形が成立する。両事実は削除
+ではなく記録定理として保存した（`committed_tables_existential_is_a_tautology`、
+`the_former_conclusion_shape_holds_without_the_bridge`）。
+
+修復後の見出し`extracted_tables_satisfy_the_selected_gate_constraints_and_are_pairwise_run_independent`は、受理・
+`AssemblyResidue`（R1bBridgeの抽出状態で）・good draw・`WhirDecodeUniqueness`・`gates.Nodup`の下で、
+(i) **対ごとの走行非依存性** — `RunPairNoCollision r rp`なる任意の第2走行rpについて、rpの抽出表はrの抽出表と等しい、
+または実際に開かれた2行上の`OpenedLeafCollision` — これが「コミットメントが表を決定する」の計算論的に正直な意味であり、
+(ii) 全行（< 2^degreeBits）×全選択gateで`GateEvaluatorCoverage.evaluateGateFull`の全constraint項がゼロ、を結論する。
+一様`tablesOf`への強化案（`∀ r, RunPairNoCollision r r₀`）は出荷前に検査し、深さ1 fixtureで反証されることを定理として
+記録した（`the_uniform_no_collision_family_fails_at_the_depth_one_fixture`）— R1bBridgeで反証した∀-全実行の罠が
+「一様抽出器」の顔で再入場する実例であり、本監査はこの罠を二度捕まえ、二度とも反証を定理として保存したことになる。
+
+**一意選択はツリーから証明した。** `unique_selection_of_plonky2_selector_row`は採用済み`Gates.other_row_zero_filter`／
+`unused_selector_zero_filter`の合成であり、ツリーにないもの（定数列が行に何を持つか）だけを5欄構造`SelectorRowIsPlonky2`
+に分離した。その中身はplonky2の実装に照合済みである: 未使用セレクタ定数`4294967295 = u32::MAX`は`mle/src/gate_ext3.rs:33`
+（filter計算は`:629-647`）とSolidityミラー2箇所に一致し、`manySelectors`を落とすと一意選択が壊れる反例、および構造が
+結論を密輸していないことの検査もレビューが済ませた。列の同定は`ConstantsProvenance`で未放電のまま継承（明記）。
+
+**意味論**は全14 familyが`evaluateGateFull`形に載る（`validateConfiguration`は受理から、幅は`extractedStateConsistent`
+から、`numSelectors ≤ numConstants`はenvelopeから）。完全な体等式展開はid 0–3のみで、id 13はcoset layout形状ゲートで
+`none`があり得る。転写の但し書き（監査済みRustへの照合であってPlonky2本体への照合ではない）は逐語継承。
+
+**追加配備仮定を1つ名指しした**: `gates.Nodup`。採用済みの単一gate定理はpre/postの全要素のfilter消滅を要求するため、
+選択gateと構造的に同一の重複はそこに覆われず残る。`Gates.validateConfiguration`に相異検査はなく、`distinctRows`は重複に
+対して空虚である（反例定理つき）。誠実な弱形は選択gateごとの`count = 1`である。
+
+**最深の条件層を明記した**: `AssemblyResidue`の実例はこのツリーで一度も提示されていない。最寄りは
+`ExtractorConstruction`§8（19欄中10欄を放電。keccak2欄・配備/ABI4欄・`gatesDecode`・`gateConstraintsPositive`・
+`activeFilter`・R1bが仮定のまま）で、`SoundnessAssembly`自身が「`hacc`と`AssemblyResidue`が両立し得ることを示すものは
+ここにはない」と述べている。すなわち`{hacc, H, hdraw, hidx}`の同時充足は未提示であり、本文はその条件の下の文である。
+12項目の台帳: copy/routing（欠落文は正確に「コミットされた表が回路のroutingの各置換軌道上で一定」）・公開入力束縛
+（PublicInputGateの行等式まで）・truth列と`coeffsOf`の自由・root盲目性・セレクタ列の中身・未選択行は全く無拘束・
+coset layoutゲート・転写但し書き・質量側・`hdec`・`Nodup`・同時充足。
+
+1モジュールで157モデル・6542定理。今回もROMの法則下の結果であり、keccakの性質でも系の健全性誤差でもない。
+残るのは、copy/routing制約の意味論（置換軌道上の一定性）、公開入力束縛、`AssemblyResidue`の実例（受理との同時充足）、
+r族の拒否形、packed pointsの2欄、そしてFiat–Shamirのchallenge grindingの課金である。
+
+%%B45%%
+
 
 
 

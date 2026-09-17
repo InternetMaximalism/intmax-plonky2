@@ -190,7 +190,7 @@
     },
     {
       "path": "mle/audit/Audit.lean",
-      "sha256": "fddc6b4d444474fdc4495b7e7ac11c6e1c29a4097a8b99e168b7f6c201038025",
+      "sha256": "1291b773e95b4f1f3d99efbe4589ba66ae8a3c1684d3ec2d273c57ea4adb1bd8",
       "kind": "current-model"
     },
     {
@@ -540,7 +540,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "f45f61c73f4f5c176694abcc269c578aa5aaf0e56fad17a9ae6e1f59b71ec75f",
+      "sha256": "47f4952865276c950080ccccd570a88cba0ba0e2587b6c64a6e92e2426e6e8a2",
       "kind": "tooling"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "e521153bf92477a4a5e82cc9289d893e10d41a517c70aa8cd26709013ca31ae5",
+      "sha256": "221407bcccfcb2caae5152abe6e1414c338780774b0816b4eea180713e2803fd",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "00a540e16a496a47bc963f6f03fe85e54f50f8f142cab6aba9963ec9c9353c03",
+      "sha256": "0206ac633a5f3c24da16121d34c64b106a41f034eb7b82c000718c7e6af68bab",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "0d977e4bcc803f562e195cd0ac09a5abf77c3a6cd34cd3871052d6cda46fe4d2",
+      "sha256": "13a07cc76d06321fac0ec20555fad6c41c747ebf04dcf3415778bdfe0f0f6e8e",
       "kind": "spec"
     },
     {
@@ -2526,6 +2526,11 @@
     {
       "path": "mle/audit/Audit/Wire3/DeployedWhirWitness.lean",
       "sha256": "160becd049d32ea1b1154d437b1382e4733aebba19db985753d5212a8a553abb",
+      "kind": "current-model"
+    },
+    {
+      "path": "mle/audit/Audit/Wire3/CircuitTruth.lean",
+      "sha256": "0d7c89b9ceedaa04e67084796e09dbd8191cc9099eccb7668b29533a8576494f",
       "kind": "current-model"
     }
   ],
@@ -10745,6 +10750,42 @@
         "mle/src/vk_v2.rs"
       ],
       "scope": "Moves the WHIR execution witness from the toy shape to the full deployed variable count: a successful run at twenty-one variables with four real intermediate folding rounds on the transcribed canonical row's own schedule, six claim cells under the deployed mask, the transcript at exactly the shape cap, and exact end-of-file on both streams \u2014 through the installed tail and parse to a true WHIR gate. Parameter admission runs the transcribed canonical row itself, with the non-vacuity control that the row as transcribed is rejected because it ships with empty points while its real two-to-the-twenty-three domain and twenty-nine-query count pass every structural check. The magnitude of the two stand-in families is disclosed at headline weight and as theorems: the canonical in-domain query budget of eighty-four openings across five stages is cut to five, one per stage, a sixteen-point-eight-fold reduction saying nothing about list-decoding margins, and the stand-in domain has Merkle depth zero, so every authentication path in the hints is empty. Model fidelity is settled and proved: the deployed wire format sends two of the three quadratic sumcheck coefficients and the verifier reconstructs the third from the running claim, in the Lean model, the Solidity and the vendored Rust alike, so intermediate rounds impose no equality by construction and the single reconciliation is the final claim; the round step's success is provably independent of the running claim. The proof-of-work comparison carries the five real canonical thresholds and consumes the forty nonce bytes but is provably vacuous at the constant hash, with a contrast hash at which grinding bites. Five of the seven derived-context fields are identified with the derived configuration's context for every transcript hash, configuration hash and profile; the two packed points remain open as a heartbeat-budget record with the missing lemma named, and the six claim cells are all zero because the derived proof is a zero proof. An execution witness and nothing more. Random-oracle model, not keccak; not the system's soundness error."
+    },
+    {
+      "module": "Audit.Wire3.CircuitTruth",
+      "theorems": [
+        "Audit.Wire3.CircuitTruth.row_filter_via_row_selector",
+        "Audit.Wire3.CircuitTruth.unique_selection_of_plonky2_selector_row",
+        "Audit.Wire3.CircuitTruth.fixture_selector_row_is_plonky2",
+        "Audit.Wire3.CircuitTruth.fixture_other_gates_have_zero_filter",
+        "Audit.Wire3.CircuitTruth.fixture_gates_nodup",
+        "Audit.Wire3.CircuitTruth.fixture_active_filter_nonzero",
+        "Audit.Wire3.CircuitTruth.selected_gate_terms_vanish",
+        "Audit.Wire3.CircuitTruth.selected_gate_terms_vanish_under_plonky2_selectors",
+        "Audit.Wire3.CircuitTruth.row_widths_of_consistent",
+        "Audit.Wire3.CircuitTruth.validate_gate_of_mem",
+        "Audit.Wire3.CircuitTruth.selectors_within_constants",
+        "Audit.Wire3.CircuitTruth.evaluate_gate_full_terms_vanish",
+        "Audit.Wire3.CircuitTruth.noop_gate_semantics",
+        "Audit.Wire3.CircuitTruth.constant_gate_semantics",
+        "Audit.Wire3.CircuitTruth.public_input_gate_semantics",
+        "Audit.Wire3.CircuitTruth.arithmetic_gate_semantics",
+        "Audit.Wire3.CircuitTruth.extracted_tables_satisfy_the_selected_gate_constraints_and_are_pairwise_run_independent",
+        "Audit.Wire3.CircuitTruth.committed_tables_existential_is_a_tautology",
+        "Audit.Wire3.CircuitTruth.the_former_conclusion_shape_holds_without_the_bridge",
+        "Audit.Wire3.CircuitTruth.the_uniform_no_collision_family_fails_at_the_depth_one_fixture",
+        "Audit.Wire3.CircuitTruth.duplicated_gates_selector_row_is_plonky2",
+        "Audit.Wire3.CircuitTruth.duplicated_gates_active_filter_nonzero",
+        "Audit.Wire3.CircuitTruth.duplicated_gates_are_not_nodup",
+        "Audit.Wire3.CircuitTruth.single_selector_other_group_unused",
+        "Audit.Wire3.CircuitTruth.single_selector_unique_selection_fails"
+      ],
+      "sources": [
+        "mle/src/gate_ext3.rs",
+        "mle/contracts/src/Plonky2GateEvaluatorExt3.sol",
+        "mle/src/verifier_v2.rs"
+      ],
+      "scope": "Bundles the adopted good-draw constraint vanishing into the audit's conditional circuit-truth sentence. Under acceptance, the assembly residue taken at the bridge's extracted state, the good draw, decode uniqueness and a no-duplicate-gates hypothesis, the extracted tables are pairwise run-independent \u2014 any second accepted run whose executed inputs are collision-free with the first yields equal extracted tables, up to a localized leaf collision on two actually-opened rows, which is the computationally honest meaning of the commitment determining the tables \u2014 and on every row below the degree bound every selected gate's full evaluator returns constraint terms that are all zero. Unique selection per row is proved from the tree's own selector semantics, with only the constants-column content isolated as a named five-field structure whose unused-selector constant matches the audited Rust and both Solidity mirrors; dropping the many-selectors field breaks unique selection, so the structure is not decorative. The semantics reaches all fourteen gate families in full-evaluator form, with complete field-equation unfoldings for the first four ids and the coset gate layout-gated; the transcription caveat is inherited verbatim. Two shapes are kept as recorded negatives rather than shipped: the committed-tables existential of an earlier draft is a tautology provable with no hypotheses, and the uniform one-table-map-for-every-run upgrade is refuted at the tree's own depth-one fixture \u2014 the second time the all-executions quantifier trap has been caught and preserved as theorems. One added deployment assumption is named: the decoded gate list has no duplicates, which no adopted validation checks. The deepest conditional layer is stated outright: no assembly-residue instance has ever been exhibited in this tree, so joint satisfiability of acceptance, residue and good draw is open, and the sentence is conditional on it. The ledger names what circuit truth still lacks: the copy-routing statement that committed tables are constant on each permutation orbit, the public-input binding beyond the public-input gate's row equation, the truth columns' and coefficient family's freedom, root-blindness, and rows at which no gate is selected being wholly unconstrained. Random-oracle model, not keccak; not the system's soundness error."
     }
   ]
 }

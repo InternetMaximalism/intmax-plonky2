@@ -161,3 +161,4 @@ import Audit.Wire3.DigestRoutedAcceptance
 import Audit.Wire3.RejectionWitness
 import Audit.Wire3.R1bBridge
 import Audit.Wire3.DeployedWhirWitness
+import Audit.Wire3.CircuitTruth
