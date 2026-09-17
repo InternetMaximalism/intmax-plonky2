@@ -175,7 +175,7 @@ raw認証成功とcanonical decode成功は別条件。final splitのdecode/集�
 
 上表の名前は共通prefix `Audit.Wire3.` を省略。
 初期モジュールの見出しだけをここに置き、後続は各「第N継続更新」に記録する。
-直近バッチ40の見出しは次のとおり。
+直近バッチ40・41の見出しは次のとおり。
 
 | テーマ | 定理 |
 |---|---|
@@ -186,6 +186,9 @@ raw認証成功とcanonical decode成功は別条件。final splitのdecode/集�
 | `numRouted = 80` での受理 | `RoutedAcceptance.routed_acceptance`, `RoutedAcceptance.routed_integrated_acceptance` |
 | digest 無視と衝突 | `RoutedAcceptance.routed_hash_is_a_transcript_collision`, `RoutedAcceptance.rho_ignores_the_statement` |
 | ゲート7は根の差を区別しない | `RoutedAcceptance.alt_proof_is_also_accepted`, `RoutedAcceptance.routed_wire_loop_runs_eighty_times` |
+| digest を読む routed 受理 | `DigestRoutedAcceptance.fixed_acceptance`, `DigestRoutedAcceptance.fixed_initial_transcript_separates_the_two_proofs` |
+| 旧ハッシュは2つのproofを分離しない | `DigestRoutedAcceptance.routed_initial_transcripts_do_not_separate_the_two_proofs` |
+| chain は1バイト幅 | `DigestRoutedAcceptance.derive_digest_tail_is_thirty_one_zero_bytes`, `DigestRoutedAcceptance.fixed_hash_is_still_a_transcript_collision` |
 
 全名付き定理は[manifest](wire3-manifest.json)で管理し、検査は抜粋ではなく全件に対して行う。
 
@@ -2051,7 +2054,21 @@ fixture WHIR対を名指しのうえで」である。
 具体的拒否例（経路(a)かinstalled WHIR parse）、21変数のWHIR成功witness、R1b、回路の真値、
 Fiat–Shamirのchallenge grindingの課金である。
 
+## 第50継続更新（c0572083以降）
+
+追跡版runnerでコミット`c0572083`の153モデル・6411定理を再検査しPASS（1018.227秒、1483モジュール、
+manifest `898d80048d4b1ef366f5f401053ea9c130f80eab38d16eb47901b442022c8476`、receipt
+`a42b3766ced743fb5efd8c2990495aa78e70dda143b4535787c3f3f46866c169`、graph
+`b5bd65577bee19cab4d8b751e5947749102e344b0719583a93eb8d96d233ca5c`）。
+
+この更新の時点で、受理ラインの誠実性の弧は次の段階にある: 検証器が**実行する**（済）、検証器がproofに**依存する**
+（済 — ただしchain状態は1バイト幅で、復元されたのはFiat–Shamir依存の構造であって量的衝突耐性ではない）、
+検証器が誤ったproofを**拒否する**（未了）。次工程はその最後の一歩 — 経路(a)（導出索引点でpacked foldが消える
+非ゼロnorm-inverse列）またはinstalled WHIR parseによる、2つの具体的proofの分離 — と、状態幅を広げたハッシュ、
+21変数のWHIR成功witness、R1b、回路の真値、Fiat–Shamirのchallenge grindingの課金である。
+
 %%B43%%
+
 
 
 

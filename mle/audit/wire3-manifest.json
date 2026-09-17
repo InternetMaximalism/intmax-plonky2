@@ -585,12 +585,12 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "584b61624c3bdbbd46933c606da2e6e0a72c2e6e7f25c4ff664b722d5f77a05d",
+      "sha256": "997191ebfa7f330fae3797a861a5270a4b8b3a8fe12ba23b1856121cd90bb236",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "5bc7c63d84331b54b4cc9ef6cd37e6ae1b22c9d2182d18dea4e6d9529dac54e2",
+      "sha256": "d4c19e1b4c9db43ea0e74b93cf3056af518624871acc7ac7f5997274aefe5f44",
       "kind": "spec"
     },
     {
