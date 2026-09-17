@@ -1919,7 +1919,21 @@ DerivedAcceptanceの`thash`全称量化を**保てない**。次の反復では�
 ゲート7が2つのproofを区別する具体的拒否例、R1b（全列のroot決定性）、回路の真値、そしてFiat–Shamirの
 challenge grindingの課金である。
 
-%%B41%%
+## 第48継続更新（84e7c54c以降）
+
+追跡版runnerでコミット`84e7c54c`の152モデル・6292定理を再検査しPASS（1054.723秒、1482モジュール、
+manifest `fdeb30545b31e6e7387c0eaea9789c11a3e60e0b8a990ca3e18855abfdb26469`、receipt
+`1762988f8561a9e65fa340383a3ed2eda1b56d6c004dbdb87c1d8e62ce0a6d06`、graph
+`7be1b47866c711e4c5f9d813917ed8cc00167bd2125c64ea657b7682cf3b1854`）。
+
+この更新の時点で、受理ラインは routed wires と proof依存challengeの両方を持っていない。
+WHIR成功は installed 水準で具体化されたが、構成は`Verifier.testConfig`（1変数）、ハッシュは定数toyであり、
+`DerivedAcceptance.derivedConfig`（21変数）への接続は未構成である。次工程は digest を実際に使う
+`thash`での`numRouted > 0`、ゲート7が2つのproofを区別する具体的拒否例、21変数のWHIR成功witness、
+R1b、回路の真値、そしてFiat–Shamirの challenge grinding の課金である。
+
+%%B42%%
+
 
 
 
