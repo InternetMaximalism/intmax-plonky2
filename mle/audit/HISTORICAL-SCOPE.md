@@ -1,89 +1,89 @@
-# Lean 形式検証スコープ (lean-formal-audit 段階0 成果物)
+# Lean formal verification scope (lean-formal-audit stage 0 deliverable)
 
 > Historical scope: the definitions below are retained for the July target and
 > do not model current wire v3. See [current scope](../README.md).
 
-日付: 2026-07-06 / 対象コミット: ee80ee6d (branch claude/gifted-germain-0283dd)
+Date: 2026-07-06 / target commit: ee80ee6d (branch claude/gifted-germain-0283dd)
 
-## モード
+## Mode
 
-**監査モード**(既存仕様・実装の形式化)。
+**Audit mode** (formalization of an existing specification and implementation).
 
-### 仕様書の階層(段階2で判明・2026-07-06 追記)
+### Hierarchy of specification documents (discovered at stage 2; added 2026-07-06)
 
-当初 paper v2 のみを仕様としたが、実装により近い定義ドキュメントが4層存在する。
-乖離判定は必ずこの階層に照らす(基準を取り違えると誤検出になる):
+Initially only paper v2 was taken as the specification, but there exist 4 layers of definition documents closer to the implementation.
+Divergence judgments must always be made against this hierarchy (mistaking the baseline leads to false detections):
 
-- **層0(理論)**: `mle/paper/plonky2_mle_paper_v2.md` — batching sumcheck(§4.4)を
-  含む理想プロトコル。**一部未実装**。
-- **層1(v1設計)**: `mle/README.md` L191-424 — 「3-vector phased WHIR + combined
-  sumcheck + aux commit(P_aux = C̃ + r·h̃)」を正式文書化。transcript順序も明記。
-  ただし v2 logup 追加は**未記載**(stale)。
-- **層2(v2設計+監査)**: `mle/soundnessgame/MleVerifier.vol.md` — Round 2
-  (vulcheck417)で Φ_inv/Φ_h/Φ_gate + inverse helpers を導入した経緯を定義。
-  R2-#1〜#8。**これが v2 の実質的な定義文書**。
-- **層3(脅威分析)**: `mle/tasks/todo.md`, `phase3_c1/c2_threat_model.md`,
-  `phase2_c2_poc_report.md` — C1(gate metadata VK非束縛)/ C2(非canonical注入)を
-  CONFIRMED CRITICAL として PoC付き分析・修正済み。Phase 6 Finding 1
-  (publicInputsHash 非束縛, HIGH, **未解決**)含む。
+- **Layer 0 (theory)**: `mle/paper/plonky2_mle_paper_v2.md` — the ideal protocol including
+  the batching sumcheck (§4.4). **Partly unimplemented**.
+- **Layer 1 (v1 design)**: `mle/README.md` L191-424 — formally documents "3-vector phased WHIR + combined
+  sumcheck + aux commit (P_aux = C̃ + r·h̃)". The transcript order is also stated.
+  However, the v2 logup addition is **not described** (stale).
+- **Layer 2 (v2 design + audit)**: `mle/soundnessgame/MleVerifier.vol.md` — defines the background of introducing
+  Φ_inv/Φ_h/Φ_gate + inverse helpers in Round 2 (vulcheck417).
+  R2-#1 through #8. **This is the de facto definition document for v2**.
+- **Layer 3 (threat analysis)**: `mle/tasks/todo.md`, `phase3_c1/c2_threat_model.md`,
+  `phase2_c2_poc_report.md` — C1 (gate metadata not bound to the VK) / C2 (non-canonical injection) analyzed
+  as CONFIRMED CRITICAL with PoCs, and fixed. Includes Phase 6 Finding 1
+  (publicInputsHash not bound, HIGH, **unresolved**).
 
-補助: `mle/paper/whir_optimization_report.md`(WHIRクエリ特性)、
-`mle/soundnessgame/*.vol.md`(各コンポーネントの監査所見)。
+Auxiliary: `mle/paper/whir_optimization_report.md` (WHIR query characteristics),
+`mle/soundnessgame/*.vol.md` (audit findings for each component).
 
-ユーザー指示により Rust / Solidity 両実装との整合まで確認する。
+By user instruction, consistency with both the Rust and Solidity implementations is also checked.
 
-## 対象の構成要素
+## Components in scope
 
-paper v2 の構成に従う:
+Following the structure of paper v2:
 
-| 構成要素 | 論文節 | Leanファイル |
+| Component | Paper section | Lean file |
 |---|---|---|
-| 有限体 (Goldilocks / Ext3) | §2.1, §6.1 | `Audit/Field.lean` |
-| MLE・eq多項式・hypercube | §2.1, §2.3 | `Audit/Mle.lean` |
-| 一変数多項式(sumcheckラウンドメッセージ) | §2.4 | `Audit/Poly.lean` |
-| Sumcheck検証者 | §2.4, §5.3 | `Audit/Sumcheck.lean` |
-| PCS抽象インターフェース (WHIRブラックボックス) | §2.5, §7.4 | `Audit/Pcs.lean` |
-| WHIR内部の抽象構造+監査不変量 | §2.5, SpongefishWhir*.vol.md | `Audit/Whir.lean` |
-| Fiat-Shamirトランスクリプト | §5.4, §6.2 | `Audit/Transcript.lean` |
-| プロトコル本体 (VK / Proof / Verifier §5.3) | §5 | `Audit/Protocol.lean` |
-| 検証したい性質(命題) | §3, §4.5, §6 | `Audit/Statements.lean` |
+| Finite fields (Goldilocks / Ext3) | §2.1, §6.1 | `Audit/Field.lean` |
+| MLE, eq polynomial, hypercube | §2.1, §2.3 | `Audit/Mle.lean` |
+| Univariate polynomials (sumcheck round messages) | §2.4 | `Audit/Poly.lean` |
+| Sumcheck verifier | §2.4, §5.3 | `Audit/Sumcheck.lean` |
+| Abstract PCS interface (WHIR black box) | §2.5, §7.4 | `Audit/Pcs.lean` |
+| Abstract structure inside WHIR + audit invariants | §2.5, SpongefishWhir*.vol.md | `Audit/Whir.lean` |
+| Fiat-Shamir transcript | §5.4, §6.2 | `Audit/Transcript.lean` |
+| Protocol proper (VK / Proof / Verifier §5.3) | §5 | `Audit/Protocol.lean` |
+| Properties to be verified (propositions) | §3, §4.5, §6 | `Audit/Statements.lean` |
 
-## 検証したい性質
+## Properties to be verified
 
-1. **Soundness (Theorem 1, §6.1)** — 決定論的コア:
-   検証者が受理 ∧ ステートメント不成立 ⇒ 列挙されたSchwartz-Zippel型
-   バッドイベントのいずれかが発生(各イベントの「大きさ」= 誤り確率の分子を記録)。
-2. **Completeness** — 正直なproverの証明は必ず受理される。
-3. **Fiat-Shamirバインディング (§6.2)** — チャレンジが先行absorbの決定的関数で
-   あること、ドメイン分離、canonical encoding単射性。
-4. **バインディングギャップ不在 (§3, §4.5)** —
-   `MLE(b ↦ formula(W(b)))(r) ≠ formula(MLE(W)(r))` が一般に成り立つこと(§3の
-   ギャップの存在)と、本構成の全終端チェックが「PCSにバインドされた多項式の
-   同一点評価」なのでギャップを踏まないこと(§4.5)の両方。
+1. **Soundness (Theorem 1, §6.1)** — deterministic core:
+   verifier accepts ∧ statement does not hold ⇒ one of the enumerated Schwartz-Zippel-type
+   bad events occurs (recording the "size" of each event = the numerator of the error probability).
+2. **Completeness** — a proof from an honest prover is always accepted.
+3. **Fiat-Shamir binding (§6.2)** — that challenges are deterministic functions of the preceding absorptions,
+   domain separation, and injectivity of the canonical encoding.
+4. **Absence of a binding gap (§3, §4.5)** —
+   both that `MLE(b ↦ formula(W(b)))(r) ≠ formula(MLE(W)(r))` holds in general (the existence of the gap
+   in §3), and that every terminal check of this construction is an "evaluation at the same point of a polynomial
+   bound to the PCS" and therefore does not step into the gap (§4.5).
 
-## 前提・脅威モデル(公理・仮定として一元管理)
+## Assumptions and threat model (managed centrally as axioms/hypotheses)
 
-- **敵対的prover**: 証明・トランスクリプトメッセージは全て敵対的。
-- **PCS binding**: WHIRは ε_PCS-binding。Lean上は「各コミットメントが一意の
-  多項式表を定め、verify成功は評価一致を含意する」理想化として仮定に置き、
-  ε_PCS 誤差はバッドイベントとして記録(`Pcs.lean` の構造体フィールド)。
-- **Random Oracle**: Keccak256スポンジをオラクル構造体 `FSOracle` として
-  パラメータ化。ROMでの性質(先行absorb確定後のチャレンジの予測不能性)は
-  仮定として明示。
-- **数学的事実の公理化**: Mathlib不使用のため「次数dの非零一変数多項式の根は
-  高々d個」等の標準事実は明示コメント付きで公理化し、仮定一覧に載せる。
-- **信頼するもの**: 検証鍵(circuit_digest, preprocessed_root)は正しく生成済み。
+- **Adversarial prover**: the proof and all transcript messages are adversarial.
+- **PCS binding**: WHIR is ε_PCS-binding. In Lean it is placed as an assumption in the idealized form
+  "each commitment determines a unique polynomial table, and verification success implies evaluation agreement", and
+  the ε_PCS error is recorded as a bad event (a structure field in `Pcs.lean`).
+- **Random Oracle**: the Keccak256 sponge is parameterized as an oracle structure `FSOracle`.
+  Properties in the ROM (unpredictability of a challenge after the preceding absorptions are fixed) are
+  stated explicitly as assumptions.
+- **Axiomatization of mathematical facts**: since Mathlib is not used, standard facts such as "a nonzero univariate
+  polynomial of degree d has at most d roots" are axiomatized with explicit comments and listed in the assumption inventory.
+- **What is trusted**: the verification key (circuit_digest, preprocessed_root) has been correctly generated.
 
-## 範囲外
+## Out of scope
 
-- Prover側の計算効率・メモリ(§7の性能記述)
-- WHIRの近接性(proximity)ギャップの定量解析(WHIR論文自体の再証明はしない —
-  ブラックボックス+抽象不変量まで)
-- Zero-knowledge性(§9で明示的に将来課題)
-- 再帰検証(recursive verification)の回路コスト
-- `whir_optimization_report.md` の改善提案(P0-P3)自体の検証は範囲外だが、
-  §7.1のOn-the-fly方式のsoundness注意点は Statements にコメントで言及
+- Prover-side computational efficiency and memory (the performance description in §7)
+- Quantitative analysis of WHIR's proximity gap (the WHIR paper itself is not re-proved —
+  only up to a black box + abstract invariants)
+- Zero-knowledge (explicitly stated as future work in §9)
+- Circuit cost of recursive verification
+- Verification of the improvement proposals (P0-P3) in `whir_optimization_report.md` is itself out of scope, but
+  the soundness caveats of the on-the-fly method in §7.1 are mentioned in a comment in Statements
 
-## 環境
+## Environment
 
-Lean 4.10.0 (elan)、Mathlib不使用(自己完結)。`mle/audit/` に lake パッケージ。
+Lean 4.10.0 (elan), Mathlib not used (self-contained). A lake package under `mle/audit/`.

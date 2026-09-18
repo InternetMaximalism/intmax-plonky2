@@ -1,176 +1,189 @@
-# 検証レポート — WHIR ベース多重線形証明システムの Lean 4 形式監査
+# Verification Report — Lean 4 Formal Audit of the WHIR-based Multilinear Proof System
 
 > Historical report: this is not a wire-v3 audit or production approval.
 > Current implementation scope and release limitations: [mle/README.md](../README.md).
 
-日付: 2026-07-06 / 対象コミット: ee80ee6d / ブランチ: claude/gifted-germain-0283dd
-成果物: `mle/audit/`(Lean 4.10.0、Mathlib 非依存、`lake build` 警告0、
-**46 定理・`sorry` 0・明示公理 1**)
+Date: 2026-07-06 / Target commit: ee80ee6d / Branch: claude/gifted-germain-0283dd
+Deliverable: `mle/audit/` (Lean 4.10.0, no Mathlib dependency, `lake build` with 0 warnings,
+**46 theorems, 0 `sorry`, 1 explicit axiom**)
 
-## 対象とバージョン / モード
+## Target, Version, and Mode
 
-**監査モード**。対象は `mle/` の WHIR ベース多重線形(MLE)証明システム:
+**Audit mode.** The target is the WHIR-based multilinear (MLE) proof system in `mle/`:
 
-- 仕様: `mle/paper/plonky2_mle_paper_v2.md`(理論、層0)
-- Rust 実装: `mle/src/`(特に `verifier.rs`)
-- Solidity 実装: `mle/contracts/src/`(特に `MleVerifier.sol`)
+- Specification: `mle/paper/plonky2_mle_paper_v2.md` (theory, layer 0)
+- Rust implementation: `mle/src/` (in particular `verifier.rs`)
+- Solidity implementation: `mle/contracts/src/` (in particular `MleVerifier.sol`)
 
-## スコープ(段階0インタビュー結果、詳細 [SCOPE.md](HISTORICAL-SCOPE.md))
+## Scope (result of the stage-0 interview; details in [SCOPE.md](HISTORICAL-SCOPE.md))
 
-- WHIR はブラックボックス PCS + 内部も抽象不変量として形式化(内部の proximity
-  soundness 再証明は範囲外)。
-- 検証性質: Soundness(Theorem 1)、Completeness、Fiat-Shamir バインディング、
-  binding-gap 不在。
-- Rust / Solidity 両実装との整合まで確認。
-- 範囲外: prover 効率、ZK、再帰検証コスト、WHIR 論文自体の再証明。
+- WHIR is formalized as a black-box PCS, with its internals also formalized as abstract
+  invariants (re-proving the internal proximity soundness is out of scope).
+- Verification properties: Soundness (Theorem 1), Completeness, Fiat-Shamir binding,
+  absence of a binding gap.
+- Consistency with both the Rust and Solidity implementations is checked as well.
+- Out of scope: prover efficiency, ZK, recursive verification cost, re-proving the WHIR
+  paper itself.
 
-## 手法(4段階 + 段階3前クリーンアップ)
+## Method (4 stages + a cleanup before stage 3)
 
-1. **段階1**: 仕様の抽象構成を Lean 化([Audit/*.lean](Audit/))。
-2. **段階2**: Rust/Solidity を逐行対照([Audit/Impl/*.lean](Audit/Impl/))、
-   三者の乖離を D1–D11 として命題化。
-3. **クリーンアップ**: 空命題(vacuous `True`/`∃ BadEvent,True`)を実体化、
-   デッドコード除去。
-4. **段階3**: 主要性質を証明([Audit/Proofs/*.lean](Audit/Proofs/))。
+1. **Stage 1**: Formalize the abstract construction of the specification in Lean ([Audit/*.lean](Audit/)).
+2. **Stage 2**: Line-by-line comparison of Rust/Solidity ([Audit/Impl/*.lean](Audit/Impl/)),
+   stating the divergences among the three as propositions D1–D11.
+3. **Cleanup**: Give substance to vacuous propositions (vacuous `True`/`∃ BadEvent,True`),
+   and remove dead code.
+4. **Stage 3**: Prove the principal properties ([Audit/Proofs/*.lean](Audit/Proofs/)).
 
-## 重要発見: 仕様書は4層構造
+## Key Finding: the Specification Has a 4-Layer Structure
 
-当初 paper v2 を唯一の仕様としたが、実装により近い定義文書が4層ある。乖離判定は
-この階層に照らす:
+Initially paper v2 was taken as the sole specification, but there are four layers of
+definitional documents that are closer to the implementation. Divergence judgments are
+made against this hierarchy:
 
-| 層 | 文書 | 位置づけ |
+| Layer | Document | Role |
 |---|---|---|
-| 層0 理論 | `paper/plonky2_mle_paper_v2.md` | batching sumcheck(§4.4)含む理想。一部**未実装** |
-| 層1 v1設計 | `README.md` L191-424 | aux commit + combined sumcheck を正式文書化 |
-| 層2 v2設計 | `soundnessgame/MleVerifier.vol.md` | Φ_inv/Φ_h/Φ_gate + inverse helpers の定義文書(R2-#1〜#8)|
-| 層3 脅威分析 | `tasks/todo.md` ほか | C1/C2 CRITICAL + PoC + 修正、Phase6 に現存 HIGH |
+| Layer 0 theory | `paper/plonky2_mle_paper_v2.md` | The ideal, including batching sumcheck (§4.4). Partly **not implemented** |
+| Layer 1 v1 design | `README.md` L191-424 | Formally documents aux commit + combined sumcheck |
+| Layer 2 v2 design | `soundnessgame/MleVerifier.vol.md` | Definitional document for Φ_inv/Φ_h/Φ_gate + inverse helpers (R2-#1 through #8) |
+| Layer 3 threat analysis | `tasks/todo.md` and others | C1/C2 CRITICAL + PoC + fixes; a HIGH still present in Phase6 |
 
-実装は「層0 の理論」ではなく「層1+層2 の積層」であり、**統合された健全性定理は
-どの層にも存在しない**。本監査の Lean 化がその統合の第一歩。
+The implementation is not "the theory of layer 0" but a **stack of layer 1 + layer 2**, and
+**no unified soundness theorem exists at any layer**. The Lean formalization in this audit
+is the first step toward that unification.
 
-## 仮定一覧(axiom / 理想化 / UNDERSPECIFIED)
+## List of Assumptions (axiom / idealization / UNDERSPECIFIED)
 
-| 種別 | 内容 | 場所 |
+| Kind | Content | Location |
 |---|---|---|
-| 公理 | 次数 ≤ d の非零多項式の相異なる根は ≤ d 個(標準事実、Mathlib 非使用のため) | `Poly.roots_le_degree` |
-| 理想化 | PCS binding(ε_PCS): コミットメントが一意の多項式を定め verify 成功が評価一致を含意 | `Pcs.lean` / `ProtocolPCS.verify_sound` |
-| 理想化 | Merkle 衝突耐性、Keccak = ランダムオラクル | `Whir.lean` / `Transcript.lean` |
-| 信頼仮定 | VK(circuit_digest, preprocessed_root, kIs, subgroupGenPowers)は正しく生成済み | D8 |
-| 抽象化(4) | transcript 再導出順、lookup 空検査、WHIR 内部(両モデル)| `*VerifyAccepts` の残 `True` |
-| UNDERSPEC | §5.3 step7 の逆再構成、§4.3 の列結合スカラー(→ 実装は WHIR 多点で代替、D7) | `Statements.lean` メモ |
+| Axiom | A nonzero polynomial of degree ≤ d has ≤ d distinct roots (a standard fact; stated because Mathlib is not used) | `Poly.roots_le_degree` |
+| Idealization | PCS binding (ε_PCS): a commitment determines a unique polynomial and a successful verify implies agreement of the evaluation | `Pcs.lean` / `ProtocolPCS.verify_sound` |
+| Idealization | Merkle collision resistance; Keccak = random oracle | `Whir.lean` / `Transcript.lean` |
+| Trust assumption | The VK (circuit_digest, preprocessed_root, kIs, subgroupGenPowers) has been correctly generated | D8 |
+| Abstraction (4) | Transcript re-derivation order, empty lookup check, WHIR internals (both models) | the remaining `True` in `*VerifyAccepts` |
+| UNDERSPEC | The inverse reconstruction in §5.3 step7, the column-combining scalar in §4.3 (→ the implementation substitutes WHIR multi-point, D7) | note in `Statements.lean` |
 
-## ファイル別・所見別(乖離 D1–D11)
+## By File and by Finding (divergences D1–D11)
 
-| ID | 深刻度 | 内容 | 状態 |
+| ID | Severity | Content | Status |
 |---|---|---|---|
-| **D1** | Spec-bug | 論文 §4.2.2 の g_sub 閉形式が Σ 形式で誤り。Rust/Sol とも正しい Π 形式 | 実装は正、仕様書要訂正 |
-| **D2** | Medium | combined sumcheck の次数境界検査が **Rust に無い**(Sol は R2-#8 で修正済) | Rust 側残余 |
-| **D3** | **CRITICAL(確定)** | inverse helpers a_j,b_j が PCS 束縛されず、Φ_inv の単一線形関係しか課されない。検証者は不正な逆元を受理する | **強い版を形式的に証明**(`d3_strong`、下記) |
-| **D4** | Info | Φ_h の非重み付き Σ は層2 vol.md の設計に忠実(層0 §4.2.3 との乖離のみ)。λ_h 死にチャレンジ | 実装は自設計に忠実 |
-| **D5** | Info | transcript の 96bit 縮約。コメント「256bit/2^-192」は誤記、実装は Rust/Sol 一貫 | 相互運用 OK |
-| **D6** | Info | ドメイン分離ラベルが層0 と実装で不一致、実装同士は一致 | 相互運用 OK |
-| **D7** | 構造 | 層0 §4.4 batching は未実装、WHIR 多点で代替。実装は層1+層2 積層 | 設計理解 |
-| **D8** | 信頼仮定 | Sol の kIs/subgroupGenPowers が transcript 非束縛(caller 責任) | 運用ラッパ前提 |
-| **D9** | Low | τ_perm が squeeze されるが未使用(層1 名残) | 無害 |
-| **D10** | **High, 未解決** | publicInputsHash が publicInputs に非束縛(層3 Phase6 Finding1、Sol Poseidon 未実装) | **現存・未修正** |
-| **D11** | Info/follow-up | WHIR/Sumcheck ライブラリ内部に同種の非 canonical sub(p,X) サイト | out-of-scope |
+| **D1** | Spec-bug | The closed form of g_sub in paper §4.2.2 is wrong, given in Σ form. Both Rust and Sol use the correct Π form | The implementation is correct; the specification needs correction |
+| **D2** | Medium | The degree-bound check for the combined sumcheck is **absent in Rust** (Sol fixed it in R2-#8) | Residual on the Rust side |
+| **D3** | **CRITICAL (confirmed)** | The inverse helpers a_j,b_j are not PCS-bound, and only the single linear relation of Φ_inv is imposed. The verifier accepts an incorrect inverse | **The strong version is formally proved** (`d3_strong`, below) |
+| **D4** | Info | The unweighted Σ of Φ_h is faithful to the design of the layer-2 vol.md (the divergence is only against layer 0 §4.2.3). λ_h is a dead challenge | The implementation is faithful to its own design |
+| **D5** | Info | 96-bit truncation in the transcript. The comment "256bit/2^-192" is a misstatement; the implementation is consistent between Rust and Sol | Interoperability OK |
+| **D6** | Info | The domain separation labels disagree between layer 0 and the implementation; the implementations agree with each other | Interoperability OK |
+| **D7** | Structural | The layer-0 §4.4 batching is not implemented, and is substituted by WHIR multi-point. The implementation is a layer 1 + layer 2 stack | Design understanding |
+| **D8** | Trust assumption | The kIs/subgroupGenPowers in Sol are not transcript-bound (caller's responsibility) | Presupposes an operational wrapper |
+| **D9** | Low | τ_perm is squeezed but unused (a remnant of layer 1) | Harmless |
+| **D10** | **High, unresolved** | publicInputsHash is not bound to publicInputs (layer 3 Phase6 Finding1; Poseidon not implemented in Sol) | **Still present, not fixed** |
+| **D11** | Info/follow-up | Sites of the same kind of non-canonical sub(p,X) inside the WHIR/Sumcheck library | out-of-scope |
 
-## 証明した性質(段階3)
+## Properties Proved (stage 3)
 
-Mathlib 非依存で体クラスの代数を公理から構築([Audit/Algebra.lean](Audit/Algebra.lean))。
+The algebra of the field class is built from axioms without depending on Mathlib
+([Audit/Algebra.lean](Audit/Algebra.lean)).
 
-| 性質 | 定理 | 内容 |
+| Property | Theorem | Content |
 |---|---|---|
-| **Soundness コア** | `sumcheck_telescope` | telescoping: 受理 + 最終値一致 + 初期主張相違 ⇒ 実チャレンジのどこかで差多項式(非零・次数≤d)の根に命中。Theorem 1 の決定論部 |
-| **実装 Soundness** | `rustSoundness` / `solSoundness` | 受理 ⇒ 4 本の sumcheck それぞれで固定版健全性(格納/再導出チャレンジに固定) |
-| **FS バインディング** | `domainSeparation` / `fsOrdering` | ラベル埋め込みの単射性、challenge-after-commit の決定性 |
-| **binding-gap 不在(§4.5)** | `linearCommutes` | 終端の線形結合について MLE 可換 |
-| **binding-gap 実在(§3)** | `bindingGapExists` | **|F|>2(非冪等元)の下で** MLE(W²)(r) ≠ (MLE(W)(r))²。標数2では成立しない(Goldilocks は充足) |
-| **MLE 基本性質** | `eq_diag` / `eq_sum` / `mleEval_bit1` / `hsum_vprod_factor` | eq(b,b)=1、Σeq=1、テンソル和 |
-| **D3 弱い版** | `d3_substitutable` | inverse helper 評価値のみ異なり witness batch consistency は一致する 2 proof の存在 |
-| **D3 強い版(CRITICAL 確定)** | `d3_strong` | **検証者(`RustVerifyAccepts` 全フィールド)を完全に満たす 2 proof で、片方は正直な逆元 (1,1)、片方は不正な逆元 (0,2) を主張し witness は同一** — 検証者が両方を受理 ⇒ ソウンドネス破れ |
+| **Soundness core** | `sumcheck_telescope` | Telescoping: acceptance + agreement of the final value + disagreement of the initial claim ⇒ somewhere in the actual challenges one hits a root of the difference polynomial (nonzero, degree ≤ d). The deterministic part of Theorem 1 |
+| **Implementation Soundness** | `rustSoundness` / `solSoundness` | Acceptance ⇒ fixed-version soundness for each of the 4 sumchecks (fixed to the stored/re-derived challenges) |
+| **FS binding** | `domainSeparation` / `fsOrdering` | Injectivity of the label embedding, determinism of challenge-after-commit |
+| **Absence of a binding gap (§4.5)** | `linearCommutes` | MLE commutes with respect to the linear combination at the terminal |
+| **Existence of a binding gap (§3)** | `bindingGapExists` | **Under \|F\|>2 (non-idempotent elements)**, MLE(W²)(r) ≠ (MLE(W)(r))². It does not hold in characteristic 2 (Goldilocks satisfies the condition) |
+| **Basic MLE properties** | `eq_diag` / `eq_sum` / `mleEval_bit1` / `hsum_vprod_factor` | eq(b,b)=1, Σeq=1, tensor sum |
+| **D3 weak version** | `d3_substitutable` | Existence of 2 proofs that differ only in the evaluation values of the inverse helpers while agreeing on the witness batch consistency |
+| **D3 strong version (CRITICAL confirmed)** | `d3_strong` | **Two proofs that completely satisfy the verifier (all fields of `RustVerifyAccepts`), where one claims the honest inverse (1,1) and the other the incorrect inverse (0,2), with identical witnesses** — the verifier accepts both ⇒ soundness is broken |
 
-補助として `polySub_eval`、`isZero_eval`、`accepts_length`、`hsum_add`、
-`hsum_mul_left` 等も証明。
+As auxiliaries, `polySub_eval`, `isZero_eval`, `accepts_length`, `hsum_add`,
+`hsum_mul_left`, etc. are also proved.
 
-## 発見事項(深刻度別サマリ)
+## Findings (summary by severity)
 
-- **CRITICAL(確定)**:
-  - **D3**(inverse helpers 束縛鎖の切れ): 論文 §4.5 の「全終端値は PCS 束縛」を
-    実装が破っている。`d3_strong` で**形式的に確定**した: 検証者を完全に満たす
-    (`RustVerifyAccepts` 全フィールド)2 つの proof が存在し、witness は同一なのに
-    片方は正直な逆元 (a₀,b₀)=(1,1)、片方は不正な逆元 (0,2) を主張する。両方が
-    受理される ⇒ inverse helpers は PCS で束縛されておらず、置換引数(コピー制約)の
-    健全性が破れる。原因は inverse helpers に witness/preprocessed のような
-    batch consistency 検査が無く、Φ_inv 終端の単一線形関係 a₀+b₀=2 しか
-    課されないこと(2 解 (1,1)/(0,2) が両方通る)。
-    **推奨修正**: inverse helper 個別評価値にも WHIR/batch consistency 束縛を追加。
+- **CRITICAL (confirmed)**:
+  - **D3** (break in the binding chain of the inverse helpers): the implementation violates
+    "all terminal values are PCS-bound" from paper §4.5. This has been **formally confirmed**
+    by `d3_strong`: there exist two proofs that completely satisfy the verifier
+    (all fields of `RustVerifyAccepts`) and whose witnesses are identical, yet
+    one claims the honest inverse (a₀,b₀)=(1,1) and the other the incorrect inverse (0,2).
+    Both being accepted ⇒ the inverse helpers are not bound by the PCS, and the soundness
+    of the permutation argument (copy constraints) is broken. The cause is that the inverse
+    helpers have no batch consistency check like the one for witness/preprocessed, and only
+    the single linear relation a₀+b₀=2 at the Φ_inv terminal is imposed
+    (both of the 2 solutions (1,1)/(0,2) pass).
+    **Recommended fix**: additionally impose WHIR/batch consistency binding on the individual
+    evaluation values of the inverse helpers.
 - **High**:
-  - **D10**(publicInputsHash 非束縛): 層3 Phase6 が現存 HIGH と認定、Solidity
-    Poseidon 未実装のため**未修正**。
-- **Medium**: D2(Rust combined sumcheck の次数境界欠如)。
-- **Spec-bug**: D1(§4.2.2 g_sub の Σ 誤記、実装は正)。
-- **Info/Low**: D4, D5, D6, D9, D11。
-- **構造/仮定**: D7(積層プロトコル、統合定理不在)、D8(perm context 非束縛)。
+  - **D10** (publicInputsHash not bound): layer 3 Phase6 identified it as a HIGH still present;
+    **not fixed**, because Poseidon is not implemented in Solidity.
+- **Medium**: D2 (missing degree bound in the Rust combined sumcheck).
+- **Spec-bug**: D1 (the Σ misstatement of g_sub in §4.2.2; the implementation is correct).
+- **Info/Low**: D4, D5, D6, D9, D11.
+- **Structural/assumptions**: D7 (stacked protocol, no unified theorem), D8 (perm context not bound).
 
-## sorry・未証明箇所の一覧と解釈
+## List and Interpretation of `sorry` and Unproved Points
 
-`sorry` は **0 件**。公理は `Poly.roots_le_degree` の 1 件のみ(標準数学事実)。
-以下は「未証明の Prop 定義」として残る(段階3の残):
+There are **0** occurrences of `sorry`. The only axiom is `Poly.roots_le_degree` (a standard
+mathematical fact). The following remain as "unproved Prop definitions" (the residue of stage 3):
 
-- `SoundnessProp`(paper 版)本体 — 存在量化を telescope に接続する証明。
-  実装版 `rustSoundness`/`solSoundness` は証明済みなので、健全性の実質は担保。
+- The body of `SoundnessProp` (paper version) — the proof connecting the existential
+  quantification to the telescope. Since the implementation versions
+  `rustSoundness`/`solSoundness` are proved, the substance of soundness is secured.
 - `mle_agrees_on_hypercube_prop` / `mle_is_multilinear_prop` / `mle_unique_prop`
-  — MLE の一意性系(eq_diag/eq_sum は証明済み)。
-- Completeness の end-to-end — prover 形式化を要し SCOPE 範囲外。
-- D3 の**強い版**。
+  — the uniqueness family for MLE (eq_diag/eq_sum are proved).
+- End-to-end Completeness — it would require formalizing the prover and is outside SCOPE.
+- The **strong version** of D3.
 
-## 結論
+## Conclusions
 
-1. **健全性の決定論的中核は形式的に確立**した(`sumcheck_telescope` とその実装系
-   `rustSoundness`/`solSoundness`)。実装が受理する限り、偽ステートメントは
-   4 本の sumcheck のいずれかでの root-hit に帰着し、その確率は
-   `Poly.roots_le_degree` により per-round ≤ deg/|F| で抑えられる。
+1. **The deterministic core of soundness has been formally established** (`sumcheck_telescope`
+   and its implementation counterparts `rustSoundness`/`solSoundness`). As long as the
+   implementation accepts, a false statement reduces to a root-hit in one of the 4 sumchecks,
+   and that probability is bounded per round by ≤ deg/|F| via `Poly.roots_le_degree`.
 
-2. **最重要の発見は D3(CRITICAL 確定)**: `d3_strong` により、検証者を完全に
-   満たす 2 proof(witness 同一・inverse helper のみ相違、片方は不正な逆元 (0,2))が
-   存在することを**形式的に証明**した。検証者は不正な逆元を受理する = 置換引数の
-   健全性破れ。論文 §4.5「全終端値は PCS 束縛」が実装で成立していない。修正は
-   inverse helper 個別評価値への batch/WHIR 束縛の追加。
+2. **The most important finding is D3 (CRITICAL, confirmed)**: via `d3_strong` we have
+   **formally proved** the existence of 2 proofs that completely satisfy the verifier
+   (identical witnesses, differing only in the inverse helper, one of them claiming the
+   incorrect inverse (0,2)). The verifier accepts an incorrect inverse = the soundness of
+   the permutation argument is broken. Paper §4.5, "all terminal values are PCS-bound",
+   does not hold in the implementation. The fix is to add batch/WHIR binding on the
+   individual evaluation values of the inverse helpers.
 
-3. **D10(publicInputsHash 非束縛)は現存 HIGH** で、オンチェーン検証固有。
-   Solidity Poseidon 実装が正しい修正。
+3. **D10 (publicInputsHash not bound) is a HIGH that is still present**, and is specific to
+   on-chain verification. A Solidity Poseidon implementation is the correct fix.
 
-4. 仕様書 §4.2.2(D1、g_sub の Σ 誤記)は**文書の訂正**を推奨(実装は正しい)。
+4. For specification §4.2.2 (D1, the Σ misstatement of g_sub), **correcting the document**
+   is recommended (the implementation is correct).
 
-5. 実装は論文の単一プロトコルではなく**層1+層2 の積層**であり、統合された健全性
-   定理が文献に存在しない。本監査の Lean 定式化がその統合の基盤となる。
+5. The implementation is not the single protocol of the paper but a **stack of layer 1 + layer 2**,
+   and no unified soundness theorem exists in the literature. The Lean formalization of this
+   audit provides the foundation for that unification.
 
-### 修正状況(2026-07-06)
+### Fix Status (2026-07-06)
 
-- **D3(CRITICAL)修正済み**: inverse helper 個別評価値への batch consistency
-  束縛を追加。
-  - Rust: `proof.rs` に `inverse_helpers_eval_value_at_r_{inv,h}` フィールド追加、
-    `prover.rs` で batched 値を出力、`verifier.rs` 5g/5h の破棄フォールドを
-    `ensure!` に変更(witness の 5e/5f と対称)。回帰テスト 2 本追加。
-    **Rust lib 59 テスト全通過**(honest roundtrip 維持 + D3 改竄が reject)。
-  - Solidity: `MleVerifier.sol` に対応フィールド + `require` 追加。
-    **forge 79 テスト全通過**(E2E 7 + boundary 10 含む)。
-  - 仕様: `plonky2_mle_paper_v2.md` §4.2.2 に inverse-helper 束縛の必須性を明記、
-    §5.3 に verifier step 7b(batch consistency)を追加。
-  - Lean: `d3_fix_distinguishes`(非退化 batch チャレンジ `r≠1` の下で
-    正直な逆元 [1,1] と不正な逆元 [0,2] は異なる batched 値を与え、単一の
-    WHIR 束縛値に両立不可 ⇒ 新 `ensure!` が片方を必ず弾く)を証明。
-- **D1(Spec-bug)修正済み**: `plonky2_mle_paper_v2.md` §4.2.2 の g_sub を
-  Σ 形式から正しい Π 形式に訂正(実装は元から正しい)。
+- **D3 (CRITICAL) fixed**: batch consistency binding was added on the individual evaluation
+  values of the inverse helpers.
+  - Rust: added the `inverse_helpers_eval_value_at_r_{inv,h}` fields to `proof.rs`,
+    output the batched values in `prover.rs`, and changed the discarding fold in 5g/5h of
+    `verifier.rs` into an `ensure!` (symmetric with 5e/5f for the witness). Added 2 regression tests.
+    **All 59 Rust lib tests pass** (honest roundtrip preserved + D3 tampering is rejected).
+  - Solidity: added the corresponding fields + a `require` in `MleVerifier.sol`.
+    **All 79 forge tests pass** (including E2E 7 + boundary 10).
+  - Specification: stated in `plonky2_mle_paper_v2.md` §4.2.2 that inverse-helper binding is
+    mandatory, and added verifier step 7b (batch consistency) to §5.3.
+  - Lean: proved `d3_fix_distinguishes` (under a non-degenerate batch challenge `r≠1`, the
+    honest inverse [1,1] and the incorrect inverse [0,2] give different batched values and
+    cannot both be consistent with a single WHIR-bound value ⇒ the new `ensure!` necessarily
+    rejects one of them).
+- **D1 (Spec-bug) fixed**: corrected g_sub in `plonky2_mle_paper_v2.md` §4.2.2 from the Σ form
+  to the correct Π form (the implementation was correct from the start).
 
-### 残りの作業(優先度順)
+### Remaining Work (in priority order)
 
-1. D10 の Solidity Poseidon による修正
-2. D2 の Rust 側次数境界追加
-3. `SoundnessProp` paper 版本体 + MLE 一意性系の証明完了
+1. Fixing D10 via Solidity Poseidon
+2. Adding the degree bound on the Rust side for D2
+3. Completing the proof of the body of the `SoundnessProp` paper version + the MLE uniqueness family
 
-注: coset E2E fixture は現行コードで WHIR duplicate-index 問題
-(SpongefishWhirVerify 所見#1)に触れる(D3 とは無関係、transcript が
-D3 変更有無で byte 一致することを確認済み)。当該 fixture は既存の
-通過する WHIR proof を保持しつつ D3 の新フィールドのみ注入して緑を維持。
+Note: with the current code, the coset E2E fixture runs into the WHIR duplicate-index problem
+(SpongefishWhirVerify finding #1) (unrelated to D3; it has been confirmed that the transcript
+matches byte-for-byte with and without the D3 change). That fixture keeps the existing passing
+WHIR proof and injects only the new D3 fields, so as to stay green.

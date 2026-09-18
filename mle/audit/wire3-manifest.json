@@ -545,17 +545,17 @@
     },
     {
       "path": "mle/audit/HISTORICAL-README.md",
-      "sha256": "dc418b21632bca2c1b9dc6d45803aa84a93eed10facf9b40d5de9e9c666c631c",
+      "sha256": "9446fae03eeafb28de60a3f4b556c2a4f989f63724593157ce21b54d9b43a347",
       "kind": "historical"
     },
     {
       "path": "mle/audit/HISTORICAL-REPORT.md",
-      "sha256": "9849ee2fe5685dfff29f8099ec31aa19f8df2812a288698c656ece643eeaa6f2",
+      "sha256": "00ee655e2845fa63b85d763b77cfbce7f94f8b93bc87e5af5a9b67ce92b98d80",
       "kind": "historical"
     },
     {
       "path": "mle/audit/HISTORICAL-SCOPE.md",
-      "sha256": "6d21c14ef500d87a337a9625d331bb496711dfc515e5ffcbf2fbc3644a4c3d69",
+      "sha256": "cd0a8bb381d118cb1afec6e18a372ce4a0c7893f5d02cd69dddc9b2b583d3515",
       "kind": "historical"
     },
     {
@@ -585,17 +585,17 @@
     },
     {
       "path": "mle/audit/README.md",
-      "sha256": "221407bcccfcb2caae5152abe6e1414c338780774b0816b4eea180713e2803fd",
+      "sha256": "0a3049de7dc55592b41050a83acd97f70dda9307e031dc8e61e1141259e4b449",
       "kind": "spec"
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "8941c469b3b14ba6e7dd374da98bd39173161b1c0495a555149723a75a53034c",
+      "sha256": "8358aef79333dc0fe51d9ffd180c719086601bf5b8d7440f05fa4efa2d02f391",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "5d5542f544af3aaf2a243c6394a93c00d6c533812aad7ab9f0fc6eb08b7d5721",
+      "sha256": "4812adcad490bf7c267c50cd89dbb8cf6d156ec98f62f782d170a4fdab8340f3",
       "kind": "spec"
     },
     {
