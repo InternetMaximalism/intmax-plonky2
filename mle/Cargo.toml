@@ -38,3 +38,34 @@ rand = { workspace = true, features = ["std", "std_rng"] }
 default = ["std", "parallel"]
 std = ["plonky2/default", "anyhow/std"]
 parallel = ["whir/parallel"]
+# Historical protocol-1 APIs and fixtures are for explicit conformance only.
+# Never enable this feature in a production dependency.
+legacy-conformance = []
+
+[[test]]
+name = "integration_tests"
+required-features = ["legacy-conformance"]
+
+[[test]]
+name = "generate_fixtures"
+required-features = ["legacy-conformance"]
+
+[[test]]
+name = "benchmarks"
+required-features = ["legacy-conformance"]
+
+[[test]]
+name = "adversarial_schema_matrix"
+required-features = ["legacy-conformance"]
+
+[[test]]
+name = "protocol_schema_codegen"
+required-features = ["legacy-conformance"]
+
+[[test]]
+name = "transcript_compat"
+required-features = ["legacy-conformance"]
+
+[[test]]
+name = "transcript_e2e_trace"
+required-features = ["legacy-conformance"]

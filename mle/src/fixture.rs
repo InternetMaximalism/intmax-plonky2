@@ -1774,12 +1774,7 @@ pub fn fixture_from_json(json: &str) -> ProofFixture {
 
 #[cfg(test)]
 mod tests {
-    use plonky2_field::goldilocks_field::GoldilocksField;
-    use plonky2_field::types::Field;
-
     use super::*;
-
-    type F = GoldilocksField;
 
     #[test]
     fn test_large_field_element_roundtrip() {
@@ -1795,15 +1790,19 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "legacy-conformance")]
     fn test_proof_fixture_roundtrip() {
         use plonky2::iop::witness::{PartialWitness, WitnessWrite};
         use plonky2::plonk::circuit_builder::CircuitBuilder;
         use plonky2::plonk::circuit_data::CircuitConfig;
         use plonky2::plonk::config::PoseidonGoldilocksConfig;
         use plonky2::util::timing::TimingTree;
+        use plonky2_field::goldilocks_field::GoldilocksField;
+        use plonky2_field::types::Field;
 
         use crate::prover::mle_prove;
 
+        type F = GoldilocksField;
         type C = PoseidonGoldilocksConfig;
         const D: usize = 2;
 

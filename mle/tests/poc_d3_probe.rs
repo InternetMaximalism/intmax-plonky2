@@ -1,5 +1,9 @@
 //! Discriminating probe for audit finding D3 (inverse-helper binding).
 //!
+//! This exercises the historical V1 prover/verifier, so it needs the
+//! non-default `legacy-conformance` feature:
+//! `cargo test -p plonky2_mle --test poc_d3_probe --features legacy-conformance`.
+//!
 //! Question: are the individual inverse-helper evals `a_j`/`b_j` at `r_inv`
 //! bound to the committed inverse-helper polynomial by the grouped WHIR
 //! opening (`bind_expected_fold` -> `verify_grouped`), or only by the
@@ -9,6 +13,8 @@
 //! lone tampered eval. This probe tampers an eval AND recomputes the batched
 //! scalar consistently, so the 5g check passes by construction. Whatever
 //! rejects the proof afterwards must be the commitment binding.
+
+#![cfg(feature = "legacy-conformance")]
 
 use plonky2::iop::witness::{PartialWitness, WitnessWrite};
 use plonky2::plonk::circuit_builder::CircuitBuilder;

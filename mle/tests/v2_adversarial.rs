@@ -352,8 +352,7 @@ fn honest_roundtrip_and_high_value_tampering_matrix() {
     )
     .expect("evaluation-table extraction");
     let error = mle_prove_v2_from_tables(&circuit.common, &tables, &oversized_digest)
-        .err()
-        .expect("table-level prover must reject a non-canonical circuit digest shape");
+        .expect_err("table-level prover must reject a non-canonical circuit digest shape");
     assert!(error.to_string().contains("circuit digest shape"));
 
     let mut tampered = proof.clone();

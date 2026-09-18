@@ -918,6 +918,8 @@ mod tests {
         )
     }
 
+    // The tuple mirrors the ordered inputs consumed by the relation tests.
+    #[allow(clippy::type_complexity)]
     fn honest_tables(
         num_vars: usize,
         num_routed: usize,

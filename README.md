@@ -3,11 +3,31 @@
 This fork repository was originally for [Plonky2 with FRI](https://github.com/0xPolygonZero/plonky2). In its mle/ directory, WHIR verification is available now. 
 Periodic auditing and maintenance of this fork repository, including the MLE/WHIR proving system, is conducted by the Intmax team.
 
-**WARNING: STILL EXPERIMENTAL**
-`main` now includes the wire-v3 repair through `b569e0d7` from
-`codex/whir-leaf-consistency-20260830`. See [the current MLE scope and release
-limitations](mle/README.md). Use the V2 APIs with `MLEWHIR3`; legacy V1 is not
-a production fallback. The retained July Lean audit does not certify wire v3.
+**WARNING: EXPERIMENTAL — PRODUCTION RELEASE REMAINS NO-GO.**
+
+The current MLE implementation uses PCS wire v3 through the historical `V2`
+Rust APIs and `MleVerifierV2` / `PinnedMleVerifierV2` Solidity contracts. Its
+commitments bind the constituent tables before challenges and authenticate the
+terminal claims and raw public inputs. Integrations must regenerate their
+verification keys, configurations, and proofs together; old wire formats are
+not accepted by the current entry points. The old Rust proving/verifying API
+requires the non-default `legacy-conformance` feature, and the old Solidity
+`MleVerifier` is abstract and retained for test conformance only.
+
+See the [MLE implementation and migration guide](mle/README.md) for the exact
+protocol, build commands, and remaining release gates. External cryptographic
+review, the protocol-specific Fiat--Shamir/grinding analysis, and the complete
+parent-system fixture and acceptance checks remain required. Keep deployment
+containment in place. The [Lean audit](mle/audit/README.md) models PCS wire v3
+itself, but only in part: it certifies stated properties of Lean models of the
+implementation under explicit hypotheses, not implementation refinement, PCS or
+Fiat--Shamir soundness, or witness existence. Its scope and limits are in
+[SCOPE.md](mle/audit/SCOPE.md), and the superseded July 2026 audit of the
+earlier implementation is retained as `mle/audit/HISTORICAL-*.md`.
+
+The [wire-v3 adversarial re-audit](mle/tasks/reaudit_wire3_soundness_2026-09-18.md)
+records the attack-scenario ledger against the deployed code, the executed
+proof-of-concept tests, and what it did not cover.
 
 ## Documentation
 
@@ -34,13 +54,17 @@ cargo run --example <example_name>
 
 ## Building
 
-Plonky2 requires a recent nightly toolchain, although we plan to transition to stable in the future.
+The repository pins `nightly-2025-03-23` in `rust-toolchain` and commits
+`Cargo.lock`. Install that toolchain and use the locked dependencies:
 
-To use a nightly toolchain for Plonky2 by default, you can run
+```sh
+rustup toolchain install nightly-2025-03-23 --component rustfmt --component clippy
+cargo build -p plonky2_mle --locked
 ```
-rustup override set nightly
-```
-in the Plonky2 directory.
+
+Run these commands from the workspace root. Do not replace the pinned toolchain
+with mutable `nightly`. The [MLE guide](mle/README.md#build-and-verification)
+also describes offline checks once the pinned dependencies are cached.
 
 
 ## Running
@@ -89,7 +113,7 @@ at your option.
 
 ## Security
 
-This code has been audited prior to the `v1.0.0` release. The audits reports and findings are available in the [audits](./audits/) folder of this repository.
+Upstream Plonky2 was audited prior to its `v1.0.0` release. Those historical reports and findings are available in the [audits](./audits/) folder; they do not cover this fork's current MLE/WHIR changes or certify its release readiness.
 An audited codebase isn't necessarily free of bugs and security exploits, hence we recommend care when using `plonky2` in production settings.
 
 If you find a security issue in the codebase, please refer to our [Security guidelines](./SECURITY.md) for private disclosure.

@@ -228,7 +228,7 @@ fn validate_and_derive(schema: &ProtocolSchema) -> DerivedSchema {
         .len()
         .checked_mul(points.len())
         .expect("claim matrix overflow");
-    let mut bound_mask = vec![0u8; (claim_count + 7) / 8];
+    let mut bound_mask = vec![0u8; claim_count.div_ceil(8)];
     let mut seen = BTreeSet::new();
     for cell in &schema.bound_cells {
         let point = *points

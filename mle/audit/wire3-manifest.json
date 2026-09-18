@@ -10,7 +10,7 @@
     },
     {
       "path": ".github/workflows/continuous-integration-workflow.yml",
-      "sha256": "6df9ae237fbc301514e881e1152f35147af04ef7a7c2b2a126df7ddd08f4bc41",
+      "sha256": "f6a82f7f78e77c934c8d98281a4a7bec5615a3e310dd69d7c51c452c7b5e73ed",
       "kind": "tooling"
     },
     {
@@ -615,7 +615,7 @@
     },
     {
       "path": "mle/Cargo.toml",
-      "sha256": "5818fdd36402f0775d265506bf777e42ab5e3e1ba68f9a58f9c82a8dd42cc168",
+      "sha256": "1aa64db5bd395c1261e9122c141d64adc7bbb8e2cb488e1d971b62e2971c7bf6",
       "kind": "tooling"
     },
     {
@@ -680,7 +680,7 @@
     },
     {
       "path": "mle/contracts/src/MleVerifier.sol",
-      "sha256": "1521bf5ec65d0c5cedb8b3f01b1fc7a2a3dceef52c6f026182d84642785a0a10",
+      "sha256": "d92b34419aa65cba5588792f51b5409b75321becac7145ad1b517a7467214eb2",
       "kind": "implementation"
     },
     {
@@ -785,7 +785,7 @@
     },
     {
       "path": "mle/contracts/test/BoundaryCheckTest.t.sol",
-      "sha256": "dd568f0a8b0c27c775fca0632536a08f5166f92299821ca5af3f6d8180b69008",
+      "sha256": "f446c849ac178c39428fc27b10bd8457eb6f5f2dd84a7ab9516115a94bef0ad8",
       "kind": "implementation"
     },
     {
@@ -830,7 +830,7 @@
     },
     {
       "path": "mle/contracts/test/GasBenchmark.t.sol",
-      "sha256": "854f73e8c2ef01385560888b54b33a48ec36f972bf30aa98b06c66b969b15140",
+      "sha256": "58cb6b8b307a8d00b88606dc7e0666cc0aee2afaf7ffefa10ee62961cfd79087",
       "kind": "implementation"
     },
     {
@@ -840,7 +840,7 @@
     },
     {
       "path": "mle/contracts/test/MleE2ETest.t.sol",
-      "sha256": "1a362c64a0a0ac663261b66103e731fd7ab67e8c280d8fc4e1322c9218e2ef6c",
+      "sha256": "156fef5285d4ee4ce55b104332fa4a39eb58c368badaa0c604e6ade7f9fce6c8",
       "kind": "implementation"
     },
     {
@@ -890,7 +890,7 @@
     },
     {
       "path": "mle/contracts/test/TranscriptE2ETrace.t.sol",
-      "sha256": "91e58159b2d15b70b36ed84bf7fa1a9c9cb25c464e7f22018b7494bf616ab4de",
+      "sha256": "d55cdd216a18d3a17d134976aac1e790a92c974e168f829f4fc511db8edffbac",
       "kind": "implementation"
     },
     {
@@ -954,6 +954,21 @@
       "kind": "implementation"
     },
     {
+      "path": "mle/contracts/test/LegacyMleVerifierContainment.t.sol",
+      "sha256": "8265822e7931031653ec9b1c71f39fce827f9b9d0a96ac7d7141477c81ced4cb",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/LegacyMleVerifierHarness.sol",
+      "sha256": "3a3a4b1affd1cf7ad0de9f2d486cd635919f3b9cf260b60345c456d3a6db741e",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/TranscriptV1Golden.sol",
+      "sha256": "2e49a14c76ac4c4a988fec69a5a308c71df35675015c56eabe711905db12f227",
+      "kind": "implementation"
+    },
+    {
       "path": "mle/examples/estimate_unified_outer_whir.rs",
       "sha256": "79bb8ecc222a9f1cb8115947ae264c3d870b65125bd2eed5c39da8f769882d4a",
       "kind": "implementation"
@@ -975,7 +990,7 @@
     },
     {
       "path": "mle/README.md",
-      "sha256": "0026328bd82c48c23c2db46e0bbaaf68e93cb76d32e50ea966a3703d583d2419",
+      "sha256": "eecbd26f38fd2dabf254762dd5632dfb5fcab174cf1a2d8a040c21884f6bf6ec",
       "kind": "spec"
     },
     {
@@ -995,7 +1010,7 @@
     },
     {
       "path": "mle/src/commitment/whir_pcs.rs",
-      "sha256": "aec2d47606dc0754fc0156bf318a2cb2b6983c8afce012e526073373805d8d22",
+      "sha256": "d24aa89b329ad12bff2417956cd518bff3f2d0424e6810cd2b60d97fcfebfc75",
       "kind": "implementation"
     },
     {
@@ -1030,7 +1045,7 @@
     },
     {
       "path": "mle/src/fixture.rs",
-      "sha256": "34f272781c692cc6c0e39b6aa2e4724add6a48d5b31458a2d8f3b5b8f2351d93",
+      "sha256": "e3b7c4492f44c324dc62fdc69b29e74b3ebbd545879dd5d55df2b5e55646bc80",
       "kind": "implementation"
     },
     {
@@ -1045,12 +1060,12 @@
     },
     {
       "path": "mle/src/generated/mle_whir_v2.rs",
-      "sha256": "6fc7431b05b7c18d31ae6bc8c328b99dc8c0ddd97b280a4300b5f077a446f153",
+      "sha256": "1679a6facceda2b18416f17facc3ffeb82ec0059e28455f0fa1796d4f5164626",
       "kind": "implementation"
     },
     {
       "path": "mle/src/lib.rs",
-      "sha256": "46afbdc4f8cd3beaf2a1c9a46d50fba15a0f512bcb885330b859949088a9a447",
+      "sha256": "280982d8c47fed10804811390c4f42ec38dc7adc8661085cf0c8f4ec1071baef",
       "kind": "implementation"
     },
     {
@@ -1070,7 +1085,7 @@
     },
     {
       "path": "mle/src/permutation/norm_logup.rs",
-      "sha256": "74cf6558d5d4061b51913465d2c18180f15702ee7251bf86e5589a1372050826",
+      "sha256": "91ea69dbb98b30213fb163076b3d54bd7ed9436d1c7e1fdf271ae67ca34a1664",
       "kind": "implementation"
     },
     {
@@ -1085,17 +1100,17 @@
     },
     {
       "path": "mle/src/prover_v2.rs",
-      "sha256": "55dcf226e6a693c4a561cf388bb4741da8e7b59972b39c6c5e8f5e7f7f0176d8",
+      "sha256": "679b8fb7be02c1411cebff5f9ef8f63b4778faa5c6d3b5ffbdacce6bbaa88c5d",
       "kind": "implementation"
     },
     {
       "path": "mle/src/prover.rs",
-      "sha256": "e816469317597876419625560edaaed30b80c087beb47d20e36eddfef2b2d6ce",
+      "sha256": "64983a1c7e654bfec60a40c1dc6b44ace4c7df44148e6aa638c18ff6f1e2fa3b",
       "kind": "implementation"
     },
     {
       "path": "mle/src/sumcheck/coefficients.rs",
-      "sha256": "8f57cdd19e95bcb452c495619b03bb727aeffb35dd9fd872f49c29ea4508333a",
+      "sha256": "4990ed995422b5defff35c2cc4f796aa2d9f7441e0f091fde3c91901a07afeb0",
       "kind": "implementation"
     },
     {
@@ -1145,7 +1160,7 @@
     },
     {
       "path": "mle/src/verifier.rs",
-      "sha256": "9322fa9d494469122e64fa8c70fbc35f39af7ce918037bcc46655700751eeb0d",
+      "sha256": "ad2df2307e7d5391d2de3d10b6bfb2ca0b720a47044996ade8cbb6f01e5ea1d1",
       "kind": "implementation"
     },
     {
@@ -1205,7 +1220,7 @@
     },
     {
       "path": "mle/tests/outer_soundness_budget.rs",
-      "sha256": "9a2263bcdb8fd63cf4930a496b280832c737b7c4b2b34f856b6454910fe0526d",
+      "sha256": "41f6cbef7a706d144b675039969bf2dea509db6b3cc4c8b083a86d44641b3bd5",
       "kind": "implementation"
     },
     {
@@ -1215,17 +1230,17 @@
     },
     {
       "path": "mle/tests/poseidon_public_inputs_hash.rs",
-      "sha256": "6c85f0eba6c47f494330505e2eef72c620e8de4fed818ffe5a4bcf5e4ad54350",
+      "sha256": "34305276a6c0bda65f03ded3650443342acf4baa9c53efca8102afa539deb08a",
       "kind": "implementation"
     },
     {
       "path": "mle/tests/protocol_schema_codegen.rs",
-      "sha256": "f9c9c601e9ebf31d230168846734ce35b42b7f45fd1ab4e355783314d2607ddc",
+      "sha256": "03c6acaf99218ed266dd974de092c277bae8c90b3ea011ce42cae01de4a5c1f5",
       "kind": "implementation"
     },
     {
       "path": "mle/tests/protocol_schema_v2_codegen.rs",
-      "sha256": "acda0df09dcd180273a4a3dfabe3b9859b774ba6ff29acb58ea8ce71f261a06c",
+      "sha256": "4ed34f00c747ce2a0639b80cb23b5b28418e32809f97d4cbb6b3e6fced95462f",
       "kind": "implementation"
     },
     {
@@ -1240,12 +1255,12 @@
     },
     {
       "path": "mle/tests/transcript_e2e_trace.rs",
-      "sha256": "9a0eebf9f3483baaa01bbdbe179ca01d2c67767afb4176d9c592f36d2672b2ff",
+      "sha256": "3168a2318bfec1cce0566a101d6c69aa5e84ad17572946e0fbc6f91f319662ef",
       "kind": "implementation"
     },
     {
       "path": "mle/tests/v2_adversarial.rs",
-      "sha256": "84e58e3ff1ec90ec0ce08c4d7aff20d7e73d979dd8135724c493670d44d632ce",
+      "sha256": "210bf8bb97ae301e3197f2b83b097408c9709b4d6c313fb9d42c3391e4308763",
       "kind": "implementation"
     },
     {
@@ -1295,7 +1310,7 @@
     },
     {
       "path": "mle/tests/poc_d3_probe.rs",
-      "sha256": "d6b65f75cdad61c90e51bdf3ca1f3f722c1cc6992cab5b97748de55f0338b2ce",
+      "sha256": "551538765b6c0a6e066ea89b0b445817bdb424cfdd1ec70f55d584180f04a94b",
       "kind": "implementation"
     },
     {

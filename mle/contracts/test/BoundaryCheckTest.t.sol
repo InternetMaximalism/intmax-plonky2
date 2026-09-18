@@ -3,6 +3,7 @@ pragma solidity ^0.8.25;
 
 import {Test} from "forge-std/Test.sol";
 import {MleVerifier} from "../src/MleVerifier.sol";
+import {LegacyMleVerifierHarness} from "./LegacyMleVerifierHarness.sol";
 import {SumcheckVerifier} from "../src/SumcheckVerifier.sol";
 import {SpongefishWhirVerify} from "../src/spongefish/SpongefishWhirVerify.sol";
 import {GoldilocksExt3} from "../src/spongefish/GoldilocksExt3.sol";
@@ -126,7 +127,7 @@ contract BoundaryCheckTest is Test {
     uint256 constant PARENT_B0 = 8488046535134267022;
 
     function setUp() public {
-        verifier = new MleVerifier(block.chainid);
+        verifier = new LegacyMleVerifierHarness(block.chainid);
     }
 
     // ──────────────────────────────────────────────────────────────────
@@ -135,18 +136,18 @@ contract BoundaryCheckTest is Test {
 
     function test_chainPin_zeroConfiguredChainReverts() public {
         vm.expectRevert(abi.encodeWithSelector(InvalidMleVerifierChainId.selector, uint256(0), block.chainid));
-        new MleVerifier(0);
+        new LegacyMleVerifierHarness(0);
     }
 
     function test_chainPin_deploymentMismatchReverts() public {
         vm.chainId(1);
         vm.expectRevert(abi.encodeWithSelector(InvalidMleVerifierChainId.selector, uint256(31337), uint256(1)));
-        new MleVerifier(31337);
+        new LegacyMleVerifierHarness(31337);
     }
 
     function test_chainPin_matchingConfiguredChainDeploys() public {
         vm.chainId(11155111);
-        MleVerifier configured = new MleVerifier(11155111);
+        MleVerifier configured = new LegacyMleVerifierHarness(11155111);
         assertEq(configured.allowedChainId(), 11155111);
     }
 

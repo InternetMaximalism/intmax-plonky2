@@ -3,6 +3,7 @@ pragma solidity ^0.8.25;
 
 import {Test} from "forge-std/Test.sol";
 import {TranscriptLib} from "../src/TranscriptLib.sol";
+import {PACKED_V1_GOLDEN_TERMINAL_DIGEST} from "./TranscriptV1Golden.sol";
 import {
     EXTENSION_FIELD_LIMBS,
     MLE_PROTOCOL_VERSION,
@@ -218,7 +219,7 @@ contract TranscriptE2ETrace is Test {
         );
         require(transcript.squeezeCounter == 12 * indexBits, "terminal squeeze count");
         require(
-            keccak256(transcript.state) == 0x0852dd5c4a3f1bfca1aaa10ca49eff8927b68305bcb360bcf58fca1c8ab0a298,
+            keccak256(transcript.state) == PACKED_V1_GOLDEN_TERMINAL_DIGEST,
             "packed v1 golden terminal digest"
         );
     }

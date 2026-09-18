@@ -574,6 +574,8 @@ fn each_power_of_two_raw_oracle_budget_loses_its_log2_from_the_union_work_factor
 }
 
 #[test]
+// Retain the generated profile's minimum-dimension premise for this bound.
+#[allow(clippy::assertions_on_constants)]
 fn rejected_three_base_repetitions_admit_sequential_round_bridging() {
     let one = rejected_base_gate_error();
     assert_eq!(one * GOLDILOCKS_P, 266.0);

@@ -89,7 +89,8 @@ pub const DOMAIN_WHIR_PROTOCOL_ID_V2: &str = "whir-protocol-id-v3";
 pub const DOMAIN_WHIR_SESSION_ID_V2: &str = "whir-session-id-v3";
 pub const DOMAIN_GROUP_PREPROCESSED_V2: &str = "pcs-group-preprocessed-v3";
 pub const DOMAIN_GROUP_WITNESS_V2: &str = "pcs-group-witness-v3";
-pub const DOMAIN_PUBLIC_INPUT_AGGREGATION_CHALLENGE_V2: &str = "public-input-aggregation-challenge-v3";
+pub const DOMAIN_PUBLIC_INPUT_AGGREGATION_CHALLENGE_V2: &str =
+    "public-input-aggregation-challenge-v3";
 pub const DOMAIN_NORM_DENOMINATOR_CHALLENGES_V2: &str = "norm-denominator-challenges-v3";
 pub const DOMAIN_GROUP_NORM_INVERSE_V2: &str = "pcs-group-norm-inverse-v3";
 pub const DOMAIN_PUBLIC_INPUT_MIX_CHALLENGE_V2: &str = "public-input-mix-challenge-v3";

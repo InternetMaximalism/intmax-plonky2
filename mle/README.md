@@ -1,7 +1,7 @@
 # `plonky2_mle` — MLE/WHIR PCS wire v3 (`V2` API generation)
 
-> **Release status: local PCS engineering candidate, not an unconditional
-> production approval.** Wire v3 repairs the historical constituent-batching
+> **Release status: NO-GO for production; local PCS engineering candidate.**
+> Wire v3 repairs the historical constituent-batching
 > forgery and directly binds every raw public input to a canonical routed
 > witness cell. Every constituent table is committed before its challenges and
 > every terminal value is authenticated by one three-group, two-point WHIR
@@ -14,7 +14,7 @@
 > `log2(H)` bits and is only about 69.535 bits at `H = 2^32`. Parent recursion
 > separately retains the default
 > Goldilocks Poseidon configuration whose repository estimate is about 95 bits,
-> so the whole application is not a 128-bit system. The current worktree must
+> so the whole application is not a 128-bit system. The parent integration must
 > also complete fixture migration and the full acceptance matrix. Keep release
 > containment in place until those gates and an external cryptographic audit
 > are complete.
@@ -32,6 +32,37 @@ in the wire-v3 addendum of
 is retained for history and its earlier v0/v1 sections are not the production
 protocol. Historical `V2` suffixes on code symbols and filenames identify the
 implementation generation; they do not authorize wire-v2 bytes.
+
+## API and fixture migration
+
+The default Rust build exposes the wire-v3 proving and verification path through
+`prover_v2`, `verifier_v2`, and their `*_v2` entry points. The default features
+do not enable the historical prover/verifier; the non-default
+`legacy-conformance` feature exists only for archived protocol conformance
+checks. In Solidity, deploy the current `MleVerifierV2` and its pinned adapter.
+The historical `MleVerifier` is abstract; a concrete harness exists only under
+`contracts/test/` for conformance checks.
+
+This is a deliberate API and proof-format migration. Generate the wire-v3
+verification key from complete `CircuitData`, validate its public-input map,
+export the matching configuration, and regenerate proofs and compact payloads
+from that same circuit and revision. Consumers must move to the corresponding
+`V2` types and the `MLEWHIR3` compact format together. Renaming a legacy fixture,
+changing its version field, or retaining an old verification key is not a
+migration. Deployments must keep their pinned circuit, configuration, WHIR
+profile, and chain guard in agreement.
+
+The [Lean audit](audit/README.md) models wire v3 itself. It certifies stated
+properties of Lean models of this implementation under explicit hypotheses; it
+does not establish implementation refinement, PCS or Fiat--Shamir soundness, or
+witness existence, and it does not close the remaining external-review and
+parent-integration release gates. Read [SCOPE.md](audit/SCOPE.md) for the exact
+trust boundaries before citing any theorem. The superseded July 2026 audit of
+the earlier protocol and its D3 follow-up are retained as `audit/HISTORICAL-*.md`.
+
+The [wire-v3 adversarial re-audit](../mle/tasks/reaudit_wire3_soundness_2026-09-18.md)
+records the attack-scenario ledger against the deployed code, the executed
+proof-of-concept tests, and the residual items it did not cover.
 
 ## Production statement
 
@@ -248,7 +279,17 @@ From the `polygon-plonky2` workspace root:
 ```bash
 cargo build -p plonky2_mle --locked --offline
 cargo test -p plonky2_mle --all-targets --locked --offline
+cargo test -p plonky2_mle --doc --locked --offline
 ```
+
+Historical protocol conformance is a separate explicit check:
+
+```bash
+cargo test -p plonky2_mle --all-targets --features legacy-conformance --locked --offline
+```
+
+Only use `legacy-conformance` in archival test tooling. Application dependencies
+must use the default wire-v3 API without that feature.
 
 For Solidity:
 
@@ -258,12 +299,15 @@ forge test --offline
 forge build --sizes --offline
 ```
 
-The 2026-09-04 local gate ran 347 Forge tests in 27 suites with zero failures
+The pre-integration 2026-09-04 local gate ran 347 Forge tests in 27 suites with zero failures
 or skips, including the four sampled max-row resource assertions above. Rust includes
 cross-language transcript/WHIR traces, exact schema/codegen drift checks,
 compact decoder mutations, malformed-proof and panic-totality regressions,
 all-six-cell claim mutations, circuit/VK binding tests, and the machine-checked
-soundness budget. Expensive randomized maximum-fixture regeneration remains an
+soundness budget. These are historical measurements; the integrated revision
+requires its own checks. CI runs locked default and explicit legacy-conformance
+Rust suites and the Solidity suite with the pinned compiler settings.
+Expensive randomized maximum-fixture regeneration remains an
 explicitly ignored opt-in test; the ordinary suite verifies the checked-in
 canonical fixture without rewriting it.
 
@@ -403,8 +447,10 @@ cited as external audit approval.
 `prover.rs`, `verifier.rs`, `proof.rs`, `transcript.rs`,
 `protocol/mle_whir_v1.json`, `MleVerifier.sol`, and V1 trace/history fixtures
 are frozen compatibility and negative-regression material. They preserve the
-old proof shapes and the exact historical constituent-cancellation exploit so
-V2 cannot regress.
+old proof shapes and historical regression cases so the current protocol can
+be checked for compatibility boundaries. Rust access to the old proving and
+verifying entry points requires `legacy-conformance`; Solidity exposes the old
+verifier as an abstract contract with its concrete harness confined to tests.
 
 V1 is not a production fallback. New integrations must use `*_v2` Rust APIs,
 `MleVerifierV2`/`PinnedMleVerifierV2`, current generated constants, and compact

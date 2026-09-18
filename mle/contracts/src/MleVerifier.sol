@@ -31,11 +31,15 @@ import {
     POINT_INVERSE
 } from "./generated/MleWhirV1.sol";
 
-/// @title MleVerifier — versioned combined-sumcheck/grouped-WHIR engine
+/// @title MleVerifier — abstract legacy conformance implementation
 /// @notice Every terminal constituent is opened directly from an ordered
 /// commitment made before its aggregation/query challenges. The immutable
 /// chain pin remains as release containment pending independent review.
-contract MleVerifier {
+/// @dev This legacy protocol is not a production fallback. Keep the checked
+/// implementation abstract so it has no deployable artifact; only test-local
+/// harnesses may instantiate it. Production integrations use the wire-v3
+/// MleVerifierV2/PinnedMleVerifierV2 entry points.
+abstract contract MleVerifier {
     using F for uint256;
     uint256 constant P = 0xFFFFFFFF00000001;
 

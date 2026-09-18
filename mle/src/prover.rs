@@ -105,7 +105,7 @@ fn tables_to_packed_ark_group<F: RichField>(
     vec![packed]
 }
 
-pub(crate) fn absorb_schema_and_base_roots<F: RichField>(
+pub(crate) fn absorb_schema_and_base_roots(
     transcript: &mut Transcript,
     num_constants: usize,
     num_routed_wires: usize,
@@ -150,7 +150,7 @@ pub(crate) fn absorb_claims_and_sample_index_points<F: RichField>(
     );
     transcript.domain_separate("pcs-constituent-claims-v1");
     for claim in claims {
-        transcript.absorb_field_vec(*claim);
+        transcript.absorb_field_vec(claim);
     }
     transcript.domain_separate("pcs-constituent-index-v1");
     (0..NUM_PCS_TERMINAL_POINTS)
@@ -357,7 +357,7 @@ pub fn mle_prove_from_tables<F: RichField + Extendable<D>, const D: usize>(
     let pre_root = commit_data.roots[0].clone();
     let witness_root = commit_data.roots[1].clone();
     let batch_r_pre: F = derive_preprocessed_batch_r(circuit_digest, &pre_root);
-    absorb_schema_and_base_roots::<F>(
+    absorb_schema_and_base_roots(
         &mut transcript,
         common_data.num_constants,
         num_routed_wires,
@@ -622,7 +622,7 @@ pub fn mle_prove_from_tables<F: RichField + Extendable<D>, const D: usize>(
     // claimed sum on an honest prover.
     let mut h_combined = vec![F::ZERO; n_rows];
     for jj in 0..num_routed_wires {
-        for row in 0..n_rows {
+        for (row, h_value) in h_combined.iter_mut().enumerate() {
             let a_v = if row < a_tables[jj].len() {
                 a_tables[jj][row]
             } else {
@@ -633,7 +633,7 @@ pub fn mle_prove_from_tables<F: RichField + Extendable<D>, const D: usize>(
             } else {
                 F::ZERO
             };
-            h_combined[row] += a_v - b_v;
+            *h_value += a_v - b_v;
         }
     }
     let mut h_combined_mle = DenseMultilinearExtension::new(h_combined);
@@ -1136,7 +1136,7 @@ mod tests {
         // all sixteen length-prefixed arrays are fixed may the index points be
         // sampled. The helper below is the same one used by prove and verify.
         let mut transcript_prefix = Transcript::new();
-        absorb_schema_and_base_roots::<F>(
+        absorb_schema_and_base_roots(
             &mut transcript_prefix,
             1,
             2,
@@ -1295,6 +1295,8 @@ mod tests {
     /// weights. Four columns in a three-dimensional base-field space always
     /// have such a relation; row reduction makes the adversarial construction
     /// explicit instead of relying on a hard-coded lucky collision.
+    // Preserve explicit row/column indexing in the frozen elimination routine.
+    #[allow(clippy::needless_range_loop)]
     fn ext3_projection_kernel(weights: &[Field64_3]) -> Vec<F> {
         let columns = weights.len();
         assert!(columns > 3);

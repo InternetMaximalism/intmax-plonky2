@@ -3,6 +3,7 @@ pragma solidity ^0.8.25;
 
 import {Test, console} from "forge-std/Test.sol";
 import {MleVerifier} from "../src/MleVerifier.sol";
+import {LegacyMleVerifierHarness} from "./LegacyMleVerifierHarness.sol";
 import {SumcheckVerifier} from "../src/SumcheckVerifier.sol";
 import {SpongefishWhirVerify} from "../src/spongefish/SpongefishWhirVerify.sol";
 import {GoldilocksExt3} from "../src/spongefish/GoldilocksExt3.sol";
@@ -14,7 +15,7 @@ contract MleE2ETest is Test {
     MleVerifier verifier;
 
     function setUp() public {
-        verifier = new MleVerifier(block.chainid);
+        verifier = new LegacyMleVerifierHarness(block.chainid);
     }
 
     // Historical context: the original "minimal port" (Issue R2-#1) only

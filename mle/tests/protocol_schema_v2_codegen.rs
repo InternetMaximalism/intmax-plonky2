@@ -210,7 +210,7 @@ fn ordered_indices(items: &[OrderedItem], kind: &str) -> BTreeMap<String, usize>
 fn validate_and_derive(schema: &ProtocolSchemaV2) -> Derived {
     assert_eq!(schema.schema_version, 3);
     assert_eq!(schema.mle_protocol_version, 3);
-    assert_eq!(schema.compact_magic.as_bytes().len(), 8);
+    assert_eq!(schema.compact_magic.len(), 8);
     assert_eq!(schema.base_field_modulus, 0xffff_ffff_0000_0001);
     assert_eq!(schema.base_field_two_adicity, GoldilocksField::TWO_ADICITY);
     assert_eq!(
@@ -625,12 +625,20 @@ fn render_rust(schema: &ProtocolSchemaV2, derived: &Derived) -> String {
         .unwrap();
     }
     for domain in &schema.transcript_domains {
-        writeln!(
-            out,
+        let declaration = format!(
             "pub const {}_V2: &str = {:?};",
             domain.constant, domain.value
-        )
-        .unwrap();
+        );
+        if declaration.len() > 100 {
+            writeln!(
+                out,
+                "pub const {}_V2: &str =\n    {:?};",
+                domain.constant, domain.value
+            )
+            .unwrap();
+        } else {
+            writeln!(out, "{declaration}").unwrap();
+        }
     }
     number!("NUM_PCS_GROUPS_V2", schema.groups.len());
     number!("NUM_PCS_TERMINAL_POINTS_V2", schema.terminal_points.len());

@@ -194,6 +194,8 @@ pub fn ext3_evaluations_to_coefficients(evaluations: &[Field64_3]) -> Vec<Field6
     matrix.into_iter().map(|row| row[degree + 1]).collect()
 }
 
+// Preserve the audited pivot/row/column order and its in-place dependencies.
+#[allow(clippy::needless_range_loop)]
 fn gaussian_eliminate_base<F: Field>(matrix: &mut [Vec<F>]) {
     let n = matrix.len();
     for pivot in 0..n {
@@ -214,6 +216,8 @@ fn gaussian_eliminate_base<F: Field>(matrix: &mut [Vec<F>]) {
     }
 }
 
+// Keep the same indexed elimination order as the base-field implementation.
+#[allow(clippy::needless_range_loop)]
 fn gaussian_eliminate_ext3(matrix: &mut [Vec<Field64_3>]) {
     let n = matrix.len();
     for pivot in 0..n {

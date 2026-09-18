@@ -72,7 +72,7 @@ fn sequential_hash_no_pad_rate_boundary_vectors() {
 /// diagonal coefficient used by the Solidity integer-FFT MDS implementation.
 #[test]
 fn sequential_poseidon_mds_vector() {
-    let state = core::array::from_fn(|i| GoldilocksField::from_canonical_usize(i));
+    let state = core::array::from_fn(GoldilocksField::from_canonical_usize);
     assert_eq!(
         <GoldilocksField as Poseidon>::mds_layer(&state).map(|x| x.0),
         [1496, 1512, 1360, 1400, 1188, 1288, 1388, 1308, 1540, 1604, 1368, 1444]

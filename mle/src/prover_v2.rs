@@ -87,6 +87,8 @@ fn preprocessed_mles<'a, F: RichField>(
     constants.iter().chain(sigmas).collect()
 }
 
+// Keep the versioned statement fields explicit and in transcript order.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn absorb_v2_statement_and_base_roots<F: RichField>(
     transcript: &mut TranscriptV2,
     circuit_digest: &[F],

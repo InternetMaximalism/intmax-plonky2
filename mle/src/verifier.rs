@@ -129,7 +129,7 @@ pub fn mle_verify<F: RichField + Extendable<D>, const D: usize>(
     transcript.domain_separate("circuit");
     transcript.absorb_field_vec(&proof.circuit_digest);
     transcript.absorb_field_vec(&proof.public_inputs);
-    absorb_schema_and_base_roots::<F>(
+    absorb_schema_and_base_roots(
         &mut transcript,
         common_data.num_constants,
         common_data.config.num_routed_wires,

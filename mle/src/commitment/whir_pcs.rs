@@ -1145,13 +1145,15 @@ impl WhirPCS {
 
     /// Parameters for the production constituent-binding statement.
     ///
-    /// The target-133 profile is evaluated with every ordered group commitment
-    /// and linear form supplied by the versioned caller included in the
-    /// soundness accounting. Summing all charged native WHIR events at the
-    /// maximum admitted packed dimension gives about 128.356 bits of aggregate
-    /// generic work (target 132 gives only about 127.356 bits). This is a local
-    /// PCS work-factor statement, not a whole-system security claim.
+    /// The generated target-105 / inverse-rate-6 profile charges every ordered
+    /// group commitment and linear form supplied by the versioned caller.
+    /// Summing the native WHIR events at the maximum admitted packed dimension
+    /// gives about 101.535 bits of aggregate generic work, as pinned by
+    /// `outer_soundness_budget`. This is a local PCS work-factor statement,
+    /// not a raw-oracle probability or a whole-system security claim.
     /// Constituent projection itself is over Field64_3.
+    // Keep the generated-configuration guard if the schema changes its mode.
+    #[allow(clippy::assertions_on_constants)]
     pub fn for_constituents(num_vars: usize, group_width: usize) -> Self {
         assert_eq!(WHIR_HASH_ID_V2, "keccak-256", "unsupported v2 WHIR hash");
         assert!(
@@ -1479,6 +1481,8 @@ impl WhirPCS {
 
     /// Verify the grouped constituent statement and its pre-RLC evaluation
     /// binding.
+    // Keep each independently checked part of the PCS statement explicit.
+    #[allow(clippy::too_many_arguments)]
     pub fn verify_grouped(
         &self,
         num_vars: usize,
@@ -2190,6 +2194,9 @@ impl WhirPCS {
     /// evaluates correctly at that point (via WHIR's FinalClaim + linear form).
     /// `eval_value` is the expected evaluation (used as the claimed sum).
     /// If None, verifies only the commitment.
+    /// Available only for historical `legacy-conformance`; use the bound
+    /// grouped statement through the current MLE verifier in production.
+    #[cfg(feature = "legacy-conformance")]
     pub fn verify(
         &self,
         num_vars: usize,
@@ -2211,6 +2218,9 @@ impl WhirPCS {
     /// SECURITY: The session name must match the one used during proving.
     /// Different sub-protocols use different session names to prevent
     /// cross-protocol proof confusion.
+    /// Available only for historical `legacy-conformance` because an omitted
+    /// evaluation skips the final linear-form check.
+    #[cfg(feature = "legacy-conformance")]
     pub fn verify_with_session(
         &self,
         num_vars: usize,
@@ -2299,15 +2309,14 @@ impl WhirPCS {
 
 #[cfg(test)]
 mod tests {
-    use ark_ff::{AdditiveGroup, Field as _};
+    use ark_ff::Field as _;
     use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 
     use super::*;
     use crate::proof::{
-        constituent_index_bits, packed_group_num_vars, GROUP_INVERSE_HELPERS, GROUP_WITNESS,
-        NUM_PACKED_VECTORS_PER_GROUP, NUM_SPLIT_COMMITMENTS,
+        constituent_index_bits, packed_group_num_vars, NUM_PACKED_VECTORS_PER_GROUP,
+        NUM_SPLIT_COMMITMENTS,
     };
-    use crate::protocol_schema::POINT_INVERSE;
 
     #[test]
     fn test_field_conversion_roundtrip() {
@@ -2342,6 +2351,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "legacy-conformance")]
     fn test_whir_prove_verify_small() {
         let evals: Vec<GoldilocksField> = (0..16)
             .map(|i| GoldilocksField::from_canonical_u64(i + 1))
@@ -2356,6 +2366,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "legacy-conformance")]
     fn test_whir_prove_verify_medium() {
         let evals: Vec<GoldilocksField> = (0..256)
             .map(|i| GoldilocksField::from_canonical_u64(i * 7 + 3))
@@ -2370,6 +2381,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "legacy-conformance")]
     fn test_whir_prove_at_point_verify() {
         let evals: Vec<GoldilocksField> = (0..16)
             .map(|i| GoldilocksField::from_canonical_u64(i + 1))
@@ -2890,17 +2902,17 @@ mod tests {
         let ood_bytes =
             config.initial_committer.out_domain_samples * NUM_PACKED_VECTORS_PER_GROUP * 24;
         let commitment_stride = 32 + ood_bytes + 32;
-        for group in 0..NUM_SPLIT_COMMITMENTS {
+        for (group, root) in roots.iter().enumerate() {
             let actual_root_offset = group * commitment_stride;
             let bound_root_offset = actual_root_offset + 32 + ood_bytes;
             assert_eq!(
                 &proof.narg_string[actual_root_offset..actual_root_offset + 32],
-                roots[group].as_slice(),
+                root.as_slice(),
                 "unexpected actual-root slot for group {group}"
             );
             assert_eq!(
                 &proof.narg_string[bound_root_offset..bound_root_offset + 32],
-                roots[group].as_slice(),
+                root.as_slice(),
                 "unexpected bound-root slot for group {group}"
             );
 
@@ -2952,7 +2964,13 @@ mod tests {
     /// values are not openings of the commitments that contain their matching
     /// historical baselines.
     #[test]
+    #[cfg(feature = "legacy-conformance")]
     fn test_historical_frozen_triples_reach_packed_v1_pcs_rejection() {
+        use ark_ff::AdditiveGroup;
+
+        use crate::proof::{GROUP_INVERSE_HELPERS, GROUP_WITNESS};
+        use crate::protocol_schema::POINT_INVERSE;
+
         const DEGREE_BITS: usize = 2;
         const NUM_ROWS: usize = 1 << DEGREE_BITS;
         const CONSTITUENT_WIDTH: usize = 160;
