@@ -1145,7 +1145,7 @@
     },
     {
       "path": "mle/src/verifier.rs",
-      "sha256": "aeec9b86b7e2a3425d58c0320bcf16a2759d667c8f60a86043265c5c9fc7a57c",
+      "sha256": "9322fa9d494469122e64fa8c70fbc35f39af7ce918037bcc46655700751eeb0d",
       "kind": "implementation"
     },
     {
@@ -1291,6 +1291,11 @@
     {
       "path": "mle/tests/poc_perm_vk_binding.rs",
       "sha256": "e28247f43c447a1afa6f2a3ca3886ce1772f8608c542b65bfe610f8883ecb753",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/poc_d3_probe.rs",
+      "sha256": "d6b65f75cdad61c90e51bdf3ca1f3f722c1cc6992cab5b97748de55f0338b2ce",
       "kind": "implementation"
     },
     {

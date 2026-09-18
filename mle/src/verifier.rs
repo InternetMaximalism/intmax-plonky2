@@ -570,7 +570,20 @@ pub fn mle_verify<F: RichField + Extendable<D>, const D: usize>(
         "preprocessed_individual_evals_at_r_inv has wrong length"
     );
 
-    // 5g: Inverse helpers batch consistency at r_inv
+    // 5g: Inverse helpers batch consistency at r_inv.
+    //
+    // HISTORY (audit finding D3, 2026-07-06, commit bee025f9): at that time the
+    // individual a_j/b_j were bound ONLY through a batched Goldilocks scalar,
+    // and this fold was computed and discarded, leaving them unconstrained.
+    // The verifier has since moved to the packed grouped-WHIR binding: the raw
+    // arrays are absorbed into the transcript, the constituent index point is
+    // sampled afterwards, and `bind_expected_fold` (below, GROUP_INVERSE_HELPERS
+    // at POINT_INVERSE / POINT_H) makes WHIR check the fold against the
+    // committed polynomial. That binds every individual eval directly, so the
+    // D3-era batched-scalar comparison is no longer the load-bearing check.
+    // Verified by `mle/tests/poc_d3_probe.rs`: tampering one eval AND
+    // recomputing a consistent batched scalar is still rejected, by WHIR.
+    // The fold below is retained only as a length/shape guard.
     ensure!(
         proof.inverse_helpers_evals_at_r_inv.len() == 2 * proof.num_routed_wires,
         "inverse_helpers_evals_at_r_inv has wrong length"
@@ -593,7 +606,7 @@ pub fn mle_verify<F: RichField + Extendable<D>, const D: usize>(
         _expected_inv_at_r_h += r_pow * eval;
         r_pow *= proof.inverse_helpers_batch_r;
     }
-    let _ = expected_inv_at_r_inv; // silence unused-binding warnings (used via WHIR)
+    let _ = expected_inv_at_r_inv; // bound via the grouped WHIR opening, not here
 
     // 5j: Batch consistency — witness at r_gate_v2 (Issue R2-#1).
     ensure!(
