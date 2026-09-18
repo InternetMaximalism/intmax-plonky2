@@ -590,12 +590,12 @@
     },
     {
       "path": "mle/audit/REPORT.md",
-      "sha256": "d8d7eda3485bdb31c6db9304b1331a056498d10af5343c498d9367130c56bfca",
+      "sha256": "8941c469b3b14ba6e7dd374da98bd39173161b1c0495a555149723a75a53034c",
       "kind": "spec"
     },
     {
       "path": "mle/audit/SCOPE.md",
-      "sha256": "13a07cc76d06321fac0ec20555fad6c41c747ebf04dcf3415778bdfe0f0f6e8e",
+      "sha256": "5d5542f544af3aaf2a243c6394a93c00d6c533812aad7ab9f0fc6eb08b7d5721",
       "kind": "spec"
     },
     {
@@ -929,6 +929,31 @@
       "kind": "implementation"
     },
     {
+      "path": "mle/contracts/test/PocGateExt3Production.t.sol",
+      "sha256": "d3dbef195eb994a9e79437e643baf0df01f2b3016e8237ddee93a98f99750d85",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/PocOuterCanonicality.t.sol",
+      "sha256": "a93aa81b0bc65b3b5e45e4ce501f2bcbd8d5bd92315852b3561697d6bc50f5dd",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/PocOuterFraudVerdict.t.sol",
+      "sha256": "1372e8a8b2f68d0ff593ebec275e88949fe144669d5b4b3207ebe79524ab5077",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/PocWhirDotEqBounds.t.sol",
+      "sha256": "67bbb9cc366ac9ef2e755b96390e8242ec319ad0b6faf0ab1ca65e6f8b3eb3db",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/PocWhirFiatShamir.t.sol",
+      "sha256": "067b6b370f2906fa7c09874539d918d89b9421f8f832cabdf9145758cb21f1e4",
+      "kind": "implementation"
+    },
+    {
       "path": "mle/examples/estimate_unified_outer_whir.rs",
       "sha256": "79bb8ecc222a9f1cb8115947ae264c3d870b65125bd2eed5c39da8f769882d4a",
       "kind": "implementation"
@@ -1241,6 +1266,31 @@
     {
       "path": "mle/tests/whir_profile_v2_codegen.rs",
       "sha256": "f2ca1a00dc90deac11d0461a7c91c8f8f4655881914f69c6ec6ee5e8e62fa0ba",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/poc_gates_differential.rs",
+      "sha256": "ae6e6a9f788a1b85016ca528aecab894a7d78f6985426d91f7f15a1b263ae22f",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/poc_gates_production_vectors.rs",
+      "sha256": "42c9b166d236c1e4da2c7180171cca887bd141ecca91293aaa68e47f307e975e",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/poc_perm_copy_constraint.rs",
+      "sha256": "ccc8b680b0a382516035695ce9b43d1f4bf9eeafb48e6018e4d43c8639c12624",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/poc_perm_explore.rs",
+      "sha256": "c3c53b89933e866fee1bc139215731b866339177e4e65c6066ef47dc202041aa",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/tests/poc_perm_vk_binding.rs",
+      "sha256": "e28247f43c447a1afa6f2a3ca3886ce1772f8608c542b65bfe610f8883ecb753",
       "kind": "implementation"
     },
     {

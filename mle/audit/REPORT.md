@@ -2203,7 +2203,25 @@ manifest `0da9172dfc13f908e4b9374a3c9dfda5e179e1f6e536e534740fb2fc60ddf582`、re
 `gateConstraintsPositive`・`activeFilter`・R1b（橋済み）— の同時充足）、r族の拒否形（`receiveOne`のバイト等式の輸出）、
 packed pointsの閉形、公開入力束縛、Fiat–Shamirのchallenge grindingの課金である。
 
-%%B45%%
+## 第55継続更新（e5ece29e以降）— 配備コードの敵対的再監査（Leanモデル外）
+
+Leanモデルの追加ではなく、配備ピン`b569e0d7`と同一の実Rust/Solidityコードに対する敵対的再監査の記録である
+（詳細は`mle/tasks/reaudit_wire3_soundness_2026-09-18.md`）。攻撃者は証明バイト列のみを制御し、VK・設定・
+WHIRプロファイルはコード常駐で正直とした。四系統 — (1) plonky2 `evaluate_gate_constraints`を真値とする
+14ゲート族の差分（本番パラメータ、Rust→Solidity Ext3評価器まで）、(2) 内側WHIR Fiat–Shamir順序・Merkle・
+折畳み・プロファイル固定、(3) 外側Solidityの`verifier_v2.rs`全`ensure!`鏡像・transcript・正準性・fraud判定、
+(4) norm/logUp置換論証の恒等式導出（`x³−2`の既約性、部分分数一意性）と公開入力束縛 — を実行し、
+CRITICAL/HIGHは見つからなかった。過去のpre-repair偽造2件（root吸収前のRLC、公開入力ハッシュ未再計算）は
+narg 552バイト目のRLC squeezeと`MleVerifierV2.sol:382`のPoseidon再計算により閉じている。
+PoCは新規ファイル10件（`mle/tests/poc_*.rs` 5件、`mle/contracts/test/Poc*.t.sol` 5件）として実装inventoryに
+`kind: implementation`で登録した（Rust 8 passed、Solidity 36 passed をorchestratorが再実行）。これらはLean定理
+ではなく実行済みテストであり、Leanの未完項目（`AssemblyResidue`の同時充足、公開入力束縛の形式化、grinding課金）
+を放電しない。記録した非critical事項: fraud判定の活性余裕（親側`MIN_MLE_VERIFY_GAS`との関係、未計測）、
+`_dotEqWithRow`の境界不足（`numCommitments==3`で到達不能）、Merkle葉/節点の分離なし（葉長128/384≠64）、
+Poseidon部分ラウンド定数の形式差（`FAST_PARTIAL_ROUND_CONSTANTS[21]==0`で値同一）、`epsilon_log`の安全側過大計上。
+この更新のみを根拠に「criticalな健全性問題なし」を宣言しない。
+
+%%B46%%
 
 
 

@@ -907,3 +907,8 @@ GatePolynomialのList.Count）。
 照合し、既存の依存.oleanは使わない。ただし11個のProofWidgets JSは固定した既存データで、
 JS source再生成・Lean toolchain/core artifactの再現・全実装/PCS証明を主張しない。
 その記録は後続追加モデルのfresh検査済みという意味でもない。詳細はREPORTを参照する。
+
+2026-09-18の配備コード再監査（`mle/tasks/reaudit_wire3_soundness_2026-09-18.md`）で追加した10件のPoCテスト
+（`mle/tests/poc_*.rs`、`mle/contracts/test/Poc*.t.sol`）は実装inventoryに`implementation`として登録した
+実行済みテストであり、Lean定理でも形式的refinementでもない。そこで用いたplonky2の`evaluate_gate_constraints`
+は真値として信頼した外部実装で、Leanモデル化していない。
