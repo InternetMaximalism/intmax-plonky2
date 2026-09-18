@@ -2204,7 +2204,16 @@ insufficient bounds in `_dotEqWithRow` (unreachable at `numCommitments==3`), no 
 a formal difference in the Poseidon partial round constants (identical in value since `FAST_PARTIAL_ROUND_CONSTANTS[21]==0`), and the safe-side over-counting of `epsilon_log`.
 We do not declare "no critical soundness problems" on the basis of this update alone.
 
-%%B46%%
+## Continuation update #56 (after 43a454fb)
+
+Re-checked the 157 models / 6542 theorems of commit `43a454fb` (translation of `mle/audit/README.md`, `SCOPE.md`,
+`REPORT.md`, `HISTORICAL-README.md`, `HISTORICAL-SCOPE.md` and `HISTORICAL-REPORT.md` from Japanese to English;
+no technical claim, hedge, citation, identifier, hash, or numeric constant was altered, only prose) with the
+tracked runner: PASS (1018.546 seconds, 1487 modules, audit-manifest digest
+`34a564b8cd3be2337976521ee83cdd8ff9a83f93ff79a0291e28de3433b32253`, receipt-file digest
+`fdc9daa14e641b0a0b59acec248534ff3af9ccde4e09c32bf531aa320a303e9b`). Guard rerun after the receipt edit: PASS.
+
+%%B47%%
 
 
 
