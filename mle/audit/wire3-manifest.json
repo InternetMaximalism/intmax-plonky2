@@ -705,7 +705,7 @@
     },
     {
       "path": "mle/contracts/src/PinnedMleVerifierV2.sol",
-      "sha256": "015d4c60abec6a877085cade3ee021e1a395c474f5cb3703015184f88b5a5eb8",
+      "sha256": "38b5777bd0cf0336f3e77db8b5b343e8229728265514039899298721c12b3580",
       "kind": "implementation"
     },
     {
@@ -866,6 +866,16 @@
     {
       "path": "mle/contracts/test/PinnedMleVerifierV2.t.sol",
       "sha256": "3cc752f7e83edea71eea50512ba7b49b529148a84278397902f82ec316fc64f0",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/AuditFraudVerdictBoundary20261016.t.sol",
+      "sha256": "a6a317cb3666cdb4cb8ce61343d11d6165089bf4a79b6e40f32e37c2fb842e30",
+      "kind": "implementation"
+    },
+    {
+      "path": "mle/contracts/test/AuditWhirMaxDimension20261016.t.sol",
+      "sha256": "2848a05883b396ec16fece49d59ad80a643de5143d1feb559c536222db334ca0",
       "kind": "implementation"
     },
     {

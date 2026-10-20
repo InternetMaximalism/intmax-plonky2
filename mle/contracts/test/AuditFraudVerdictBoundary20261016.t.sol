@@ -6,9 +6,12 @@ import {MleVerifierV2} from "../src/MleVerifierV2.sol";
 import {PinnedMleVerifierV2} from "../src/PinnedMleVerifierV2.sol";
 import {InvalidMleProof} from "../src/MleProofErrors.sol";
 
-/// Diagnostic only: distinguish an actual OOG from a completed proof rejection.
+/// Distinguish an actual OOG from a completed proof rejection. Until 2026-10-17 this suite
+/// DEMONSTRATED the mislabel (a completed `InvalidMleProof()` reported STARVED between ~10.5M and
+/// ~11.5M gas); `fraudVerdictCompact` now classifies the exact error before the gas check, so a
+/// completed rejection must be INVALID at every budget.
 contract AuditFraudVerdictBoundary20261016Test is Test {
-    function test_completedRejectionCanBecomeStarved() external {
+    function test_completedRejectionIsNeverStarved() external {
         string memory json = vm.readFile("test/fixtures/v2_max_resource.json");
         MleVerifierV2.MleProof memory proof =
             abi.decode(vm.parseJsonBytes(json, ".solidityAbiProof.bytes"), (MleVerifierV2.MleProof));
@@ -65,9 +68,12 @@ contract AuditFraudVerdictBoundary20261016Test is Test {
             emit log_named_uint("body exact InvalidMleProof with LESS gas", completedInvalid ? 1 : 0);
             emit log_named_uint("classifier verdict (0 INVALID, 3 STARVED)", verdict);
             assertTrue(verdict == 0 || verdict == 3);
-            if (completedInvalid && verdict == 3) ++demonstrated;
+            if (completedInvalid) {
+                assertEq(verdict, 0, "a completed InvalidMleProof() rejection was reported STARVED");
+                ++demonstrated;
+            }
         }
-        assertGt(demonstrated, 0, "must demonstrate completed rejection mislabeled STARVED");
+        assertGt(demonstrated, 0, "no budget completed the rejection; the probe is not exercising the boundary");
     }
 
     function _u32(bytes memory data, uint256 offset) private pure returns (uint256 n) {

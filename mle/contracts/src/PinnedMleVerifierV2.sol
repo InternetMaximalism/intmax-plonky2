@@ -156,8 +156,15 @@ contract PinnedMleVerifierV2 {
             if (verdict <= ENCODED_PI_MISMATCH) return verdict;
             return ENCODED_UNEVALUABLE;
         } catch (bytes memory reason) {
-            if (gasleft() < reserve + budget / 8) return ENCODED_STARVED;
+            // Classify the exact `InvalidMleProof()` first, as `fraudVerdictEncoded` does: it can
+            // only come from the strict decoder or the pinned core after they COMPLETED their
+            // deterministic checks (an out-of-gas anywhere in the body reverts with empty data), so
+            // the gas left afterwards says nothing about the verdict. Checking starvation first
+            // reported a completed rejection as STARVED whenever the body had used most of its
+            // budget (HEAD soundness review 2026-10-16, mle/tasks/head_soundness_review_2026-10-16.md:
+            // STARVED between ~10.5M and ~11.5M gas for the 21-variable fixture).
             if (_isInvalidMleProof(reason)) return ENCODED_INVALID;
+            if (gasleft() < reserve + budget / 8) return ENCODED_STARVED;
             return ENCODED_UNEVALUABLE;
         }
     }
