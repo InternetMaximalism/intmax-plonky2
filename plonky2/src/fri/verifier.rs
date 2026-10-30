@@ -89,6 +89,16 @@ pub fn verify_fri_proof<
         "Number of query rounds does not match config."
     );
 
+    ensure!(
+        openings.batches.len() == instance.batches.len()
+            && openings
+                .batches
+                .iter()
+                .zip(&instance.batches)
+                .all(|(opening, batch)| opening.values.len() == batch.polynomials.len()),
+        "FRI openings do not match the FRI instance."
+    );
+
     let precomputed_reduced_evals =
         PrecomputedReducedOpenings::from_os_and_alpha(openings, challenges.fri_alpha);
     for (&x_index, round_proof) in challenges

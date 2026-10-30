@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- Lookup argument: pin every partial Sum/LDC polynomial to zero on the `InitSre` row (native, batch and circuit verifiers). The running chain is seeded from the last partial polynomial, so pinning only the first left its start unconstrained.
+- Compressed proofs: `CompressedProofWithPublicInputs::{verify, decompress}` now validate the decompressed proof shape before any identity check.
+- FRI: the number of initial Merkle caps must match the instance oracles and each query's openings; the number of commit-phase caps must match the reduction schedule; the opening set must match the FRI instance.
+- Multi-degree recursive FRI: the final polynomial length is bound to the actual inner degree and the caps of skipped folding steps are constrained to zero.
+- starky: `quotient_polys_cap` is mandatory whenever the STARK has quotient polynomials; STARKs with lookups or cross-table lookups must declare `constraint_degree() >= 2` (the `PermutationStark` example now does); the recursive verifier binds `proof.degree_bits` to the circuit degree (or range-checks it in multi-degree mode); the circuit CTL check no longer adds `VirtualTarget { index: 0 }` in place of zero and registers the Z transition constraint as a transition constraint.
+- Serialization: field elements read from proof bytes must be canonical (`< p`).
+
 ## [1.1.0] - 2024-11-25
 - Add constraints binding ([#1679](https://github.com/0xPolygonZero/plonky2/pull/1679))
 - Observe config parameters in challenger ([#1678](https://github.com/0xPolygonZero/plonky2/pull/1678))

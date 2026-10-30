@@ -834,7 +834,9 @@ pub(crate) fn eval_cross_table_lookup_checks_circuit<
             let combined = builder.mul_sub_extension(combin1, z_diff, f1);
             let combined = builder.mul_extension(combined, combin0);
             let constr = builder.arithmetic_extension(F::NEG_ONE, F::ONE, f0, combin1, combined);
-            consumer.constraint_last_row(builder, constr);
+            // This is the Z transition constraint (it involves `z_diff`); the native verifier
+            // registers it with `constraint_transition`, so the circuit must do the same.
+            consumer.constraint_transition(builder, constr);
         } else {
             let combin0 = challenges.combine_circuit(builder, &evals[0]);
             let f0 = filter[0].eval_filter_circuit(builder, local_values, next_values);
@@ -936,7 +938,12 @@ pub fn verify_cross_table_lookups_circuit<
             );
 
             // Get elements looking into `looked_table` that are not associated to any STARK.
-            let extra_sum = ctl_extra_looking_sum.map(|v| v[c]).unwrap_or_default();
+            // `Target::default()` is `VirtualTarget { index: 0 }`, i.e. whatever the caller
+            // allocated first, not the constant zero. Use the circuit's zero constant.
+            let extra_sum = match ctl_extra_looking_sum {
+                Some(v) => v[c],
+                None => builder.zero(),
+            };
             looking_zs_sum = builder.add(looking_zs_sum, extra_sum);
 
             // Get the looked table CTL polynomial opening.
