@@ -3,11 +3,11 @@
 //! subgroup column. A table-level prover controls all three inputs to
 //! `mle_prove_v2_from_tables`; none of them may become a free parameter.
 
-use plonky2::iop::witness::{PartialWitness, WitnessWrite};
+use plonky2::hash::poseidon::PoseidonHash;
 use plonky2::iop::wire::Wire;
+use plonky2::iop::witness::{PartialWitness, WitnessWrite};
 use plonky2::plonk::circuit_builder::CircuitBuilder;
 use plonky2::plonk::circuit_data::{CircuitConfig, CircuitData, EvaluationTables};
-use plonky2::hash::poseidon::PoseidonHash;
 use plonky2::plonk::config::{Hasher, PoseidonGoldilocksConfig};
 use plonky2::plonk::prover::extract_evaluation_tables;
 use plonky2::util::timing::TimingTree;
@@ -85,7 +85,9 @@ fn poc_v_rerouted_sigma_is_rejected_by_the_vk_preprocessed_root() {
         .expect_err("prover-chosen sigma columns must be rejected");
     println!("poc(v) rejection: {error}");
     assert!(
-        error.to_string().contains("preprocessed root is not VK-bound"),
+        error
+            .to_string()
+            .contains("preprocessed root is not VK-bound"),
         "expected the VK preprocessed-root bind to reject, got: {error}"
     );
     assert_ne!(proof.preprocessed_root, vk.preprocessed_commitment_root);
@@ -99,7 +101,10 @@ fn poc_vi_reaimed_public_input_wire_map_is_rejected() {
     let vk = mle_setup_v2::<F, C, D>(&circuit.prover_only, &circuit.common);
     let digest = vk.circuit_digest.clone();
     assert_eq!(honest.public_input_wires.len(), 1);
-    println!("poc(vi) honest PI wire = {:?}", honest.public_input_wires[0]);
+    println!(
+        "poc(vi) honest PI wire = {:?}",
+        honest.public_input_wires[0]
+    );
 
     let mut tables = clone_tables(&honest);
     // Claim a different public input and point the map at a spare routed cell
@@ -139,7 +144,9 @@ fn poc_vii_permuted_subgroup_column_is_rejected() {
         .expect_err("a prover-chosen subgroup column must be rejected");
     println!("poc(vii) rejection: {error}");
     assert!(
-        error.to_string().contains("norm/logUp terminal equation failed"),
+        error
+            .to_string()
+            .contains("norm/logUp terminal equation failed"),
         "expected the recomputed subgroup evaluation to reject, got: {error}"
     );
 }

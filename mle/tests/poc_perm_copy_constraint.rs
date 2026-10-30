@@ -171,11 +171,8 @@ fn standalone_log_lane(
             column(&values)
         })
         .collect();
-    let inverse_identity: Vec<Field64_3> = inverse_tables
-        .identity
-        .iter()
-        .map(|c| column(c))
-        .collect();
+    let inverse_identity: Vec<Field64_3> =
+        inverse_tables.identity.iter().map(|c| column(c)).collect();
     let inverse_sigma: Vec<Field64_3> = inverse_tables.sigma.iter().map(|c| column(c)).collect();
     let subgroup = column(&tables.subgroup);
     let terminal = evaluate_joint_norm_logup_terminal_with_public_inputs(
@@ -214,7 +211,11 @@ fn demo_challenges() -> NormLogupChallenges {
     }
 }
 
-fn honest_inverse_tables(tables: &EvaluationTables<F>, beta: Field64_3, gamma: Field64_3) -> NormInverseTables<F> {
+fn honest_inverse_tables(
+    tables: &EvaluationTables<F>,
+    beta: Field64_3,
+    gamma: Field64_3,
+) -> NormInverseTables<F> {
     compute_norm_inverse_tables(
         &tables.wire_values,
         &tables.sigma_values,
@@ -300,7 +301,9 @@ fn poc_i_single_violated_copy_constraint_is_rejected() {
         .expect_err("a violated copy constraint must be rejected");
     println!("poc(i) end-to-end rejection: {error}");
     assert!(
-        error.to_string().contains("norm/logUp terminal equation failed"),
+        error
+            .to_string()
+            .contains("norm/logUp terminal equation failed"),
         "expected the permutation lane to reject, got: {error}"
     );
 }
@@ -318,13 +321,8 @@ fn poc_i_lane_isolated_copy_constraint_violation() {
     let wires = pi_wires(&circuit, &honest_tables);
 
     let honest_helpers = honest_inverse_tables(&honest_tables, challenges.beta, challenges.gamma);
-    let (honest_claim, honest_terminal) = standalone_log_lane(
-        &honest_tables,
-        &wires,
-        challenges,
-        &tau,
-        &honest_helpers,
-    );
+    let (honest_claim, honest_terminal) =
+        standalone_log_lane(&honest_tables, &wires, challenges, &tau, &honest_helpers);
     assert_eq!(
         honest_claim, honest_terminal,
         "honest tables must satisfy the log lane"
@@ -364,7 +362,9 @@ fn poc_ii_public_input_changed_witness_unchanged_is_rejected() {
         .expect_err("a public input that disagrees with its routed cell must be rejected");
     println!("poc(ii) rejection: {error}");
     assert!(
-        error.to_string().contains("norm/logUp terminal equation failed"),
+        error
+            .to_string()
+            .contains("norm/logUp terminal equation failed"),
         "expected D_PI to reject, got: {error}"
     );
 }
@@ -399,7 +399,9 @@ fn poc_iii_mapped_witness_cell_changed_is_rejected() {
         .expect_err("a mapped cell that disagrees with its public input must be rejected");
     println!("poc(iii) rejection: {error}");
     assert!(
-        error.to_string().contains("norm/logUp terminal equation failed"),
+        error
+            .to_string()
+            .contains("norm/logUp terminal equation failed"),
         "expected the log lane to reject, got: {error}"
     );
 }
@@ -429,9 +431,8 @@ fn poc_iv_forged_norm_inverse_cannot_cancel_the_logup_defect() {
     for j in 0..num_routed {
         for row in 0..tables.degree {
             let wire = tables.wire_values[j][row];
-            let identity = Field64_3::from(
-                (tables.k_is[j] * tables.subgroup[row]).to_canonical_u64(),
-            );
+            let identity =
+                Field64_3::from((tables.k_is[j] * tables.subgroup[row]).to_canonical_u64());
             let sigma = Field64_3::from(tables.sigma_values[row][j].to_canonical_u64());
             defect += denominator(wire, identity).inverse().unwrap()
                 - denominator(wire, sigma).inverse().unwrap();
@@ -521,7 +522,9 @@ fn poc_iv_formal_norm_is_the_field_norm_and_only_vanishes_at_zero() {
     // N(a,b,c) = a^3 + 2 b^3 + 4 c^3 - 6 a b c, and N(v) = 0 iff v = 0.
     let mut seed = 1u64;
     for _ in 0..4096 {
-        seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+        seed = seed
+            .wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407);
         let a = ArkGoldilocks::from(seed);
         let b = ArkGoldilocks::from(seed.rotate_left(17));
         let c = ArkGoldilocks::from(seed.rotate_left(41));
