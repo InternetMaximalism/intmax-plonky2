@@ -234,7 +234,9 @@ fn run_circuit(label: &str, common: &CommonCircuitData<F, D>, seed: u64, trials:
     //    formulas for that family.
     for target in &gate_infos {
         for _ in 0..trials {
-            let wires: Vec<F> = (0..common.config.num_wires).map(|_| rand_f(&mut rng)).collect();
+            let wires: Vec<F> = (0..common.config.num_wires)
+                .map(|_| rand_f(&mut rng))
+                .collect();
             let mut constants: Vec<F> = (0..common.num_constants)
                 .map(|_| rand_f(&mut rng))
                 .collect();
@@ -252,7 +254,10 @@ fn run_circuit(label: &str, common: &CommonCircuitData<F, D>, seed: u64, trials:
                 ],
             };
             let ours = assert_agrees(
-                &format!("{label}/isolated gate_id={} row={}", target.gate_id, target.gate_row_index),
+                &format!(
+                    "{label}/isolated gate_id={} row={}",
+                    target.gate_id, target.gate_row_index
+                ),
                 common,
                 &context,
                 &wires,
@@ -262,7 +267,11 @@ fn run_circuit(label: &str, common: &CommonCircuitData<F, D>, seed: u64, trials:
             // With the gate isolated, everything past its own constraint count
             // must be identically zero: catches a family that writes into more
             // slots than plonky2's num_constraints().
-            for (slot, value) in ours.iter().enumerate().skip(usize::from(target.num_constraints)) {
+            for (slot, value) in ours
+                .iter()
+                .enumerate()
+                .skip(usize::from(target.num_constraints))
+            {
                 assert_eq!(
                     *value,
                     Field64_3::from(0u64),
@@ -278,7 +287,9 @@ fn run_circuit(label: &str, common: &CommonCircuitData<F, D>, seed: u64, trials:
     //    filter, so this exercises compute_filter (group ranges, UNUSED_SELECTOR,
     //    many_selector) and the cross-gate slot accumulation.
     for _ in 0..trials {
-        let wires: Vec<F> = (0..common.config.num_wires).map(|_| rand_f(&mut rng)).collect();
+        let wires: Vec<F> = (0..common.config.num_wires)
+            .map(|_| rand_f(&mut rng))
+            .collect();
         let constants: Vec<F> = (0..common.num_constants)
             .map(|_| rand_f(&mut rng))
             .collect();
@@ -332,7 +343,10 @@ fn run_circuit(label: &str, common: &CommonCircuitData<F, D>, seed: u64, trials:
         num_selectors,
         common.num_gate_constraints,
         common.quotient_degree_factor,
-        gate_infos.iter().map(|g| g.gate_id).collect::<BTreeSet<_>>()
+        gate_infos
+            .iter()
+            .map(|g| g.gate_id)
+            .collect::<BTreeSet<_>>()
     );
     for (row, gate) in common.gates.iter().enumerate() {
         println!(

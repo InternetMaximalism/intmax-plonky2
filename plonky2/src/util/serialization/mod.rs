@@ -159,7 +159,13 @@ pub trait Read {
     {
         let mut buf = [0; size_of::<u64>()];
         self.read_exact(&mut buf)?;
-        Ok(F::from_canonical_u64(u64::from_le_bytes(buf)))
+        let raw = u64::from_le_bytes(buf);
+        // Reject non-canonical encodings so that every field element has exactly one byte
+        // representation (release builds previously accepted `raw >= p` silently).
+        if raw >= F::ORDER {
+            return Err(IoError);
+        }
+        Ok(F::from_canonical_u64(raw))
     }
 
     /// Reads a vector of elements from the field `F` from `self`.

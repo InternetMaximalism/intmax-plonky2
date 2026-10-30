@@ -603,7 +603,10 @@ fn local_pcs_work_factor_and_literal_probability_are_distinct_conventions() {
     assert!(local_pcs_conventional_work_factor_bits() < KECCAK_COLLISION_WORK_FACTOR_BITS);
     assert_eq!(
         local_pcs_conventional_work_factor_bits(),
-        bits(native_whir_union_work_inverse(max_variables, WHIR_SECURITY_LEVEL_V2))
+        bits(native_whir_union_work_inverse(
+            max_variables,
+            WHIR_SECURITY_LEVEL_V2
+        ))
     );
 
     // Treating the work factor as a literal fixed probability term leaves no room for any

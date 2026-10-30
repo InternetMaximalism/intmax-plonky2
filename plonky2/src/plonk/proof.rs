@@ -26,6 +26,7 @@ use crate::iop::ext_target::ExtensionTarget;
 use crate::iop::target::Target;
 use crate::plonk::circuit_data::{CommonCircuitData, VerifierOnlyCircuitData};
 use crate::plonk::config::{GenericConfig, Hasher};
+use crate::plonk::validate_shape::validate_proof_with_pis_shape;
 use crate::plonk::verifier::verify_with_challenges;
 use crate::util::serialization::{Buffer, Read, Write};
 
@@ -196,10 +197,14 @@ impl<F: RichField + Extendable<D>, C: GenericConfig<D, F = F>, const D: usize>
         let decompressed_proof =
             self.proof
                 .decompress(&challenges, fri_inferred_elements, &common_data.fri_params);
-        Ok(ProofWithPublicInputs {
+        let proof_with_pis = ProofWithPublicInputs {
             public_inputs: self.public_inputs,
             proof: decompressed_proof,
-        })
+        };
+        // The compressed representation carries no shape guarantees of its own; validate the
+        // decompressed proof exactly like the uncompressed verification entry point does.
+        validate_proof_with_pis_shape(&proof_with_pis, common_data)?;
+        Ok(proof_with_pis)
     }
 
     pub(crate) fn verify(
@@ -221,8 +226,17 @@ impl<F: RichField + Extendable<D>, C: GenericConfig<D, F = F>, const D: usize>
         let decompressed_proof =
             self.proof
                 .decompress(&challenges, fri_inferred_elements, &common_data.fri_params);
+        // Shape validation must run before any polynomial identity is checked: with a
+        // malformed opening set (for example quotient openings relocated into another
+        // vector) the quotient identity loop would otherwise run zero times and every
+        // constraint check would be skipped.
+        let proof_with_pis = ProofWithPublicInputs {
+            public_inputs: self.public_inputs,
+            proof: decompressed_proof,
+        };
+        validate_proof_with_pis_shape(&proof_with_pis, common_data)?;
         verify_with_challenges::<F, C, D>(
-            decompressed_proof,
+            proof_with_pis.proof,
             public_inputs_hash,
             challenges,
             verifier_data,

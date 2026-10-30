@@ -40,6 +40,10 @@ where
     } = proof;
 
     let cap_height = params.config.cap_height;
+    ensure!(
+        commit_phase_merkle_caps.len() == params.reduction_arity_bits.len(),
+        "Number of commit-phase Merkle caps does not match the reduction schedule."
+    );
     for cap in commit_phase_merkle_caps {
         ensure!(cap.height() == cap_height);
     }

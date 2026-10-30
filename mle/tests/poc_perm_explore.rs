@@ -4,6 +4,8 @@
 //! This file is exploratory instrumentation for the permutation re-audit; it
 //! asserts only structural facts it prints.
 
+use std::collections::HashMap;
+
 use plonky2::iop::witness::{PartialWitness, WitnessWrite};
 use plonky2::plonk::circuit_builder::CircuitBuilder;
 use plonky2::plonk::circuit_data::{CircuitConfig, EvaluationTables};
@@ -12,7 +14,6 @@ use plonky2::plonk::prover::extract_evaluation_tables;
 use plonky2::util::timing::TimingTree;
 use plonky2_field::goldilocks_field::GoldilocksField;
 use plonky2_field::types::{Field, PrimeField64};
-use std::collections::HashMap;
 
 type F = GoldilocksField;
 type C = PoseidonGoldilocksConfig;

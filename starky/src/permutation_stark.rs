@@ -65,7 +65,9 @@ impl<F: RichField + Extendable<D>, const D: usize> Stark<F, D> for PermutationSt
         StarkFrame<ExtensionTarget<D>, ExtensionTarget<D>, PERM_COLUMNS, PERM_PUBLIC_INPUTS>;
 
     fn constraint_degree(&self) -> usize {
-        0
+        // Lookup constraints are part of the vanishing polynomial, which is only checked through
+        // the quotient openings; a degree below 2 would silence them entirely.
+        3
     }
 
     fn lookups(&self) -> Vec<Lookup<F>> {

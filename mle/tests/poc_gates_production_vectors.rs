@@ -14,6 +14,7 @@
 //! Nothing existing is modified: the JSON path is new and is only written by
 //! the `#[ignore]`d dump test.
 
+use ark_ff::PrimeField as ArkPrimeField;
 use plonky2::gates::arithmetic_base::ArithmeticGate;
 use plonky2::gates::arithmetic_extension::ArithmeticExtensionGate;
 use plonky2::gates::base_sum::BaseSumGate;
@@ -45,8 +46,6 @@ use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use serde::{Deserialize, Serialize};
 use whir::algebra::fields::{Field64 as ArkGoldilocks, Field64_3};
-
-use ark_ff::PrimeField as ArkPrimeField;
 
 type F = GoldilocksField;
 type C = PoseidonGoldilocksConfig;
@@ -190,6 +189,7 @@ fn base_to_k(value: F) -> Field64_3 {
 // The two deployed gate tables, transcribed from the parent-repo configs
 // ---------------------------------------------------------------------------
 
+#[allow(clippy::too_many_arguments)]
 const fn g(
     gate_id: u8,
     selector_index: u8,
@@ -361,7 +361,11 @@ fn plonky2_cross_check(
     assert_eq!(ours.len(), production.len(), "[{label}] length mismatch");
     for (slot, (mine, theirs)) in ours.iter().zip(&production).enumerate() {
         let c: [F; D] = <QuadraticExtension<F> as FieldExtension<D>>::to_basefield_array(theirs);
-        assert_eq!(c[1], F::ZERO, "[{label}] plonky2 left the base field at {slot}");
+        assert_eq!(
+            c[1],
+            F::ZERO,
+            "[{label}] plonky2 left the base field at {slot}"
+        );
         assert_eq!(
             *mine,
             base_to_k(c[0]),
@@ -386,15 +390,27 @@ fn build_config_vectors(
         "[{name}] rebuilt gate table does not match the deployed configuration"
     );
     assert_eq!(common.config.num_wires, 135, "[{name}] numWires");
-    assert_eq!(common.config.num_routed_wires, 80, "[{name}] numRoutedWires");
-    assert_eq!(common.num_constants, expected_num_constants, "[{name}] numConstants");
+    assert_eq!(
+        common.config.num_routed_wires, 80,
+        "[{name}] numRoutedWires"
+    );
+    assert_eq!(
+        common.num_constants, expected_num_constants,
+        "[{name}] numConstants"
+    );
     assert_eq!(
         common.selectors_info.num_selectors(),
         expected_num_selectors,
         "[{name}] numSelectors"
     );
-    assert_eq!(common.num_gate_constraints, 123, "[{name}] numGateConstraints");
-    assert_eq!(common.quotient_degree_factor, 8, "[{name}] quotientDegreeFactor");
+    assert_eq!(
+        common.num_gate_constraints, 123,
+        "[{name}] numGateConstraints"
+    );
+    assert_eq!(
+        common.quotient_degree_factor, 8,
+        "[{name}] quotientDegreeFactor"
+    );
 
     let mut rng = StdRng::seed_from_u64(seed);
     let num_selectors = common.selectors_info.num_selectors();
@@ -440,8 +456,16 @@ fn build_config_vectors(
                 .expect("aggregation2");
         // The aggregate must be sum_c alpha^c * slot_c over the very vector we
         // are about to publish.
-        assert_eq!(reduce(alpha), aggregation, "[{label}] alpha aggregation mismatch");
-        assert_eq!(reduce(alpha2), aggregation2, "[{label}] alpha2 aggregation mismatch");
+        assert_eq!(
+            reduce(alpha),
+            aggregation,
+            "[{label}] alpha aggregation mismatch"
+        );
+        assert_eq!(
+            reduce(alpha2),
+            aggregation2,
+            "[{label}] alpha2 aggregation mismatch"
+        );
         assert_ne!(alpha, alpha2, "[{label}] the two challenges must differ");
         vectors.push(VectorRecord {
             label,
@@ -466,7 +490,8 @@ fn build_config_vectors(
     //     equals its row index, every other selector is UNUSED, and all local
     //     constants and wires are full Ext3 values.
     for target in &gate_infos {
-        let mut constants: Vec<Field64_3> = (0..num_constants).map(|_| rand_ext3(&mut rng)).collect();
+        let mut constants: Vec<Field64_3> =
+            (0..num_constants).map(|_| rand_ext3(&mut rng)).collect();
         for sel in constants.iter_mut().take(num_selectors) {
             *sel = Field64_3::from(UNUSED_SELECTOR);
         }
@@ -482,16 +507,14 @@ fn build_config_vectors(
         };
         let alpha = rand_ext3(&mut rng);
         let alpha2 = rand_ext3(&mut rng);
-        let slots = evaluate_gate_constraints_ext3(
-            common,
-            &gate_infos,
-            &wires_ext3_a,
-            &constants,
-            &pih,
-        )
-        .expect("ext3 isolated");
+        let slots =
+            evaluate_gate_constraints_ext3(common, &gate_infos, &wires_ext3_a, &constants, &pih)
+                .expect("ext3 isolated");
         emit(
-            format!("{name}/ext3-isolated/gate_id={}/row={}", target.gate_id, target.gate_row_index),
+            format!(
+                "{name}/ext3-isolated/gate_id={}/row={}",
+                target.gate_id, target.gate_row_index
+            ),
             0,
             false,
             &wires_ext3_a,
@@ -677,7 +700,10 @@ fn deployed_gate_tables_match_plonky2_per_family() {
                 }
             }
         }
-        println!("[{name}] plonky2 per-family cross-check OK ({} rows)", gate_infos.len());
+        println!(
+            "[{name}] plonky2 per-family cross-check OK ({} rows)",
+            gate_infos.len()
+        );
     }
 }
 

@@ -72,6 +72,10 @@ pub fn verify_fri_proof<
     params: &FriParams,
 ) -> Result<()> {
     validate_fri_proof_shape::<F, C, D>(proof, instance, params)?;
+    ensure!(
+        initial_merkle_caps.len() == instance.oracles.len(),
+        "Number of commitments does not match the number of oracles in the FRI instance."
+    );
 
     // Size of the LDE domain.
     let n = params.lde_size();
@@ -83,6 +87,16 @@ pub fn verify_fri_proof<
     ensure!(
         params.config.num_query_rounds == proof.query_round_proofs.len(),
         "Number of query rounds does not match config."
+    );
+
+    ensure!(
+        openings.batches.len() == instance.batches.len()
+            && openings
+                .batches
+                .iter()
+                .zip(&instance.batches)
+                .all(|(opening, batch)| opening.values.len() == batch.polynomials.len()),
+        "FRI openings do not match the FRI instance."
     );
 
     let precomputed_reduced_evals =
@@ -113,6 +127,10 @@ fn fri_verify_initial_proof<F: RichField, H: Hasher<F>>(
     proof: &FriInitialTreeProof<F, H>,
     initial_merkle_caps: &[MerkleCap<F, H>],
 ) -> Result<()> {
+    ensure!(
+        proof.evals_proofs.len() == initial_merkle_caps.len(),
+        "Number of initial oracle openings does not match the number of commitments."
+    );
     for ((evals, merkle_proof), cap) in proof.evals_proofs.iter().zip(initial_merkle_caps) {
         verify_merkle_proof_to_cap::<F, H>(evals.clone(), x_index, cap, merkle_proof)?;
     }

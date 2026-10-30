@@ -15,6 +15,7 @@ use plonky2::iop::target::Target;
 use plonky2::iop::witness::WitnessWrite;
 use plonky2::plonk::circuit_builder::CircuitBuilder;
 use plonky2::plonk::config::{AlgebraicHasher, GenericConfig};
+use plonky2::util::log2_ceil;
 use plonky2::util::reducing::ReducingFactorTarget;
 use plonky2::with_context;
 
@@ -104,8 +105,33 @@ pub fn verify_stark_proof_with_challenges_circuit<
         .map(|v| v.iter().map(|ctl| ctl.helper_columns.len()).sum::<usize>())
         .unwrap_or_default();
 
+    assert!(
+        !(stark.uses_lookups() || stark.requires_ctls())
+            || stark.num_quotient_polys(inner_config) > 0,
+        "STARKs with lookups or cross-table lookups must declare constraint_degree() >= 2."
+    );
+
     // degree_bits should be nonzero.
     let _ = builder.inverse(proof.degree_bits);
+    // `proof.degree_bits` is a prover-supplied witness. Bind it to the degree the circuit was
+    // built for (single-degree mode) or to the supported range (multi-degree mode); otherwise a
+    // proof for a shorter trace is accepted by a circuit built for a longer one.
+    match min_degree_bits_to_support {
+        None => {
+            let expected_degree_bits = builder.constant(F::from_canonical_usize(degree_bits));
+            builder.connect(proof.degree_bits, expected_degree_bits);
+        }
+        Some(min_degree_bits) => {
+            assert!(min_degree_bits <= degree_bits);
+            let min_t = builder.constant(F::from_canonical_usize(min_degree_bits));
+            let max_t = builder.constant(F::from_canonical_usize(degree_bits));
+            let above_min = builder.sub(proof.degree_bits, min_t);
+            let below_max = builder.sub(max_t, proof.degree_bits);
+            let range_bits = log2_ceil(degree_bits - min_degree_bits + 1).max(1);
+            builder.range_check(above_min, range_bits);
+            builder.range_check(below_max, range_bits);
+        }
+    }
 
     let quotient_polys = &proof.openings.quotient_polys;
     let ctl_zs_first = &proof.openings.ctl_zs_first;
