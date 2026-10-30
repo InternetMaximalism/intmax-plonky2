@@ -216,6 +216,22 @@ impl<F: RichField + Extendable<D>, const D: usize> CircuitBuilder<F, D> {
         current_log_n = self.add(current_log_n, current_degree_bits);
         let min_log_n_to_support = params.config.rate_bits + min_degree_bits_to_support;
 
+        // The final polynomial target always has the maximum length `params.final_poly_len()`,
+        // but for the actual inner degree only `2^(current_degree_bits - active arities)`
+        // coefficients may be non-zero, and the commit-phase caps of skipped folding steps carry
+        // no commitment (the honest prover zero-pads both). Without these constraints the final
+        // low-degree check is vacuous for most supported degrees.
+        with_context!(
+            self,
+            "bind final polynomial length and skipped-step caps to the actual degree",
+            self.constrain_multi_degree_padding(
+                proof,
+                params,
+                current_degree_bits,
+                degree_sub_one_bits_vec
+            )
+        );
+
         with_context!(
             self,
             "check PoW",
@@ -268,6 +284,61 @@ impl<F: RichField + Extendable<D>, const D: usize> CircuitBuilder<F, D> {
                     params,
                 )
             );
+        }
+    }
+
+    fn constrain_multi_degree_padding(
+        &mut self,
+        proof: &FriProofTarget<D>,
+        params: &FriParams,
+        current_degree_bits: Target,
+        degree_sub_one_bits_vec: &[BoolTarget],
+    ) {
+        let total_arity_bits: usize = params.reduction_arity_bits.iter().sum();
+        let max_final_poly_bits = params.degree_bits - total_arity_bits;
+        debug_assert_eq!(1 << max_final_poly_bits, proof.final_poly.len());
+
+        // Same step-activation rule as `fri_verifier_query_round_with_multiple_degree_bits`.
+        let mut index_in_degree_sub_one_bits_vec = degree_sub_one_bits_vec.len() - total_arity_bits;
+        let mut active_arity_bits = self.zero();
+        for (i, &arity_bits) in params.reduction_arity_bits.iter().enumerate() {
+            let step_active = degree_sub_one_bits_vec[index_in_degree_sub_one_bits_vec];
+            let arity_const = self.constant(F::from_canonical_usize(arity_bits));
+            active_arity_bits = self.mul_add(step_active.target, arity_const, active_arity_bits);
+
+            // Caps of skipped steps must be zero.
+            let step_inactive = self.not(step_active);
+            for hash in &proof.commit_phase_merkle_caps[i].0 {
+                for &elem in &hash.elements {
+                    let masked = self.mul(elem, step_inactive.target);
+                    self.assert_zero(masked);
+                }
+            }
+            index_in_degree_sub_one_bits_vec += arity_bits;
+        }
+
+        // `actual_final_poly_bits` is in `0..=max_final_poly_bits` for every supported degree.
+        let actual_final_poly_bits = self.sub(current_degree_bits, active_arity_bits);
+        let length_is: Vec<BoolTarget> = (0..=max_final_poly_bits)
+            .map(|b| {
+                let b_const = self.constant(F::from_canonical_usize(b));
+                self.is_equal(actual_final_poly_bits, b_const)
+            })
+            .collect();
+        let one = self.one();
+        for (i, coeff) in proof.final_poly.0.iter().enumerate() {
+            // Coefficient `i` is allowed iff `i < 2^actual_final_poly_bits`.
+            let mut allowed = self.zero();
+            for (b, &is_b) in length_is.iter().enumerate() {
+                if i < (1 << b) {
+                    allowed = self.add(allowed, is_b.target);
+                }
+            }
+            let not_allowed = self.sub(one, allowed);
+            for &limb in &coeff.0 {
+                let masked = self.mul(limb, not_allowed);
+                self.assert_zero(masked);
+            }
         }
     }
 

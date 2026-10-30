@@ -354,7 +354,8 @@ pub fn check_lookup_constraints<F: RichField + Extendable<D>, const D: usize>(
     let num_sldc_polys = local_lookup_zs.len() - 1;
     let lut_degree = num_lut_slots.div_ceil(num_sldc_polys);
 
-    let mut constraints = Vec::with_capacity(4 + common_data.luts.len() + 2 * num_sldc_polys);
+    let mut constraints =
+        Vec::with_capacity(3 + num_sldc_polys + common_data.luts.len() + 2 * num_sldc_polys);
 
     // RE is the first polynomial stored.
     let z_re = local_lookup_zs[0];
@@ -399,7 +400,13 @@ pub fn check_lookup_constraints<F: RichField + Extendable<D>, const D: usize>(
     );
 
     // Check initial Sum constraint.
-    constraints.push(lookup_selectors[LookupSelectors::InitSre as usize] * z_x_lookup_sldcs[0]);
+    // The Sum/LDC running chain is seeded from the LAST partial polynomial of the row above the
+    // first LUT row (see `prev` for `poly == 0` below and `compute_lookup_polys`), so every
+    // partial polynomial must be pinned to zero there, not only the first one. Pinning a single
+    // polynomial leaves the chain start free and lets a prover shift the whole chain.
+    for sldc in z_x_lookup_sldcs.iter() {
+        constraints.push(lookup_selectors[LookupSelectors::InitSre as usize] * *sldc);
+    }
 
     // Check initial RE constraint.
     constraints.push(lookup_selectors[LookupSelectors::InitSre as usize] * z_re);
@@ -527,7 +534,8 @@ pub fn check_lookup_constraints_batch<F: RichField + Extendable<D>, const D: usi
     let num_sldc_polys = local_lookup_zs.len() - 1;
     let lut_degree = num_lut_slots.div_ceil(num_sldc_polys);
 
-    let mut constraints = Vec::with_capacity(4 + common_data.luts.len() + 2 * num_sldc_polys);
+    let mut constraints =
+        Vec::with_capacity(3 + num_sldc_polys + common_data.luts.len() + 2 * num_sldc_polys);
 
     // RE is the first polynomial stored.
     let z_re = local_lookup_zs[0];
@@ -569,7 +577,13 @@ pub fn check_lookup_constraints_batch<F: RichField + Extendable<D>, const D: usi
     );
 
     // Check initial Sum constraint.
-    constraints.push(lookup_selectors[LookupSelectors::InitSre as usize] * z_x_lookup_sldcs[0]);
+    // The Sum/LDC running chain is seeded from the LAST partial polynomial of the row above the
+    // first LUT row (see `prev` for `poly == 0` below and `compute_lookup_polys`), so every
+    // partial polynomial must be pinned to zero there, not only the first one. Pinning a single
+    // polynomial leaves the chain start free and lets a prover shift the whole chain.
+    for sldc in z_x_lookup_sldcs.iter() {
+        constraints.push(lookup_selectors[LookupSelectors::InitSre as usize] * *sldc);
+    }
 
     // Check initial RE constraint.
     constraints.push(lookup_selectors[LookupSelectors::InitSre as usize] * z_re);
@@ -949,7 +963,8 @@ pub fn check_lookup_constraints_circuit<F: RichField + Extendable<D>, const D: u
     let num_sldc_polys = local_lookup_zs.len() - 1;
     let lut_degree = num_lut_slots.div_ceil(num_sldc_polys);
 
-    let mut constraints = Vec::with_capacity(4 + common_data.luts.len() + 2 * num_sldc_polys);
+    let mut constraints =
+        Vec::with_capacity(3 + num_sldc_polys + common_data.luts.len() + 2 * num_sldc_polys);
 
     // RE is the first polynomial stored.
     let z_re = local_lookup_zs[0];
@@ -1027,10 +1042,12 @@ pub fn check_lookup_constraints_circuit<F: RichField + Extendable<D>, const D: u
     ));
 
     // Check initial Sum constraint.
-    constraints.push(builder.mul_extension(
-        lookup_selectors[LookupSelectors::InitSre as usize],
-        z_x_lookup_sldcs[0],
-    ));
+    // See the native variant: every partial Sum/LDC polynomial must be zero on the InitSre row.
+    for sldc in z_x_lookup_sldcs.iter() {
+        constraints.push(
+            builder.mul_extension(lookup_selectors[LookupSelectors::InitSre as usize], *sldc),
+        );
+    }
 
     // Check initial RE constraint.
     constraints

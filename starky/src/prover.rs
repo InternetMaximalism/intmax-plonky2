@@ -1029,6 +1029,10 @@ where
     S: Stark<F, D>,
 {
     if stark.quotient_degree_factor() == 0 {
+        assert!(
+            !(stark.uses_lookups() || stark.requires_ctls()),
+            "STARKs with lookups or cross-table lookups must declare constraint_degree() >= 2."
+        );
         return None;
     }
 

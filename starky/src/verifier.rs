@@ -252,15 +252,29 @@ where
     } = openings;
 
     ensure!(public_inputs.len() == S::PUBLIC_INPUTS);
+    // Lookup and cross-table-lookup constraints live in the vanishing polynomial, which is only
+    // checked through the quotient openings. A STARK that declares `constraint_degree() < 2`
+    // has no quotient polynomial and would leave those constraints entirely unchecked.
+    ensure!(
+        !(stark.uses_lookups() || stark.requires_ctls()) || stark.num_quotient_polys(config) > 0,
+        "STARKs with lookups or cross-table lookups must declare constraint_degree() >= 2."
+    );
 
     let fri_params = config.fri_params(degree_bits);
     let cap_height = fri_params.config.cap_height;
 
     ensure!(trace_cap.height() == cap_height);
-    ensure!(
-        quotient_polys_cap.is_none()
-            || quotient_polys_cap.as_ref().map(|q| q.height()) == Some(cap_height)
-    );
+    // The quotient commitment is mandatory whenever the STARK has quotient polynomials: an
+    // absent cap would drop the quotient oracle from the FRI initial-tree checks and leave
+    // the quotient openings unauthenticated.
+    if stark.num_quotient_polys(config) > 0 {
+        ensure!(
+            quotient_polys_cap.as_ref().map(|q| q.height()) == Some(cap_height),
+            "Missing or malformed quotient polynomials commitment."
+        );
+    } else {
+        ensure!(quotient_polys_cap.is_none());
+    }
 
     ensure!(local_values.len() == S::COLUMNS);
     ensure!(next_values.len() == S::COLUMNS);
