@@ -189,6 +189,7 @@ fn base_to_k(value: F) -> Field64_3 {
 // The two deployed gate tables, transcribed from the parent-repo configs
 // ---------------------------------------------------------------------------
 
+#[allow(clippy::too_many_arguments)]
 const fn g(
     gate_id: u8,
     selector_index: u8,
