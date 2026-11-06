@@ -269,6 +269,92 @@ sampled upper bounds and the parent cold path are below the repository's
 | `PinnedMleVerifierV2` | 12,570 | 12,006 |
 | `SpongefishWhirVerify` | 23,656 | 920 |
 
+## Gas baseline and profiling
+
+`contracts/test/GasBaselineV2.t.sol` is the tracked execution-gas baseline.
+Each production entry point is measured in its own test with a fresh
+deployment (the same deployment as `V2ResourceEnvelope.t.sol`) as one
+`gasleft()` delta around one raw `staticcall` over pre-encoded calldata, so
+the harness-side argument copy is excluded and the first access to every
+linked library is cold, as in a production transaction. Every execution number
+is asserted against a `BUDGET_*` constant at the top of that file, set to the
+measurement rounded up by 0.5%: a regression fails the test, an improvement is
+recorded by lowering the budget in the same commit. The test emits one
+`log_named_uint` per number under stable names
+(`gas/<fixture>/<entry>/{execution,calldataBytes,calldataIntrinsic,calldataFloor7623,budget}`).
+
+Measured on the local Forge EVM (prague, via-IR, 200 runs) at the current
+sources. "Intrinsic" is the legacy calldata pricing (21,000 + 4 per zero byte
++ 16 per non-zero byte) and "7623 floor" the EIP-7623 floor
+(21,000 + 10 x (zero bytes + 4 x non-zero bytes)), both over the full
+ABI-encoded calldata of the call; a transaction pays the larger of its
+execution-plus-intrinsic total and the floor.
+
+| Fixture | Entry point | Execution | Calldata bytes | Intrinsic | 7623 floor |
+|---|---|---:|---:|---:|---:|
+| `v2_max_resource.json` (sampled degree-13 maximum, 1 PI) | `PinnedMleVerifierV2.verifyCompact` | 12,654,254 | 129,380 | 2,014,964 | 5,005,910 |
+| | `verifyCompactPublicInputs` | 12,654,347 | 129,380 | 2,014,964 | 5,005,910 |
+| | `fraudVerdictCompact` (honest, PI_MISMATCH) | 12,712,019 | 129,412 | 2,015,092 | 5,006,230 |
+| | `MleVerifierV2.verify` | 11,500,469 | 197,316 | 2,299,260 | 5,716,650 |
+| `v2_production_shape.json` (largest admitted parent profile, 103 PIs) | `PinnedMleVerifierV2.verifyCompact` | 17,009,357 | 131,236 | 2,042,512 | 5,074,780 |
+| | `verifyCompactPublicInputs` | 17,018,732 | 131,236 | 2,042,512 | 5,074,780 |
+| | `fraudVerdictCompact` (honest, PI_MISMATCH) | 17,068,394 | 131,268 | 2,042,640 | 5,075,100 |
+| | `MleVerifierV2.verify` | 15,773,391 | 204,804 | 2,353,644 | 5,852,610 |
+| `v2_cross_language.json` cases[0] (small parity circuit, 1 PI) | `PinnedMleVerifierV2.verifyCompact` | 7,850,405 | 56,900 | 862,052 | 2,123,630 |
+| | `verifyCompactPublicInputs` | 7,850,498 | 56,900 | 862,052 | 2,123,630 |
+| | `fraudVerdictCompact` (honest, PI_MISMATCH) | 7,868,754 | 56,932 | 862,180 | 2,123,950 |
+| | `MleVerifierV2.verify` | 7,133,880 | 109,060 | 1,080,244 | 2,669,110 |
+
+The production-shape fixture is optional: the production rows of the test log
+and skip when `test/fixtures/v2_production_shape.json` is absent. The
+classifier rows pass `bytes32(0)` as the expected PI hash because none of
+these fixtures has the rollup 8 x 32-bit public-input shape; a valid proof
+therefore reaches `PI_MISMATCH` after full verification, which is the same
+execution as the `VALID` path.
+
+```sh
+cd mle/contracts
+forge test --offline --match-contract GasBaselineV2Test -vv
+```
+
+`contracts/gasprof/` holds the per-phase profiler that explains these totals:
+a `mark(id)` probe (207 gas each, subtracted per span) is patched into a
+scratch copy of the sources by 103 exact-match replacements, the harness is
+run with and without operation counters, and `parse.py` / `summarize.py`
+produce the phase tables. It is never applied to the tracked sources and
+nothing under `gasprof/` is compiled by `forge build` / `forge test`.
+
+```sh
+cd mle/contracts
+./gasprof/run.sh /path/to/scratch     # ~2 minutes; leaves summary_tables.txt there
+python3 gasprof/patch.py --check src  # anchors still match the tracked sources
+```
+
+The mark-corrected `verifyCompact` total over the sampled maximum is
+12,688,189 gas (+0.27% over the uninstrumented 12,654,251 raw staticcall).
+The largest phases of that profile:
+
+| Phase | Gas | Share |
+|---|---:|---:|
+| WHIR folding round 0 (Merkle authentication 917k, in-domain dot products 856k) | 2,165,014 | 17.1% |
+| Norm/logUp terminal (per-routed-wire denominators/norms, 80 wires) | 1,315,805 | 10.4% |
+| WHIR final claim (round-constraint subtraction, eq evaluations) | 1,082,437 | 8.5% |
+| Outer coupled sumcheck rounds (transcript 468k, round polynomials 423k) | 903,651 | 7.1% |
+| Gate terminal: Poseidon gate (123 constraints) | 861,547 | 6.8% |
+| WHIR folding round 1 | 754,055 | 5.9% |
+| Compact decode (Ext3 vector copies) | 693,979 | 5.5% |
+| WHIR folding round 2 | 570,472 | 4.5% |
+| Packed-claim folds (5 cells) | 553,533 | 4.4% |
+| Boundary core -> OuterLogupExt3Verifier (DELEGATECALL ABI encode/decode) | 545,027 | 4.3% |
+| WHIR folding round 3 | 504,354 | 4.0% |
+| Boundary pinned adapter -> core.verify (ABI-encode proof+config) | 437,305 | 3.5% |
+
+The full tables, including the small fixture and the per-span operation counts
+(keccak invocations/bytes, Ext3 multiplications), are in
+`tasks/gas_profile_2026-11-07/summary_tables.txt` and `profile_full.txt`;
+`contracts/gasprof/README.md` documents the probe, the correction and the
+procedure.
+
 ## Build and verification
 
 The repository pins `nightly-2025-03-23`; do not replace it with mutable

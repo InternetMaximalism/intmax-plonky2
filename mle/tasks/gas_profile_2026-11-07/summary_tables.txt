@@ -1,0 +1,272 @@
+==== test_max_verifyCompact: corrected callee total 12,688,189 gas ====
+      22,872   0.18%  00 Pinned adapter: entry/chainid/config load
+         989   0.01%      - glue/chainid
+       2,878   0.02%      - EXTCODECOPY config store
+      18,968   0.15%      - abi.decode(VerificationConfig)
+          37   0.00%      - glue
+     693,979   5.47%  01 Compact decode
+       1,428   0.01%      - glue
+       4,077   0.03%      - header/digest/PIs/roots
+       1,734   0.01%      - whirTranscript copy
+      62,051   0.49%      - whirHints copy (calldatacopy)
+      57,304   0.45%      - logProof rounds (65 Ext3)
+     285,452   2.25%      - log terminal vectors (379 Ext3)
+     110,858   0.87%      - gateProof rounds (130 Ext3)
+     171,075   1.35%      - gate terminal vectors (219 Ext3)
+     437,305   3.45%  02 BOUNDARY Pinned->core.verify (ABI-encode proof+config, STATICCALL, return)
+      12,912   0.10%  03 Core: config digest (abi.encode(config)+keccak)
+      21,402   0.17%  04 Core: canonical shape checks
+     228,099   1.80%  05 Core: initial transcript
+       2,643   0.02%      - glue
+      26,578   0.21%      - statement absorption (16 frames)
+      26,573   0.21%      - eta/beta/gamma/xi squeezes + normInverse root
+      16,953   0.13%      - lambda/rho/kappa squeezes
+      74,856   0.59%      - tau vector squeezes
+       5,307   0.04%      - gate alpha squeeze
+      75,189   0.59%      - gate tau vector squeezes
+     270,623   2.13%  06 Core: canonical limb copies (calldata->memory)
+     169,001   1.33%      - 5 terminal vectors (598 Ext3)
+     101,622   0.80%      - 2 sumcheck proofs (195 Ext3) + VK structs
+     545,027   4.30%  07 BOUNDARY core->OuterLogupExt3Verifier (DELEGATECALL ABI encode/decode)
+     903,651   7.12%  08 Outer coupled sumcheck rounds
+      13,274   0.10%      - glue
+     467,706   3.69%      - transcript commit per round (11 keccaks)
+     422,671   3.33%      - round-poly evaluation (log deg5 + gate deg10, library Ext3 ops)
+   1,315,805  10.37%  09 Norm/logUp terminal
+      45,148   0.36%      - eq(tau, point)
+      22,981   0.18%      - subgroup evaluation
+   1,220,847   9.62%      - per-routed-wire denominators/norms/adjugates/accumulate (80 wires)
+       3,602   0.03%      - combine + xi*PI + eq check
+      23,227   0.18%      - PI aggregation (binding loop + eq rows)
+     327,629   2.58%  10 Core: constituent-claim absorption
+     327,629   2.58%      - 5 Ext3 vec frames (598 records, 14.9KB)
+      91,098   0.72%  11 Core: index-point squeezes
+      91,098   0.72%      - 2 x indexBits Ext3 squeezes
+     553,533   4.36%  12 Core: packed-claim folds (5 cells)
+      39,267   0.31%  13 Core: WHIR param prep
+     190,704   1.50%  14 BOUNDARY core->SpongefishWhirVerify (DELEGATECALL ABI encode/decode incl. hints copy)
+      36,945   0.29%  15 WHIR: parameter validation + transcript init
+      27,856   0.22%      - validateParameters
+       9,089   0.07%      - initTranscript + state alloc
+      65,677   0.52%  16 WHIR: initial claims + RLC
+      15,534   0.12%      - 6 evaluation claims absorb + mask check
+      21,161   0.17%      - cross-commitment OOD matrix
+      15,116   0.12%      - vector/constraint RLC geometric challenges
+      13,866   0.11%      - theSum accumulation
+      31,522   0.25%  16 WHIR: initial roots/OOD
+      31,522   0.25%      - 3 roots + OOD squeezes/answers
+      31,100   0.25%  17 WHIR: initial sumcheck (4 rounds)
+   2,165,014  17.06%  18 WHIR: folding round 0
+       8,517   0.07%      - root read + OOD squeeze/answers
+       2,481   0.02%      - PoW check
+      95,141   0.75%      - challenge indices (1 keccak per index byte + sort)
+      66,898   0.53%      - vec prefix + leaf row hashing
+     917,341   7.23%      - Merkle authentication
+         707   0.01%      - glue
+     105,529   0.83%      - in-domain eval points (glPow per query)
+      24,565   0.19%      - constraint values: eq weights
+      36,552   0.29%      - constraint values: RLC challenge
+     856,392   6.75%      - constraint values: in-domain dot products (+OOD) into theSum
+      19,668   0.16%      - constraint values: store round constraints
+      31,223   0.25%      - sumcheck (4 rounds)
+     754,055   5.94%  18 WHIR: folding round 1
+       8,705   0.07%      - root read + OOD squeeze/answers
+       2,529   0.02%      - PoW check
+      54,846   0.43%      - challenge indices (1 keccak per index byte + sort)
+      15,179   0.12%      - vec prefix + leaf row hashing
+      69,587   0.55%      - in-domain eval points (glPow per query)
+     198,317   1.56%      - Merkle authentication
+       1,082   0.01%      - glue
+      25,285   0.20%      - constraint values: eq weights
+      26,379   0.21%      - constraint values: RLC challenge
+     307,124   2.42%      - constraint values: in-domain dot products (+OOD) into theSum
+      13,699   0.11%      - constraint values: store round constraints
+      31,323   0.25%      - sumcheck (4 rounds)
+     570,472   4.50%  18 WHIR: folding round 2
+       8,769   0.07%      - root read + OOD squeeze/answers
+       2,545   0.02%      - PoW check
+      41,329   0.33%      - challenge indices (1 keccak per index byte + sort)
+      11,742   0.09%      - vec prefix + leaf row hashing
+      49,741   0.39%      - in-domain eval points (glPow per query)
+     140,126   1.10%      - Merkle authentication
+       1,091   0.01%      - glue
+      25,566   0.20%      - constraint values: eq weights
+      20,886   0.16%      - constraint values: RLC challenge
+     226,637   1.79%      - constraint values: in-domain dot products (+OOD) into theSum
+      10,636   0.08%      - constraint values: store round constraints
+      31,404   0.25%      - sumcheck (4 rounds)
+     504,354   3.97%  18 WHIR: folding round 3
+       8,821   0.07%      - root read + OOD squeeze/answers
+       2,560   0.02%      - PoW check
+      37,557   0.30%      - challenge indices (1 keccak per index byte + sort)
+      10,396   0.08%      - vec prefix + leaf row hashing
+      41,819   0.33%      - in-domain eval points (glPow per query)
+     113,426   0.89%      - Merkle authentication
+         943   0.01%      - glue
+      25,806   0.20%      - constraint values: eq weights
+      18,752   0.15%      - constraint values: RLC challenge
+     194,464   1.53%      - constraint values: in-domain dot products (+OOD) into theSum
+       9,450   0.07%      - constraint values: store round constraints
+      40,360   0.32%      - sumcheck (4 rounds)
+          98   0.00%  19 WHIR: EOF checks
+   1,082,437   8.53%  19 WHIR: final claim
+       1,960   0.02%      - foldEval
+       9,855   0.08%      - Ext3 inverse + mul
+     934,324   7.36%      - subtract round constraints (mleEvaluateUnivariate per OOD/in-domain point)
+     135,502   1.07%      - eq(evalPoint_i, r) x2 + expectedRlc
+         796   0.01%      - eq check
+     388,881   3.06%  19 WHIR: final round
+       5,276   0.04%      - read final polynomial
+       2,413   0.02%      - PoW check
+      28,173   0.22%      - challenge indices
+      26,374   0.21%      - eq weights
+      32,999   0.26%      - in-domain eval points (glPow)
+       6,948   0.05%      - vec prefix + leaf row hashing
+      91,388   0.72%      - Merkle authentication
+     195,310   1.54%      - final-vector openings per query (reduceWithPowers + Ext3 row dot)
+       7,972   0.06%  19 WHIR: final sumcheck
+       2,537   0.02%  20 Core: constants prefix copy
+       4,554   0.04%  21 BOUNDARY core->PoseidonPublicInputsHash
+     139,682   1.10%  22 Public-input Poseidon hash (hash_no_pad)
+      98,931   0.78%  23 BOUNDARY core->Plonky2GateEvaluatorExt3 (wires+constants ABI copy)
+     123,341   0.97%  24 Gate terminal: non-Poseidon gates + filters
+       1,934   0.02%      - glue
+      29,614   0.23%      - selector filters
+       1,842   0.01%      - row 0: unfiltered eval + alpha reduce
+       5,479   0.04%      - filter*reduced accumulate
+       6,530   0.05%      - row 1: unfiltered eval + alpha reduce
+      11,795   0.09%      - row 2: unfiltered eval + alpha reduce
+      66,147   0.52%      - row 3: unfiltered eval + alpha reduce
+      94,392   0.74%  25 BOUNDARY gate evaluator->PoseidonGateExt3 (wires ABI copy)
+     861,547   6.79%  26 Gate terminal: Poseidon gate (123 constraints)
+      13,185   0.10%      - constants load + allocs
+       6,258   0.05%      - swap/delta
+     239,477   1.89%      - first 4 full rounds
+      42,211   0.33%      - partial constant layer + MDS partial init
+     246,255   1.94%      - 22 partial rounds
+     243,515   1.92%      - second 4 full rounds
+       3,597   0.03%      - output constraints
+      67,049   0.53%      - alpha-reduce 123
+      20,685   0.16%  27 BOUNDARY core->verifyGateTerminal
+      50,098   0.39%  28 Gate terminal equality (eq(tau,point)*gateEval)
+       9,485   0.07%      - canonical checks
+      40,613   0.32%      - eq + mul + compare
+         -11  -0.00%  29 tails
+  12,688,189  sum of groups (check)
+
+==== test_small_verifyCompact: corrected callee total 7,863,277 gas ====
+      18,445   0.23%  00 Pinned adapter: entry/chainid/config load
+         989   0.01%      - glue/chainid
+       2,320   0.03%      - EXTCODECOPY config store
+      15,100   0.19%      - abi.decode(VerificationConfig)
+          36   0.00%      - glue
+     481,640   6.13%  01 Compact decode
+       1,389   0.02%      - glue
+       4,074   0.05%      - header/digest/PIs/roots
+       1,465   0.02%      - whirTranscript copy
+      17,918   0.23%      - whirHints copy (calldatacopy)
+       8,794   0.11%      - logProof rounds (65 Ext3)
+     270,558   3.44%      - log terminal vectors (379 Ext3)
+      16,598   0.21%      - gateProof rounds (130 Ext3)
+     160,844   2.05%      - gate terminal vectors (219 Ext3)
+     216,811   2.76%  02 BOUNDARY Pinned->core.verify (ABI-encode proof+config, STATICCALL, return)
+       9,605   0.12%  03 Core: config digest (abi.encode(config)+keccak)
+       6,948   0.09%  04 Core: canonical shape checks
+     101,740   1.29%  05 Core: initial transcript
+       2,631   0.03%      - glue
+      26,547   0.34%      - statement absorption (16 frames)
+      26,548   0.34%      - eta/beta/gamma/xi squeezes + normInverse root
+      16,940   0.22%      - lambda/rho/kappa squeezes
+      11,893   0.15%      - tau vector squeezes
+       5,286   0.07%      - gate alpha squeeze
+      11,895   0.15%      - gate tau vector squeezes
+     188,017   2.39%  06 Core: canonical limb copies (calldata->memory)
+     163,939   2.08%      - 5 terminal vectors (598 Ext3)
+      24,078   0.31%      - 2 sumcheck proofs (195 Ext3) + VK structs
+     353,460   4.50%  07 BOUNDARY core->OuterLogupExt3Verifier (DELEGATECALL ABI encode/decode)
+     135,917   1.73%  08 Outer coupled sumcheck rounds
+       3,878   0.05%      - glue
+      70,257   0.89%      - transcript commit per round (11 keccaks)
+      61,782   0.79%      - round-poly evaluation (log deg5 + gate deg10, library Ext3 ops)
+   1,243,899  15.82%  09 Norm/logUp terminal
+       6,990   0.09%      - eq(tau, point)
+       3,848   0.05%      - subgroup evaluation
+   1,220,021  15.52%      - per-routed-wire denominators/norms/adjugates/accumulate (80 wires)
+       3,358   0.04%      - combine + xi*PI + eq check
+       9,682   0.12%      - PI aggregation (binding loop + eq rows)
+     327,629   4.17%  10 Core: constituent-claim absorption
+     327,629   4.17%      - 5 Ext3 vec frames (598 records, 14.9KB)
+      91,098   1.16%  11 Core: index-point squeezes
+      91,098   1.16%      - 2 x indexBits Ext3 squeezes
+     560,560   7.13%  12 Core: packed-claim folds (5 cells)
+      21,491   0.27%  13 Core: WHIR param prep
+      69,654   0.89%  14 BOUNDARY core->SpongefishWhirVerify (DELEGATECALL ABI encode/decode incl. hints copy)
+      19,241   0.24%  15 WHIR: parameter validation + transcript init
+      13,452   0.17%      - validateParameters
+       5,789   0.07%      - initTranscript + state alloc
+      65,530   0.83%  16 WHIR: initial claims + RLC
+      15,512   0.20%      - 6 evaluation claims absorb + mask check
+      21,108   0.27%      - cross-commitment OOD matrix
+      15,061   0.19%      - vector/constraint RLC geometric challenges
+      13,849   0.18%      - theSum accumulation
+      31,442   0.40%  16 WHIR: initial roots/OOD
+      31,442   0.40%      - 3 roots + OOD squeezes/answers
+      31,071   0.40%  17 WHIR: initial sumcheck (4 rounds)
+   1,610,455  20.48%  18 WHIR: folding round 0
+       8,499   0.11%      - root read + OOD squeeze/answers
+       2,476   0.03%      - PoW check
+      85,059   1.08%      - challenge indices (1 keccak per index byte + sort)
+      66,741   0.85%      - vec prefix + leaf row hashing
+     412,854   5.25%      - Merkle authentication
+         546   0.01%      - glue
+      66,965   0.85%      - in-domain eval points (glPow per query)
+      24,477   0.31%      - constraint values: eq weights
+      36,378   0.46%      - constraint values: RLC challenge
+     855,696  10.88%      - constraint values: in-domain dot products (+OOD) into theSum
+      19,569   0.25%      - constraint values: store round constraints
+      31,195   0.40%      - sumcheck (4 rounds)
+          98   0.00%  19 WHIR: EOF checks
+     294,959   3.75%  19 WHIR: final claim
+       4,065   0.05%      - foldEval
+       9,820   0.12%      - Ext3 inverse + mul
+     214,182   2.72%      - subtract round constraints (mleEvaluateUnivariate per OOD/in-domain point)
+      66,109   0.84%      - eq(evalPoint_i, r) x2 + expectedRlc
+         783   0.01%      - eq check
+     643,231   8.18%  19 WHIR: final round
+       9,850   0.13%      - read final polynomial
+       2,366   0.03%      - PoW check
+      54,353   0.69%      - challenge indices
+      25,487   0.32%      - eq weights
+      44,174   0.56%      - in-domain eval points (glPow)
+      11,802   0.15%      - vec prefix + leaf row hashing
+      80,726   1.03%      - Merkle authentication
+     414,473   5.27%      - final-vector openings per query (reduceWithPowers + Ext3 row dot)
+      15,675   0.20%  19 WHIR: final sumcheck
+       2,537   0.03%  20 Core: constants prefix copy
+       4,554   0.06%  21 BOUNDARY core->PoseidonPublicInputsHash
+     139,682   1.78%  22 Public-input Poseidon hash (hash_no_pad)
+      98,074   1.25%  23 BOUNDARY core->Plonky2GateEvaluatorExt3 (wires+constants ABI copy)
+     108,730   1.38%  24 Gate terminal: non-Poseidon gates + filters
+       1,631   0.02%      - glue
+      18,353   0.23%      - selector filters
+       6,520   0.08%      - row 0: unfiltered eval + alpha reduce
+       4,375   0.06%      - filter*reduced accumulate
+      11,773   0.15%      - row 1: unfiltered eval + alpha reduce
+      66,078   0.84%      - row 2: unfiltered eval + alpha reduce
+      94,254   1.20%  25 BOUNDARY gate evaluator->PoseidonGateExt3 (wires ABI copy)
+     861,547  10.96%  26 Gate terminal: Poseidon gate (123 constraints)
+      13,185   0.17%      - constants load + allocs
+       6,258   0.08%      - swap/delta
+     239,477   3.05%      - first 4 full rounds
+      42,211   0.54%      - partial constant layer + MDS partial init
+     246,255   3.13%      - 22 partial rounds
+     243,515   3.10%      - second 4 full rounds
+       3,597   0.05%      - output constraints
+      67,049   0.85%      - alpha-reduce 123
+       5,411   0.07%  27 BOUNDARY core->verifyGateTerminal
+       9,883   0.13%  28 Gate terminal equality (eq(tau,point)*gateEval)
+       2,037   0.03%      - canonical checks
+       7,846   0.10%      - eq + mul + compare
+         -11  -0.00%  29 tails
+   7,863,277  sum of groups (check)
+
