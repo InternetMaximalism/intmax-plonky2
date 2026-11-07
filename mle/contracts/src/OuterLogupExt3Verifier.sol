@@ -26,9 +26,12 @@ import {
 ///      lives in `("memory-safe")` Yul: an element is three words, products are small Yul
 ///      helpers over stack triples or scratch records (every load precedes every store, so
 ///      an output may alias an input), and long-lived accumulators sit in fixed scratch so
-///      nothing is allocated per round or per wire. Every limb written back is reduced by
-///      `addmod`/`mulmod`, so results are canonical and bit-identical to the reference Ext3
-///      library sequence they replace.
+///      nothing is allocated per round or per wire. Field products use lazy reduction: all
+///      operands are canonical limbs (< 2^64), so integer sums of limb products stay below
+///      2^133 and every output limb is reduced exactly once with `mod` (subtractions first add
+///      2^68 * p, which exceeds every unreduced minuend, so nothing wraps). Every limb written
+///      back is therefore canonical and bit-identical to the reference Ext3 library sequence
+///      it replaces.
 library OuterLogupExt3Verifier {
     uint256 internal constant P = BASE_FIELD_MODULUS_V2;
     uint256 internal constant MAX_DEGREE = LOG_ROUND_DEGREE_V2;
@@ -206,6 +209,68 @@ library OuterLogupExt3Verifier {
             logRounds, gateRounds, preprocessed, witness, normInverse, publicInputs, vk, challenges, transcript
         );
         nextTranscript = transcript;
+    }
+
+    /// @notice `verifyPrevalidatedFlat` with the six flat vectors packed in one byte string:
+    /// `blob` is the concatenation, in this order, of six length-prefixed word arrays
+    /// `[len_words][word_0 .. word_{len-1}]` (each exactly the memory image of a `uint256[]`):
+    /// publicInputs, logRounds, gateRounds, preprocessed, witness, normInverse.
+    /// @dev The blob is copied to memory once and the six `uint256[]` views point into that copy
+    /// (no further copies). Any array running past the blob, or trailing bytes after the sixth,
+    /// revert with `InvalidMleProof`; every length is then re-checked against `vk` exactly as in
+    /// `verifyPrevalidatedFlat`.
+    function verifyPrevalidatedBlob(
+        bytes calldata blob,
+        VerificationKey memory vk,
+        Challenges memory challenges,
+        TranscriptV2.Transcript memory transcript
+    )
+        external
+        pure
+        returns (
+            GoldilocksExt3.Ext3[] memory logPoint,
+            GoldilocksExt3.Ext3[] memory gatePoint,
+            GoldilocksExt3.Ext3 memory gateFinalClaim,
+            TranscriptV2.Transcript memory nextTranscript
+        )
+    {
+        bytes memory copy = blob;
+        uint256 cursor;
+        uint256[] memory publicInputs;
+        uint256[] memory logRounds;
+        uint256[] memory gateRounds;
+        uint256[] memory preprocessed;
+        uint256[] memory witness;
+        uint256[] memory normInverse;
+        (publicInputs, cursor) = _blobArray(copy, cursor);
+        (logRounds, cursor) = _blobArray(copy, cursor);
+        (gateRounds, cursor) = _blobArray(copy, cursor);
+        (preprocessed, cursor) = _blobArray(copy, cursor);
+        (witness, cursor) = _blobArray(copy, cursor);
+        (normInverse, cursor) = _blobArray(copy, cursor);
+        if (cursor != copy.length) revert InvalidMleProof();
+        (logPoint, gatePoint, gateFinalClaim) = _verifyFlatUnchecked(
+            logRounds, gateRounds, preprocessed, witness, normInverse, publicInputs, vk, challenges, transcript
+        );
+        nextTranscript = transcript;
+    }
+
+    /// @dev `uint256[]` view (no copy) of the length-prefixed word array starting at byte `offset`
+    /// of `copy`, and the offset just past it. Reverts with `InvalidMleProof` when the length word
+    /// or the words it announces run past the end of `copy`.
+    function _blobArray(bytes memory copy, uint256 offset)
+        private
+        pure
+        returns (uint256[] memory view_, uint256 next)
+    {
+        uint256 end = copy.length;
+        if (offset + 0x20 > end) revert InvalidMleProof();
+        assembly ("memory-safe") {
+            view_ := add(add(copy, 0x20), offset)
+        }
+        uint256 length = view_.length;
+        if (length > (end - offset - 0x20) >> 5) revert InvalidMleProof();
+        next = offset + 0x20 + (length << 5);
     }
 
     /// @notice Verify all coefficient rounds without evaluating either terminal family.
@@ -444,30 +509,16 @@ library OuterLogupExt3Verifier {
                 TranscriptV2.commitCoupledOuterRound(transcript, roundIndex, logCoefficients, gateCoefficients);
             // Round polynomial evaluation: a0 = (claim - sum a_j) / 2, then Horner at the challenge.
             assembly ("memory-safe") {
-                // record x times stack triple b
+                // record x times stack triple b (canonical limbs; one `mod` per output limb)
                 function mulRecord(x, b0, b1, b2) -> c0, c1, c2 {
                     let p := 0xFFFFFFFF00000001
-                    c0 :=
-                        addmod(
-                            mulmod(mload(x), b0, p),
-                            shl(1, addmod(mulmod(mload(add(x, 0x20)), b2, p), mulmod(mload(add(x, 0x40)), b1, p), p)),
-                            p
-                        )
-                    c1 :=
-                        addmod(
-                            addmod(mulmod(mload(x), b1, p), mulmod(mload(add(x, 0x20)), b0, p), p),
-                            shl(1, mulmod(mload(add(x, 0x40)), b2, p)),
-                            p
-                        )
-                    c2 :=
-                        addmod(
-                            addmod(mulmod(mload(x), b2, p), mulmod(mload(add(x, 0x20)), b1, p), p),
-                            mulmod(mload(add(x, 0x40)), b0, p),
-                            p
-                        )
+                    c0 := mod(add(mul(mload(x), b0), shl(1, add(mul(mload(add(x, 0x20)), b2), mul(mload(add(x, 0x40)), b1)))), p)
+                    c1 := mod(add(add(mul(mload(x), b1), mul(mload(add(x, 0x20)), b0)), shl(1, mul(mload(add(x, 0x40)), b2))), p)
+                    c2 := mod(add(add(mul(mload(x), b2), mul(mload(add(x, 0x20)), b1)), mul(mload(add(x, 0x40)), b0)), p)
                 }
                 // claim <- a0 + x * (a1 + x * (... + x * a_degree)) with a0 = (claim - sum a_j) * 2^-1.
-                // One pass: Horner from a_degree down to a_1 while summing the coefficients.
+                // One pass: Horner from a_degree down to a_1 while summing the coefficients; the sum of at
+                // most ten canonical limbs (< 2^68) is reduced once at the end.
                 function evaluateRound(claim, base, end, x) {
                     let p := 0xFFFFFFFF00000001
                     let s0 := 0
@@ -487,23 +538,23 @@ library OuterLogupExt3Verifier {
                         for {} gt(c, base) {} {
                             c := sub(c, 0x60)
                             e0, e1, e2 := mulRecord(x, e0, e1, e2)
-                            e0 := addmod(e0, mload(c), p)
-                            e1 := addmod(e1, mload(add(c, 0x20)), p)
-                            e2 := addmod(e2, mload(add(c, 0x40)), p)
-                            s0 := addmod(s0, mload(c), p)
-                            s1 := addmod(s1, mload(add(c, 0x20)), p)
-                            s2 := addmod(s2, mload(add(c, 0x40)), p)
+                            e0 := mod(add(e0, mload(c)), p)
+                            e1 := mod(add(e1, mload(add(c, 0x20))), p)
+                            e2 := mod(add(e2, mload(add(c, 0x40))), p)
+                            s0 := add(s0, mload(c))
+                            s1 := add(s1, mload(add(c, 0x20)))
+                            s2 := add(s2, mload(add(c, 0x40)))
                         }
                         e0, e1, e2 := mulRecord(x, e0, e1, e2)
                     }
-                    mstore(claim, addmod(e0, mulmod(addmod(mload(claim), sub(p, s0), p), 0x7FFFFFFF80000001, p), p))
+                    mstore(claim, mod(add(e0, mulmod(add(mload(claim), sub(p, mod(s0, p))), 0x7FFFFFFF80000001, p)), p))
                     mstore(
                         add(claim, 0x20),
-                        addmod(e1, mulmod(addmod(mload(add(claim, 0x20)), sub(p, s1), p), 0x7FFFFFFF80000001, p), p)
+                        mod(add(e1, mulmod(add(mload(add(claim, 0x20)), sub(p, mod(s1, p))), 0x7FFFFFFF80000001, p)), p)
                     )
                     mstore(
                         add(claim, 0x40),
-                        addmod(e2, mulmod(addmod(mload(add(claim, 0x40)), sub(p, s2), p), 0x7FFFFFFF80000001, p), p)
+                        mod(add(e2, mulmod(add(mload(add(claim, 0x40)), sub(p, mod(s2, p))), 0x7FFFFFFF80000001, p)), p)
                     )
                 }
 
@@ -564,6 +615,10 @@ library OuterLogupExt3Verifier {
         // 0x740 sigma data, 0x760 T_id data, 0x780 T_sigma data, 0x7a0 k_i data.
         uint256[62] memory w;
         assembly ("memory-safe") {
+            // Lazy reduction: operands are canonical (< 2^64) limbs, so every product is < 2^128 and the
+            // integer sums below stay far below 2^256; each limb is reduced once with `mod`. Subtractions
+            // add 2^68 * p = 0xffffffff0000000100000000000000000 (> 2^132 - 2^100, larger than any
+            // unreduced minuend here, all < 10 * 2^128 + 2^64) before subtracting, so they never wrap.
             // out <- x * y (records; every load precedes the stores, so out may alias x or y)
             function mulInto(out, x, y) {
                 let p := 0xFFFFFFFF00000001
@@ -573,14 +628,11 @@ library OuterLogupExt3Verifier {
                 let y0 := mload(y)
                 let y1 := mload(add(y, 0x20))
                 let y2 := mload(add(y, 0x40))
-                mstore(out, addmod(mulmod(x0, y0, p), shl(1, addmod(mulmod(x1, y2, p), mulmod(x2, y1, p), p)), p))
-                mstore(
-                    add(out, 0x20),
-                    addmod(addmod(mulmod(x0, y1, p), mulmod(x1, y0, p), p), shl(1, mulmod(x2, y2, p)), p)
-                )
-                mstore(add(out, 0x40), addmod(addmod(mulmod(x0, y2, p), mulmod(x1, y1, p), p), mulmod(x2, y0, p), p))
+                mstore(out, mod(add(mul(x0, y0), shl(1, add(mul(x1, y2), mul(x2, y1)))), p))
+                mstore(add(out, 0x20), mod(add(add(mul(x0, y1), mul(x1, y0)), shl(1, mul(x2, y2))), p))
+                mstore(add(out, 0x40), mod(add(add(mul(x0, y2), mul(x1, y1)), mul(x2, y0)), p))
             }
-            // out <- out + x * y
+            // out <- out + x * y (sum < 2^64 + 5 * 2^128)
             function mulAddInto(out, x, y) {
                 let p := 0xFFFFFFFF00000001
                 let x0 := mload(x)
@@ -589,32 +641,14 @@ library OuterLogupExt3Verifier {
                 let y0 := mload(y)
                 let y1 := mload(add(y, 0x20))
                 let y2 := mload(add(y, 0x40))
-                mstore(
-                    out,
-                    addmod(
-                        mload(out),
-                        addmod(mulmod(x0, y0, p), shl(1, addmod(mulmod(x1, y2, p), mulmod(x2, y1, p), p)), p),
-                        p
-                    )
-                )
+                mstore(out, mod(add(mload(out), add(mul(x0, y0), shl(1, add(mul(x1, y2), mul(x2, y1))))), p))
                 mstore(
                     add(out, 0x20),
-                    addmod(
-                        mload(add(out, 0x20)),
-                        addmod(addmod(mulmod(x0, y1, p), mulmod(x1, y0, p), p), shl(1, mulmod(x2, y2, p)), p),
-                        p
-                    )
+                    mod(add(mload(add(out, 0x20)), add(add(mul(x0, y1), mul(x1, y0)), shl(1, mul(x2, y2)))), p)
                 )
-                mstore(
-                    add(out, 0x40),
-                    addmod(
-                        mload(add(out, 0x40)),
-                        addmod(addmod(mulmod(x0, y2, p), mulmod(x1, y1, p), p), mulmod(x2, y0, p), p),
-                        p
-                    )
-                )
+                mstore(add(out, 0x40), mod(add(mload(add(out, 0x40)), add(add(mul(x0, y2), mul(x1, y1)), mul(x2, y0))), p))
             }
-            // out <- out - x * y
+            // out <- out - x * y, as (out + 2^68 p - x * y) mod p with 2^68 p > 5 * 2^128 > x * y limbs
             function mulSubInto(out, x, y) {
                 let p := 0xFFFFFFFF00000001
                 let x0 := mload(x)
@@ -625,30 +659,36 @@ library OuterLogupExt3Verifier {
                 let y2 := mload(add(y, 0x40))
                 mstore(
                     out,
-                    addmod(
-                        mload(out),
-                        sub(p, addmod(mulmod(x0, y0, p), shl(1, addmod(mulmod(x1, y2, p), mulmod(x2, y1, p), p)), p)),
+                    mod(
+                        sub(
+                            add(mload(out), 0xffffffff0000000100000000000000000),
+                            add(mul(x0, y0), shl(1, add(mul(x1, y2), mul(x2, y1))))
+                        ),
                         p
                     )
                 )
                 mstore(
                     add(out, 0x20),
-                    addmod(
-                        mload(add(out, 0x20)),
-                        sub(p, addmod(addmod(mulmod(x0, y1, p), mulmod(x1, y0, p), p), shl(1, mulmod(x2, y2, p)), p)),
+                    mod(
+                        sub(
+                            add(mload(add(out, 0x20)), 0xffffffff0000000100000000000000000),
+                            add(add(mul(x0, y1), mul(x1, y0)), shl(1, mul(x2, y2)))
+                        ),
                         p
                     )
                 )
                 mstore(
                     add(out, 0x40),
-                    addmod(
-                        mload(add(out, 0x40)),
-                        sub(p, addmod(addmod(mulmod(x0, y2, p), mulmod(x1, y1, p), p), mulmod(x2, y0, p), p)),
+                    mod(
+                        sub(
+                            add(mload(add(out, 0x40)), 0xffffffff0000000100000000000000000),
+                            add(add(mul(x0, y2), mul(x1, y1)), mul(x2, y0))
+                        ),
                         p
                     )
                 )
             }
-            // out <- out + 2 * x * y
+            // out <- out + 2 * x * y (sum < 2^64 + 10 * 2^128)
             function mulDoubleAddInto(out, x, y) {
                 let p := 0xFFFFFFFF00000001
                 let x0 := mload(x)
@@ -657,32 +697,17 @@ library OuterLogupExt3Verifier {
                 let y0 := mload(y)
                 let y1 := mload(add(y, 0x20))
                 let y2 := mload(add(y, 0x40))
-                mstore(
-                    out,
-                    addmod(
-                        mload(out),
-                        shl(1, addmod(mulmod(x0, y0, p), shl(1, addmod(mulmod(x1, y2, p), mulmod(x2, y1, p), p)), p)),
-                        p
-                    )
-                )
+                mstore(out, mod(add(mload(out), shl(1, add(mul(x0, y0), shl(1, add(mul(x1, y2), mul(x2, y1)))))), p))
                 mstore(
                     add(out, 0x20),
-                    addmod(
-                        mload(add(out, 0x20)),
-                        shl(1, addmod(addmod(mulmod(x0, y1, p), mulmod(x1, y0, p), p), shl(1, mulmod(x2, y2, p)), p)),
-                        p
-                    )
+                    mod(add(mload(add(out, 0x20)), shl(1, add(add(mul(x0, y1), mul(x1, y0)), shl(1, mul(x2, y2))))), p)
                 )
                 mstore(
                     add(out, 0x40),
-                    addmod(
-                        mload(add(out, 0x40)),
-                        shl(1, addmod(addmod(mulmod(x0, y2, p), mulmod(x1, y1, p), p), mulmod(x2, y0, p), p)),
-                        p
-                    )
+                    mod(add(mload(add(out, 0x40)), shl(1, add(add(mul(x0, y2), mul(x1, y1)), mul(x2, y0)))), p)
                 )
             }
-            // out <- a^2 - 2 * b * c
+            // out <- a^2 - 2 * b * c (unreduced a^2 limbs < 5 * 2^128, 2bc limbs < 10 * 2^128)
             function squareMinusDoubleProductInto(out, a, b, c) {
                 let p := 0xFFFFFFFF00000001
                 let q0 := 0
@@ -692,9 +717,9 @@ library OuterLogupExt3Verifier {
                     let a0 := mload(a)
                     let a1 := mload(add(a, 0x20))
                     let a2 := mload(add(a, 0x40))
-                    q0 := addmod(mulmod(a0, a0, p), shl(2, mulmod(a1, a2, p)), p)
-                    q1 := addmod(shl(1, mulmod(a0, a1, p)), shl(1, mulmod(a2, a2, p)), p)
-                    q2 := addmod(shl(1, mulmod(a0, a2, p)), mulmod(a1, a1, p), p)
+                    q0 := add(mul(a0, a0), shl(2, mul(a1, a2)))
+                    q1 := shl(1, add(mul(a0, a1), mul(a2, a2)))
+                    q2 := add(shl(1, mul(a0, a2)), mul(a1, a1))
                 }
                 let x0 := mload(b)
                 let x1 := mload(add(b, 0x20))
@@ -702,41 +727,11 @@ library OuterLogupExt3Verifier {
                 let y0 := mload(c)
                 let y1 := mload(add(c, 0x20))
                 let y2 := mload(add(c, 0x40))
-                mstore(
-                    out,
-                    addmod(
-                        q0,
-                        sub(
-                            0x1FFFFFFFE00000002,
-                            shl(1, addmod(mulmod(x0, y0, p), shl(1, addmod(mulmod(x1, y2, p), mulmod(x2, y1, p), p)), p))
-                        ),
-                        p
-                    )
-                )
-                mstore(
-                    add(out, 0x20),
-                    addmod(
-                        q1,
-                        sub(
-                            0x1FFFFFFFE00000002,
-                            shl(1, addmod(addmod(mulmod(x0, y1, p), mulmod(x1, y0, p), p), shl(1, mulmod(x2, y2, p)), p))
-                        ),
-                        p
-                    )
-                )
-                mstore(
-                    add(out, 0x40),
-                    addmod(
-                        q2,
-                        sub(
-                            0x1FFFFFFFE00000002,
-                            shl(1, addmod(addmod(mulmod(x0, y2, p), mulmod(x1, y1, p), p), mulmod(x2, y0, p), p))
-                        ),
-                        p
-                    )
-                )
+                mstore(out, mod(sub(add(q0, 0xffffffff0000000100000000000000000), shl(1, add(mul(x0, y0), shl(1, add(mul(x1, y2), mul(x2, y1)))))), p))
+                mstore(add(out, 0x20), mod(sub(add(q1, 0xffffffff0000000100000000000000000), shl(1, add(add(mul(x0, y1), mul(x1, y0)), shl(1, mul(x2, y2))))), p))
+                mstore(add(out, 0x40), mod(sub(add(q2, 0xffffffff0000000100000000000000000), shl(1, add(add(mul(x0, y2), mul(x1, y1)), mul(x2, y0)))), p))
             }
-            // out <- 2 * a^2 - b * c
+            // out <- 2 * a^2 - b * c (unreduced 2a^2 limbs < 10 * 2^128)
             function doubleSquareMinusProductInto(out, a, b, c) {
                 let p := 0xFFFFFFFF00000001
                 let q0 := 0
@@ -746,9 +741,9 @@ library OuterLogupExt3Verifier {
                     let a0 := mload(a)
                     let a1 := mload(add(a, 0x20))
                     let a2 := mload(add(a, 0x40))
-                    q0 := shl(1, addmod(mulmod(a0, a0, p), shl(2, mulmod(a1, a2, p)), p))
-                    q1 := shl(1, addmod(shl(1, mulmod(a0, a1, p)), shl(1, mulmod(a2, a2, p)), p))
-                    q2 := shl(1, addmod(shl(1, mulmod(a0, a2, p)), mulmod(a1, a1, p), p))
+                    q0 := shl(1, add(mul(a0, a0), shl(2, mul(a1, a2))))
+                    q1 := shl(1, shl(1, add(mul(a0, a1), mul(a2, a2))))
+                    q2 := shl(1, add(shl(1, mul(a0, a2)), mul(a1, a1)))
                 }
                 let x0 := mload(b)
                 let x1 := mload(add(b, 0x20))
@@ -756,26 +751,11 @@ library OuterLogupExt3Verifier {
                 let y0 := mload(c)
                 let y1 := mload(add(c, 0x20))
                 let y2 := mload(add(c, 0x40))
-                mstore(
-                    out,
-                    addmod(
-                        q0, sub(p, addmod(mulmod(x0, y0, p), shl(1, addmod(mulmod(x1, y2, p), mulmod(x2, y1, p), p)), p)), p
-                    )
-                )
-                mstore(
-                    add(out, 0x20),
-                    addmod(
-                        q1,
-                        sub(p, addmod(addmod(mulmod(x0, y1, p), mulmod(x1, y0, p), p), shl(1, mulmod(x2, y2, p)), p)),
-                        p
-                    )
-                )
-                mstore(
-                    add(out, 0x40),
-                    addmod(q2, sub(p, addmod(addmod(mulmod(x0, y2, p), mulmod(x1, y1, p), p), mulmod(x2, y0, p), p)), p)
-                )
+                mstore(out, mod(sub(add(q0, 0xffffffff0000000100000000000000000), add(mul(x0, y0), shl(1, add(mul(x1, y2), mul(x2, y1))))), p))
+                mstore(add(out, 0x20), mod(sub(add(q1, 0xffffffff0000000100000000000000000), add(add(mul(x0, y1), mul(x1, y0)), shl(1, mul(x2, y2)))), p))
+                mstore(add(out, 0x40), mod(sub(add(q2, 0xffffffff0000000100000000000000000), add(add(mul(x0, y2), mul(x1, y1)), mul(x2, y0))), p))
             }
-            // out <- a^2 - b * c
+            // out <- a^2 - b * c (unreduced a^2 limbs < 5 * 2^128)
             function squareMinusProductInto(out, a, b, c) {
                 let p := 0xFFFFFFFF00000001
                 let q0 := 0
@@ -785,9 +765,9 @@ library OuterLogupExt3Verifier {
                     let a0 := mload(a)
                     let a1 := mload(add(a, 0x20))
                     let a2 := mload(add(a, 0x40))
-                    q0 := addmod(mulmod(a0, a0, p), shl(2, mulmod(a1, a2, p)), p)
-                    q1 := addmod(shl(1, mulmod(a0, a1, p)), shl(1, mulmod(a2, a2, p)), p)
-                    q2 := addmod(shl(1, mulmod(a0, a2, p)), mulmod(a1, a1, p), p)
+                    q0 := add(mul(a0, a0), shl(2, mul(a1, a2)))
+                    q1 := shl(1, add(mul(a0, a1), mul(a2, a2)))
+                    q2 := add(shl(1, mul(a0, a2)), mul(a1, a1))
                 }
                 let x0 := mload(b)
                 let x1 := mload(add(b, 0x20))
@@ -795,24 +775,9 @@ library OuterLogupExt3Verifier {
                 let y0 := mload(c)
                 let y1 := mload(add(c, 0x20))
                 let y2 := mload(add(c, 0x40))
-                mstore(
-                    out,
-                    addmod(
-                        q0, sub(p, addmod(mulmod(x0, y0, p), shl(1, addmod(mulmod(x1, y2, p), mulmod(x2, y1, p), p)), p)), p
-                    )
-                )
-                mstore(
-                    add(out, 0x20),
-                    addmod(
-                        q1,
-                        sub(p, addmod(addmod(mulmod(x0, y1, p), mulmod(x1, y0, p), p), shl(1, mulmod(x2, y2, p)), p)),
-                        p
-                    )
-                )
-                mstore(
-                    add(out, 0x40),
-                    addmod(q2, sub(p, addmod(addmod(mulmod(x0, y2, p), mulmod(x1, y1, p), p), mulmod(x2, y0, p), p)), p)
-                )
+                mstore(out, mod(sub(add(q0, 0xffffffff0000000100000000000000000), add(mul(x0, y0), shl(1, add(mul(x1, y2), mul(x2, y1))))), p))
+                mstore(add(out, 0x20), mod(sub(add(q1, 0xffffffff0000000100000000000000000), add(add(mul(x0, y1), mul(x1, y0)), shl(1, mul(x2, y2)))), p))
+                mstore(add(out, 0x40), mod(sub(add(q2, 0xffffffff0000000100000000000000000), add(add(mul(x0, y2), mul(x1, y1)), mul(x2, y0))), p))
             }
             // Formal norm (-> 0x5a0) and recomposed adjugate (-> 0x600) of the denominator coordinates
             //   a = wire + beta_0 + gamma_0 * pos, b = beta_1 + gamma_1 * pos, c = beta_2 + gamma_2 * pos,
@@ -825,17 +790,17 @@ library OuterLogupExt3Verifier {
                     let p1 := mload(add(pos, 0x20))
                     let p2 := mload(add(pos, 0x40))
                     let g := mload(add(s, 0xc0))
-                    mstore(add(s, 0x360), addmod(addmod(mload(wire), mload(add(s, 0x60)), p), mulmod(p0, g, p), p))
-                    mstore(add(s, 0x380), addmod(mload(add(wire, 0x20)), mulmod(p1, g, p), p))
-                    mstore(add(s, 0x3a0), addmod(mload(add(wire, 0x40)), mulmod(p2, g, p), p))
+                    mstore(add(s, 0x360), mod(add(add(mload(wire), mload(add(s, 0x60))), mul(p0, g)), p))
+                    mstore(add(s, 0x380), mod(add(mload(add(wire, 0x20)), mul(p1, g)), p))
+                    mstore(add(s, 0x3a0), mod(add(mload(add(wire, 0x40)), mul(p2, g)), p))
                     g := mload(add(s, 0xe0))
-                    mstore(add(s, 0x3c0), addmod(mload(add(s, 0x80)), mulmod(p0, g, p), p))
-                    mstore(add(s, 0x3e0), mulmod(p1, g, p))
-                    mstore(add(s, 0x400), mulmod(p2, g, p))
+                    mstore(add(s, 0x3c0), mod(add(mload(add(s, 0x80)), mul(p0, g)), p))
+                    mstore(add(s, 0x3e0), mod(mul(p1, g), p))
+                    mstore(add(s, 0x400), mod(mul(p2, g), p))
                     g := mload(add(s, 0x100))
-                    mstore(add(s, 0x420), addmod(mload(add(s, 0xa0)), mulmod(p0, g, p), p))
-                    mstore(add(s, 0x440), mulmod(p1, g, p))
-                    mstore(add(s, 0x460), mulmod(p2, g, p))
+                    mstore(add(s, 0x420), mod(add(mload(add(s, 0xa0)), mul(p0, g)), p))
+                    mstore(add(s, 0x440), mod(mul(p1, g), p))
+                    mstore(add(s, 0x460), mod(mul(p2, g), p))
                 }
                 squareMinusDoubleProductInto(add(s, 0x480), add(s, 0x360), add(s, 0x3c0), add(s, 0x420))
                 doubleSquareMinusProductInto(add(s, 0x4e0), add(s, 0x420), add(s, 0x360), add(s, 0x3c0))
@@ -843,15 +808,9 @@ library OuterLogupExt3Verifier {
                 mulInto(add(s, 0x5a0), add(s, 0x360), add(s, 0x480))
                 mulDoubleAddInto(add(s, 0x5a0), add(s, 0x420), add(s, 0x4e0))
                 mulDoubleAddInto(add(s, 0x5a0), add(s, 0x3c0), add(s, 0x540))
-                mstore(
-                    add(s, 0x600),
-                    addmod(mload(add(s, 0x480)), shl(1, addmod(mload(add(s, 0x520)), mload(add(s, 0x560)), p)), p)
-                )
-                mstore(
-                    add(s, 0x620),
-                    addmod(mload(add(s, 0x4a0)), addmod(mload(add(s, 0x4e0)), shl(1, mload(add(s, 0x580))), p), p)
-                )
-                mstore(add(s, 0x640), addmod(mload(add(s, 0x4c0)), addmod(mload(add(s, 0x500)), mload(add(s, 0x540)), p), p))
+                mstore(add(s, 0x600), mod(add(mload(add(s, 0x480)), shl(1, add(mload(add(s, 0x520)), mload(add(s, 0x560))))), p))
+                mstore(add(s, 0x620), mod(add(mload(add(s, 0x4a0)), add(mload(add(s, 0x4e0)), shl(1, mload(add(s, 0x580))))), p))
+                mstore(add(s, 0x640), mod(add(mload(add(s, 0x4c0)), add(mload(add(s, 0x500)), mload(add(s, 0x540)))), p))
             }
             function wireStep(s, i) {
                 let p := 0xFFFFFFFF00000001
@@ -859,15 +818,15 @@ library OuterLogupExt3Verifier {
                 {
                     // identity position = k_i * subgroup(point): an Ext3 times a base scalar
                     let k := mload(add(mload(add(s, 0x7a0)), shl(5, i)))
-                    mstore(add(s, 0x2a0), mulmod(mload(s), k, p))
-                    mstore(add(s, 0x2c0), mulmod(mload(add(s, 0x20)), k, p))
-                    mstore(add(s, 0x2e0), mulmod(mload(add(s, 0x40)), k, p))
+                    mstore(add(s, 0x2a0), mod(mul(mload(s), k), p))
+                    mstore(add(s, 0x2c0), mod(mul(mload(add(s, 0x20)), k), p))
+                    mstore(add(s, 0x2e0), mod(mul(mload(add(s, 0x40)), k), p))
                 }
                 denominator(s, wire, add(s, 0x2a0))
                 let helper := add(mload(add(s, 0x760)), mul(i, 0x60))
                 // Z_id = T_id * N_id - 1
                 mulInto(add(s, 0x300), helper, add(s, 0x5a0))
-                mstore(add(s, 0x300), addmod(mload(add(s, 0x300)), 0xFFFFFFFF00000000, p))
+                mstore(add(s, 0x300), mod(add(mload(add(s, 0x300)), 0xFFFFFFFF00000000), p))
                 // logUp += T_id * R_id
                 mulAddInto(add(s, 0x240), helper, add(s, 0x600))
 
@@ -877,13 +836,13 @@ library OuterLogupExt3Verifier {
                 mulSubInto(add(s, 0x240), helper, add(s, 0x600))
                 // Z_sigma = T_sigma * N_sigma - 1, then Z_id += rho * Z_sigma
                 mulInto(add(s, 0x660), helper, add(s, 0x5a0))
-                mstore(add(s, 0x660), addmod(mload(add(s, 0x660)), 0xFFFFFFFF00000000, p))
+                mstore(add(s, 0x660), mod(add(mload(add(s, 0x660)), 0xFFFFFFFF00000000), p))
                 mulAddInto(add(s, 0x300), add(s, 0x120), add(s, 0x660))
                 // accumulator = accumulator * lambda + (Z_id + rho * Z_sigma) (Horner over the routed wires)
                 mulInto(add(s, 0x1e0), add(s, 0x1e0), add(s, 0x180))
-                mstore(add(s, 0x1e0), addmod(mload(add(s, 0x1e0)), mload(add(s, 0x300)), p))
-                mstore(add(s, 0x200), addmod(mload(add(s, 0x200)), mload(add(s, 0x320)), p))
-                mstore(add(s, 0x220), addmod(mload(add(s, 0x220)), mload(add(s, 0x340)), p))
+                mstore(add(s, 0x1e0), mod(add(mload(add(s, 0x1e0)), mload(add(s, 0x300))), p))
+                mstore(add(s, 0x200), mod(add(mload(add(s, 0x200)), mload(add(s, 0x320))), p))
+                mstore(add(s, 0x220), mod(add(mload(add(s, 0x220)), mload(add(s, 0x340))), p))
             }
 
             mstore(w, mload(subgroup))
@@ -957,27 +916,12 @@ library OuterLogupExt3Verifier {
         // 0x1a0 unique-row memo base, 0x1c0 memo entries used, 0x1e0 accumulator (3 words).
         uint256[18] memory w;
         assembly ("memory-safe") {
-            // record x times stack triple b
+            // record x times stack triple b (canonical limbs; one `mod` per output limb)
             function mulRecord(x, b0, b1, b2) -> c0, c1, c2 {
                 let p := 0xFFFFFFFF00000001
-                c0 :=
-                    addmod(
-                        mulmod(mload(x), b0, p),
-                        shl(1, addmod(mulmod(mload(add(x, 0x20)), b2, p), mulmod(mload(add(x, 0x40)), b1, p), p)),
-                        p
-                    )
-                c1 :=
-                    addmod(
-                        addmod(mulmod(mload(x), b1, p), mulmod(mload(add(x, 0x20)), b0, p), p),
-                        shl(1, mulmod(mload(add(x, 0x40)), b2, p)),
-                        p
-                    )
-                c2 :=
-                    addmod(
-                        addmod(mulmod(mload(x), b2, p), mulmod(mload(add(x, 0x20)), b1, p), p),
-                        mulmod(mload(add(x, 0x40)), b0, p),
-                        p
-                    )
+                c0 := mod(add(mul(mload(x), b0), shl(1, add(mul(mload(add(x, 0x20)), b2), mul(mload(add(x, 0x40)), b1)))), p)
+                c1 := mod(add(add(mul(mload(x), b1), mul(mload(add(x, 0x20)), b0)), shl(1, mul(mload(add(x, 0x40)), b2))), p)
+                c2 := mod(add(add(mul(mload(x), b2), mul(mload(add(x, 0x20)), b1)), mul(mload(add(x, 0x40)), b0)), p)
             }
             // out <- out * (x when bit = 1, 1 - x otherwise) for coordinate record x
             function mulFactorInto(out, x, bit) {
@@ -986,7 +930,7 @@ library OuterLogupExt3Verifier {
                 let f1 := mload(add(x, 0x20))
                 let f2 := mload(add(x, 0x40))
                 if iszero(bit) {
-                    f0 := addmod(1, sub(p, f0), p)
+                    f0 := mod(add(1, sub(p, f0)), p)
                     f1 := mod(sub(p, f1), p)
                     f2 := mod(sub(p, f2), p)
                 }
@@ -1056,9 +1000,9 @@ library OuterLogupExt3Verifier {
                 let a2 := mload(add(s, 0x220))
                 if or(a0, or(a1, a2)) { a0, a1, a2 := mulRecord(etaPower(s, length), a0, a1, a2) }
                 r0, r1, r2 := mulRecord(eqRow(s, row), r0, r1, r2)
-                mstore(add(s, 0x1e0), addmod(a0, r0, p))
-                mstore(add(s, 0x200), addmod(a1, r1, p))
-                mstore(add(s, 0x220), addmod(a2, r2, p))
+                mstore(add(s, 0x1e0), mod(add(a0, r0), p))
+                mstore(add(s, 0x200), mod(add(a1, r1), p))
+                mstore(add(s, 0x220), mod(add(a2, r2), p))
             }
 
             let p := 0xFFFFFFFF00000001
@@ -1109,9 +1053,9 @@ library OuterLogupExt3Verifier {
                     revert(0x00, 0x04)
                 }
                 word := add(mload(add(w, 0x60)), mul(word, 0x60))
-                r0 := addmod(r0, addmod(mload(word), sub(p, mload(add(mload(add(w, 0xa0)), shl(5, i)))), p), p)
-                r1 := addmod(r1, mload(add(word, 0x20)), p)
-                r2 := addmod(r2, mload(add(word, 0x40)), p)
+                r0 := mod(add(r0, add(mload(word), sub(p, mload(add(mload(add(w, 0xa0)), shl(5, i)))))), p)
+                r1 := mod(add(r1, mload(add(word, 0x20))), p)
+                r2 := mod(add(r2, mload(add(word, 0x40))), p)
                 length := add(length, 1)
             }
             flush(w, runRow, length, r0, r1, r2)
@@ -1141,28 +1085,32 @@ library OuterLogupExt3Verifier {
                 let x0 := mload(x)
                 let x1 := mload(add(x, 0x20))
                 let x2 := mload(add(x, 0x40))
-                // factor = 1 - tau - x + 2 * tau * x
+                // factor = 1 - tau - x + 2 * tau * x, lazily: 2p - (tau + x) >= 2 and the doubled
+                // unreduced product limbs are < 10 * 2^128, reduced once per limb
                 mstore(
                     factor,
-                    addmod(
-                        addmod(1, sub(0x1FFFFFFFE00000002, addmod(t0, x0, p)), p),
-                        shl(1, addmod(mulmod(t0, x0, p), shl(1, addmod(mulmod(t1, x2, p), mulmod(t2, x1, p), p)), p)),
+                    mod(
+                        add(
+                            add(1, sub(0x1FFFFFFFE00000002, add(t0, x0))),
+                            shl(1, add(mul(t0, x0), shl(1, add(mul(t1, x2), mul(t2, x1)))))
+                        ),
                         p
                     )
                 )
                 mstore(
                     add(factor, 0x20),
-                    addmod(
-                        sub(0x1FFFFFFFE00000002, addmod(t1, x1, p)),
-                        shl(1, addmod(addmod(mulmod(t0, x1, p), mulmod(t1, x0, p), p), shl(1, mulmod(t2, x2, p)), p)),
+                    mod(
+                        add(
+                            sub(0x1FFFFFFFE00000002, add(t1, x1)),
+                            shl(1, add(add(mul(t0, x1), mul(t1, x0)), shl(1, mul(t2, x2))))
+                        ),
                         p
                     )
                 )
                 mstore(
                     add(factor, 0x40),
-                    addmod(
-                        sub(0x1FFFFFFFE00000002, addmod(t2, x2, p)),
-                        shl(1, addmod(addmod(mulmod(t0, x2, p), mulmod(t1, x1, p), p), mulmod(t2, x0, p), p)),
+                    mod(
+                        add(sub(0x1FFFFFFFE00000002, add(t2, x2)), shl(1, add(add(mul(t0, x2), mul(t1, x1)), mul(t2, x0)))),
                         p
                     )
                 )
@@ -1185,10 +1133,10 @@ library OuterLogupExt3Verifier {
             GoldilocksExt3.Ext3 memory x = point[i];
             assembly ("memory-safe") {
                 let p := 0xFFFFFFFF00000001
-                let g := addmod(generator, 0xFFFFFFFF00000000, p)
-                mstore(factor, addmod(1, mulmod(mload(x), g, p), p))
-                mstore(add(factor, 0x20), mulmod(mload(add(x, 0x20)), g, p))
-                mstore(add(factor, 0x40), mulmod(mload(add(x, 0x40)), g, p))
+                let g := mod(add(generator, 0xFFFFFFFF00000000), p)
+                mstore(factor, mod(add(1, mul(mload(x), g)), p))
+                mstore(add(factor, 0x20), mod(mul(mload(add(x, 0x20)), g), p))
+                mstore(add(factor, 0x40), mod(mul(mload(add(x, 0x40)), g), p))
             }
             _mulInPlace(value, factor);
         }
@@ -1207,15 +1155,10 @@ library OuterLogupExt3Verifier {
             let b0 := mload(multiplier)
             let b1 := mload(add(multiplier, 0x20))
             let b2 := mload(add(multiplier, 0x40))
-            mstore(destination, addmod(mulmod(a0, b0, p), shl(1, addmod(mulmod(a1, b2, p), mulmod(a2, b1, p), p)), p))
-            mstore(
-                add(destination, 0x20),
-                addmod(addmod(mulmod(a0, b1, p), mulmod(a1, b0, p), p), shl(1, mulmod(a2, b2, p)), p)
-            )
-            mstore(
-                add(destination, 0x40),
-                addmod(addmod(mulmod(a0, b2, p), mulmod(a1, b1, p), p), mulmod(a2, b0, p), p)
-            )
+            // lazy reduction over canonical limbs: integer sums < 5 * 2^128, one `mod` per limb
+            mstore(destination, mod(add(mul(a0, b0), shl(1, add(mul(a1, b2), mul(a2, b1)))), p))
+            mstore(add(destination, 0x20), mod(add(add(mul(a0, b1), mul(a1, b0)), shl(1, mul(a2, b2))), p))
+            mstore(add(destination, 0x40), mod(add(add(mul(a0, b2), mul(a1, b1)), mul(a2, b0)), p))
         }
     }
 
@@ -1233,29 +1176,15 @@ library OuterLogupExt3Verifier {
             let y0 := mload(y)
             let y1 := mload(add(y, 0x20))
             let y2 := mload(add(y, 0x40))
-            mstore(
-                destination,
-                addmod(
-                    mload(destination),
-                    addmod(mulmod(x0, y0, p), shl(1, addmod(mulmod(x1, y2, p), mulmod(x2, y1, p), p)), p),
-                    p
-                )
-            )
+            // lazy reduction over canonical limbs: integer sums < 2^64 + 5 * 2^128, one `mod` per limb
+            mstore(destination, mod(add(mload(destination), add(mul(x0, y0), shl(1, add(mul(x1, y2), mul(x2, y1))))), p))
             mstore(
                 add(destination, 0x20),
-                addmod(
-                    mload(add(destination, 0x20)),
-                    addmod(addmod(mulmod(x0, y1, p), mulmod(x1, y0, p), p), shl(1, mulmod(x2, y2, p)), p),
-                    p
-                )
+                mod(add(mload(add(destination, 0x20)), add(add(mul(x0, y1), mul(x1, y0)), shl(1, mul(x2, y2)))), p)
             )
             mstore(
                 add(destination, 0x40),
-                addmod(
-                    mload(add(destination, 0x40)),
-                    addmod(addmod(mulmod(x0, y2, p), mulmod(x1, y1, p), p), mulmod(x2, y0, p), p),
-                    p
-                )
+                mod(add(mload(add(destination, 0x40)), add(add(mul(x0, y2), mul(x1, y1)), mul(x2, y0))), p)
             )
         }
     }
@@ -1278,22 +1207,21 @@ library OuterLogupExt3Verifier {
                 let y0 := mload(y)
                 let y1 := mload(add(y, 0x20))
                 let y2 := mload(add(y, 0x40))
-                mstore(out, addmod(mulmod(x0, y0, p), shl(1, addmod(mulmod(x1, y2, p), mulmod(x2, y1, p), p)), p))
-                mstore(
-                    add(out, 0x20),
-                    addmod(addmod(mulmod(x0, y1, p), mulmod(x1, y0, p), p), shl(1, mulmod(x2, y2, p)), p)
-                )
-                mstore(add(out, 0x40), addmod(addmod(mulmod(x0, y2, p), mulmod(x1, y1, p), p), mulmod(x2, y0, p), p))
+                mstore(out, mod(add(mul(x0, y0), shl(1, add(mul(x1, y2), mul(x2, y1)))), p))
+                mstore(add(out, 0x20), mod(add(add(mul(x0, y1), mul(x1, y0)), shl(1, mul(x2, y2))), p))
+                mstore(add(out, 0x40), mod(add(add(mul(x0, y2), mul(x1, y1)), mul(x2, y0)), p))
             }
             function squareInto(out, x) {
                 let p := 0xFFFFFFFF00000001
                 let x0 := mload(x)
                 let x1 := mload(add(x, 0x20))
                 let x2 := mload(add(x, 0x40))
-                mstore(out, addmod(mulmod(x0, x0, p), shl(2, mulmod(x1, x2, p)), p))
-                mstore(add(out, 0x20), addmod(shl(1, mulmod(x0, x1, p)), shl(1, mulmod(x2, x2, p)), p))
-                mstore(add(out, 0x40), addmod(shl(1, mulmod(x0, x2, p)), mulmod(x1, x1, p), p))
+                mstore(out, mod(add(mul(x0, x0), shl(2, mul(x1, x2))), p))
+                mstore(add(out, 0x20), mod(shl(1, add(mul(x0, x1), mul(x2, x2))), p))
+                mstore(add(out, 0x40), mod(add(shl(1, mul(x0, x2)), mul(x1, x1)), p))
             }
+            // lazy reduction: every operand below is a canonical limb (< 2^64), so each integer sum is
+            // < 2^67 and is reduced once; 2p - 2x and p - x are non-negative for canonical x
             let p := 0xFFFFFFFF00000001
             let a := mload(coordinates)
             let b := mload(add(coordinates, 0x20))
@@ -1302,33 +1230,33 @@ library OuterLogupExt3Verifier {
             let s := mload(adjugate)
             squareInto(s, a)
             mulInto(product, b, c)
-            mstore(s, addmod(mload(s), sub(0x1FFFFFFFE00000002, shl(1, mload(product))), p))
-            mstore(add(s, 0x20), addmod(mload(add(s, 0x20)), sub(0x1FFFFFFFE00000002, shl(1, mload(add(product, 0x20)))), p))
-            mstore(add(s, 0x40), addmod(mload(add(s, 0x40)), sub(0x1FFFFFFFE00000002, shl(1, mload(add(product, 0x40)))), p))
+            mstore(s, mod(add(mload(s), sub(0x1FFFFFFFE00000002, shl(1, mload(product)))), p))
+            mstore(add(s, 0x20), mod(add(mload(add(s, 0x20)), sub(0x1FFFFFFFE00000002, shl(1, mload(add(product, 0x20))))), p))
+            mstore(add(s, 0x40), mod(add(mload(add(s, 0x40)), sub(0x1FFFFFFFE00000002, shl(1, mload(add(product, 0x40))))), p))
             // s1 = 2c^2 - ab
             s := mload(add(adjugate, 0x20))
             squareInto(s, c)
             mulInto(product, a, b)
-            mstore(s, addmod(shl(1, mload(s)), sub(p, mload(product)), p))
-            mstore(add(s, 0x20), addmod(shl(1, mload(add(s, 0x20))), sub(p, mload(add(product, 0x20))), p))
-            mstore(add(s, 0x40), addmod(shl(1, mload(add(s, 0x40))), sub(p, mload(add(product, 0x40))), p))
+            mstore(s, mod(add(shl(1, mload(s)), sub(p, mload(product))), p))
+            mstore(add(s, 0x20), mod(add(shl(1, mload(add(s, 0x20))), sub(p, mload(add(product, 0x20)))), p))
+            mstore(add(s, 0x40), mod(add(shl(1, mload(add(s, 0x40))), sub(p, mload(add(product, 0x40)))), p))
             // s2 = b^2 - ac
             s := mload(add(adjugate, 0x40))
             squareInto(s, b)
             mulInto(product, a, c)
-            mstore(s, addmod(mload(s), sub(p, mload(product)), p))
-            mstore(add(s, 0x20), addmod(mload(add(s, 0x20)), sub(p, mload(add(product, 0x20))), p))
-            mstore(add(s, 0x40), addmod(mload(add(s, 0x40)), sub(p, mload(add(product, 0x40))), p))
+            mstore(s, mod(add(mload(s), sub(p, mload(product))), p))
+            mstore(add(s, 0x20), mod(add(mload(add(s, 0x20)), sub(p, mload(add(product, 0x20)))), p))
+            mstore(add(s, 0x40), mod(add(mload(add(s, 0x40)), sub(p, mload(add(product, 0x40)))), p))
             // norm = a*s0 + 2*(c*s1 + b*s2)
             mulInto(norm, a, mload(adjugate))
             mulInto(product, c, mload(add(adjugate, 0x20)))
-            mstore(norm, addmod(mload(norm), shl(1, mload(product)), p))
-            mstore(add(norm, 0x20), addmod(mload(add(norm, 0x20)), shl(1, mload(add(product, 0x20))), p))
-            mstore(add(norm, 0x40), addmod(mload(add(norm, 0x40)), shl(1, mload(add(product, 0x40))), p))
+            mstore(norm, mod(add(mload(norm), shl(1, mload(product))), p))
+            mstore(add(norm, 0x20), mod(add(mload(add(norm, 0x20)), shl(1, mload(add(product, 0x20)))), p))
+            mstore(add(norm, 0x40), mod(add(mload(add(norm, 0x40)), shl(1, mload(add(product, 0x40)))), p))
             mulInto(product, b, mload(add(adjugate, 0x40)))
-            mstore(norm, addmod(mload(norm), shl(1, mload(product)), p))
-            mstore(add(norm, 0x20), addmod(mload(add(norm, 0x20)), shl(1, mload(add(product, 0x20))), p))
-            mstore(add(norm, 0x40), addmod(mload(add(norm, 0x40)), shl(1, mload(add(product, 0x40))), p))
+            mstore(norm, mod(add(mload(norm), shl(1, mload(product))), p))
+            mstore(add(norm, 0x20), mod(add(mload(add(norm, 0x20)), shl(1, mload(add(product, 0x20)))), p))
+            mstore(add(norm, 0x40), mod(add(mload(add(norm, 0x40)), shl(1, mload(add(product, 0x40)))), p))
         }
     }
 
