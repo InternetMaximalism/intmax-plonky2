@@ -213,8 +213,9 @@ library PoseidonGateExt3 {
             // Dense MDS on one limb plane `sp` (12 words), using Plonky2's exact integer-FFT
             // factorization of the fixed circulant CIRC = [17,15,41,16,2,28,13,13,39,18,34,20]
             // plus the single diagonal coefficient 8 on row 0. `t_` is a 12-word scratch area.
-            // Identical to `PoseidonGate._mdsLayerInline`; every value stays a canonical
-            // representative and the bounded multiples of p keep all subtractions positive.
+            // Identical to `PoseidonGate._mdsLayerInline`; the butterflies sum at most four
+            // canonical words (plus bounded multiples of p before a subtraction) and reduce once,
+            // so every value stays a canonical representative.
             function mdsPlane(sp, t_) {
                 let p := 0xFFFFFFFF00000001
                 for { let g := 0 } lt(g, 3) { g := add(g, 1) } {
@@ -223,10 +224,10 @@ library PoseidonGateExt3 {
                     let c := mload(add(sp, mul(add(g, 6), 0x20)))
                     let d := mload(add(sp, mul(add(g, 9), 0x20)))
                     let base := add(t_, mul(g, 0x80))
-                    mstore(base, addmod(addmod(a, b, p), addmod(c, d, p), p))
-                    mstore(add(base, 0x20), addmod(a, sub(p, c), p))
-                    mstore(add(base, 0x40), addmod(d, sub(p, b), p))
-                    mstore(add(base, 0x60), addmod(addmod(a, sub(p, b), p), addmod(c, sub(p, d), p), p))
+                    mstore(base, mod(add(add(a, b), add(c, d)), p))
+                    mstore(add(base, 0x20), mod(add(a, sub(p, c)), p))
+                    mstore(add(base, 0x40), mod(add(d, sub(p, b)), p))
+                    mstore(add(base, 0x60), mod(sub(add(add(a, c), shl(1, p)), add(b, d)), p))
                 }
                 {
                     let x0 := mload(t_)
@@ -282,14 +283,14 @@ library PoseidonGateExt3 {
                     let v1r := mload(add(base, 0x20))
                     let v1i := mload(add(base, 0x40))
                     let v2 := mload(add(base, 0x60))
-                    let z0 := addmod(v0, v2, p)
-                    let z1 := addmod(v0, sub(p, v2), p)
-                    let out0 := addmod(z0, v1r, p)
-                    if iszero(g) { out0 := addmod(out0, mulmod(mload(sp), 8, p), p) }
-                    mstore(add(sp, mul(g, 0x20)), out0)
-                    mstore(add(sp, mul(add(g, 3), 0x20)), addmod(z1, sub(p, v1i), p))
-                    mstore(add(sp, mul(add(g, 6), 0x20)), addmod(z0, sub(p, v1r), p))
-                    mstore(add(sp, mul(add(g, 9), 0x20)), addmod(z1, v1i, p))
+                    let z0 := add(v0, v2)
+                    let z1 := add(v0, sub(p, v2))
+                    let out0 := add(z0, v1r)
+                    if iszero(g) { out0 := add(out0, mul(mload(sp), 8)) }
+                    mstore(add(sp, mul(g, 0x20)), mod(out0, p))
+                    mstore(add(sp, mul(add(g, 3), 0x20)), mod(add(z1, sub(p, v1i)), p))
+                    mstore(add(sp, mul(add(g, 6), 0x20)), mod(add(z0, sub(p, v1r)), p))
+                    mstore(add(sp, mul(add(g, 9), 0x20)), mod(add(z1, v1i), p))
                 }
             }
 
@@ -337,19 +338,52 @@ library PoseidonGateExt3 {
             mstore(add(r, 0x300), mload(add(s, 0x300)))
             let matrix := add(pim, 0x20)
             for { let c := 0x20 } lt(c, 0x180) { c := add(c, 0x20) } {
-                let acc0 := 0
-                let acc1 := 0
-                let acc2 := 0
                 // M[0][c-1], then one 88-byte row stride per state row.
                 let mp := add(matrix, sub(shr(2, c), 8))
-                for { let row := 0x20 } lt(row, 0x180) { row := add(row, 0x20) } {
-                    let m := shr(192, mload(mp))
-                    let a := add(s, row)
-                    acc0 := add(acc0, mul(mload(a), m))
-                    acc1 := add(acc1, mul(mload(add(a, 0x180)), m))
-                    acc2 := add(acc2, mul(mload(add(a, 0x300)), m))
-                    mp := add(mp, 88)
-                }
+                let m := shr(192, mload(mp))
+                let acc0 := mul(mload(add(s, 0x20)), m)
+                let acc1 := mul(mload(add(s, 0x1a0)), m)
+                let acc2 := mul(mload(add(s, 0x320)), m)
+                m := shr(192, mload(add(mp, 0x58)))
+                acc0 := add(acc0, mul(mload(add(s, 0x40)), m))
+                acc1 := add(acc1, mul(mload(add(s, 0x1c0)), m))
+                acc2 := add(acc2, mul(mload(add(s, 0x340)), m))
+                m := shr(192, mload(add(mp, 0xb0)))
+                acc0 := add(acc0, mul(mload(add(s, 0x60)), m))
+                acc1 := add(acc1, mul(mload(add(s, 0x1e0)), m))
+                acc2 := add(acc2, mul(mload(add(s, 0x360)), m))
+                m := shr(192, mload(add(mp, 0x108)))
+                acc0 := add(acc0, mul(mload(add(s, 0x80)), m))
+                acc1 := add(acc1, mul(mload(add(s, 0x200)), m))
+                acc2 := add(acc2, mul(mload(add(s, 0x380)), m))
+                m := shr(192, mload(add(mp, 0x160)))
+                acc0 := add(acc0, mul(mload(add(s, 0xa0)), m))
+                acc1 := add(acc1, mul(mload(add(s, 0x220)), m))
+                acc2 := add(acc2, mul(mload(add(s, 0x3a0)), m))
+                m := shr(192, mload(add(mp, 0x1b8)))
+                acc0 := add(acc0, mul(mload(add(s, 0xc0)), m))
+                acc1 := add(acc1, mul(mload(add(s, 0x240)), m))
+                acc2 := add(acc2, mul(mload(add(s, 0x3c0)), m))
+                m := shr(192, mload(add(mp, 0x210)))
+                acc0 := add(acc0, mul(mload(add(s, 0xe0)), m))
+                acc1 := add(acc1, mul(mload(add(s, 0x260)), m))
+                acc2 := add(acc2, mul(mload(add(s, 0x3e0)), m))
+                m := shr(192, mload(add(mp, 0x268)))
+                acc0 := add(acc0, mul(mload(add(s, 0x100)), m))
+                acc1 := add(acc1, mul(mload(add(s, 0x280)), m))
+                acc2 := add(acc2, mul(mload(add(s, 0x400)), m))
+                m := shr(192, mload(add(mp, 0x2c0)))
+                acc0 := add(acc0, mul(mload(add(s, 0x120)), m))
+                acc1 := add(acc1, mul(mload(add(s, 0x2a0)), m))
+                acc2 := add(acc2, mul(mload(add(s, 0x420)), m))
+                m := shr(192, mload(add(mp, 0x318)))
+                acc0 := add(acc0, mul(mload(add(s, 0x140)), m))
+                acc1 := add(acc1, mul(mload(add(s, 0x2c0)), m))
+                acc2 := add(acc2, mul(mload(add(s, 0x440)), m))
+                m := shr(192, mload(add(mp, 0x370)))
+                acc0 := add(acc0, mul(mload(add(s, 0x160)), m))
+                acc1 := add(acc1, mul(mload(add(s, 0x2e0)), m))
+                acc2 := add(acc2, mul(mload(add(s, 0x460)), m))
                 let o := add(r, c)
                 mstore(o, mod(acc0, p))
                 mstore(add(o, 0x180), mod(acc1, p))
