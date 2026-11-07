@@ -1452,167 +1452,100 @@ P(f, """    ) external pure returns (GoldilocksExt3.Ext3 memory combined) {
         GasProbe.mark(601);
     }
 """)
-P(f, """        combined = GoldilocksExt3.zero();
-        for (uint256 row = 0; row < gates.length; ++row) {
+P(f, """        for (uint256 row = 0; row < gates.length; ++row) {
             GateInfoV2 calldata info = gates[row];
-            GoldilocksExt3.Ext3 memory filter =
-                _computeFilter(info, constants[uint256(info.selectorIndex)], numSelectors > 1);
+            if (uint256(info.selectorIndex) >= fr.numConstants) revert InvalidMleProof();
+            _computeFilter(fr, info, fr.numSelectors > 1);
             // Metadata for every gate was validated above. A zero selector filter
             // therefore makes this gate's entire contribution identically zero;
             // avoid evaluating expensive inactive Poseidon/coset constraints.
-            if (GoldilocksExt3.isZero(filter)) continue;
-            GoldilocksExt3.Ext3 memory reduced;
-            // Poseidon is by far the largest Plonky2 gate. Reduce its constraints
-            // inside the linked library so 123/24 Ext3 values are never ABI-copied
-            // back into this evaluator, and pass the already validated wire vector
-            // directly instead of allocating another struct array prefix.
-            if (info.gateId == GATE_POSEIDON) {
-                reduced = PoseidonGateExt3.evalPoseidonReduced(wires, alpha);
-            } else if (info.gateId == GATE_POSEIDON_MDS) {
-                reduced = PoseidonGateExt3.evalPoseidonMdsReduced(wires, alpha);
-            } else {
-                GoldilocksExt3.Ext3[] memory unfiltered =
-                    _evaluateUnfiltered(info, wires, constants, publicHash, numSelectors);
-                if (unfiltered.length != uint256(info.numConstraints)) revert InvalidMleVerifierConfiguration();
-                reduced = GoldilocksExt3.reduceWithPowers(unfiltered, alpha);
-            }
-            combined = GoldilocksExt3.add(combined, GoldilocksExt3.mul(filter, reduced));
-        }
-""", """        combined = GoldilocksExt3.zero();
-        for (uint256 row = 0; row < gates.length; ++row) {
+            if ((fr.f0 | fr.f1 | fr.f2) == 0) continue;
+""", """        for (uint256 row = 0; row < gates.length; ++row) {
             GasProbe.mark(2010 + 10 * row);
             GateInfoV2 calldata info = gates[row];
-            GoldilocksExt3.Ext3 memory filter =
-                _computeFilter(info, constants[uint256(info.selectorIndex)], numSelectors > 1);
+            if (uint256(info.selectorIndex) >= fr.numConstants) revert InvalidMleProof();
+            _computeFilter(fr, info, fr.numSelectors > 1);
             GasProbe.mark(2011 + 10 * row);
             // Metadata for every gate was validated above. A zero selector filter
             // therefore makes this gate's entire contribution identically zero;
             // avoid evaluating expensive inactive Poseidon/coset constraints.
-            if (GoldilocksExt3.isZero(filter)) continue;
-            GoldilocksExt3.Ext3 memory reduced;
-            // Poseidon is by far the largest Plonky2 gate. Reduce its constraints
-            // inside the linked library so 123/24 Ext3 values are never ABI-copied
-            // back into this evaluator, and pass the already validated wire vector
-            // directly instead of allocating another struct array prefix.
-            if (info.gateId == GATE_POSEIDON) {
-                reduced = PoseidonGateExt3.evalPoseidonReduced(wires, alpha);
-            } else if (info.gateId == GATE_POSEIDON_MDS) {
-                reduced = PoseidonGateExt3.evalPoseidonMdsReduced(wires, alpha);
+            if ((fr.f0 | fr.f1 | fr.f2) == 0) continue;
+""")
+P(f, """                if (gateId == GATE_POSEIDON) {
+                    (fr.r0, fr.r1, fr.r2) = PoseidonGateExt3.evalPoseidonReduced(flatWires, a0, a1, a2);
+                } else {
+""", """                if (gateId == GATE_POSEIDON) {
+                    (fr.r0, fr.r1, fr.r2) = PoseidonGateExt3.evalPoseidonReduced(flatWires, a0, a1, a2);
+                    GasProbe.mark(2013 + 10 * row);
+                } else {
+""")
+P(f, """                    assembly ("memory-safe") {
+                        mstore(flatWires, fullLength)
+                    }
+                }
+                _evalAndAccumulate(fr);
             } else {
-                GoldilocksExt3.Ext3[] memory unfiltered =
-                    _evaluateUnfiltered(info, wires, constants, publicHash, numSelectors);
-                GasProbe.mark(2012 + 10 * row);
-                if (unfiltered.length != uint256(info.numConstraints)) revert InvalidMleVerifierConfiguration();
-                reduced = GoldilocksExt3.reduceWithPowers(unfiltered, alpha);
+                _evalAndAccumulate(fr);
             }
-            GasProbe.mark(2013 + 10 * row);
-            combined = GoldilocksExt3.add(combined, GoldilocksExt3.mul(filter, reduced));
+        }
+""", """                    assembly ("memory-safe") {
+                        mstore(flatWires, fullLength)
+                    }
+                    GasProbe.mark(2012 + 10 * row);
+                }
+                _evalAndAccumulate(fr);
+                if (gateId != GATE_POSEIDON) GasProbe.mark(2013 + 10 * row);
+            } else {
+                GasProbe.mark(2012 + 10 * row);
+                _evalAndAccumulate(fr);
+                GasProbe.mark(2013 + 10 * row);
+            }
             GasProbe.mark(2014 + 10 * row);
         }
-""")
-P(f, """        if (wires.length < 4 * count || constants.length < constantOffset + 2) revert InvalidMleProof();
-        output = new GoldilocksExt3.Ext3[](count);
-        assembly ("memory-safe") {
-            function mul3(a0, a1, a2, b0, b1, b2) -> r0, r1, r2 {
-                let p := 0xFFFFFFFF00000001
-                let t0 := addmod(mulmod(a1, b2, p), mulmod(a2, b1, p), p)
-""", """        if (wires.length < 4 * count || constants.length < constantOffset + 2) revert InvalidMleProof();
-        output = new GoldilocksExt3.Ext3[](count);
-        GasProbe.ext3Count(70, 3 * count);
-        assembly ("memory-safe") {
-            function mul3(a0, a1, a2, b0, b1, b2) -> r0, r1, r2 {
-                let p := 0xFFFFFFFF00000001
-                let t0 := addmod(mulmod(a1, b2, p), mulmod(a2, b1, p), p)
 """)
 
 # ---------------------------------------------------------------- PoseidonGateExt3
 f = "PoseidonGateExt3.sol"
-P(f, 'import {GoldilocksExt3} from "./spongefish/GoldilocksExt3.sol";\n',
-     'import {GoldilocksExt3} from "./spongefish/GoldilocksExt3.sol";\n' + IMPORT_ROOT)
-P(f, """        if (wires.length < POSEIDON_WIRES) revert InvalidMleProof();
+P(f, 'import {PoseidonConstants} from "./PoseidonConstants.sol";\n',
+     'import {PoseidonConstants} from "./PoseidonConstants.sol";\n' + IMPORT_ROOT)
+P(f, """        if (wires.length < POSEIDON_WIRES * WIRE) revert InvalidMleProof();
 
-        bytes memory allRC = PoseidonConstants.ALL_ROUND_CONSTANTS;
+        bytes memory roundConstants = PoseidonConstants.ALL_ROUND_CONSTANTS;
 """, """        GasProbe.mark(700);
-        if (wires.length < POSEIDON_WIRES) revert InvalidMleProof();
+        if (wires.length < POSEIDON_WIRES * WIRE) revert InvalidMleProof();
 
-        bytes memory allRC = PoseidonConstants.ALL_ROUND_CONSTANTS;
+        bytes memory roundConstants = PoseidonConstants.ALL_ROUND_CONSTANTS;
 """)
-P(f, """        _evalSwapDelta(wires, statePtr, constraintsPtr);
-        uint256 next = _firstFullRounds(wires, statePtr, scratchPtr, constraintsPtr, mdsPtr, allRC);
-        _partialFirstConstantLayer(statePtr, pfrc);
-        _mdsPartialLayerInit(statePtr, scratchPtr, pim);
-        next = _partialRounds(wires, statePtr, scratchPtr, constraintsPtr, prc, prvs, prwh, next, mdsPtr);
-        next = _secondFullRounds(wires, statePtr, scratchPtr, constraintsPtr, mdsPtr, allRC, next);
-        _outputConstraints(wires, statePtr, constraintsPtr, next);
-        reduced = _reduceRaw(constraintsPtr, POSEIDON_CONSTRAINTS, alpha);
+P(f, """        _swapDelta(w, s, k, t);
+        uint256 next = _fullRounds(w, s, t, k, roundConstants, 0, 5);
+        s = _partialInit(s, r, pfrc, pim);
+        next = _partialRounds(w, s, k, prc, prvs, prwh, next);
+        next = _fullRounds(w, s, t, k, roundConstants, 1, next);
+        _outputConstraints(w, s, k, next);
+        (red0, red1, red2) = _reduce(k, alpha0, alpha1, alpha2);
     }
 """, """        GasProbe.mark(701);
-        _evalSwapDelta(wires, statePtr, constraintsPtr);
+        _swapDelta(w, s, k, t);
         GasProbe.ext3Count(83, 5);
         GasProbe.mark(702);
-        uint256 next = _firstFullRounds(wires, statePtr, scratchPtr, constraintsPtr, mdsPtr, allRC);
+        uint256 next = _fullRounds(w, s, t, k, roundConstants, 0, 5);
+        GasProbe.ext3Count(80, 192);
         GasProbe.mark(703);
-        _partialFirstConstantLayer(statePtr, pfrc);
-        _mdsPartialLayerInit(statePtr, scratchPtr, pim);
+        s = _partialInit(s, r, pfrc, pim);
         GasProbe.scalarCount(84, 121);
         GasProbe.mark(704);
-        next = _partialRounds(wires, statePtr, scratchPtr, constraintsPtr, prc, prvs, prwh, next, mdsPtr);
+        next = _partialRounds(w, s, k, prc, prvs, prwh, next);
+        GasProbe.ext3Count(80, 88);
         GasProbe.mark(705);
-        next = _secondFullRounds(wires, statePtr, scratchPtr, constraintsPtr, mdsPtr, allRC, next);
+        next = _fullRounds(w, s, t, k, roundConstants, 1, next);
+        GasProbe.ext3Count(80, 192);
         GasProbe.mark(706);
-        _outputConstraints(wires, statePtr, constraintsPtr, next);
+        _outputConstraints(w, s, k, next);
         GasProbe.mark(707);
-        reduced = _reduceRaw(constraintsPtr, POSEIDON_CONSTRAINTS, alpha);
+        (red0, red1, red2) = _reduce(k, alpha0, alpha1, alpha2);
+        GasProbe.ext3Count(82, 123);
         GasProbe.mark(708);
     }
-""")
-P(f, """    function _sboxOne(uint256 valuePtr) private pure {
-        assembly ("memory-safe") {
-""", """    function _sboxOne(uint256 valuePtr) private pure {
-        GasProbe.ext3Count(80, 4);
-        assembly ("memory-safe") {
-""")
-P(f, """    function _mdsLayer(uint256 statePtr, uint256 scratchPtr, uint256 mdsPtr) private pure {
-        assembly ("memory-safe") {
-""", """    function _mdsLayer(uint256 statePtr, uint256 scratchPtr, uint256 mdsPtr) private pure {
-        GasProbe.scalarCount(81, 145);
-        assembly ("memory-safe") {
-""")
-P(f, """        uint256 m00
-    ) private pure {
-        assembly ("memory-safe") {
-            let p := P
-            let s0 := mload(statePtr)
-""", """        uint256 m00
-    ) private pure {
-        GasProbe.scalarCount(85, 23);
-        assembly ("memory-safe") {
-            let p := P
-            let s0 := mload(statePtr)
-""")
-P(f, """        returns (GoldilocksExt3.Ext3 memory reduced)
-    {
-        assembly ("memory-safe") {
-            function extMul(a0, a1, a2, b0, b1, b2) -> c0, c1, c2 {
-                let p := P
-                c0 := addmod(mulmod(a0, b0, p), mulmod(2, addmod(mulmod(a1, b2, p), mulmod(a2, b1, p), p), p), p)
-                c1 := addmod(addmod(mulmod(a0, b1, p), mulmod(a1, b0, p), p), mulmod(2, mulmod(a2, b2, p), p), p)
-                c2 := addmod(addmod(mulmod(a0, b2, p), mulmod(a1, b1, p), p), mulmod(a2, b0, p), p)
-            }
-            let p := P
-            let alpha0 := mload(alpha)
-""", """        returns (GoldilocksExt3.Ext3 memory reduced)
-    {
-        GasProbe.ext3Count(82, count);
-        assembly ("memory-safe") {
-            function extMul(a0, a1, a2, b0, b1, b2) -> c0, c1, c2 {
-                let p := P
-                c0 := addmod(mulmod(a0, b0, p), mulmod(2, addmod(mulmod(a1, b2, p), mulmod(a2, b1, p), p), p), p)
-                c1 := addmod(addmod(mulmod(a0, b1, p), mulmod(a1, b0, p), p), mulmod(2, mulmod(a2, b2, p), p), p)
-                c2 := addmod(addmod(mulmod(a0, b2, p), mulmod(a1, b1, p), p), mulmod(a2, b0, p), p)
-            }
-            let p := P
-            let alpha0 := mload(alpha)
 """)
 
 # ---------------------------------------------------------------- PoseidonPublicInputsHash
