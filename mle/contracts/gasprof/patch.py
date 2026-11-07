@@ -1134,12 +1134,10 @@ P(f, """        if (rStart > r.length / 3 || numRounds > r.length / 3 - rStart) 
 # ---------------------------------------------------------------- Plonky2GateEvaluatorExt3
 f = "Plonky2GateEvaluatorExt3.sol"
 P(f, '} from "./generated/MleWhirV2.sol";\n', '} from "./generated/MleWhirV2.sol";\n' + IMPORT_ROOT)
-P(f, """    ) external pure returns (GoldilocksExt3.Ext3 memory combined) {
-        return _evalCombinedUnchecked(wires, constants, publicInputsHash, alpha, gates, numSelectors);
+P(f, """        return _evalFlatUnchecked(flatWires, flatConstants, publicInputsHash, alpha, gates, numSelectors);
     }
-""", """    ) external pure returns (GoldilocksExt3.Ext3 memory combined) {
-        GasProbe.mark(600);
-        combined = _evalCombinedUnchecked(wires, constants, publicInputsHash, alpha, gates, numSelectors);
+""", """        GasProbe.mark(600);
+        combined = _evalFlatUnchecked(flatWires, flatConstants, publicInputsHash, alpha, gates, numSelectors);
         GasProbe.mark(601);
     }
 """)
