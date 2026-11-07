@@ -181,6 +181,27 @@ A1+A2 は 1 つの改修で扱える（「core は compact calldata を直接読
 - 公開入力 Poseidon のインラインリテラル 734 個は `PoseidonConstants.sol` の blob と一致（本体で照合: 未知のリテラル 0、不足 0）。
 - 実測された EVM の実コスト: Yul でも Ext3 積 1 回 ≈350〜400 gas（mulmod/addmod 連鎖）、lazy reduction（2^64 未満の canonical limb の積和を整数で累積し limb ごとに 1 回 `mod`）で ≈25% 減。机上見積（§3）は実コストを 3〜4 倍過小評価していた。
 
+### フェーズ別の内訳（配備形状、計測器補正後、`gas_profile_2026-11-07/summary_tables_phase1.txt`）
+
+| フェーズ | Phase 0 | Phase 1 |
+| --- | ---: | ---: |
+| Compact decode／parse（Pinned の decode → core の flat limb 化） | 733,188 | 471,161 |
+| Pinned→core 境界 | 470,851 | 71,929 |
+| core: 初期 transcript | 261,431 | 138,394 |
+| core: canonical copy／views | 274,971 | 9,893 |
+| core→Outer 境界 | 568,666 | 98,929 |
+| Outer 結合 sumcheck 13 round | 905,348 | 418,231 |
+| norm/logUp 終端（PI 束縛含む） | 1,834,153 | 848,269 |
+| claim 吸収 + index squeeze | 420,829 | 54,017 |
+| packed-claim fold | 557,093 | 424,830 |
+| core→WHIR 境界 | 195,648 | 145,480 |
+| WHIR フレーム計 | 5,638,527 | 2,901,251 |
+| 公開入力 Poseidon（13 permutation） | 1,736,738 | 560,261 |
+| core→gate 境界 | 107,952 | 24,685 |
+| ゲート終端（非 Poseidon 13 行 + Poseidon） | 3,337,374 | 1,020,805 |
+| ゲート終端式（外部 → core 内） | 70,540 | 13,586 |
+| 計（補正後 callee total） | 17,050,048 | 7,258,321 |
+
 ### 残り（実装レベルで各 ≲10k）とプロトコル側の選択肢
 
 実装のみでの残余は各項目 10k 未満（エージェント報告）。さらに削るなら B5（verifier 側の公開入力 Poseidon 廃止、−0.56M）、B1（squeeze の 4 limb/keccak 化）、C（rate 再調整で calldata −0.3M）が候補で、いずれも wire v4（Rust・Lean manifest・監査文書の更新）を伴う。

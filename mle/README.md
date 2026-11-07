@@ -353,7 +353,10 @@ The largest phases of that profile:
 
 The full tables, including the small fixture and the per-span operation counts
 (keccak invocations/bytes, Ext3 multiplications), are in
-`tasks/gas_profile_2026-11-07/summary_tables.txt` and `profile_full.txt`;
+`tasks/gas_profile_2026-11-07/summary_tables.txt` and `profile_full.txt`
+(Phase 0 baseline) and in `summary_tables_phase1.txt` / `profile_full_phase1.txt`
+(after the Phase 1 optimisations; the production-shape callee total is
+7,258,321 gas corrected);
 `contracts/gasprof/README.md` documents the probe, the correction and the
 procedure.
 
