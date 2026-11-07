@@ -1313,10 +1313,11 @@ contract V2CrossLanguageFixtureTest is Test {
         bytes memory compact = vm.parseJsonBytes(json, string.concat(CASE, ".compactProof.bytes"));
         bytes memory callData = abi.encodeCall(PinnedMleVerifierV2.fraudVerdictCompact, (compact, bytes32(0)));
 
-        // Keep enough gas for strict compact decoding and the classifier's
-        // EIP-150 reserve, but less than an honest end-to-end verification.
+        // Keep enough gas for strict compact parsing and the classifier's
+        // EIP-150 reserve, but less than an honest end-to-end verification
+        // (4.37M execution gas for this fixture after the gas-halving work).
         // This is a containment test, not a snapshot of verifier performance.
-        (bool success, bytes memory result) = address(pinned).staticcall{gas: 5_000_000}(callData);
+        (bool success, bytes memory result) = address(pinned).staticcall{gas: 2_000_000}(callData);
         assertTrue(success, "compact low-gas classifier must contain exhaustion");
         assertEq(result.length, 32, "compact low-gas verdict encoding");
         assertEq(uint256(abi.decode(result, (uint8))), 3, "compact low gas must be STARVED");

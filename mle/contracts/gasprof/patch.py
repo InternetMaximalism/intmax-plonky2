@@ -174,19 +174,23 @@ P(f, """        DerivedState memory derived = _deriveInitialTranscript(view_, co
         GasProbe.mark(23);
 
         OuterLogupExt3Verifier.VerificationKey memory outerVk""")
-P(f, """        (logPoint, gatePoint, gateFinalClaim) = _runOuter(view_, outerVk, derived);
+P(f, """        (logPoint, gatePoint, gateFinalClaim, derived.transcript) = OuterLogupExt3Verifier.verifyPrevalidatedFlat(
+            view_.logRounds,
 """, """        GasProbe.mark(24);
-        (logPoint, gatePoint, gateFinalClaim) = _runOuter(view_, outerVk, derived);
+        GasProbe.mark(25);
+        (logPoint, gatePoint, gateFinalClaim, derived.transcript) = OuterLogupExt3Verifier.verifyPrevalidatedFlat(
+            view_.logRounds,
 """)
-P(f, """        (logPoint, gatePoint, gateFinalClaim, derived.transcript) = OuterLogupExt3Verifier.verifyPrevalidated(
-            logProof, gateProof, outerVk, derived.logChallenges, terminal, derived.transcript
+P(f, """            derived.logChallenges,
+            derived.transcript
         );
-""", """        GasProbe.mark(25);
-        (logPoint, gatePoint, gateFinalClaim, derived.transcript) = OuterLogupExt3Verifier.verifyPrevalidated(
-            logProof, gateProof, outerVk, derived.logChallenges, terminal, derived.transcript
+
+        GoldilocksExt3.Ext3[][] memory indexPoints""", """            derived.logChallenges,
+            derived.transcript
         );
         GasProbe.mark(26);
-""")
+
+        GoldilocksExt3.Ext3[][] memory indexPoints""")
 P(f, """        GoldilocksExt3.Ext3[][] memory indexPoints = _absorbClaimsAndSampleIndices(derived.transcript, view_, indexBits);
 """, """        GoldilocksExt3.Ext3[][] memory indexPoints = _absorbClaimsAndSampleIndices(derived.transcript, view_, indexBits);
         GasProbe.mark(27);

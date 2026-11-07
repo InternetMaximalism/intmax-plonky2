@@ -392,7 +392,17 @@ contract MleVerifierV2 {
         GoldilocksExt3.Ext3[] memory logPoint;
         GoldilocksExt3.Ext3[] memory gatePoint;
         GoldilocksExt3.Ext3 memory gateFinalClaim;
-        (logPoint, gatePoint, gateFinalClaim) = _runOuter(view_, outerVk, derived);
+        (logPoint, gatePoint, gateFinalClaim, derived.transcript) = OuterLogupExt3Verifier.verifyPrevalidatedFlat(
+            view_.logRounds,
+            view_.gateRounds,
+            view_.logPreprocessed,
+            view_.logWitness,
+            view_.logNormInverse,
+            view_.publicInputs,
+            outerVk,
+            derived.logChallenges,
+            derived.transcript
+        );
 
         GoldilocksExt3.Ext3[][] memory indexPoints = _absorbClaimsAndSampleIndices(derived.transcript, view_, indexBits);
         (GoldilocksExt3.Ext3[] memory evaluations, bytes memory evaluationMask) = PackedClaimExt3
@@ -497,61 +507,6 @@ contract MleVerifierV2 {
                 )
         }
         if (!accepted) revert InvalidMleProof();
-    }
-
-    /// @dev Coupled outer sumchecks and the norm/logUp terminal over the flat
-    /// buffers. TEMPORARY ADAPTER: builds pointer-table views for the current
-    /// `verifyPrevalidated` entry; replaced by `verifyPrevalidatedFlat`.
-    function _runOuter(
-        ProofView memory view_,
-        OuterLogupExt3Verifier.VerificationKey memory outerVk,
-        DerivedState memory derived
-    )
-        private
-        pure
-        returns (
-            GoldilocksExt3.Ext3[] memory logPoint,
-            GoldilocksExt3.Ext3[] memory gatePoint,
-            GoldilocksExt3.Ext3 memory gateFinalClaim
-        )
-    {
-        OuterLogupExt3Verifier.SumcheckProof memory logProof =
-            _sumcheckView(view_.logRounds, outerVk.numVars, LOG_ROUND_DEGREE_V2);
-        OuterLogupExt3Verifier.SumcheckProof memory gateProof =
-            _sumcheckView(view_.gateRounds, outerVk.numVars, outerVk.gateDegree);
-        OuterLogupExt3Verifier.TerminalEvaluations memory terminal = OuterLogupExt3Verifier.TerminalEvaluations({
-            preprocessed: _pointerTable(view_.logPreprocessed, view_.logPreprocessed.length / 3),
-            witness: _pointerTable(view_.logWitness, view_.logWitness.length / 3),
-            normInverse: _pointerTable(view_.logNormInverse, view_.logNormInverse.length / 3),
-            publicInputs: view_.publicInputs
-        });
-        (logPoint, gatePoint, gateFinalClaim, derived.transcript) = OuterLogupExt3Verifier.verifyPrevalidated(
-            logProof, gateProof, outerVk, derived.logChallenges, terminal, derived.transcript
-        );
-    }
-
-    function _sumcheckView(uint256[] memory limbs, uint256 rounds, uint256 degree)
-        private
-        pure
-        returns (OuterLogupExt3Verifier.SumcheckProof memory proof)
-    {
-        if (limbs.length != 3 * rounds * degree) revert InvalidMleProof();
-        proof.rounds = new OuterLogupExt3Verifier.CoefficientRound[](rounds);
-        for (uint256 round = 0; round < rounds; ++round) {
-            GoldilocksExt3.Ext3[] memory table;
-            assembly ("memory-safe") {
-                table := mload(0x40)
-                mstore(table, degree)
-                let entries := add(table, 0x20)
-                let record := add(add(limbs, 0x20), mul(mul(round, degree), 0x60))
-                for { let i := 0 } lt(i, degree) { i := add(i, 1) } {
-                    mstore(add(entries, shl(5, i)), record)
-                    record := add(record, 0x60)
-                }
-                mstore(0x40, add(entries, shl(5, degree)))
-            }
-            proof.rounds[round].nonConstant = table;
-        }
     }
 
     function _deriveInitialTranscript(
