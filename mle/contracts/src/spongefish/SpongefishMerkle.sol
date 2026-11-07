@@ -47,9 +47,7 @@ library SpongefishMerkle {
         uint256 pairs = _packLayer(indices, leafHashes, n);
         (uint256 hc, uint256 hcEnd) = _hintCursor(hints, hintOffset);
         uint256 hcStart = hc;
-        for (uint256 layer = 0; layer < numLayers; layer++) {
-            (n, hc) = _reduceLayer(pairs, n, hc, hcEnd);
-        }
+        (n, hc) = _reduceLayers(pairs, n, hc, hcEnd, numLayers);
         newHintOffset = hintOffset + (hc - hcStart);
 
         // Should be left with a single root
@@ -76,7 +74,7 @@ library SpongefishMerkle {
         uint256 pairs = _packLayer(curIndices, curHashes, n);
         (uint256 hc, uint256 hcEnd) = _hintCursor(hints, hintOff);
         uint256 hcStart = hc;
-        (nextLen, hc) = _reduceLayer(pairs, n, hc, hcEnd);
+        (nextLen, hc) = _reduceLayers(pairs, n, hc, hcEnd, 1);
         newHintOff = hintOff + (hc - hcStart);
         assembly ("memory-safe") {
             let src := pairs
@@ -136,11 +134,11 @@ library SpongefishMerkle {
         return (base + hintOff, base + length);
     }
 
-    /// @dev Reduce `n` packed (index, hash) pairs at `pairs` to their parents, in place.
-    ///      Pairs (a, a^1) that are both present merge without a hint; a lone node reads its
-    ///      sibling from calldata at `hc` (never past `hcEnd`). Returns the parent count and
-    ///      the advanced hint cursor.
-    function _reduceLayer(uint256 pairs, uint256 n, uint256 hc, uint256 hcEnd)
+    /// @dev Reduce `n` packed (index, hash) pairs at `pairs` to their ancestors `numLayers`
+    ///      levels up, in place, one layer at a time. Pairs (a, a^1) that are both present
+    ///      merge without a hint; a lone node reads its sibling from calldata at `hc` (never
+    ///      past `hcEnd`). Returns the remaining node count and the advanced hint cursor.
+    function _reduceLayers(uint256 pairs, uint256 n, uint256 hc, uint256 hcEnd, uint256 numLayers)
         private
         pure
         returns (uint256 nextLen, uint256 newHc)
@@ -180,9 +178,12 @@ library SpongefishMerkle {
                     wp := add(wp, 0x40)
                 }
             }
-            let wp, hcOut := reduce(pairs, add(pairs, shl(6, n)), hc, hcEnd)
-            nextLen := shr(6, sub(wp, pairs))
-            newHc := hcOut
+            let end := add(pairs, shl(6, n))
+            for { let layer := 0 } lt(layer, numLayers) { layer := add(layer, 1) } {
+                end, hc := reduce(pairs, end, hc, hcEnd)
+            }
+            nextLen := shr(6, sub(end, pairs))
+            newHc := hc
         }
     }
 }

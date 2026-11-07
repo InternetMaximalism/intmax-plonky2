@@ -140,34 +140,41 @@ library SpongefishWhir {
         TranscriptState memory ts,
         bytes memory transcript
     ) internal pure returns (uint64 c0, uint64 c1, uint64 c2) {
-        uint256 pos = ts.transcriptPos;
-        if (pos > transcript.length || 24 > transcript.length - pos) {
-            revert InvalidMleProof();
-        }
-        ts.sponge.absorbSlice(transcript, pos, 24);
-        ts.transcriptPos = pos + 24;
-        uint256 raw0;
-        uint256 raw1;
-        uint256 raw2;
+        // One assembly block: bounds check, absorb (state = keccak256(state || 24 bytes),
+        // counter = 0), cursor advance, LE decode and the canonical check.
         assembly ("memory-safe") {
-            // The three LE u64 limbs are the top 24 bytes of one word. Reverse the bytes inside
-            // every 64-bit lane at once (same result as three per-limb byte swaps).
+            let pos := mload(add(ts, 0x20))
+            let len := mload(transcript)
+            if or(gt(pos, len), gt(24, sub(len, pos))) {
+                mstore(0x00, shl(224, 0xf0783a66))
+                revert(0x00, 0x04)
+            }
+            let sp := mload(ts) // ts.sponge
             let w := mload(add(add(transcript, 0x20), pos))
+            // Temporary scratch after the free memory pointer (not retained): state || message.
+            let scratch := mload(0x40)
+            mstore(scratch, mload(sp))
+            mstore(add(scratch, 0x20), w)
+            mstore(sp, keccak256(scratch, 56))
+            mstore(add(sp, 0x20), 0)
+            mstore(add(ts, 0x20), add(pos, 24))
+            // The three LE u64 limbs are the top 24 bytes of the word. Reverse the bytes inside
+            // every 64-bit lane at once (same result as three per-limb byte swaps).
             w := or(and(shr(8, w), 0x00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF), and(shl(8, w), 0xFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00))
             w := or(and(shr(16, w), 0x0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF), and(shl(16, w), 0xFFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000))
             w := or(and(shr(32, w), 0x00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF), and(shl(32, w), 0xFFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000))
-            raw0 := shr(192, w)
-            raw1 := and(shr(128, w), 0xFFFFFFFFFFFFFFFF)
-            raw2 := and(shr(64, w), 0xFFFFFFFFFFFFFFFF)
+            c0 := shr(192, w)
+            c1 := and(shr(128, w), 0xFFFFFFFFFFFFFFFF)
+            c2 := and(shr(64, w), 0xFFFFFFFFFFFFFFFF)
+            // SECURITY: enforce canonical encoding on RAW values (before any reduction).
+            // The sponge already absorbed the raw bytes above; if any raw >= GL_P, the prover
+            // is using a non-canonical byte pattern to steer Fiat-Shamir challenge derivation
+            // while still claiming an in-field value.
+            if or(or(gt(c0, 0xFFFFFFFF00000000), gt(c1, 0xFFFFFFFF00000000)), gt(c2, 0xFFFFFFFF00000000)) {
+                mstore(0x00, shl(224, 0xf0783a66))
+                revert(0x00, 0x04)
+            }
         }
-        // SECURITY: enforce canonical encoding on RAW values (before any reduction).
-        // The sponge already absorbed the raw bytes via proverMessage above; if any
-        // raw >= GL_P, the prover is using a non-canonical byte pattern to steer
-        // Fiat-Shamir challenge derivation while still claiming an in-field value.
-        if (raw0 >= GL_P || raw1 >= GL_P || raw2 >= GL_P) revert InvalidMleProof();
-        c0 = uint64(raw0);
-        c1 = uint64(raw1);
-        c2 = uint64(raw2);
     }
 
     /// @dev Squeeze a Field64_3: 3 × (8 + 32) = 120 bytes.
