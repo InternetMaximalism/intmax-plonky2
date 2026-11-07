@@ -440,9 +440,9 @@ contract MleVerifierV2 {
         if (!whirAccepted) revert InvalidMleProof();
 
         uint256[4] memory publicInputsHash = PoseidonPublicInputsHash.hashNoPad(view_.publicInputs);
-        GoldilocksExt3.Ext3 memory gateEvaluation = Plonky2GateEvaluatorExt3.evalCombinedPrevalidatedFlat(
-            view_.gateWitness,
-            _prefixWords(view_.gatePreprocessed, 3 * circuit.numConstants),
+        GoldilocksExt3.Ext3 memory gateEvaluation = Plonky2GateEvaluatorExt3.evalCombinedPrevalidatedBytes(
+            _limbBytes(view_.gateWitness, view_.gateWitness.length),
+            _limbBytes(view_.gatePreprocessed, 3 * circuit.numConstants),
             publicInputsHash,
             derived.gateAlpha,
             config.gates,
@@ -1056,13 +1056,14 @@ contract MleVerifierV2 {
 
     // ------------------------------------------------------------------ helpers
 
-    /// @dev Copy of the first `count` words of a flat limb buffer (the constants
-    /// prefix of the gate preprocessed vector).
-    function _prefixWords(uint256[] memory limbs, uint256 count) private pure returns (uint256[] memory prefix) {
+    /// @dev The first `count` words of a flat limb buffer as a byte string (the
+    /// image of the words, `0x60` bytes per Fp3 value), copied so the buffer's own
+    /// length word is untouched.
+    function _limbBytes(uint256[] memory limbs, uint256 count) private pure returns (bytes memory image) {
         if (count > limbs.length) revert InvalidMleProof();
-        prefix = new uint256[](count);
+        image = new bytes(count << 5);
         assembly ("memory-safe") {
-            mcopy(add(prefix, 0x20), add(limbs, 0x20), shl(5, count))
+            mcopy(add(image, 0x20), add(limbs, 0x20), shl(5, count))
         }
     }
 
