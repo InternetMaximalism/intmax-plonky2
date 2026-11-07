@@ -19,14 +19,27 @@ import {
 ///      production verifier can link this bulk implementation without consuming its own
 ///      EIP-170 bytecode budget. The terminal uses formal coordinate polynomials at the
 ///      off-cube Ext3 point. It never takes an actual Ext3 inverse there.
+///
+///      Internally every Ext3 vector is a flat `uint256[]` of canonical limbs, three words
+///      per element in `(c0, c1, c2)` order (`verifyPrevalidatedFlat` consumes that layout
+///      directly; the `Ext3[]`-based entries flatten their inputs once). All field algebra
+///      lives in `("memory-safe")` Yul: an element is three words, products are small Yul
+///      helpers over stack triples or scratch records (every load precedes every store, so
+///      an output may alias an input), and long-lived accumulators sit in fixed scratch so
+///      nothing is allocated per round or per wire. Every limb written back is reduced by
+///      `addmod`/`mulmod`, so results are canonical and bit-identical to the reference Ext3
+///      library sequence they replace.
 library OuterLogupExt3Verifier {
     uint256 internal constant P = BASE_FIELD_MODULUS_V2;
-    uint64 private constant INV_TWO = uint64((BASE_FIELD_MODULUS_V2 + 1) / 2);
     uint256 internal constant MAX_DEGREE = LOG_ROUND_DEGREE_V2;
     uint256 internal constant MAX_ROW_VARIABLES = MAX_ROW_VARIABLES_V2;
     uint256 internal constant MAX_GATE_DEGREE = MAX_GATE_ROUND_DEGREE_V2;
     uint256 internal constant MAX_ROUTED_WIRES = MAX_ROUTED_WIRES_V2;
     uint256 internal constant MAX_CONSTITUENT_WIDTH = MAX_CONSTITUENT_WIDTH_V2;
+
+    // Yul literals (assembly cannot read these constants): the Goldilocks prime
+    // 0xFFFFFFFF00000001, `2p` = 0x1FFFFFFFE00000002, `p - 1` = 0xFFFFFFFF00000000,
+    // `2^-1 mod p` = 0x7FFFFFFF80000001 and the `InvalidMleProof()` selector 0xf0783a66.
 
     struct CoefficientRound {
         /// @dev Monomial coefficients `[a1, a2, a3, a4, a5]` in this exact order.
@@ -74,17 +87,7 @@ library OuterLogupExt3Verifier {
         uint256[] publicInputs;
     }
 
-    /// @dev Fixed owner for the public-input accumulator and unique-row cache.
-    /// Keeping these values behind one memory pointer avoids stack growth in
-    /// the 103-entry production loop without changing the packed-map walk.
-    struct PublicInputBindingScratch {
-        uint256[] cachedRows;
-        GoldilocksExt3.Ext3[] rowBindings;
-        uint256 uniqueRows;
-        uint256 varyingRowBits;
-        GoldilocksExt3.Ext3 etaPower;
-        GoldilocksExt3.Ext3 binding;
-    }
+    // ---------------------------------------------------------------- external entries
 
     /// @notice Verify both lockstep Ext3 sumchecks and a norm/logUp terminal evaluation.
     /// @dev This verifies only the outer algebra. Before accepting a proof, the caller MUST
@@ -114,11 +117,17 @@ library OuterLogupExt3Verifier {
         )
     {
         _validateAll(logProof, gateProof, vk, challenges, terminal);
-        GoldilocksExt3.Ext3 memory logFinalClaim;
-        (logPoint, logFinalClaim, gatePoint, gateFinalClaim) =
-            _verifyCoupledSumchecksUnchecked(logProof, gateProof, vk.numVars, transcript);
-        GoldilocksExt3.Ext3 memory terminalValue = _evaluateTerminalUnchecked(vk, challenges, terminal, logPoint);
-        if (!GoldilocksExt3.eq(logFinalClaim, terminalValue)) revert InvalidMleProof();
+        (logPoint, gatePoint, gateFinalClaim) = _verifyFlatUnchecked(
+            _flattenRounds(logProof, vk.numVars, MAX_DEGREE),
+            _flattenRounds(gateProof, vk.numVars, vk.gateDegree),
+            _flattenExt3(terminal.preprocessed),
+            _flattenExt3(terminal.witness),
+            _flattenExt3(terminal.normInverse),
+            terminal.publicInputs,
+            vk,
+            challenges,
+            transcript
+        );
         nextTranscript = transcript;
     }
 
@@ -129,6 +138,8 @@ library OuterLogupExt3Verifier {
     /// deriving canonical transcript challenges, and pins the VK by digest.
     /// It is not a standalone proof verifier and its return value must never be
     /// trusted without that preflight and the subsequent PCS/gate checks.
+    /// The vector shapes the caller guarantees are re-checked against `vk` while
+    /// the inputs are flattened; any mismatch reverts with `InvalidMleProof`.
     function verifyPrevalidated(
         SumcheckProof memory logProof,
         SumcheckProof memory gateProof,
@@ -146,11 +157,54 @@ library OuterLogupExt3Verifier {
             TranscriptV2.Transcript memory nextTranscript
         )
     {
-        GoldilocksExt3.Ext3 memory logFinalClaim;
-        (logPoint, logFinalClaim, gatePoint, gateFinalClaim) =
-            _verifyCoupledSumchecksUnchecked(logProof, gateProof, vk.numVars, transcript);
-        GoldilocksExt3.Ext3 memory terminalValue = _evaluateTerminalUnchecked(vk, challenges, terminal, logPoint);
-        if (!GoldilocksExt3.eq(logFinalClaim, terminalValue)) revert InvalidMleProof();
+        uint256[] memory logRounds = _flattenRounds(logProof, vk.numVars, MAX_DEGREE);
+        uint256[] memory gateRounds = _flattenRounds(gateProof, vk.numVars, vk.gateDegree);
+        (logPoint, gatePoint, gateFinalClaim) = _verifyFlatUnchecked(
+            logRounds,
+            gateRounds,
+            _flattenExt3(terminal.preprocessed),
+            _flattenExt3(terminal.witness),
+            _flattenExt3(terminal.normInverse),
+            terminal.publicInputs,
+            vk,
+            challenges,
+            transcript
+        );
+        nextTranscript = transcript;
+    }
+
+    /// @notice Same semantics as `verifyPrevalidated`, but every Ext3 vector is supplied as a flat
+    /// `uint256[]` of canonical limbs, three words per element in (c0, c1, c2) order, no pointer tables.
+    /// The caller guarantees exact lengths and canonical limbs, exactly as for `verifyPrevalidated`.
+    /// @param logRounds numVars * 5 * 3 words: round-major, then coefficients a1..a5, then limbs.
+    /// @param gateRounds numVars * gateDegree * 3 words, same ordering.
+    /// @param preprocessed (numConstants + numRoutedWires) * 3 words: constants..., sigma_0..sigma_{m-1}.
+    /// @param witness numWires * 3 words.
+    /// @param normInverse 2 * numRoutedWires * 3 words.
+    /// @param publicInputs numPublicInputs canonical base-field words.
+    function verifyPrevalidatedFlat(
+        uint256[] memory logRounds,
+        uint256[] memory gateRounds,
+        uint256[] memory preprocessed,
+        uint256[] memory witness,
+        uint256[] memory normInverse,
+        uint256[] memory publicInputs,
+        VerificationKey memory vk,
+        Challenges memory challenges,
+        TranscriptV2.Transcript memory transcript
+    )
+        external
+        pure
+        returns (
+            GoldilocksExt3.Ext3[] memory logPoint,
+            GoldilocksExt3.Ext3[] memory gatePoint,
+            GoldilocksExt3.Ext3 memory gateFinalClaim,
+            TranscriptV2.Transcript memory nextTranscript
+        )
+    {
+        (logPoint, gatePoint, gateFinalClaim) = _verifyFlatUnchecked(
+            logRounds, gateRounds, preprocessed, witness, normInverse, publicInputs, vk, challenges, transcript
+        );
         nextTranscript = transcript;
     }
 
@@ -175,8 +229,13 @@ library OuterLogupExt3Verifier {
         )
     {
         _validateProofs(logProof, gateProof, numVars, gateDegree);
-        (logPoint, logFinalClaim, gatePoint, gateFinalClaim) =
-            _verifyCoupledSumchecksUnchecked(logProof, gateProof, numVars, transcript);
+        (logPoint, logFinalClaim, gatePoint, gateFinalClaim) = _coupledSumchecksFlat(
+            _flattenRounds(logProof, numVars, MAX_DEGREE),
+            _flattenRounds(gateProof, numVars, gateDegree),
+            numVars,
+            gateDegree,
+            transcript
+        );
         nextTranscript = transcript;
     }
 
@@ -191,7 +250,15 @@ library OuterLogupExt3Verifier {
     ) external pure {
         _validateTerminalInputs(vk, challenges, terminal, point);
         _checkCanonical(finalClaim);
-        GoldilocksExt3.Ext3 memory terminalValue = _evaluateTerminalUnchecked(vk, challenges, terminal, point);
+        GoldilocksExt3.Ext3 memory terminalValue = _terminalFlat(
+            vk,
+            challenges,
+            _flattenExt3(terminal.preprocessed),
+            _flattenExt3(terminal.witness),
+            _flattenExt3(terminal.normInverse),
+            terminal.publicInputs,
+            point
+        );
         if (!GoldilocksExt3.eq(finalClaim, terminalValue)) revert InvalidMleProof();
     }
 
@@ -203,7 +270,15 @@ library OuterLogupExt3Verifier {
         GoldilocksExt3.Ext3[] memory point
     ) external pure returns (GoldilocksExt3.Ext3 memory value) {
         _validateTerminalInputs(vk, challenges, terminal, point);
-        value = _evaluateTerminalUnchecked(vk, challenges, terminal, point);
+        value = _terminalFlat(
+            vk,
+            challenges,
+            _flattenExt3(terminal.preprocessed),
+            _flattenExt3(terminal.witness),
+            _flattenExt3(terminal.normInverse),
+            terminal.publicInputs,
+            point
+        );
     }
 
     /// @notice Check the Ext3 gate sumcheck terminal after its constituent
@@ -223,7 +298,8 @@ library OuterLogupExt3Verifier {
         }
         _checkCanonical(gateEvaluation);
         _checkCanonical(finalClaim);
-        GoldilocksExt3.Ext3 memory expected = GoldilocksExt3.mul(_eqEvaluation(tau, point), gateEvaluation);
+        GoldilocksExt3.Ext3 memory expected = _eqEvaluation(tau, point);
+        _mulInPlace(expected, gateEvaluation);
         if (!GoldilocksExt3.eq(expected, finalClaim)) revert InvalidMleProof();
     }
 
@@ -236,7 +312,8 @@ library OuterLogupExt3Verifier {
         for (uint256 i = 0; i < 3; ++i) {
             _checkCanonical(coordinates[i]);
         }
-        adjugate = _formalAdjugate(coordinates);
+        GoldilocksExt3.Ext3 memory norm;
+        _formalTerms(coordinates, adjugate, norm);
     }
 
     /// @notice Evaluate the formal cubic norm over Ext3-valued coordinate polynomials.
@@ -248,13 +325,75 @@ library OuterLogupExt3Verifier {
         for (uint256 i = 0; i < 3; ++i) {
             _checkCanonical(coordinates[i]);
         }
-        norm = _formalNorm(coordinates);
+        GoldilocksExt3.Ext3[3] memory adjugate;
+        _formalTerms(coordinates, adjugate, norm);
     }
 
-    function _verifyCoupledSumchecksUnchecked(
-        SumcheckProof memory logProof,
-        SumcheckProof memory gateProof,
+    // ---------------------------------------------------------------- flat core
+
+    /// @dev Shared body of `verify`, `verifyPrevalidated` and `verifyPrevalidatedFlat` over the
+    /// flat limb layout. The structural shape of every vector is re-checked against `vk` so no
+    /// Yul read can leave its buffer; canonical limbs are the caller's responsibility (or were
+    /// established by `_validateAll`).
+    function _verifyFlatUnchecked(
+        uint256[] memory logRounds,
+        uint256[] memory gateRounds,
+        uint256[] memory preprocessed,
+        uint256[] memory witness,
+        uint256[] memory normInverse,
+        uint256[] memory publicInputs,
+        VerificationKey memory vk,
+        Challenges memory challenges,
+        TranscriptV2.Transcript memory transcript
+    )
+        private
+        pure
+        returns (
+            GoldilocksExt3.Ext3[] memory logPoint,
+            GoldilocksExt3.Ext3[] memory gatePoint,
+            GoldilocksExt3.Ext3 memory gateFinalClaim
+        )
+    {
+        _requireFlatShapes(logRounds, gateRounds, preprocessed, witness, normInverse, publicInputs, vk, challenges);
+        GoldilocksExt3.Ext3 memory logFinalClaim;
+        (logPoint, logFinalClaim, gatePoint, gateFinalClaim) =
+            _coupledSumchecksFlat(logRounds, gateRounds, vk.numVars, vk.gateDegree, transcript);
+        GoldilocksExt3.Ext3 memory terminalValue =
+            _terminalFlat(vk, challenges, preprocessed, witness, normInverse, publicInputs, logPoint);
+        if (!GoldilocksExt3.eq(logFinalClaim, terminalValue)) revert InvalidMleProof();
+    }
+
+    function _requireFlatShapes(
+        uint256[] memory logRounds,
+        uint256[] memory gateRounds,
+        uint256[] memory preprocessed,
+        uint256[] memory witness,
+        uint256[] memory normInverse,
+        uint256[] memory publicInputs,
+        VerificationKey memory vk,
+        Challenges memory challenges
+    ) private pure {
+        uint256 numVars = vk.numVars;
+        uint256 numRoutedWires = vk.numRoutedWires;
+        if (
+            numVars > MAX_ROW_VARIABLES || vk.gateDegree > MAX_GATE_DEGREE
+                || logRounds.length != numVars * MAX_DEGREE * 3 || gateRounds.length != numVars * vk.gateDegree * 3
+                || preprocessed.length != 3 * (vk.numConstants + numRoutedWires) || witness.length != 3 * vk.numWires
+                || normInverse.length != 6 * numRoutedWires || vk.kIs.length != numRoutedWires
+                || vk.subgroupGenPowers.length != numVars || challenges.tau.length != numVars
+                || publicInputs.length > type(uint256).max / 3
+                || vk.publicInputWireMap.length != 3 * publicInputs.length
+        ) revert InvalidMleProof();
+    }
+
+    /// @dev Both coupled sumchecks over flat coefficient buffers. The transcript still receives
+    /// ordinary `Ext3[]` arguments: two pointer tables, reused every round, whose entries point
+    /// straight into the flat buffers. The zero-initialised return records are the running claims.
+    function _coupledSumchecksFlat(
+        uint256[] memory logRounds,
+        uint256[] memory gateRounds,
         uint256 numVars,
+        uint256 gateDegree,
         TranscriptV2.Transcript memory transcript
     )
         private
@@ -268,242 +407,795 @@ library OuterLogupExt3Verifier {
     {
         logPoint = new GoldilocksExt3.Ext3[](numVars);
         gatePoint = new GoldilocksExt3.Ext3[](numVars);
-        GoldilocksExt3.Ext3 memory logClaim = GoldilocksExt3.zero();
-        GoldilocksExt3.Ext3 memory gateClaim = GoldilocksExt3.zero();
+        GoldilocksExt3.Ext3[] memory logCoefficients = new GoldilocksExt3.Ext3[](MAX_DEGREE);
+        GoldilocksExt3.Ext3[] memory gateCoefficients = new GoldilocksExt3.Ext3[](gateDegree);
+        // Loop-invariant context read from memory inside the Yul: 0x00 log data, 0x20 gate data,
+        // 0x40 gate round stride, 0x60 log table, 0x80 gate table, 0xa0 log point table,
+        // 0xc0 gate point table, 0xe0 log claim, 0x100 gate claim.
+        uint256[9] memory ctx;
+        assembly ("memory-safe") {
+            mstore(ctx, add(logRounds, 0x20))
+            mstore(add(ctx, 0x20), add(gateRounds, 0x20))
+            mstore(add(ctx, 0x40), mul(gateDegree, 0x60))
+            mstore(add(ctx, 0x60), add(logCoefficients, 0x20))
+            mstore(add(ctx, 0x80), add(gateCoefficients, 0x20))
+            mstore(add(ctx, 0xa0), add(logPoint, 0x20))
+            mstore(add(ctx, 0xc0), add(gatePoint, 0x20))
+            mstore(add(ctx, 0xe0), logFinalClaim)
+            mstore(add(ctx, 0x100), gateFinalClaim)
+        }
 
         for (uint256 roundIndex = 0; roundIndex < numVars; ++roundIndex) {
-            GoldilocksExt3.Ext3[] memory logCoefficients = logProof.rounds[roundIndex].nonConstant;
-            GoldilocksExt3.Ext3[] memory gateCoefficients = gateProof.rounds[roundIndex].nonConstant;
+            assembly ("memory-safe") {
+                let base := add(mload(ctx), mul(roundIndex, 0x1e0))
+                let table := mload(add(ctx, 0x60))
+                for { let j := 0 } lt(j, 5) { j := add(j, 1) } {
+                    mstore(add(table, shl(5, j)), add(base, mul(j, 0x60)))
+                }
+                let stride := mload(add(ctx, 0x40))
+                base := add(mload(add(ctx, 0x20)), mul(roundIndex, stride))
+                table := mload(add(ctx, 0x80))
+                for { let offset := 0 } lt(offset, stride) { offset := add(offset, 0x60) } {
+                    mstore(table, add(base, offset))
+                    table := add(table, 0x20)
+                }
+            }
             TranscriptV2.CoupledOuterRoundChallenges memory roundChallenges =
                 TranscriptV2.commitCoupledOuterRound(transcript, roundIndex, logCoefficients, gateCoefficients);
+            // Round polynomial evaluation: a0 = (claim - sum a_j) / 2, then Horner at the challenge.
+            assembly ("memory-safe") {
+                // record x times stack triple b
+                function mulRecord(x, b0, b1, b2) -> c0, c1, c2 {
+                    let p := 0xFFFFFFFF00000001
+                    c0 :=
+                        addmod(
+                            mulmod(mload(x), b0, p),
+                            shl(1, addmod(mulmod(mload(add(x, 0x20)), b2, p), mulmod(mload(add(x, 0x40)), b1, p), p)),
+                            p
+                        )
+                    c1 :=
+                        addmod(
+                            addmod(mulmod(mload(x), b1, p), mulmod(mload(add(x, 0x20)), b0, p), p),
+                            shl(1, mulmod(mload(add(x, 0x40)), b2, p)),
+                            p
+                        )
+                    c2 :=
+                        addmod(
+                            addmod(mulmod(mload(x), b2, p), mulmod(mload(add(x, 0x20)), b1, p), p),
+                            mulmod(mload(add(x, 0x40)), b0, p),
+                            p
+                        )
+                }
+                // claim <- a0 + x * (a1 + x * (... + x * a_degree)) with a0 = (claim - sum a_j) * 2^-1.
+                // One pass: Horner from a_degree down to a_1 while summing the coefficients.
+                function evaluateRound(claim, base, end, x) {
+                    let p := 0xFFFFFFFF00000001
+                    let s0 := 0
+                    let s1 := 0
+                    let s2 := 0
+                    let e0 := 0
+                    let e1 := 0
+                    let e2 := 0
+                    if gt(end, base) {
+                        let c := sub(end, 0x60)
+                        e0 := mload(c)
+                        e1 := mload(add(c, 0x20))
+                        e2 := mload(add(c, 0x40))
+                        s0 := e0
+                        s1 := e1
+                        s2 := e2
+                        for {} gt(c, base) {} {
+                            c := sub(c, 0x60)
+                            e0, e1, e2 := mulRecord(x, e0, e1, e2)
+                            e0 := addmod(e0, mload(c), p)
+                            e1 := addmod(e1, mload(add(c, 0x20)), p)
+                            e2 := addmod(e2, mload(add(c, 0x40)), p)
+                            s0 := addmod(s0, mload(c), p)
+                            s1 := addmod(s1, mload(add(c, 0x20)), p)
+                            s2 := addmod(s2, mload(add(c, 0x40)), p)
+                        }
+                        e0, e1, e2 := mulRecord(x, e0, e1, e2)
+                    }
+                    mstore(claim, addmod(e0, mulmod(addmod(mload(claim), sub(p, s0), p), 0x7FFFFFFF80000001, p), p))
+                    mstore(
+                        add(claim, 0x20),
+                        addmod(e1, mulmod(addmod(mload(add(claim, 0x20)), sub(p, s1), p), 0x7FFFFFFF80000001, p), p)
+                    )
+                    mstore(
+                        add(claim, 0x40),
+                        addmod(e2, mulmod(addmod(mload(add(claim, 0x40)), sub(p, s2), p), 0x7FFFFFFF80000001, p), p)
+                    )
+                }
 
-            logPoint[roundIndex] = roundChallenges.log;
-            logClaim = _evaluateExt3Round(logClaim, logCoefficients, roundChallenges.log);
-            gatePoint[roundIndex] = roundChallenges.gate;
-            gateClaim = _evaluateExt3RoundDynamic(gateClaim, gateCoefficients, roundChallenges.gate);
+                let challenge := mload(roundChallenges)
+                let record := mload(add(mload(add(ctx, 0xa0)), shl(5, roundIndex)))
+                mstore(record, mload(challenge))
+                mstore(add(record, 0x20), mload(add(challenge, 0x20)))
+                mstore(add(record, 0x40), mload(add(challenge, 0x40)))
+                record := add(mload(ctx), mul(roundIndex, 0x1e0))
+                evaluateRound(mload(add(ctx, 0xe0)), record, add(record, 0x1e0), challenge)
+
+                challenge := mload(add(roundChallenges, 0x20))
+                record := mload(add(mload(add(ctx, 0xc0)), shl(5, roundIndex)))
+                mstore(record, mload(challenge))
+                mstore(add(record, 0x20), mload(add(challenge, 0x20)))
+                mstore(add(record, 0x40), mload(add(challenge, 0x40)))
+                record := add(mload(add(ctx, 0x20)), mul(roundIndex, mload(add(ctx, 0x40))))
+                evaluateRound(mload(add(ctx, 0x100)), record, add(record, mload(add(ctx, 0x40))), challenge)
+            }
         }
-        logFinalClaim = logClaim;
-        gateFinalClaim = gateClaim;
     }
 
-    function _evaluateExt3Round(
-        GoldilocksExt3.Ext3 memory claim,
-        GoldilocksExt3.Ext3[] memory coefficients,
-        GoldilocksExt3.Ext3 memory challenge
-    ) private pure returns (GoldilocksExt3.Ext3 memory) {
-        GoldilocksExt3.Ext3 memory coefficientSum = GoldilocksExt3.zero();
-        for (uint256 i = 0; i < MAX_DEGREE; ++i) {
-            coefficientSum = GoldilocksExt3.add(coefficientSum, coefficients[i]);
-        }
-        GoldilocksExt3.Ext3 memory a0 = GoldilocksExt3.mulScalar(GoldilocksExt3.sub(claim, coefficientSum), INV_TWO);
-        GoldilocksExt3.Ext3 memory evaluated = GoldilocksExt3.zero();
-        for (uint256 i = MAX_DEGREE; i > 0; --i) {
-            evaluated = GoldilocksExt3.add(GoldilocksExt3.mul(evaluated, challenge), coefficients[i - 1]);
-        }
-        return GoldilocksExt3.add(GoldilocksExt3.mul(evaluated, challenge), a0);
-    }
-
-    function _evaluateExt3RoundDynamic(
-        GoldilocksExt3.Ext3 memory claim,
-        GoldilocksExt3.Ext3[] memory coefficients,
-        GoldilocksExt3.Ext3 memory challenge
-    ) private pure returns (GoldilocksExt3.Ext3 memory) {
-        GoldilocksExt3.Ext3 memory coefficientSum = GoldilocksExt3.zero();
-        for (uint256 i = 0; i < coefficients.length; ++i) {
-            coefficientSum = GoldilocksExt3.add(coefficientSum, coefficients[i]);
-        }
-        GoldilocksExt3.Ext3 memory a0 = GoldilocksExt3.mulScalar(GoldilocksExt3.sub(claim, coefficientSum), INV_TWO);
-        GoldilocksExt3.Ext3 memory evaluated = GoldilocksExt3.zero();
-        for (uint256 i = coefficients.length; i > 0; --i) {
-            evaluated = GoldilocksExt3.add(GoldilocksExt3.mul(evaluated, challenge), coefficients[i - 1]);
-        }
-        return GoldilocksExt3.add(GoldilocksExt3.mul(evaluated, challenge), a0);
-    }
-
-    function _evaluateTerminalUnchecked(
+    /// @dev Full terminal: norm/logUp permutation value plus `xi` times the direct-PI binding.
+    function _terminalFlat(
         VerificationKey memory vk,
         Challenges memory challenges,
-        TerminalEvaluations memory terminal,
+        uint256[] memory preprocessed,
+        uint256[] memory witness,
+        uint256[] memory normInverse,
+        uint256[] memory publicInputs,
         GoldilocksExt3.Ext3[] memory point
-    ) private pure returns (GoldilocksExt3.Ext3 memory) {
-        GoldilocksExt3.Ext3 memory permutationValue = _permutationTerminalUnchecked(vk, challenges, terminal, point);
-        GoldilocksExt3.Ext3 memory publicInputBinding = _publicInputBinding(vk, terminal, point, challenges.eta);
-        return GoldilocksExt3.add(permutationValue, GoldilocksExt3.mul(challenges.xi, publicInputBinding));
+    ) private pure returns (GoldilocksExt3.Ext3 memory value) {
+        value = _permutationTerminalFlat(vk, challenges, preprocessed, witness, normInverse, point);
+        GoldilocksExt3.Ext3 memory binding =
+            _publicInputBindingFlat(vk.publicInputWireMap, witness, publicInputs, point, challenges.eta);
+        _mulAddInPlace(value, challenges.xi, binding);
     }
 
-    /// @dev Existing degree-five norm/logUp terminal, isolated so adding the
-    /// direct-PI relation cannot exhaust the EVM compiler's stack in its wire loop.
-    function _permutationTerminalUnchecked(
+    /// @dev Degree-five norm/logUp terminal over the routed wires:
+    ///   eq(tau, point) * sum_i lambda^i (Z_id,i + rho * Z_sigma,i) + kappa * sum_i (T_id,i * R_id,i - T_sigma,i * R_sigma,i)
+    /// with Z = T * N - 1, N the formal norm and R the recomposed formal adjugate of the
+    /// denominator coordinates. The lambda-weighted sum is accumulated by Horner from the last
+    /// routed wire down, which is the same field element as the power-by-power sum.
+    function _permutationTerminalFlat(
         VerificationKey memory vk,
         Challenges memory challenges,
-        TerminalEvaluations memory terminal,
+        uint256[] memory preprocessed,
+        uint256[] memory witness,
+        uint256[] memory normInverse,
         GoldilocksExt3.Ext3[] memory point
     ) private pure returns (GoldilocksExt3.Ext3 memory permutationValue) {
         GoldilocksExt3.Ext3 memory eqValue = _eqEvaluation(challenges.tau, point);
         GoldilocksExt3.Ext3 memory subgroup = _subgroupEvaluation(vk.subgroupGenPowers, point);
-        GoldilocksExt3.Ext3 memory helperZeroChecks = GoldilocksExt3.zero();
-        GoldilocksExt3.Ext3 memory logupSum = GoldilocksExt3.zero();
-        GoldilocksExt3.Ext3 memory lambdaPower = GoldilocksExt3.one();
-        GoldilocksExt3.Ext3 memory identityPosition = GoldilocksExt3.zero();
-        GoldilocksExt3.Ext3 memory identityNorm = GoldilocksExt3.zero();
-        GoldilocksExt3.Ext3 memory identityAdjugate = GoldilocksExt3.zero();
-        GoldilocksExt3.Ext3 memory sigmaNorm = GoldilocksExt3.zero();
-        GoldilocksExt3.Ext3 memory sigmaAdjugate = GoldilocksExt3.zero();
-        // Nine reusable Ext3 records. Keeping the formal-coordinate algebra in
-        // fixed scratch prevents the free-memory pointer from advancing for
-        // every field operation across all routed wires.
-        uint256[27] memory scratch;
+        // Scratch block (byte offsets): 0x000 subgroup, 0x060 beta, 0x0c0 gamma, 0x120 rho,
+        // 0x180 lambda, 0x1e0 helper-zero accumulator, 0x240 logUp sum, 0x2a0 identity position,
+        // 0x300 Z_id, 0x360/0x3c0/0x420 coordinates a/b/c, 0x480/0x4e0/0x540 adjugate s0/s1/s2,
+        // 0x5a0 norm, 0x600 recomposed adjugate, 0x660 temporary, 0x6c0 unused, 0x720 witness data,
+        // 0x740 sigma data, 0x760 T_id data, 0x780 T_sigma data, 0x7a0 k_i data.
+        uint256[62] memory w;
+        assembly ("memory-safe") {
+            // out <- x * y (records; every load precedes the stores, so out may alias x or y)
+            function mulInto(out, x, y) {
+                let p := 0xFFFFFFFF00000001
+                let x0 := mload(x)
+                let x1 := mload(add(x, 0x20))
+                let x2 := mload(add(x, 0x40))
+                let y0 := mload(y)
+                let y1 := mload(add(y, 0x20))
+                let y2 := mload(add(y, 0x40))
+                mstore(out, addmod(mulmod(x0, y0, p), shl(1, addmod(mulmod(x1, y2, p), mulmod(x2, y1, p), p)), p))
+                mstore(
+                    add(out, 0x20),
+                    addmod(addmod(mulmod(x0, y1, p), mulmod(x1, y0, p), p), shl(1, mulmod(x2, y2, p)), p)
+                )
+                mstore(add(out, 0x40), addmod(addmod(mulmod(x0, y2, p), mulmod(x1, y1, p), p), mulmod(x2, y0, p), p))
+            }
+            // out <- out + x * y
+            function mulAddInto(out, x, y) {
+                let p := 0xFFFFFFFF00000001
+                let x0 := mload(x)
+                let x1 := mload(add(x, 0x20))
+                let x2 := mload(add(x, 0x40))
+                let y0 := mload(y)
+                let y1 := mload(add(y, 0x20))
+                let y2 := mload(add(y, 0x40))
+                mstore(
+                    out,
+                    addmod(
+                        mload(out),
+                        addmod(mulmod(x0, y0, p), shl(1, addmod(mulmod(x1, y2, p), mulmod(x2, y1, p), p)), p),
+                        p
+                    )
+                )
+                mstore(
+                    add(out, 0x20),
+                    addmod(
+                        mload(add(out, 0x20)),
+                        addmod(addmod(mulmod(x0, y1, p), mulmod(x1, y0, p), p), shl(1, mulmod(x2, y2, p)), p),
+                        p
+                    )
+                )
+                mstore(
+                    add(out, 0x40),
+                    addmod(
+                        mload(add(out, 0x40)),
+                        addmod(addmod(mulmod(x0, y2, p), mulmod(x1, y1, p), p), mulmod(x2, y0, p), p),
+                        p
+                    )
+                )
+            }
+            // out <- out - x * y
+            function mulSubInto(out, x, y) {
+                let p := 0xFFFFFFFF00000001
+                let x0 := mload(x)
+                let x1 := mload(add(x, 0x20))
+                let x2 := mload(add(x, 0x40))
+                let y0 := mload(y)
+                let y1 := mload(add(y, 0x20))
+                let y2 := mload(add(y, 0x40))
+                mstore(
+                    out,
+                    addmod(
+                        mload(out),
+                        sub(p, addmod(mulmod(x0, y0, p), shl(1, addmod(mulmod(x1, y2, p), mulmod(x2, y1, p), p)), p)),
+                        p
+                    )
+                )
+                mstore(
+                    add(out, 0x20),
+                    addmod(
+                        mload(add(out, 0x20)),
+                        sub(p, addmod(addmod(mulmod(x0, y1, p), mulmod(x1, y0, p), p), shl(1, mulmod(x2, y2, p)), p)),
+                        p
+                    )
+                )
+                mstore(
+                    add(out, 0x40),
+                    addmod(
+                        mload(add(out, 0x40)),
+                        sub(p, addmod(addmod(mulmod(x0, y2, p), mulmod(x1, y1, p), p), mulmod(x2, y0, p), p)),
+                        p
+                    )
+                )
+            }
+            // out <- out + 2 * x * y
+            function mulDoubleAddInto(out, x, y) {
+                let p := 0xFFFFFFFF00000001
+                let x0 := mload(x)
+                let x1 := mload(add(x, 0x20))
+                let x2 := mload(add(x, 0x40))
+                let y0 := mload(y)
+                let y1 := mload(add(y, 0x20))
+                let y2 := mload(add(y, 0x40))
+                mstore(
+                    out,
+                    addmod(
+                        mload(out),
+                        shl(1, addmod(mulmod(x0, y0, p), shl(1, addmod(mulmod(x1, y2, p), mulmod(x2, y1, p), p)), p)),
+                        p
+                    )
+                )
+                mstore(
+                    add(out, 0x20),
+                    addmod(
+                        mload(add(out, 0x20)),
+                        shl(1, addmod(addmod(mulmod(x0, y1, p), mulmod(x1, y0, p), p), shl(1, mulmod(x2, y2, p)), p)),
+                        p
+                    )
+                )
+                mstore(
+                    add(out, 0x40),
+                    addmod(
+                        mload(add(out, 0x40)),
+                        shl(1, addmod(addmod(mulmod(x0, y2, p), mulmod(x1, y1, p), p), mulmod(x2, y0, p), p)),
+                        p
+                    )
+                )
+            }
+            // out <- a^2 - 2 * b * c
+            function squareMinusDoubleProductInto(out, a, b, c) {
+                let p := 0xFFFFFFFF00000001
+                let q0 := 0
+                let q1 := 0
+                let q2 := 0
+                {
+                    let a0 := mload(a)
+                    let a1 := mload(add(a, 0x20))
+                    let a2 := mload(add(a, 0x40))
+                    q0 := addmod(mulmod(a0, a0, p), shl(2, mulmod(a1, a2, p)), p)
+                    q1 := addmod(shl(1, mulmod(a0, a1, p)), shl(1, mulmod(a2, a2, p)), p)
+                    q2 := addmod(shl(1, mulmod(a0, a2, p)), mulmod(a1, a1, p), p)
+                }
+                let x0 := mload(b)
+                let x1 := mload(add(b, 0x20))
+                let x2 := mload(add(b, 0x40))
+                let y0 := mload(c)
+                let y1 := mload(add(c, 0x20))
+                let y2 := mload(add(c, 0x40))
+                mstore(
+                    out,
+                    addmod(
+                        q0,
+                        sub(
+                            0x1FFFFFFFE00000002,
+                            shl(1, addmod(mulmod(x0, y0, p), shl(1, addmod(mulmod(x1, y2, p), mulmod(x2, y1, p), p)), p))
+                        ),
+                        p
+                    )
+                )
+                mstore(
+                    add(out, 0x20),
+                    addmod(
+                        q1,
+                        sub(
+                            0x1FFFFFFFE00000002,
+                            shl(1, addmod(addmod(mulmod(x0, y1, p), mulmod(x1, y0, p), p), shl(1, mulmod(x2, y2, p)), p))
+                        ),
+                        p
+                    )
+                )
+                mstore(
+                    add(out, 0x40),
+                    addmod(
+                        q2,
+                        sub(
+                            0x1FFFFFFFE00000002,
+                            shl(1, addmod(addmod(mulmod(x0, y2, p), mulmod(x1, y1, p), p), mulmod(x2, y0, p), p))
+                        ),
+                        p
+                    )
+                )
+            }
+            // out <- 2 * a^2 - b * c
+            function doubleSquareMinusProductInto(out, a, b, c) {
+                let p := 0xFFFFFFFF00000001
+                let q0 := 0
+                let q1 := 0
+                let q2 := 0
+                {
+                    let a0 := mload(a)
+                    let a1 := mload(add(a, 0x20))
+                    let a2 := mload(add(a, 0x40))
+                    q0 := shl(1, addmod(mulmod(a0, a0, p), shl(2, mulmod(a1, a2, p)), p))
+                    q1 := shl(1, addmod(shl(1, mulmod(a0, a1, p)), shl(1, mulmod(a2, a2, p)), p))
+                    q2 := shl(1, addmod(shl(1, mulmod(a0, a2, p)), mulmod(a1, a1, p), p))
+                }
+                let x0 := mload(b)
+                let x1 := mload(add(b, 0x20))
+                let x2 := mload(add(b, 0x40))
+                let y0 := mload(c)
+                let y1 := mload(add(c, 0x20))
+                let y2 := mload(add(c, 0x40))
+                mstore(
+                    out,
+                    addmod(
+                        q0, sub(p, addmod(mulmod(x0, y0, p), shl(1, addmod(mulmod(x1, y2, p), mulmod(x2, y1, p), p)), p)), p
+                    )
+                )
+                mstore(
+                    add(out, 0x20),
+                    addmod(
+                        q1,
+                        sub(p, addmod(addmod(mulmod(x0, y1, p), mulmod(x1, y0, p), p), shl(1, mulmod(x2, y2, p)), p)),
+                        p
+                    )
+                )
+                mstore(
+                    add(out, 0x40),
+                    addmod(q2, sub(p, addmod(addmod(mulmod(x0, y2, p), mulmod(x1, y1, p), p), mulmod(x2, y0, p), p)), p)
+                )
+            }
+            // out <- a^2 - b * c
+            function squareMinusProductInto(out, a, b, c) {
+                let p := 0xFFFFFFFF00000001
+                let q0 := 0
+                let q1 := 0
+                let q2 := 0
+                {
+                    let a0 := mload(a)
+                    let a1 := mload(add(a, 0x20))
+                    let a2 := mload(add(a, 0x40))
+                    q0 := addmod(mulmod(a0, a0, p), shl(2, mulmod(a1, a2, p)), p)
+                    q1 := addmod(shl(1, mulmod(a0, a1, p)), shl(1, mulmod(a2, a2, p)), p)
+                    q2 := addmod(shl(1, mulmod(a0, a2, p)), mulmod(a1, a1, p), p)
+                }
+                let x0 := mload(b)
+                let x1 := mload(add(b, 0x20))
+                let x2 := mload(add(b, 0x40))
+                let y0 := mload(c)
+                let y1 := mload(add(c, 0x20))
+                let y2 := mload(add(c, 0x40))
+                mstore(
+                    out,
+                    addmod(
+                        q0, sub(p, addmod(mulmod(x0, y0, p), shl(1, addmod(mulmod(x1, y2, p), mulmod(x2, y1, p), p)), p)), p
+                    )
+                )
+                mstore(
+                    add(out, 0x20),
+                    addmod(
+                        q1,
+                        sub(p, addmod(addmod(mulmod(x0, y1, p), mulmod(x1, y0, p), p), shl(1, mulmod(x2, y2, p)), p)),
+                        p
+                    )
+                )
+                mstore(
+                    add(out, 0x40),
+                    addmod(q2, sub(p, addmod(addmod(mulmod(x0, y2, p), mulmod(x1, y1, p), p), mulmod(x2, y0, p), p)), p)
+                )
+            }
+            // Formal norm (-> 0x5a0) and recomposed adjugate (-> 0x600) of the denominator coordinates
+            //   a = wire + beta_0 + gamma_0 * pos, b = beta_1 + gamma_1 * pos, c = beta_2 + gamma_2 * pos,
+            //   (s0, s1, s2) = (a^2 - 2bc, 2c^2 - ab, b^2 - ac), norm = a*s0 + 2*(c*s1 + b*s2),
+            //   recomposed = s0 + theta*s1 + theta^2*s2 with theta^3 = 2.
+            function denominator(s, wire, pos) {
+                let p := 0xFFFFFFFF00000001
+                {
+                    let p0 := mload(pos)
+                    let p1 := mload(add(pos, 0x20))
+                    let p2 := mload(add(pos, 0x40))
+                    let g := mload(add(s, 0xc0))
+                    mstore(add(s, 0x360), addmod(addmod(mload(wire), mload(add(s, 0x60)), p), mulmod(p0, g, p), p))
+                    mstore(add(s, 0x380), addmod(mload(add(wire, 0x20)), mulmod(p1, g, p), p))
+                    mstore(add(s, 0x3a0), addmod(mload(add(wire, 0x40)), mulmod(p2, g, p), p))
+                    g := mload(add(s, 0xe0))
+                    mstore(add(s, 0x3c0), addmod(mload(add(s, 0x80)), mulmod(p0, g, p), p))
+                    mstore(add(s, 0x3e0), mulmod(p1, g, p))
+                    mstore(add(s, 0x400), mulmod(p2, g, p))
+                    g := mload(add(s, 0x100))
+                    mstore(add(s, 0x420), addmod(mload(add(s, 0xa0)), mulmod(p0, g, p), p))
+                    mstore(add(s, 0x440), mulmod(p1, g, p))
+                    mstore(add(s, 0x460), mulmod(p2, g, p))
+                }
+                squareMinusDoubleProductInto(add(s, 0x480), add(s, 0x360), add(s, 0x3c0), add(s, 0x420))
+                doubleSquareMinusProductInto(add(s, 0x4e0), add(s, 0x420), add(s, 0x360), add(s, 0x3c0))
+                squareMinusProductInto(add(s, 0x540), add(s, 0x3c0), add(s, 0x360), add(s, 0x420))
+                mulInto(add(s, 0x5a0), add(s, 0x360), add(s, 0x480))
+                mulDoubleAddInto(add(s, 0x5a0), add(s, 0x420), add(s, 0x4e0))
+                mulDoubleAddInto(add(s, 0x5a0), add(s, 0x3c0), add(s, 0x540))
+                mstore(
+                    add(s, 0x600),
+                    addmod(mload(add(s, 0x480)), shl(1, addmod(mload(add(s, 0x520)), mload(add(s, 0x560)), p)), p)
+                )
+                mstore(
+                    add(s, 0x620),
+                    addmod(mload(add(s, 0x4a0)), addmod(mload(add(s, 0x4e0)), shl(1, mload(add(s, 0x580))), p), p)
+                )
+                mstore(add(s, 0x640), addmod(mload(add(s, 0x4c0)), addmod(mload(add(s, 0x500)), mload(add(s, 0x540)), p), p))
+            }
+            function wireStep(s, i) {
+                let p := 0xFFFFFFFF00000001
+                let wire := add(mload(add(s, 0x720)), mul(i, 0x60))
+                {
+                    // identity position = k_i * subgroup(point): an Ext3 times a base scalar
+                    let k := mload(add(mload(add(s, 0x7a0)), shl(5, i)))
+                    mstore(add(s, 0x2a0), mulmod(mload(s), k, p))
+                    mstore(add(s, 0x2c0), mulmod(mload(add(s, 0x20)), k, p))
+                    mstore(add(s, 0x2e0), mulmod(mload(add(s, 0x40)), k, p))
+                }
+                denominator(s, wire, add(s, 0x2a0))
+                let helper := add(mload(add(s, 0x760)), mul(i, 0x60))
+                // Z_id = T_id * N_id - 1
+                mulInto(add(s, 0x300), helper, add(s, 0x5a0))
+                mstore(add(s, 0x300), addmod(mload(add(s, 0x300)), 0xFFFFFFFF00000000, p))
+                // logUp += T_id * R_id
+                mulAddInto(add(s, 0x240), helper, add(s, 0x600))
 
-        for (uint256 wireIndex = 0; wireIndex < vk.numRoutedWires; ++wireIndex) {
-            GoldilocksExt3.Ext3 memory wire = terminal.witness[wireIndex];
-            // `k_i` is a pinned, canonical base-field scalar. Multiplication by
-            // its Ext3 embedding is exactly component-wise scalar
-            // multiplication, so avoid the six cross terms which are known to
-            // be zero. `_validateTerminalShapeAndCanonical` ran before this
-            // unchecked evaluator and makes the uint64 cast lossless.
-            _mulScalarInPlace(identityPosition, subgroup, uint64(vk.kIs[wireIndex]));
-            GoldilocksExt3.Ext3 memory sigmaPosition = terminal.preprocessed[vk.numConstants + wireIndex];
+                denominator(s, wire, add(mload(add(s, 0x740)), mul(i, 0x60)))
+                helper := add(mload(add(s, 0x780)), mul(i, 0x60))
+                // logUp -= T_sigma * R_sigma
+                mulSubInto(add(s, 0x240), helper, add(s, 0x600))
+                // Z_sigma = T_sigma * N_sigma - 1, then Z_id += rho * Z_sigma
+                mulInto(add(s, 0x660), helper, add(s, 0x5a0))
+                mstore(add(s, 0x660), addmod(mload(add(s, 0x660)), 0xFFFFFFFF00000000, p))
+                mulAddInto(add(s, 0x300), add(s, 0x120), add(s, 0x660))
+                // accumulator = accumulator * lambda + (Z_id + rho * Z_sigma) (Horner over the routed wires)
+                mulInto(add(s, 0x1e0), add(s, 0x1e0), add(s, 0x180))
+                mstore(add(s, 0x1e0), addmod(mload(add(s, 0x1e0)), mload(add(s, 0x300)), p))
+                mstore(add(s, 0x200), addmod(mload(add(s, 0x200)), mload(add(s, 0x320)), p))
+                mstore(add(s, 0x220), addmod(mload(add(s, 0x220)), mload(add(s, 0x340)), p))
+            }
 
-            _denominatorTermsInPlace(
-                wire, identityPosition, challenges.beta, challenges.gamma, identityNorm, identityAdjugate, scratch
-            );
-            _denominatorTermsInPlace(
-                wire, sigmaPosition, challenges.beta, challenges.gamma, sigmaNorm, sigmaAdjugate, scratch
-            );
+            mstore(w, mload(subgroup))
+            mstore(add(w, 0x20), mload(add(subgroup, 0x20)))
+            mstore(add(w, 0x40), mload(add(subgroup, 0x40)))
+            let source := mload(challenges) // beta
+            mstore(add(w, 0x60), mload(source))
+            mstore(add(w, 0x80), mload(add(source, 0x20)))
+            mstore(add(w, 0xa0), mload(add(source, 0x40)))
+            source := mload(add(challenges, 0x20)) // gamma
+            mstore(add(w, 0xc0), mload(source))
+            mstore(add(w, 0xe0), mload(add(source, 0x20)))
+            mstore(add(w, 0x100), mload(add(source, 0x40)))
+            source := mload(add(challenges, 0x60)) // rho
+            mstore(add(w, 0x120), mload(source))
+            mstore(add(w, 0x140), mload(add(source, 0x20)))
+            mstore(add(w, 0x160), mload(add(source, 0x40)))
+            source := mload(add(challenges, 0x40)) // lambda
+            mstore(add(w, 0x180), mload(source))
+            mstore(add(w, 0x1a0), mload(add(source, 0x20)))
+            mstore(add(w, 0x1c0), mload(add(source, 0x40)))
+            let numRoutedWires := mload(add(vk, 0x60))
+            mstore(add(w, 0x720), add(witness, 0x20))
+            mstore(add(w, 0x740), add(add(preprocessed, 0x20), mul(mload(add(vk, 0x40)), 0x60)))
+            mstore(add(w, 0x760), add(normInverse, 0x20))
+            mstore(add(w, 0x780), add(add(normInverse, 0x20), mul(numRoutedWires, 0x60)))
+            mstore(add(w, 0x7a0), add(mload(add(vk, 0xa0)), 0x20))
 
-            GoldilocksExt3.Ext3 memory identityHelper = terminal.normInverse[wireIndex];
-            GoldilocksExt3.Ext3 memory sigmaHelper = terminal.normInverse[vk.numRoutedWires + wireIndex];
-            _accumulateWireInPlace(
-                helperZeroChecks,
-                logupSum,
-                lambdaPower,
-                identityHelper,
-                sigmaHelper,
-                identityNorm,
-                sigmaNorm,
-                identityAdjugate,
-                sigmaAdjugate,
-                challenges.rho,
-                challenges.lambda,
-                scratch
-            );
+            for { let i := numRoutedWires } i {} {
+                i := sub(i, 1)
+                wireStep(w, i)
+            }
         }
-
-        permutationValue = GoldilocksExt3.add(
-            GoldilocksExt3.mul(eqValue, helperZeroChecks), GoldilocksExt3.mul(challenges.kappa, logupSum)
-        );
+        // permutationValue = eq(tau, point) * helperZeroChecks + kappa * logUpSum
+        assembly ("memory-safe") {
+            mstore(permutationValue, 0)
+            mstore(add(permutationValue, 0x20), 0)
+            mstore(add(permutationValue, 0x40), 0)
+        }
+        _mulAddInPlace(permutationValue, eqValue, _recordAt(w, 0x1e0));
+        _mulAddInPlace(permutationValue, challenges.kappa, _recordAt(w, 0x240));
     }
 
-    /// @dev Evaluate Σ eta^i eq(row_i, point) (W_col_i(point) - PI_i).
-    /// Duplicate map entries and PI order are intentionally retained. Equality
-    /// factors are evaluated once per unique row: weighted differences are
-    /// first accumulated by row, so a 103-PI statement does not repeat either
-    /// `eq(row, point)` or its final Ext3 multiplication for every PI.
-    function _publicInputBinding(
-        VerificationKey memory vk,
-        TerminalEvaluations memory terminal,
+    /// @dev View three consecutive scratch words as an Ext3 record (no copy).
+    function _recordAt(uint256[62] memory w, uint256 offset) private pure returns (GoldilocksExt3.Ext3 memory record) {
+        assembly ("memory-safe") {
+            record := add(w, offset)
+        }
+    }
+
+    /// @dev Evaluate sum_i eta^i eq(row_i, point) (W_col_i(point) - PI_i). Duplicate map entries
+    /// and PI order are intentionally retained. The sum is taken by Horner from the last public
+    /// input down, one run of consecutive same-row entries (at most eight) at a time:
+    ///   acc <- acc * eta^L + eq(row) * sum_{t in run} eta^(t - first) D_t,
+    /// so a run costs one product per entry plus two, and eta^1..eta^8 are built once on demand.
+    /// Coordinates shared by every row are multiplied once; each unique row then adds only its
+    /// genuinely varying coordinates and is memoised, so an `eq(row, point)` is never repeated.
+    /// Every intermediate is reduced, so the result is the same field element as the direct sum.
+    function _publicInputBindingFlat(
+        bytes memory publicInputWireMap,
+        uint256[] memory witness,
+        uint256[] memory publicInputs,
         GoldilocksExt3.Ext3[] memory point,
         GoldilocksExt3.Ext3 memory eta
     ) private pure returns (GoldilocksExt3.Ext3 memory binding) {
-        uint256 count = terminal.publicInputs.length;
+        uint256 count = publicInputs.length;
         if (count == 0) return binding;
-        PublicInputBindingScratch memory scratch;
-        scratch.cachedRows = new uint256[](count);
-        scratch.rowBindings = new GoldilocksExt3.Ext3[](count);
-        scratch.etaPower = GoldilocksExt3.one();
+        // Scratch (byte offsets): 0x00 map data, 0x20 point table, 0x40 numVars, 0x60 witness data,
+        // 0x80 numWires, 0xa0 public input data, 0xc0 varying-row-bit mask, 0xe0 eta record,
+        // 0x100 shared-coordinate eq (3 words), 0x160 eta-power table base, 0x180 powers built,
+        // 0x1a0 unique-row memo base, 0x1c0 memo entries used, 0x1e0 accumulator (3 words).
+        uint256[18] memory w;
+        assembly ("memory-safe") {
+            // record x times stack triple b
+            function mulRecord(x, b0, b1, b2) -> c0, c1, c2 {
+                let p := 0xFFFFFFFF00000001
+                c0 :=
+                    addmod(
+                        mulmod(mload(x), b0, p),
+                        shl(1, addmod(mulmod(mload(add(x, 0x20)), b2, p), mulmod(mload(add(x, 0x40)), b1, p), p)),
+                        p
+                    )
+                c1 :=
+                    addmod(
+                        addmod(mulmod(mload(x), b1, p), mulmod(mload(add(x, 0x20)), b0, p), p),
+                        shl(1, mulmod(mload(add(x, 0x40)), b2, p)),
+                        p
+                    )
+                c2 :=
+                    addmod(
+                        addmod(mulmod(mload(x), b2, p), mulmod(mload(add(x, 0x20)), b1, p), p),
+                        mulmod(mload(add(x, 0x40)), b0, p),
+                        p
+                    )
+            }
+            // out <- out * (x when bit = 1, 1 - x otherwise) for coordinate record x
+            function mulFactorInto(out, x, bit) {
+                let p := 0xFFFFFFFF00000001
+                let f0 := mload(x)
+                let f1 := mload(add(x, 0x20))
+                let f2 := mload(add(x, 0x40))
+                if iszero(bit) {
+                    f0 := addmod(1, sub(p, f0), p)
+                    f1 := mod(sub(p, f1), p)
+                    f2 := mod(sub(p, f2), p)
+                }
+                let c0, c1, c2 := mulRecord(out, f0, f1, f2)
+                mstore(out, c0)
+                mstore(add(out, 0x20), c1)
+                mstore(add(out, 0x40), c2)
+            }
+            // out <- out * prod of the equality factors of `row` over the coordinates selected by `mask`
+            function selectedEqInto(out, row, mask, pointTable, numVars) {
+                for { let v := 0 } lt(v, numVars) { v := add(v, 1) } {
+                    if and(shr(v, mask), 1) {
+                        mulFactorInto(out, mload(add(pointTable, shl(5, v))), and(shr(v, row), 1))
+                    }
+                }
+            }
+            // `row_u16_le` of map entry i (`row_u16_le || routed_column_u8` at byte offset 3*i)
+            function rowOf(mapData, i) -> row {
+                let word := mload(add(mapData, mul(i, 3)))
+                row := or(byte(0, word), shl(8, byte(1, word)))
+            }
+            // eq(row, point) record from the unique-row memo, computed and memoised on first use
+            function eqRow(s, row) -> e {
+                let memo := mload(add(s, 0x1a0))
+                let used := mload(add(s, 0x1c0))
+                for { let j := used } j {} {
+                    j := sub(j, 1)
+                    let entry := add(memo, shl(7, j))
+                    if eq(mload(entry), row) {
+                        e := add(entry, 0x20)
+                        leave
+                    }
+                }
+                e := add(memo, shl(7, used))
+                mstore(e, row)
+                e := add(e, 0x20)
+                mstore(e, mload(add(s, 0x100)))
+                mstore(add(e, 0x20), mload(add(s, 0x120)))
+                mstore(add(e, 0x40), mload(add(s, 0x140)))
+                selectedEqInto(e, row, mload(add(s, 0xc0)), mload(add(s, 0x20)), mload(add(s, 0x40)))
+                mstore(add(s, 0x1c0), add(used, 1))
+            }
+            // record of eta^length (1 <= length <= 8), extending the power table as needed
+            function etaPower(s, length) -> e {
+                let base := mload(add(s, 0x160))
+                for { let have := mload(add(s, 0x180)) } lt(have, length) { have := add(have, 1) } {
+                    let dst := add(base, mul(have, 0x60))
+                    switch have
+                    case 0 { mcopy(dst, mload(add(s, 0xe0)), 0x60) }
+                    default {
+                        let prev := sub(dst, 0x60)
+                        let c0, c1, c2 :=
+                            mulRecord(mload(add(s, 0xe0)), mload(prev), mload(add(prev, 0x20)), mload(add(prev, 0x40)))
+                        mstore(dst, c0)
+                        mstore(add(dst, 0x20), c1)
+                        mstore(add(dst, 0x40), c2)
+                    }
+                    mstore(add(s, 0x180), add(have, 1))
+                }
+                e := add(base, mul(sub(length, 1), 0x60))
+            }
+            // accumulator (-> 0x1e0..0x220) <- accumulator * eta^length + eq(row) * run
+            function flush(s, row, length, r0, r1, r2) {
+                let p := 0xFFFFFFFF00000001
+                let a0 := mload(add(s, 0x1e0))
+                let a1 := mload(add(s, 0x200))
+                let a2 := mload(add(s, 0x220))
+                if or(a0, or(a1, a2)) { a0, a1, a2 := mulRecord(etaPower(s, length), a0, a1, a2) }
+                r0, r1, r2 := mulRecord(eqRow(s, row), r0, r1, r2)
+                mstore(add(s, 0x1e0), addmod(a0, r0, p))
+                mstore(add(s, 0x200), addmod(a1, r1, p))
+                mstore(add(s, 0x220), addmod(a2, r2, p))
+            }
 
-        for (uint256 i = 0; i < count; ++i) {
-            uint256 offset = 3 * i;
-            uint256 row =
-                uint8(vk.publicInputWireMap[offset]) | (uint256(uint8(vk.publicInputWireMap[offset + 1])) << 8);
-            uint256 column = uint8(vk.publicInputWireMap[offset + 2]);
-            uint256 rowIndex = _cachedRowIndex(scratch, row);
-            if (i != 0) scratch.varyingRowBits |= scratch.cachedRows[0] ^ row;
-            GoldilocksExt3.Ext3 memory wire = terminal.witness[column];
-            _accumulatePublicInputInPlace(
-                scratch.rowBindings[rowIndex], scratch.etaPower, wire, terminal.publicInputs[i]
-            );
-            if (i + 1 < count) _mulExt3InPlace(scratch.etaPower, eta);
+            let p := 0xFFFFFFFF00000001
+            mstore(w, add(publicInputWireMap, 0x20))
+            mstore(add(w, 0x20), add(point, 0x20))
+            mstore(add(w, 0x40), mload(point))
+            mstore(add(w, 0x60), add(witness, 0x20))
+            mstore(add(w, 0x80), div(mload(witness), 3))
+            mstore(add(w, 0xa0), add(publicInputs, 0x20))
+            mstore(add(w, 0xe0), eta)
+            {
+                let row0 := rowOf(mload(w), 0)
+                let varying := 0
+                for { let i := 1 } lt(i, count) { i := add(i, 1) } {
+                    varying := or(varying, xor(row0, rowOf(mload(w), i)))
+                }
+                mstore(add(w, 0xc0), varying)
+                // eq over the coordinates every row shares, evaluated once
+                mstore(add(w, 0x100), 1)
+                selectedEqInto(add(w, 0x100), row0, not(varying), mload(add(w, 0x20)), mload(add(w, 0x40)))
+            }
+            // temporary memory past the free pointer: eta^1..eta^8, then the memo `(row, eq0, eq1, eq2)`
+            mstore(add(w, 0x160), mload(0x40))
+            mstore(add(w, 0x1a0), add(mload(0x40), 0x300))
+            // walk the public inputs from the last one down, one same-row run (at most eight) at a time
+            let runRow := 0
+            let length := 0
+            let r0 := 0
+            let r1 := 0
+            let r2 := 0
+            for { let i := count } i {} {
+                i := sub(i, 1)
+                let word := mload(add(mload(w), mul(i, 3)))
+                let row := or(byte(0, word), shl(8, byte(1, word)))
+                if iszero(and(eq(row, runRow), lt(length, 8))) {
+                    if length { flush(w, runRow, length, r0, r1, r2) }
+                    runRow := row
+                    length := 0
+                    r0 := 0
+                    r1 := 0
+                    r2 := 0
+                }
+                // run <- run * eta + (W_column - PI_i)
+                if length { r0, r1, r2 := mulRecord(mload(add(w, 0xe0)), r0, r1, r2) }
+                word := byte(2, word)
+                if iszero(lt(word, mload(add(w, 0x80)))) {
+                    mstore(0x00, shl(224, 0xf0783a66))
+                    revert(0x00, 0x04)
+                }
+                word := add(mload(add(w, 0x60)), mul(word, 0x60))
+                r0 := addmod(r0, addmod(mload(word), sub(p, mload(add(mload(add(w, 0xa0)), shl(5, i)))), p), p)
+                r1 := addmod(r1, mload(add(word, 0x20)), p)
+                r2 := addmod(r2, mload(add(word, 0x40)), p)
+                length := add(length, 1)
+            }
+            flush(w, runRow, length, r0, r1, r2)
+            mstore(binding, mload(add(w, 0x1e0)))
+            mstore(add(binding, 0x20), mload(add(w, 0x200)))
+            mstore(add(binding, 0x40), mload(add(w, 0x220)))
         }
-        GoldilocksExt3.Ext3 memory commonEq = _eqBooleanRowSelectedBits(
-            scratch.cachedRows[0], point, scratch.varyingRowBits, false, GoldilocksExt3.one()
-        );
-        for (uint256 rowIndex = 0; rowIndex < scratch.uniqueRows; ++rowIndex) {
-            GoldilocksExt3.Ext3 memory eqRow =
-                _eqBooleanRowSelectedBits(scratch.cachedRows[rowIndex], point, scratch.varyingRowBits, true, commonEq);
-            scratch.binding =
-                GoldilocksExt3.add(scratch.binding, GoldilocksExt3.mul(eqRow, scratch.rowBindings[rowIndex]));
-        }
-        binding = scratch.binding;
     }
 
-    function _cachedRowIndex(PublicInputBindingScratch memory scratch, uint256 row)
+    /// @dev eq(tau, point) = prod_i (1 - tau_i - x_i + 2 tau_i x_i).
+    function _eqEvaluation(GoldilocksExt3.Ext3[] memory tau, GoldilocksExt3.Ext3[] memory point)
         private
         pure
-        returns (uint256 rowIndex)
+        returns (GoldilocksExt3.Ext3 memory value)
     {
-        // Canonical PI targets are commonly emitted in row-local runs. Search
-        // newest-to-oldest so every repeated row after the first is O(1),
-        // while preserving exact PI order and accepting arbitrary maps.
-        for (uint256 cached = scratch.uniqueRows; cached != 0;) {
-            --cached;
-            if (scratch.cachedRows[cached] == row) return cached;
-        }
-        rowIndex = scratch.uniqueRows;
-        scratch.cachedRows[rowIndex] = row;
-        ++scratch.uniqueRows;
-    }
-
-    /// @dev Evaluate only the coordinates selected by `varying` (or its
-    /// complement). The caller factors coordinates shared by every unique PI
-    /// row once, then evaluates only genuinely varying bits per row.
-    function _eqBooleanRowSelectedBits(
-        uint256 row,
-        GoldilocksExt3.Ext3[] memory point,
-        uint256 varying,
-        bool selectVarying,
-        GoldilocksExt3.Ext3 memory initial
-    ) private pure returns (GoldilocksExt3.Ext3 memory value) {
-        value = initial;
-        GoldilocksExt3.Ext3 memory one = GoldilocksExt3.one();
-        for (uint256 variable = 0; variable < point.length; ++variable) {
-            if ((((varying >> variable) & 1) != 0) != selectVarying) continue;
-            GoldilocksExt3.Ext3 memory factor =
-                ((row >> variable) & 1) == 0 ? GoldilocksExt3.sub(one, point[variable]) : point[variable];
-            value = GoldilocksExt3.mul(value, factor);
-        }
-    }
-
-    /// @dev destination += etaPower * (wire - embed(publicInput)).
-    /// All operands are loaded before the destination is written, so this is
-    /// safe for the caller-owned row accumulator and avoids two temporary
-    /// Ext3 allocations per public input.
-    function _accumulatePublicInputInPlace(
-        GoldilocksExt3.Ext3 memory destination,
-        GoldilocksExt3.Ext3 memory etaPower,
-        GoldilocksExt3.Ext3 memory wire,
-        uint256 publicInput
-    ) private pure {
-        assembly ("memory-safe") {
-            let p := 0xFFFFFFFF00000001
-            let a0 := mload(etaPower)
-            let a1 := mload(add(etaPower, 0x20))
-            let a2 := mload(add(etaPower, 0x40))
-            let b0 := addmod(mload(wire), sub(p, publicInput), p)
-            let b1 := mload(add(wire, 0x20))
-            let b2 := mload(add(wire, 0x40))
-            let c0 := addmod(mulmod(a0, b0, p), mulmod(2, addmod(mulmod(a1, b2, p), mulmod(a2, b1, p), p), p), p)
-            let c1 := addmod(addmod(mulmod(a0, b1, p), mulmod(a1, b0, p), p), mulmod(2, mulmod(a2, b2, p), p), p)
-            let c2 := addmod(addmod(mulmod(a0, b2, p), mulmod(a1, b1, p), p), mulmod(a2, b0, p), p)
-            mstore(destination, addmod(mload(destination), c0, p))
-            mstore(add(destination, 0x20), addmod(mload(add(destination, 0x20)), c1, p))
-            mstore(add(destination, 0x40), addmod(mload(add(destination, 0x40)), c2, p))
+        GoldilocksExt3.Ext3 memory factor;
+        value.c0 = 1;
+        uint256 n = point.length;
+        for (uint256 i = 0; i < n; ++i) {
+            GoldilocksExt3.Ext3 memory t = tau[i];
+            GoldilocksExt3.Ext3 memory x = point[i];
+            assembly ("memory-safe") {
+                let p := 0xFFFFFFFF00000001
+                let t0 := mload(t)
+                let t1 := mload(add(t, 0x20))
+                let t2 := mload(add(t, 0x40))
+                let x0 := mload(x)
+                let x1 := mload(add(x, 0x20))
+                let x2 := mload(add(x, 0x40))
+                // factor = 1 - tau - x + 2 * tau * x
+                mstore(
+                    factor,
+                    addmod(
+                        addmod(1, sub(0x1FFFFFFFE00000002, addmod(t0, x0, p)), p),
+                        shl(1, addmod(mulmod(t0, x0, p), shl(1, addmod(mulmod(t1, x2, p), mulmod(t2, x1, p), p)), p)),
+                        p
+                    )
+                )
+                mstore(
+                    add(factor, 0x20),
+                    addmod(
+                        sub(0x1FFFFFFFE00000002, addmod(t1, x1, p)),
+                        shl(1, addmod(addmod(mulmod(t0, x1, p), mulmod(t1, x0, p), p), shl(1, mulmod(t2, x2, p)), p)),
+                        p
+                    )
+                )
+                mstore(
+                    add(factor, 0x40),
+                    addmod(
+                        sub(0x1FFFFFFFE00000002, addmod(t2, x2, p)),
+                        shl(1, addmod(addmod(mulmod(t0, x2, p), mulmod(t1, x1, p), p), mulmod(t2, x0, p), p)),
+                        p
+                    )
+                )
+            }
+            _mulInPlace(value, factor);
         }
     }
 
-    /// @dev destination *= multiplier, loading every limb before overwriting
-    /// the aliased left operand.
-    function _mulExt3InPlace(GoldilocksExt3.Ext3 memory destination, GoldilocksExt3.Ext3 memory multiplier)
+    /// @dev subgroup(point) = prod_i (1 + x_i * (g_i - 1)) with base-field generator powers.
+    function _subgroupEvaluation(uint256[] memory subgroupGenPowers, GoldilocksExt3.Ext3[] memory point)
+        private
+        pure
+        returns (GoldilocksExt3.Ext3 memory value)
+    {
+        GoldilocksExt3.Ext3 memory factor;
+        value.c0 = 1;
+        uint256 n = point.length;
+        for (uint256 i = 0; i < n; ++i) {
+            uint256 generator = subgroupGenPowers[i];
+            GoldilocksExt3.Ext3 memory x = point[i];
+            assembly ("memory-safe") {
+                let p := 0xFFFFFFFF00000001
+                let g := addmod(generator, 0xFFFFFFFF00000000, p)
+                mstore(factor, addmod(1, mulmod(mload(x), g, p), p))
+                mstore(add(factor, 0x20), mulmod(mload(add(x, 0x20)), g, p))
+                mstore(add(factor, 0x40), mulmod(mload(add(x, 0x40)), g, p))
+            }
+            _mulInPlace(value, factor);
+        }
+    }
+
+    /// @dev destination *= multiplier (all loads precede the stores, so aliasing is fine).
+    function _mulInPlace(GoldilocksExt3.Ext3 memory destination, GoldilocksExt3.Ext3 memory multiplier)
         private
         pure
     {
@@ -515,41 +1207,70 @@ library OuterLogupExt3Verifier {
             let b0 := mload(multiplier)
             let b1 := mload(add(multiplier, 0x20))
             let b2 := mload(add(multiplier, 0x40))
-            let c0 := addmod(mulmod(a0, b0, p), mulmod(2, addmod(mulmod(a1, b2, p), mulmod(a2, b1, p), p), p), p)
-            let c1 := addmod(addmod(mulmod(a0, b1, p), mulmod(a1, b0, p), p), mulmod(2, mulmod(a2, b2, p), p), p)
-            let c2 := addmod(addmod(mulmod(a0, b2, p), mulmod(a1, b1, p), p), mulmod(a2, b0, p), p)
-            mstore(destination, c0)
-            mstore(add(destination, 0x20), c1)
-            mstore(add(destination, 0x40), c2)
+            mstore(destination, addmod(mulmod(a0, b0, p), shl(1, addmod(mulmod(a1, b2, p), mulmod(a2, b1, p), p)), p))
+            mstore(
+                add(destination, 0x20),
+                addmod(addmod(mulmod(a0, b1, p), mulmod(a1, b0, p), p), shl(1, mulmod(a2, b2, p)), p)
+            )
+            mstore(
+                add(destination, 0x40),
+                addmod(addmod(mulmod(a0, b2, p), mulmod(a1, b1, p), p), mulmod(a2, b0, p), p)
+            )
         }
     }
 
-    function _mulScalarInPlace(GoldilocksExt3.Ext3 memory destination, GoldilocksExt3.Ext3 memory value, uint64 scalar)
-        private
-        pure
-    {
-        assembly ("memory-safe") {
-            let p := 0xFFFFFFFF00000001
-            mstore(destination, mulmod(mload(value), scalar, p))
-            mstore(add(destination, 0x20), mulmod(mload(add(value, 0x20)), scalar, p))
-            mstore(add(destination, 0x40), mulmod(mload(add(value, 0x40)), scalar, p))
-        }
-    }
-
-    /// @dev Compute both formal norm and recomposed formal adjugate with one
-    /// adjugate evaluation. All intermediates are written into caller-owned,
-    /// fixed scratch records rather than appended to Solidity free memory.
-    function _denominatorTermsInPlace(
-        GoldilocksExt3.Ext3 memory wire,
-        GoldilocksExt3.Ext3 memory position,
-        GoldilocksExt3.Ext3 memory beta,
-        GoldilocksExt3.Ext3 memory gamma,
-        GoldilocksExt3.Ext3 memory norm,
-        GoldilocksExt3.Ext3 memory recomposed,
-        uint256[27] memory scratch
+    /// @dev destination += x * y.
+    function _mulAddInPlace(
+        GoldilocksExt3.Ext3 memory destination,
+        GoldilocksExt3.Ext3 memory x,
+        GoldilocksExt3.Ext3 memory y
     ) private pure {
         assembly ("memory-safe") {
-            function mul3(out, x, y) {
+            let p := 0xFFFFFFFF00000001
+            let x0 := mload(x)
+            let x1 := mload(add(x, 0x20))
+            let x2 := mload(add(x, 0x40))
+            let y0 := mload(y)
+            let y1 := mload(add(y, 0x20))
+            let y2 := mload(add(y, 0x40))
+            mstore(
+                destination,
+                addmod(
+                    mload(destination),
+                    addmod(mulmod(x0, y0, p), shl(1, addmod(mulmod(x1, y2, p), mulmod(x2, y1, p), p)), p),
+                    p
+                )
+            )
+            mstore(
+                add(destination, 0x20),
+                addmod(
+                    mload(add(destination, 0x20)),
+                    addmod(addmod(mulmod(x0, y1, p), mulmod(x1, y0, p), p), shl(1, mulmod(x2, y2, p)), p),
+                    p
+                )
+            )
+            mstore(
+                add(destination, 0x40),
+                addmod(
+                    mload(add(destination, 0x40)),
+                    addmod(addmod(mulmod(x0, y2, p), mulmod(x1, y1, p), p), mulmod(x2, y0, p), p),
+                    p
+                )
+            )
+        }
+    }
+
+    /// @dev Formal adjugate `(a^2 - 2bc, 2c^2 - ab, b^2 - ac)` and formal norm
+    /// `a*s0 + 2*(c*s1 + b*s2)` of Ext3-valued coordinate polynomials, written into the
+    /// caller-allocated records.
+    function _formalTerms(
+        GoldilocksExt3.Ext3[3] memory coordinates,
+        GoldilocksExt3.Ext3[3] memory adjugate,
+        GoldilocksExt3.Ext3 memory norm
+    ) private pure {
+        GoldilocksExt3.Ext3 memory product;
+        assembly ("memory-safe") {
+            function mulInto(out, x, y) {
                 let p := 0xFFFFFFFF00000001
                 let x0 := mload(x)
                 let x1 := mload(add(x, 0x20))
@@ -557,340 +1278,109 @@ library OuterLogupExt3Verifier {
                 let y0 := mload(y)
                 let y1 := mload(add(y, 0x20))
                 let y2 := mload(add(y, 0x40))
-                mstore(out, addmod(mulmod(x0, y0, p), mulmod(2, addmod(mulmod(x1, y2, p), mulmod(x2, y1, p), p), p), p))
+                mstore(out, addmod(mulmod(x0, y0, p), shl(1, addmod(mulmod(x1, y2, p), mulmod(x2, y1, p), p)), p))
                 mstore(
                     add(out, 0x20),
-                    addmod(addmod(mulmod(x0, y1, p), mulmod(x1, y0, p), p), mulmod(2, mulmod(x2, y2, p), p), p)
+                    addmod(addmod(mulmod(x0, y1, p), mulmod(x1, y0, p), p), shl(1, mulmod(x2, y2, p)), p)
                 )
                 mstore(add(out, 0x40), addmod(addmod(mulmod(x0, y2, p), mulmod(x1, y1, p), p), mulmod(x2, y0, p), p))
             }
-            function square3(out, x) {
+            function squareInto(out, x) {
                 let p := 0xFFFFFFFF00000001
                 let x0 := mload(x)
                 let x1 := mload(add(x, 0x20))
                 let x2 := mload(add(x, 0x40))
-                mstore(out, addmod(mulmod(x0, x0, p), mulmod(4, mulmod(x1, x2, p), p), p))
-                mstore(add(out, 0x20), addmod(mulmod(2, mulmod(x0, x1, p), p), mulmod(2, mulmod(x2, x2, p), p), p))
-                mstore(add(out, 0x40), addmod(mulmod(2, mulmod(x0, x2, p), p), mulmod(x1, x1, p), p))
+                mstore(out, addmod(mulmod(x0, x0, p), shl(2, mulmod(x1, x2, p)), p))
+                mstore(add(out, 0x20), addmod(shl(1, mulmod(x0, x1, p)), shl(1, mulmod(x2, x2, p)), p))
+                mstore(add(out, 0x40), addmod(shl(1, mulmod(x0, x2, p)), mulmod(x1, x1, p), p))
             }
-
             let p := 0xFFFFFFFF00000001
-            let a := scratch
-            let b := add(scratch, 0x60)
-            let c := add(scratch, 0xc0)
-            let s0 := add(scratch, 0x120)
-            let s1 := add(scratch, 0x180)
-            let s2 := add(scratch, 0x1e0)
-            let t0 := add(scratch, 0x240)
-            let t1 := add(scratch, 0x2a0)
-            let t2 := add(scratch, 0x300)
-
-            let p0 := mload(position)
-            let p1 := mload(add(position, 0x20))
-            let p2 := mload(add(position, 0x40))
-            let g0 := mload(gamma)
-            let g1 := mload(add(gamma, 0x20))
-            let g2 := mload(add(gamma, 0x40))
-
-            // a = wire + embed(beta_0) + position * gamma_0.
-            mstore(a, addmod(addmod(mload(wire), mload(beta), p), mulmod(p0, g0, p), p))
-            mstore(add(a, 0x20), addmod(mload(add(wire, 0x20)), mulmod(p1, g0, p), p))
-            mstore(add(a, 0x40), addmod(mload(add(wire, 0x40)), mulmod(p2, g0, p), p))
-            // b/c have no wire term.
-            mstore(b, addmod(mload(add(beta, 0x20)), mulmod(p0, g1, p), p))
-            mstore(add(b, 0x20), mulmod(p1, g1, p))
-            mstore(add(b, 0x40), mulmod(p2, g1, p))
-            mstore(c, addmod(mload(add(beta, 0x40)), mulmod(p0, g2, p), p))
-            mstore(add(c, 0x20), mulmod(p1, g2, p))
-            mstore(add(c, 0x40), mulmod(p2, g2, p))
-
-            // (s0,s1,s2) = (a^2-2bc, 2c^2-ab, b^2-ac).
-            square3(s0, a)
-            mul3(t0, b, c)
-            mstore(s0, addmod(mload(s0), sub(p, addmod(mload(t0), mload(t0), p)), p))
-            mstore(
-                add(s0, 0x20),
-                addmod(mload(add(s0, 0x20)), sub(p, addmod(mload(add(t0, 0x20)), mload(add(t0, 0x20)), p)), p)
-            )
-            mstore(
-                add(s0, 0x40),
-                addmod(mload(add(s0, 0x40)), sub(p, addmod(mload(add(t0, 0x40)), mload(add(t0, 0x40)), p)), p)
-            )
-
-            square3(s1, c)
-            mul3(t0, a, b)
-            mstore(s1, addmod(addmod(mload(s1), mload(s1), p), sub(p, mload(t0)), p))
-            mstore(
-                add(s1, 0x20),
-                addmod(addmod(mload(add(s1, 0x20)), mload(add(s1, 0x20)), p), sub(p, mload(add(t0, 0x20))), p)
-            )
-            mstore(
-                add(s1, 0x40),
-                addmod(addmod(mload(add(s1, 0x40)), mload(add(s1, 0x40)), p), sub(p, mload(add(t0, 0x40))), p)
-            )
-
-            square3(s2, b)
-            mul3(t0, a, c)
-            mstore(s2, addmod(mload(s2), sub(p, mload(t0)), p))
-            mstore(add(s2, 0x20), addmod(mload(add(s2, 0x20)), sub(p, mload(add(t0, 0x20))), p))
-            mstore(add(s2, 0x40), addmod(mload(add(s2, 0x40)), sub(p, mload(add(t0, 0x40))), p))
-
-            // norm = a*s0 + 2*(c*s1 + b*s2).
-            mul3(t0, a, s0)
-            mul3(t1, c, s1)
-            mul3(t2, b, s2)
-            mstore(
-                norm,
-                addmod(mload(t0), addmod(addmod(mload(t1), mload(t2), p), addmod(mload(t1), mload(t2), p), p), p)
-            )
-            mstore(
-                add(norm, 0x20),
-                addmod(
-                    mload(add(t0, 0x20)),
-                    addmod(
-                        addmod(mload(add(t1, 0x20)), mload(add(t2, 0x20)), p),
-                        addmod(mload(add(t1, 0x20)), mload(add(t2, 0x20)), p),
-                        p
-                    ),
-                    p
-                )
-            )
-            mstore(
-                add(norm, 0x40),
-                addmod(
-                    mload(add(t0, 0x40)),
-                    addmod(
-                        addmod(mload(add(t1, 0x40)), mload(add(t2, 0x40)), p),
-                        addmod(mload(add(t1, 0x40)), mload(add(t2, 0x40)), p),
-                        p
-                    ),
-                    p
-                )
-            )
-
-            // s0 + theta*s1 + theta^2*s2, theta^3 = 2.
-            mstore(
-                recomposed,
-                addmod(
-                    mload(s0),
-                    addmod(
-                        addmod(mload(add(s1, 0x40)), mload(add(s1, 0x40)), p),
-                        addmod(mload(add(s2, 0x20)), mload(add(s2, 0x20)), p),
-                        p
-                    ),
-                    p
-                )
-            )
-            mstore(
-                add(recomposed, 0x20),
-                addmod(
-                    mload(add(s0, 0x20)),
-                    addmod(mload(s1), addmod(mload(add(s2, 0x40)), mload(add(s2, 0x40)), p), p),
-                    p
-                )
-            )
-            mstore(add(recomposed, 0x40), addmod(mload(add(s0, 0x40)), addmod(mload(add(s1, 0x20)), mload(s2), p), p))
+            let a := mload(coordinates)
+            let b := mload(add(coordinates, 0x20))
+            let c := mload(add(coordinates, 0x40))
+            // s0 = a^2 - 2bc
+            let s := mload(adjugate)
+            squareInto(s, a)
+            mulInto(product, b, c)
+            mstore(s, addmod(mload(s), sub(0x1FFFFFFFE00000002, shl(1, mload(product))), p))
+            mstore(add(s, 0x20), addmod(mload(add(s, 0x20)), sub(0x1FFFFFFFE00000002, shl(1, mload(add(product, 0x20)))), p))
+            mstore(add(s, 0x40), addmod(mload(add(s, 0x40)), sub(0x1FFFFFFFE00000002, shl(1, mload(add(product, 0x40)))), p))
+            // s1 = 2c^2 - ab
+            s := mload(add(adjugate, 0x20))
+            squareInto(s, c)
+            mulInto(product, a, b)
+            mstore(s, addmod(shl(1, mload(s)), sub(p, mload(product)), p))
+            mstore(add(s, 0x20), addmod(shl(1, mload(add(s, 0x20))), sub(p, mload(add(product, 0x20))), p))
+            mstore(add(s, 0x40), addmod(shl(1, mload(add(s, 0x40))), sub(p, mload(add(product, 0x40))), p))
+            // s2 = b^2 - ac
+            s := mload(add(adjugate, 0x40))
+            squareInto(s, b)
+            mulInto(product, a, c)
+            mstore(s, addmod(mload(s), sub(p, mload(product)), p))
+            mstore(add(s, 0x20), addmod(mload(add(s, 0x20)), sub(p, mload(add(product, 0x20))), p))
+            mstore(add(s, 0x40), addmod(mload(add(s, 0x40)), sub(p, mload(add(product, 0x40))), p))
+            // norm = a*s0 + 2*(c*s1 + b*s2)
+            mulInto(norm, a, mload(adjugate))
+            mulInto(product, c, mload(add(adjugate, 0x20)))
+            mstore(norm, addmod(mload(norm), shl(1, mload(product)), p))
+            mstore(add(norm, 0x20), addmod(mload(add(norm, 0x20)), shl(1, mload(add(product, 0x20))), p))
+            mstore(add(norm, 0x40), addmod(mload(add(norm, 0x40)), shl(1, mload(add(product, 0x40))), p))
+            mulInto(product, b, mload(add(adjugate, 0x40)))
+            mstore(norm, addmod(mload(norm), shl(1, mload(product)), p))
+            mstore(add(norm, 0x20), addmod(mload(add(norm, 0x20)), shl(1, mload(add(product, 0x20))), p))
+            mstore(add(norm, 0x40), addmod(mload(add(norm, 0x40)), shl(1, mload(add(product, 0x40))), p))
         }
     }
 
-    function _accumulateWireInPlace(
-        GoldilocksExt3.Ext3 memory helperZeroChecks,
-        GoldilocksExt3.Ext3 memory logupSum,
-        GoldilocksExt3.Ext3 memory lambdaPower,
-        GoldilocksExt3.Ext3 memory identityHelper,
-        GoldilocksExt3.Ext3 memory sigmaHelper,
-        GoldilocksExt3.Ext3 memory identityNorm,
-        GoldilocksExt3.Ext3 memory sigmaNorm,
-        GoldilocksExt3.Ext3 memory identityAdjugate,
-        GoldilocksExt3.Ext3 memory sigmaAdjugate,
-        GoldilocksExt3.Ext3 memory rho,
-        GoldilocksExt3.Ext3 memory lambda,
-        uint256[27] memory scratch
-    ) private pure {
+    // ---------------------------------------------------------------- layout conversion
+
+    /// @dev Flatten `numVars` rounds of exactly `degree` coefficients each into the round-major
+    /// limb layout. Any other shape reverts with `InvalidMleProof`.
+    function _flattenRounds(SumcheckProof memory proof, uint256 numVars, uint256 degree)
+        private
+        pure
+        returns (uint256[] memory flat)
+    {
+        CoefficientRound[] memory rounds = proof.rounds;
+        if (rounds.length != numVars || numVars > MAX_ROW_VARIABLES || degree > MAX_GATE_DEGREE) {
+            revert InvalidMleProof();
+        }
+        uint256 words = numVars * degree * 3;
         assembly ("memory-safe") {
-            function mul3(out, x, y) {
-                let p := 0xFFFFFFFF00000001
-                let x0 := mload(x)
-                let x1 := mload(add(x, 0x20))
-                let x2 := mload(add(x, 0x40))
-                let y0 := mload(y)
-                let y1 := mload(add(y, 0x20))
-                let y2 := mload(add(y, 0x40))
-                mstore(out, addmod(mulmod(x0, y0, p), mulmod(2, addmod(mulmod(x1, y2, p), mulmod(x2, y1, p), p), p), p))
-                mstore(
-                    add(out, 0x20),
-                    addmod(addmod(mulmod(x0, y1, p), mulmod(x1, y0, p), p), mulmod(2, mulmod(x2, y2, p), p), p)
-                )
-                mstore(add(out, 0x40), addmod(addmod(mulmod(x0, y2, p), mulmod(x1, y1, p), p), mulmod(x2, y0, p), p))
+            flat := mload(0x40)
+            mstore(flat, words)
+            let destination := add(flat, 0x20)
+            mstore(0x40, add(destination, shl(5, words)))
+            for { let r := 0 } lt(r, numVars) { r := add(r, 1) } {
+                let coefficients := mload(mload(add(add(rounds, 0x20), shl(5, r))))
+                if iszero(eq(mload(coefficients), degree)) {
+                    mstore(0x00, shl(224, 0xf0783a66))
+                    revert(0x00, 0x04)
+                }
+                for { let j := 0 } lt(j, degree) { j := add(j, 1) } {
+                    mcopy(destination, mload(add(add(coefficients, 0x20), shl(5, j))), 0x60)
+                    destination := add(destination, 0x60)
+                }
             }
-
-            let p := 0xFFFFFFFF00000001
-            let identityZero := scratch
-            let sigmaZero := add(scratch, 0x60)
-            let tmp := add(scratch, 0xc0)
-            let contribution := add(scratch, 0x120)
-            let identityTerm := add(scratch, 0x180)
-            let sigmaTerm := add(scratch, 0x1e0)
-
-            mul3(identityZero, identityHelper, identityNorm)
-            mstore(identityZero, addmod(mload(identityZero), sub(p, 1), p))
-            mul3(sigmaZero, sigmaHelper, sigmaNorm)
-            mstore(sigmaZero, addmod(mload(sigmaZero), sub(p, 1), p))
-            mul3(tmp, rho, sigmaZero)
-            mstore(tmp, addmod(mload(identityZero), mload(tmp), p))
-            mstore(add(tmp, 0x20), addmod(mload(add(identityZero, 0x20)), mload(add(tmp, 0x20)), p))
-            mstore(add(tmp, 0x40), addmod(mload(add(identityZero, 0x40)), mload(add(tmp, 0x40)), p))
-            mul3(contribution, lambdaPower, tmp)
-            mstore(helperZeroChecks, addmod(mload(helperZeroChecks), mload(contribution), p))
-            mstore(
-                add(helperZeroChecks, 0x20),
-                addmod(mload(add(helperZeroChecks, 0x20)), mload(add(contribution, 0x20)), p)
-            )
-            mstore(
-                add(helperZeroChecks, 0x40),
-                addmod(mload(add(helperZeroChecks, 0x40)), mload(add(contribution, 0x40)), p)
-            )
-
-            mul3(identityTerm, identityHelper, identityAdjugate)
-            mul3(sigmaTerm, sigmaHelper, sigmaAdjugate)
-            mstore(logupSum, addmod(mload(logupSum), addmod(mload(identityTerm), sub(p, mload(sigmaTerm)), p), p))
-            mstore(
-                add(logupSum, 0x20),
-                addmod(
-                    mload(add(logupSum, 0x20)),
-                    addmod(mload(add(identityTerm, 0x20)), sub(p, mload(add(sigmaTerm, 0x20))), p),
-                    p
-                )
-            )
-            mstore(
-                add(logupSum, 0x40),
-                addmod(
-                    mload(add(logupSum, 0x40)),
-                    addmod(mload(add(identityTerm, 0x40)), sub(p, mload(add(sigmaTerm, 0x40))), p),
-                    p
-                )
-            )
-
-            mul3(lambdaPower, lambdaPower, lambda)
         }
     }
 
-    function _denominatorCoordinates(
-        GoldilocksExt3.Ext3 memory wire,
-        GoldilocksExt3.Ext3 memory position,
-        GoldilocksExt3.Ext3 memory beta,
-        GoldilocksExt3.Ext3 memory gamma
-    ) private pure returns (GoldilocksExt3.Ext3[3] memory coordinates) {
-        // Each gamma coordinate is a base-field scalar embedded into Ext3.
-        // `embed(gamma_i) * position == mulScalar(position, gamma_i)` exactly.
-        coordinates[0] =
-            GoldilocksExt3.add(GoldilocksExt3.add(_embed(beta.c0), wire), GoldilocksExt3.mulScalar(position, gamma.c0));
-        coordinates[1] = GoldilocksExt3.add(_embed(beta.c1), GoldilocksExt3.mulScalar(position, gamma.c1));
-        coordinates[2] = GoldilocksExt3.add(_embed(beta.c2), GoldilocksExt3.mulScalar(position, gamma.c2));
-    }
-
-    function _formalAdjugate(GoldilocksExt3.Ext3[3] memory coordinates)
-        private
-        pure
-        returns (GoldilocksExt3.Ext3[3] memory adjugate)
-    {
-        GoldilocksExt3.Ext3 memory a = coordinates[0];
-        GoldilocksExt3.Ext3 memory b = coordinates[1];
-        GoldilocksExt3.Ext3 memory c = coordinates[2];
-        adjugate[0] = GoldilocksExt3.sub(GoldilocksExt3.square(a), GoldilocksExt3.double_(GoldilocksExt3.mul(b, c)));
-        adjugate[1] = GoldilocksExt3.sub(GoldilocksExt3.double_(GoldilocksExt3.square(c)), GoldilocksExt3.mul(a, b));
-        adjugate[2] = GoldilocksExt3.sub(GoldilocksExt3.square(b), GoldilocksExt3.mul(a, c));
-    }
-
-    function _formalNorm(GoldilocksExt3.Ext3[3] memory coordinates) private pure returns (GoldilocksExt3.Ext3 memory) {
-        GoldilocksExt3.Ext3[3] memory adjugate = _formalAdjugate(coordinates);
-        return _formalNormFromAdjugate(coordinates, adjugate);
-    }
-
-    function _formalNormFromAdjugate(GoldilocksExt3.Ext3[3] memory coordinates, GoldilocksExt3.Ext3[3] memory adjugate)
-        private
-        pure
-        returns (GoldilocksExt3.Ext3 memory)
-    {
-        return GoldilocksExt3.add(
-            GoldilocksExt3.mul(coordinates[0], adjugate[0]),
-            GoldilocksExt3.double_(
-                GoldilocksExt3.add(
-                    GoldilocksExt3.mul(coordinates[2], adjugate[1]), GoldilocksExt3.mul(coordinates[1], adjugate[2])
-                )
-            )
-        );
-    }
-
-    function _recomposeAdjugate(GoldilocksExt3.Ext3[3] memory coordinates)
-        private
-        pure
-        returns (GoldilocksExt3.Ext3 memory)
-    {
-        GoldilocksExt3.Ext3[3] memory adjugate = _formalAdjugate(coordinates);
-        return _recomposeFormalAdjugate(adjugate);
-    }
-
-    function _recomposeFormalAdjugate(GoldilocksExt3.Ext3[3] memory adjugate)
-        private
-        pure
-        returns (GoldilocksExt3.Ext3 memory)
-    {
-        return GoldilocksExt3.add(
-            adjugate[0], GoldilocksExt3.add(_mulByTheta(adjugate[1]), _mulByThetaSquared(adjugate[2]))
-        );
-    }
-
-    function _mulByTheta(GoldilocksExt3.Ext3 memory value) private pure returns (GoldilocksExt3.Ext3 memory result) {
-        result.c0 = uint64(addmod(uint256(value.c2), uint256(value.c2), P));
-        result.c1 = value.c0;
-        result.c2 = value.c1;
-    }
-
-    function _mulByThetaSquared(GoldilocksExt3.Ext3 memory value)
-        private
-        pure
-        returns (GoldilocksExt3.Ext3 memory result)
-    {
-        result.c0 = uint64(addmod(uint256(value.c1), uint256(value.c1), P));
-        result.c1 = uint64(addmod(uint256(value.c2), uint256(value.c2), P));
-        result.c2 = value.c0;
-    }
-
-    function _eqEvaluation(GoldilocksExt3.Ext3[] memory tau, GoldilocksExt3.Ext3[] memory point)
-        private
-        pure
-        returns (GoldilocksExt3.Ext3 memory value)
-    {
-        value = GoldilocksExt3.one();
-        GoldilocksExt3.Ext3 memory one = GoldilocksExt3.one();
-        for (uint256 i = 0; i < point.length; ++i) {
-            // tau*x + (1-tau)*(1-x) = 1 - tau - x + 2*tau*x.
-            // The latter needs only one Ext3 product.
-            GoldilocksExt3.Ext3 memory factor = GoldilocksExt3.add(
-                GoldilocksExt3.sub(GoldilocksExt3.sub(one, tau[i]), point[i]),
-                GoldilocksExt3.double_(GoldilocksExt3.mul(tau[i], point[i]))
-            );
-            value = GoldilocksExt3.mul(value, factor);
+    /// @dev Copy an `Ext3[]` into the flat three-words-per-element layout.
+    function _flattenExt3(GoldilocksExt3.Ext3[] memory values) private pure returns (uint256[] memory flat) {
+        assembly ("memory-safe") {
+            let count := mload(values)
+            flat := mload(0x40)
+            mstore(flat, mul(count, 3))
+            let destination := add(flat, 0x20)
+            mstore(0x40, add(destination, mul(count, 0x60)))
+            for { let i := 0 } lt(i, count) { i := add(i, 1) } {
+                mcopy(destination, mload(add(add(values, 0x20), shl(5, i))), 0x60)
+                destination := add(destination, 0x60)
+            }
         }
     }
 
-    function _subgroupEvaluation(uint256[] memory subgroupGenPowers, GoldilocksExt3.Ext3[] memory point)
-        private
-        pure
-        returns (GoldilocksExt3.Ext3 memory value)
-    {
-        value = GoldilocksExt3.one();
-        GoldilocksExt3.Ext3 memory one = GoldilocksExt3.one();
-        for (uint256 i = 0; i < point.length; ++i) {
-            // (1-x) + x*g = 1 + x*(g-1). Since g is base-field
-            // embedded, use scalar multiplication rather than a full Ext3 mul.
-            uint64 generatorMinusOne = uint64(addmod(subgroupGenPowers[i], P - 1, P));
-            GoldilocksExt3.Ext3 memory factor =
-                GoldilocksExt3.add(one, GoldilocksExt3.mulScalar(point[i], generatorMinusOne));
-            value = GoldilocksExt3.mul(value, factor);
-        }
-    }
+    // ---------------------------------------------------------------- validation
 
     function _validateAll(
         SumcheckProof memory logProof,
@@ -994,10 +1484,6 @@ library OuterLogupExt3Verifier {
             uint256 column = uint8(vk.publicInputWireMap[offset + 2]);
             if (row >= degree || column >= vk.numRoutedWires) revert InvalidMleProof();
         }
-    }
-
-    function _embed(uint256 value) private pure returns (GoldilocksExt3.Ext3 memory result) {
-        result.c0 = uint64(value);
     }
 
     function _checkCanonical(GoldilocksExt3.Ext3 memory value) private pure {
