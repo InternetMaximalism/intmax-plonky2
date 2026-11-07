@@ -67,13 +67,19 @@ library SpongefishWhir {
         ts.sponge.absorb(data);
     }
 
-    /// @dev Read a 32-byte hash from transcript and absorb.
+    /// @dev Read a 32-byte hash from transcript and absorb (zero-copy; same bytes absorbed as
+    ///      `proverMessage(ts, transcript, 32)`).
     function proverMessageHash(
         TranscriptState memory ts,
         bytes memory transcript
     ) internal pure returns (bytes32 h) {
-        bytes memory data = proverMessage(ts, transcript, 32);
-        assembly { h := mload(add(data, 32)) }
+        uint256 pos = ts.transcriptPos;
+        if (pos > transcript.length || 32 > transcript.length - pos) {
+            revert InvalidMleProof();
+        }
+        assembly ("memory-safe") { h := mload(add(add(transcript, 0x20), pos)) }
+        ts.sponge.absorbSlice(transcript, pos, 32);
+        ts.transcriptPos = pos + 32;
     }
 
     /// @dev Read a Goldilocks field element (8 bytes LE) from transcript and absorb.
@@ -134,31 +140,41 @@ library SpongefishWhir {
         TranscriptState memory ts,
         bytes memory transcript
     ) internal pure returns (uint64 c0, uint64 c1, uint64 c2) {
-        bytes memory data = proverMessage(ts, transcript, 24);
-        uint256 raw0;
-        uint256 raw1;
-        uint256 raw2;
-        assembly {
-            let base := add(data, 0x20)
-            // Read 3 × 8-byte LE chunks via byte-swap of high 8 bytes of each loaded word.
-            function readU64LE(ptr) -> v {
-                v := shr(192, mload(ptr))
-                v := or(shl(32, and(v, 0x00000000FFFFFFFF)), shr(32, and(v, 0xFFFFFFFF00000000)))
-                v := or(shl(16, and(v, 0x0000FFFF0000FFFF)), shr(16, and(v, 0xFFFF0000FFFF0000)))
-                v := or(shl(8,  and(v, 0x00FF00FF00FF00FF)), shr(8,  and(v, 0xFF00FF00FF00FF00)))
+        // One assembly block: bounds check, absorb (state = keccak256(state || 24 bytes),
+        // counter = 0), cursor advance, LE decode and the canonical check.
+        assembly ("memory-safe") {
+            let pos := mload(add(ts, 0x20))
+            let len := mload(transcript)
+            if or(gt(pos, len), gt(24, sub(len, pos))) {
+                mstore(0x00, shl(224, 0xf0783a66))
+                revert(0x00, 0x04)
             }
-            raw0 := readU64LE(base)
-            raw1 := readU64LE(add(base, 8))
-            raw2 := readU64LE(add(base, 16))
+            let sp := mload(ts) // ts.sponge
+            let w := mload(add(add(transcript, 0x20), pos))
+            // Temporary scratch after the free memory pointer (not retained): state || message.
+            let scratch := mload(0x40)
+            mstore(scratch, mload(sp))
+            mstore(add(scratch, 0x20), w)
+            mstore(sp, keccak256(scratch, 56))
+            mstore(add(sp, 0x20), 0)
+            mstore(add(ts, 0x20), add(pos, 24))
+            // The three LE u64 limbs are the top 24 bytes of the word. Reverse the bytes inside
+            // every 64-bit lane at once (same result as three per-limb byte swaps).
+            w := or(and(shr(8, w), 0x00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF), and(shl(8, w), 0xFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00))
+            w := or(and(shr(16, w), 0x0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF), and(shl(16, w), 0xFFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000))
+            w := or(and(shr(32, w), 0x00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF), and(shl(32, w), 0xFFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000))
+            c0 := shr(192, w)
+            c1 := and(shr(128, w), 0xFFFFFFFFFFFFFFFF)
+            c2 := and(shr(64, w), 0xFFFFFFFFFFFFFFFF)
+            // SECURITY: enforce canonical encoding on RAW values (before any reduction).
+            // The sponge already absorbed the raw bytes above; if any raw >= GL_P, the prover
+            // is using a non-canonical byte pattern to steer Fiat-Shamir challenge derivation
+            // while still claiming an in-field value.
+            if or(or(gt(c0, 0xFFFFFFFF00000000), gt(c1, 0xFFFFFFFF00000000)), gt(c2, 0xFFFFFFFF00000000)) {
+                mstore(0x00, shl(224, 0xf0783a66))
+                revert(0x00, 0x04)
+            }
         }
-        // SECURITY: enforce canonical encoding on RAW values (before any reduction).
-        // The sponge already absorbed the raw bytes via proverMessage above; if any
-        // raw >= GL_P, the prover is using a non-canonical byte pattern to steer
-        // Fiat-Shamir challenge derivation while still claiming an in-field value.
-        if (raw0 >= GL_P || raw1 >= GL_P || raw2 >= GL_P) revert InvalidMleProof();
-        c0 = uint64(raw0);
-        c1 = uint64(raw1);
-        c2 = uint64(raw2);
     }
 
     /// @dev Squeeze a Field64_3: 3 × (8 + 32) = 120 bytes.
@@ -166,10 +182,46 @@ library SpongefishWhir {
     function verifierMessageField64x3(
         TranscriptState memory ts
     ) internal pure returns (uint64 c0, uint64 c1, uint64 c2) {
-        bytes memory data = ts.sponge.squeeze(120);
-        c0 = _leModReduce64(data, 0, 40);
-        c1 = _leModReduce64(data, 40, 40);
-        c2 = _leModReduce64(data, 80, 40);
+        // Same four squeezed blocks and the same 40-byte LE reductions, without the byte string.
+        return ts.sponge.squeezeField64x3();
+    }
+
+    /// @dev Geometric challenge in flat limb layout: squeeze one Field64_3 value x (only when
+    ///      count >= 2, exactly like `geometricChallenge`) and return [1, x, x^2, ..., x^(count-1)]
+    ///      as 3 words per element.
+    function geometricChallengeFlat(
+        TranscriptState memory ts,
+        uint256 count
+    ) internal pure returns (uint256[] memory coeffs) {
+        if (count == 0) return new uint256[](0);
+        coeffs = new uint256[](3 * count);
+        coeffs[0] = 1;
+        if (count == 1) return coeffs;
+
+        (uint64 c0, uint64 c1, uint64 c2) = verifierMessageField64x3(ts);
+        assembly ("memory-safe") {
+            let p := 0xFFFFFFFF00000001
+            let x0 := c0
+            let x1 := c1
+            let x2 := c2
+            let p0 := 1
+            let p1 := 0
+            let p2 := 0
+            let end := add(add(coeffs, 0x20), mul(count, 0x60))
+            for { let cur := add(coeffs, 0x80) } lt(cur, end) { cur := add(cur, 0x60) } {
+                // Ext3 product with lazy reduction: every input is < 2^64, so the 256-bit
+                // sums of products cannot wrap before the final mod.
+                let n0 := mod(add(mul(p0, x0), shl(1, add(mul(p1, x2), mul(p2, x1)))), p)
+                let n1 := mod(add(add(mul(p0, x1), mul(p1, x0)), shl(1, mul(p2, x2))), p)
+                let n2 := mod(add(add(mul(p0, x2), mul(p1, x1)), mul(p2, x0)), p)
+                mstore(cur, n0)
+                mstore(add(cur, 0x20), n1)
+                mstore(add(cur, 0x40), n2)
+                p0 := n0
+                p1 := n1
+                p2 := n2
+            }
+        }
     }
 
     /// @dev Read N bytes from hints (NOT absorbed into sponge).

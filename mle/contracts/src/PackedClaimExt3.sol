@@ -104,6 +104,122 @@ library PackedClaimExt3 {
         return _foldV2UsedCellsUnchecked(claims, capacity, indexPoints);
     }
 
+    /// @dev Flat-buffer twin of `foldV2UsedCellsPrevalidatedInternal`: every
+    /// vector is `3 * count` canonical limb words (`c0, c1, c2` per slot). The
+    /// atomic verifier materializes each proof vector exactly once in this form
+    /// and reaches this entry only after its calldata preflight established the
+    /// exact five lengths, every limb's canonicality and two transcript-derived
+    /// index points of the deployment-pinned length.
+    function foldV2UsedCellsFlatPrevalidatedInternal(
+        uint256[] memory logPreprocessed,
+        uint256[] memory logWitness,
+        uint256[] memory logNormInverse,
+        uint256[] memory gatePreprocessed,
+        uint256[] memory gateWitness,
+        uint256 capacity,
+        GoldilocksExt3.Ext3[][] memory indexPoints
+    ) internal pure returns (GoldilocksExt3.Ext3[] memory evaluations, bytes memory evalMask) {
+        if (indexPoints.length != NUM_POINTS) revert InvalidMleProof();
+        evaluations = new GoldilocksExt3.Ext3[](NUM_CELLS);
+        uint256[] memory scratch = new uint256[](3 * capacity);
+        _foldFromFlat(logPreprocessed, indexPoints[0], scratch, evaluations[0]);
+        _foldFromFlat(logWitness, indexPoints[0], scratch, evaluations[1]);
+        _foldFromFlat(logNormInverse, indexPoints[0], scratch, evaluations[2]);
+        _foldFromFlat(gatePreprocessed, indexPoints[1], scratch, evaluations[3]);
+        _foldFromFlat(gateWitness, indexPoints[1], scratch, evaluations[4]);
+        // evaluations[5] remains the canonical Ext3 zero.
+
+        evalMask = new bytes(1);
+        evalMask[0] = USED_CELL_MASK;
+    }
+
+    /// @dev `_foldFlat` over a flat limb buffer: the slot table is copied into
+    /// `scratch` (3 words per slot) and folded in place exactly as the
+    /// record-based version does; the input buffer is left untouched.
+    function _foldFromFlat(
+        uint256[] memory limbs,
+        GoldilocksExt3.Ext3[] memory indexPoint,
+        uint256[] memory scratch,
+        GoldilocksExt3.Ext3 memory result
+    ) private pure {
+        if (limbs.length % 3 != 0) revert InvalidMleProof();
+        uint256 count = limbs.length / 3;
+        if (count == 0) return;
+        if (limbs.length > scratch.length) revert InvalidMleProof();
+        assembly ("memory-safe") {
+            let buf := add(scratch, 0x20)
+            let src := add(limbs, 0x20)
+            let bytesLength := mul(count, 0x60)
+            for { let off := 0 } lt(off, bytesLength) { off := add(off, 0x20) } {
+                mstore(add(buf, off), mload(add(src, off)))
+            }
+        }
+        _foldInPlace(scratch, count, indexPoint, result);
+    }
+
+    /// @dev Multilinear fold of the first `count` slots of `scratch` (3 words per
+    /// slot) at `indexPoint`, LSB-first, in place. See `_foldFlat` for the
+    /// aliasing argument; every butterfly is `even + r * (odd - even)` with an
+    /// absent zero-padded odd partner contributing `even + r * (0 - even)`.
+    function _foldInPlace(
+        uint256[] memory scratch,
+        uint256 count,
+        GoldilocksExt3.Ext3[] memory indexPoint,
+        GoldilocksExt3.Ext3 memory result
+    ) private pure {
+        assembly ("memory-safe") {
+            let p := 0xFFFFFFFF00000001
+            let buf := add(scratch, 0x20)
+            let active := count
+            let bits := mload(indexPoint)
+            let points := add(indexPoint, 0x20)
+            for { let bit := 0 } lt(bit, bits) { bit := add(bit, 1) } {
+                let challenge := mload(add(points, shl(5, bit)))
+                let r0 := mload(challenge)
+                let r1 := mload(add(challenge, 0x20))
+                let r2 := mload(add(challenge, 0x40))
+                let pairs := shr(1, active)
+                let dst := buf
+                let even := buf
+                // Full pairs: next = even + r * (odd - even). The Ext3 product is
+                // accumulated as plain integer sums of products of canonical limbs
+                // (every operand < 2^64, so each limb sum is < 2^131) and reduced
+                // once; this yields exactly the canonical value of the mulmod/addmod
+                // form.
+                for { let i := 0 } lt(i, pairs) { i := add(i, 1) } {
+                    let e0 := mload(even)
+                    let e1 := mload(add(even, 0x20))
+                    let e2 := mload(add(even, 0x40))
+                    let d0 := addmod(mload(add(even, 0x60)), sub(p, e0), p)
+                    let d1 := addmod(mload(add(even, 0x80)), sub(p, e1), p)
+                    let d2 := addmod(mload(add(even, 0xa0)), sub(p, e2), p)
+                    mstore(dst, mod(add(e0, add(mul(r0, d0), shl(1, add(mul(r1, d2), mul(r2, d1))))), p))
+                    mstore(add(dst, 0x20), mod(add(e1, add(add(mul(r0, d1), mul(r1, d0)), shl(1, mul(r2, d2)))), p))
+                    mstore(add(dst, 0x40), mod(add(e2, add(add(mul(r0, d2), mul(r1, d1)), mul(r2, d0))), p))
+                    dst := add(dst, 0x60)
+                    even := add(even, 0xc0)
+                }
+                // The sole element of an odd prefix pairs with the zero padding:
+                // next = even + r * (0 - even) = even * (1 - r). `p - e` is at most p.
+                if and(active, 1) {
+                    let e0 := mload(even)
+                    let e1 := mload(add(even, 0x20))
+                    let e2 := mload(add(even, 0x40))
+                    let d0 := sub(p, e0)
+                    let d1 := sub(p, e1)
+                    let d2 := sub(p, e2)
+                    mstore(dst, mod(add(e0, add(mul(r0, d0), shl(1, add(mul(r1, d2), mul(r2, d1))))), p))
+                    mstore(add(dst, 0x20), mod(add(e1, add(add(mul(r0, d1), mul(r1, d0)), shl(1, mul(r2, d2)))), p))
+                    mstore(add(dst, 0x40), mod(add(e2, add(add(mul(r0, d2), mul(r1, d1)), mul(r2, d0))), p))
+                }
+                active := shr(1, add(active, 1))
+            }
+            mstore(result, mload(buf))
+            mstore(add(result, 0x20), mload(add(buf, 0x20)))
+            mstore(add(result, 0x40), mload(add(buf, 0x40)))
+        }
+    }
+
     function _foldV2UsedCellsUnchecked(
         UsedClaims memory claims,
         uint256 capacity,

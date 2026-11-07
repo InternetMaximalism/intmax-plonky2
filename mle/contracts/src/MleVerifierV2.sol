@@ -22,6 +22,7 @@ import {
     BASE_FIELD_POWER_OF_TWO_GENERATOR_V2,
     BASE_FIELD_TWO_ADICITY_V2,
     CIRCUIT_DIGEST_LENGTH_V2,
+    COMPACT_MAGIC_V2,
     DOMAIN_CIRCUIT_CONFIG_DIGEST_V2,
     DOMAIN_CIRCUIT_STATEMENT_V2,
     DOMAIN_CONSTITUENT_CLAIMS_V2,
@@ -36,6 +37,7 @@ import {
     EXTENSION_FIELD_LIMBS_V2,
     GATE_SUMCHECK_COUNT_V2,
     LOG_ROUND_DEGREE_V2,
+    MAX_COMPACT_PROOF_BYTES_V2,
     MAX_CONSTITUENT_INDEX_BITS_V2,
     MAX_CONSTITUENT_WIDTH_V2,
     MAX_GATE_CONSTRAINTS_V2,
@@ -62,6 +64,13 @@ import {
 /// call has checked the two Ext3 outer sumchecks, all five terminal-used
 /// constituent vectors against one three-group/two-point WHIR statement, the
 /// formal norm/logUp terminal, and the exact Plonky2 gate terminal.
+///
+/// Two entry points share one verification pipeline over a `ProofView`:
+/// `verifyCompactWithConfig` reads the canonical `MLEWHIR3` byte string
+/// directly from calldata (the production path used by `PinnedMleVerifierV2`),
+/// and `verify` accepts the typed ABI proof. Both materialize every Ext3
+/// vector exactly once, as flat canonical limb buffers, and keep the WHIR hint
+/// stream in calldata until its single consumer.
 contract MleVerifierV2 {
     // Raw-proof verdicts consumed by fraud classifiers. Keep these values
     // aligned with the parent rollup: only INVALID is proof-dependent fraud;
@@ -117,12 +126,44 @@ contract MleVerifierV2 {
         SpongefishWhirVerify.WhirParams whir;
     }
 
+    /// @dev One proof, fully shape-checked and canonicalized, in the form the
+    /// pipeline consumes. Every Ext3 vector is a flat limb buffer with three
+    /// canonical words per element (`c0, c1, c2`); sumcheck rounds are
+    /// round-major then coefficient-major. The WHIR hint stream stays in
+    /// calldata (`hintsOffset`, `hintsLength`). When the proof came from the
+    /// compact encoding, `logClaimsOffset`/`gateClaimsOffset` point at the raw
+    /// little-endian records of the five terminal-used vectors so the
+    /// transcript can absorb them without re-serializing; both are zero for a
+    /// typed ABI proof.
+    struct ProofView {
+        uint256[] publicInputs;
+        bytes32 preprocessedRoot;
+        bytes32 witnessRoot;
+        bytes32 normInverseRoot;
+        bytes whirTranscript;
+        uint256 hintsOffset;
+        uint256 hintsLength;
+        /// @dev The six vectors consumed by the outer verifier, laid out back to back as
+        /// length-prefixed word arrays (`publicInputs`, `logRounds`, `gateRounds`,
+        /// `logPreprocessed`, `logWitness`, `logNormInverse`); the six array fields below
+        /// are views into this byte string, which crosses the library boundary as one copy.
+        bytes outerBlob;
+        uint256[] logRounds;
+        uint256[] gateRounds;
+        uint256[] logPreprocessed;
+        uint256[] logWitness;
+        uint256[] logNormInverse;
+        uint256[] gatePreprocessed;
+        uint256[] gateWitness;
+        uint256 logClaimsOffset;
+        uint256 gateClaimsOffset;
+    }
+
     struct DerivedState {
         TranscriptV2.Transcript transcript;
         OuterLogupExt3Verifier.Challenges logChallenges;
         GoldilocksExt3.Ext3 gateAlpha;
         GoldilocksExt3.Ext3[] gateTau;
-        uint256[] publicInputs;
     }
 
     constructor(
@@ -197,9 +238,42 @@ contract MleVerifierV2 {
         if (block.chainid != allowedChainId) revert MleProofEngineUnavailable(block.chainid);
 
         _requirePinnedConfiguration(config);
-        uint256 width = _requireCanonicalProof(proof, config.circuit);
+        _requireCanonicalProof(proof, config.circuit);
 
-        _verifyAtomic(proof, config, width);
+        ProofView memory view_ = _viewFromAbi(proof, config.circuit);
+        _verifyView(view_, config);
+        return true;
+    }
+
+    /// @notice Verify the canonical `MLEWHIR3` compact encoding against the
+    /// pinned configuration supplied as its exact ABI encoding.
+    /// @dev `encodedConfig` must be `abi.encode(config)` for the constructor-pinned
+    /// configuration: its keccak is compared with `verificationConfigDigest`
+    /// before any field is read, after which the bytes are interpreted in place
+    /// as the calldata struct. Every compact framing rule (magic, protocol
+    /// version, constituent width, trusted vector lengths, stream caps, exact
+    /// consumption, canonical limbs, pinned circuit digest and preprocessed
+    /// root) is enforced here with `InvalidMleProof`, so a caller that only
+    /// authenticates these bytes needs no separate decoder.
+    function verifyCompactWithConfig(bytes calldata compactProof, bytes calldata encodedConfig)
+        external
+        view
+        returns (bool)
+    {
+        if (block.chainid != allowedChainId) revert MleProofEngineUnavailable(block.chainid);
+        if (keccak256(encodedConfig) != verificationConfigDigest) revert InvalidMleVerifierConfiguration();
+
+        // `abi.encode(struct)` is `0x20 || tuple`; a calldata struct pointer
+        // addresses the tuple. The digest equality above proves the bytes are
+        // exactly the canonical encoding the constructor validated, so every
+        // nested offset is well-formed and lies inside `encodedConfig`.
+        VerificationConfig calldata config;
+        assembly ("memory-safe") {
+            config := add(encodedConfig.offset, 0x20)
+        }
+
+        ProofView memory view_ = _parseCompact(compactProof, config.circuit);
+        _verifyView(view_, config);
         return true;
     }
 
@@ -300,55 +374,44 @@ contract MleVerifierV2 {
         }
     }
 
-    function _verifyAtomic(MleProof calldata proof, VerificationConfig calldata config, uint256 width) private view {
-        uint256 indexBits = _constituentIndexBits(width);
-        DerivedState memory derived = _deriveInitialTranscript(proof, config, width, indexBits);
+    // ------------------------------------------------------------------ pipeline
 
-        // Only the five vectors used by both the packed fold and later
-        // terminal/gate checks need a persistent memory representation. Keep
-        // the large WHIR byte strings and sumcheck records in calldata until
-        // their single consumer instead of deep-copying the entire proof.
-        PackedClaimExt3.UsedClaims memory usedClaims = PackedClaimExt3.UsedClaims({
-            logPreprocessed: _copyCanonicalExt3(proof.logPreprocessed),
-            logWitness: _copyCanonicalExt3(proof.logWitness),
-            logNormInverse: _copyCanonicalExt3(proof.logNormInverse),
-            gatePreprocessed: _copyCanonicalExt3(proof.gatePreprocessed),
-            gateWitness: _copyCanonicalExt3(proof.gateWitness)
-        });
-        uint256[] memory kIs = config.kIs;
-        uint256[] memory subgroupGenPowers = config.subgroupGenPowers;
+    /// @dev The complete atomic statement over one shape-checked, canonical view.
+    function _verifyView(ProofView memory view_, VerificationConfig calldata config) private view {
+        CircuitConfigV2.Parameters calldata circuit = config.circuit;
+        uint256 width = _constituentWidth(circuit);
+        uint256 indexBits = _constituentIndexBits(width);
+        DerivedState memory derived = _deriveInitialTranscript(view_, config, width, indexBits);
 
         OuterLogupExt3Verifier.VerificationKey memory outerVk = OuterLogupExt3Verifier.VerificationKey({
-            numVars: config.circuit.degreeBits,
-            gateDegree: config.circuit.quotientDegreeFactor + 2,
-            numConstants: config.circuit.numConstants,
-            numRoutedWires: config.circuit.numRoutedWires,
-            numWires: config.circuit.numWires,
-            kIs: kIs,
-            subgroupGenPowers: subgroupGenPowers,
+            numVars: circuit.degreeBits,
+            gateDegree: circuit.quotientDegreeFactor + 2,
+            numConstants: circuit.numConstants,
+            numRoutedWires: circuit.numRoutedWires,
+            numWires: circuit.numWires,
+            kIs: config.kIs,
+            subgroupGenPowers: config.subgroupGenPowers,
             publicInputWireMap: config.publicInputWireMap
         });
-        OuterLogupExt3Verifier.TerminalEvaluations memory logTerminal = OuterLogupExt3Verifier.TerminalEvaluations({
-            preprocessed: usedClaims.logPreprocessed,
-            witness: usedClaims.logWitness,
-            normInverse: usedClaims.logNormInverse,
-            publicInputs: derived.publicInputs
-        });
-
-        OuterLogupExt3Verifier.SumcheckProof memory logProof = _copyCanonicalSumcheck(proof.logProof);
-        OuterLogupExt3Verifier.SumcheckProof memory gateProof = _copyCanonicalSumcheck(proof.gateProof);
 
         GoldilocksExt3.Ext3[] memory logPoint;
         GoldilocksExt3.Ext3[] memory gatePoint;
         GoldilocksExt3.Ext3 memory gateFinalClaim;
-        (logPoint, gatePoint, gateFinalClaim, derived.transcript) = OuterLogupExt3Verifier.verifyPrevalidated(
-            logProof, gateProof, outerVk, derived.logChallenges, logTerminal, derived.transcript
+        (logPoint, gatePoint, gateFinalClaim, derived.transcript) = OuterLogupExt3Verifier.verifyPrevalidatedBlob(
+            view_.outerBlob, outerVk, derived.logChallenges, derived.transcript
         );
 
-        GoldilocksExt3.Ext3[][] memory indexPoints =
-            _absorbClaimsAndSampleIndices(derived.transcript, usedClaims, indexBits);
-        (GoldilocksExt3.Ext3[] memory evaluations, bytes memory evaluationMask) =
-            PackedClaimExt3.foldV2UsedCellsPrevalidatedInternal(usedClaims, uint256(1) << indexBits, indexPoints);
+        GoldilocksExt3.Ext3[][] memory indexPoints = _absorbClaimsAndSampleIndices(derived.transcript, view_, indexBits);
+        (GoldilocksExt3.Ext3[] memory evaluations, bytes memory evaluationMask) = PackedClaimExt3
+            .foldV2UsedCellsFlatPrevalidatedInternal(
+            view_.logPreprocessed,
+            view_.logWitness,
+            view_.logNormInverse,
+            view_.gatePreprocessed,
+            view_.gateWitness,
+            uint256(1) << indexBits,
+            indexPoints
+        );
         if (
             evaluations.length != NUM_PCS_CLAIMS_V2 || evaluationMask.length != 1
                 || evaluationMask[0] != PACKED_BOUND_CLAIM_MASK_V2
@@ -359,15 +422,16 @@ contract MleVerifierV2 {
         whir.evaluationPoint2 = _packedPoint(gatePoint, indexPoints[1]);
         whir.additionalEvaluationPoints = new GoldilocksExt3.Ext3[][](0);
         bytes32[] memory roots = new bytes32[](NUM_PCS_GROUPS_V2);
-        roots[0] = proof.preprocessedRoot;
-        roots[1] = proof.witnessRoot;
-        roots[2] = proof.normInverseRoot;
+        roots[0] = view_.preprocessedRoot;
+        roots[1] = view_.witnessRoot;
+        roots[2] = view_.normInverseRoot;
+        bytes calldata hints = _hintsSlice(view_);
         bool whirAccepted = SpongefishWhirVerify.verifyWhirProofBound(
             _protocolId(),
             abi.encodePacked(whirSessionId),
             "",
-            proof.whirTranscript,
-            proof.whirHints,
+            view_.whirTranscript,
+            hints,
             evaluations,
             evaluationMask,
             roots,
@@ -375,97 +439,196 @@ contract MleVerifierV2 {
         );
         if (!whirAccepted) revert InvalidMleProof();
 
-        GoldilocksExt3.Ext3[] memory constants = new GoldilocksExt3.Ext3[](config.circuit.numConstants);
-        for (uint256 i = 0; i < constants.length; ++i) {
-            constants[i] = usedClaims.gatePreprocessed[i];
-        }
-        uint256[4] memory publicInputsHash = PoseidonPublicInputsHash.hashNoPad(proof.publicInputs);
-        GoldilocksExt3.Ext3 memory gateEvaluation = Plonky2GateEvaluatorExt3.evalCombinedPrevalidated(
-            usedClaims.gateWitness,
-            constants,
+        uint256[4] memory publicInputsHash = PoseidonPublicInputsHash.hashNoPad(view_.publicInputs);
+        GoldilocksExt3.Ext3 memory gateEvaluation = Plonky2GateEvaluatorExt3.evalCombinedPrevalidatedBytes(
+            _limbBytes(view_.gateWitness, view_.gateWitness.length),
+            _limbBytes(view_.gatePreprocessed, 3 * circuit.numConstants),
             publicInputsHash,
             derived.gateAlpha,
             config.gates,
-            config.circuit.numSelectors
+            circuit.numSelectors
         );
-        OuterLogupExt3Verifier.verifyGateTerminal(derived.gateTau, gatePoint, gateEvaluation, gateFinalClaim);
+        _requireGateTerminal(derived.gateTau, gatePoint, gateEvaluation, gateFinalClaim);
+    }
+
+    /// @dev The Ext3 gate sumcheck terminal: `eq(tau, point) * gateEvaluation == finalClaim`.
+    /// Same statement as `OuterLogupExt3Verifier.verifyGateTerminal`, evaluated in place
+    /// over verifier-derived canonical values (tau and point are transcript squeezes, the
+    /// evaluation and claim are outputs of linked canonical arithmetic), so no external
+    /// call and no re-validation of operand canonicality is needed here.
+    function _requireGateTerminal(
+        GoldilocksExt3.Ext3[] memory tau,
+        GoldilocksExt3.Ext3[] memory point,
+        GoldilocksExt3.Ext3 memory gateEvaluation,
+        GoldilocksExt3.Ext3 memory finalClaim
+    ) private pure {
+        uint256 count = tau.length;
+        if (count == 0 || count != point.length || count > MAX_ROW_VARIABLES_V2) revert InvalidMleProof();
+        bool accepted;
+        assembly ("memory-safe") {
+            let p := 0xFFFFFFFF00000001
+            // eq accumulator starts at gateEvaluation so one product is saved.
+            let a0 := mload(gateEvaluation)
+            let a1 := mload(add(gateEvaluation, 0x20))
+            let a2 := mload(add(gateEvaluation, 0x40))
+            let tauTable := add(tau, 0x20)
+            let pointTable := add(point, 0x20)
+            for { let i := 0 } lt(i, count) { i := add(i, 1) } {
+                let t := mload(add(tauTable, shl(5, i)))
+                let x := mload(add(pointTable, shl(5, i)))
+                let t0 := mload(t)
+                let t1 := mload(add(t, 0x20))
+                let t2 := mload(add(t, 0x40))
+                let x0 := mload(x)
+                let x1 := mload(add(x, 0x20))
+                let x2 := mload(add(x, 0x40))
+                // factor = 1 - tau - x + 2 * tau * x
+                let m0 := addmod(mulmod(t0, x0, p), mulmod(2, addmod(mulmod(t1, x2, p), mulmod(t2, x1, p), p), p), p)
+                let m1 := addmod(addmod(mulmod(t0, x1, p), mulmod(t1, x0, p), p), mulmod(2, mulmod(t2, x2, p), p), p)
+                let m2 := addmod(addmod(mulmod(t0, x2, p), mulmod(t1, x1, p), p), mulmod(t2, x0, p), p)
+                let f0 := addmod(addmod(addmod(1, sub(p, t0), p), sub(p, x0), p), addmod(m0, m0, p), p)
+                let f1 := addmod(addmod(sub(p, t1), sub(p, x1), p), addmod(m1, m1, p), p)
+                let f2 := addmod(addmod(sub(p, t2), sub(p, x2), p), addmod(m2, m2, p), p)
+                // accumulator *= factor
+                let n0 := addmod(mulmod(a0, f0, p), mulmod(2, addmod(mulmod(a1, f2, p), mulmod(a2, f1, p), p), p), p)
+                let n1 := addmod(addmod(mulmod(a0, f1, p), mulmod(a1, f0, p), p), mulmod(2, mulmod(a2, f2, p), p), p)
+                let n2 := addmod(addmod(mulmod(a0, f2, p), mulmod(a1, f1, p), p), mulmod(a2, f0, p), p)
+                a0 := n0
+                a1 := n1
+                a2 := n2
+            }
+            accepted :=
+                and(
+                    and(eq(a0, mod(mload(finalClaim), p)), eq(a1, mod(mload(add(finalClaim, 0x20)), p))),
+                    eq(a2, mod(mload(add(finalClaim, 0x40)), p))
+                )
+        }
+        if (!accepted) revert InvalidMleProof();
     }
 
     function _deriveInitialTranscript(
-        MleProof calldata proof,
+        ProofView memory view_,
         VerificationConfig calldata config,
         uint256 width,
         uint256 indexBits
     ) private view returns (DerivedState memory derived) {
-        derived.transcript = TranscriptV2.create();
-        TranscriptV2.domainSeparate(derived.transcript, DOMAIN_CIRCUIT_STATEMENT_V2);
-        uint256[] memory circuitDigest = proof.circuitDigest;
-        uint256[] memory publicInputs = _copyCanonicalBase(proof.publicInputs);
-        derived.publicInputs = publicInputs;
-        TranscriptV2.absorbFieldVecPrevalidated(derived.transcript, circuitDigest);
-        TranscriptV2.absorbFieldVecPrevalidated(derived.transcript, publicInputs);
+        TranscriptV2.Transcript memory transcript = derived.transcript;
+        TranscriptV2.init(transcript);
+        TranscriptV2.domainSeparate(transcript, DOMAIN_CIRCUIT_STATEMENT_V2);
+        // The view's digest was compared against the pinned one, so the pinned
+        // values are the exact absorbed statement.
+        TranscriptV2.absorbFieldVecPrevalidated(
+            transcript, _digestVector([circuitDigest0, circuitDigest1, circuitDigest2, circuitDigest3])
+        );
+        TranscriptV2.absorbFieldVecPrevalidated(transcript, view_.publicInputs);
 
-        TranscriptV2.domainSeparate(derived.transcript, PACKED_PCS_SCHEMA_DOMAIN_V2);
-        bytes memory metadata = new bytes(15 * 8);
-        uint256 offset;
-        offset = _writeU64Le(metadata, offset, MLE_PROTOCOL_VERSION_CURRENT);
-        offset = _writeU64Le(metadata, offset, NUM_PCS_GROUPS_V2);
-        offset = _writeU64Le(metadata, offset, NUM_PCS_TERMINAL_POINTS_V2);
-        offset = _writeU64Le(metadata, offset, NUM_PCS_CLAIMS_V2);
-        offset = _writeU64Le(metadata, offset, config.circuit.numConstants);
-        offset = _writeU64Le(metadata, offset, config.circuit.numRoutedWires);
-        offset = _writeU64Le(metadata, offset, config.circuit.numWires);
-        offset = _writeU64Le(metadata, offset, config.circuit.degreeBits);
-        offset = _writeU64Le(metadata, offset, width);
-        offset = _writeU64Le(metadata, offset, indexBits);
-        offset = _writeU64Le(metadata, offset, NUM_PACKED_VECTORS_PER_GROUP_V2);
-        offset = _writeU64Le(metadata, offset, EXTENSION_FIELD_LIMBS_V2);
-        offset = _writeU64Le(metadata, offset, PACKED_VARIABLE_ORDER_CODE_V2);
-        offset = _writeU64Le(metadata, offset, GATE_SUMCHECK_COUNT_V2);
-        offset = _writeU64Le(metadata, offset, LOG_ROUND_DEGREE_V2);
-        if (offset != metadata.length) revert InvalidMleVerifierConfiguration();
-        TranscriptV2.absorbBytes(derived.transcript, metadata);
+        TranscriptV2.domainSeparate(transcript, PACKED_PCS_SCHEMA_DOMAIN_V2);
+        TranscriptV2.absorbBytes(transcript, _schemaMetadata(config.circuit, width, indexBits));
 
-        TranscriptV2.domainSeparate(derived.transcript, DOMAIN_CIRCUIT_CONFIG_DIGEST_V2);
-        TranscriptV2.absorbBytes(derived.transcript, abi.encodePacked(circuitConfigDigest));
-        TranscriptV2.bindWhirIdentifiers(derived.transcript, _protocolId(), abi.encodePacked(whirSessionId));
-        TranscriptV2.domainSeparate(derived.transcript, DOMAIN_GROUP_PREPROCESSED_V2);
-        TranscriptV2.absorbBytes(derived.transcript, abi.encodePacked(proof.preprocessedRoot));
-        TranscriptV2.domainSeparate(derived.transcript, DOMAIN_GROUP_WITNESS_V2);
-        TranscriptV2.absorbBytes(derived.transcript, abi.encodePacked(proof.witnessRoot));
+        TranscriptV2.domainSeparate(transcript, DOMAIN_CIRCUIT_CONFIG_DIGEST_V2);
+        TranscriptV2.absorbBytes(transcript, abi.encodePacked(circuitConfigDigest));
+        TranscriptV2.bindWhirIdentifiers(transcript, _protocolId(), abi.encodePacked(whirSessionId));
+        TranscriptV2.domainSeparate(transcript, DOMAIN_GROUP_PREPROCESSED_V2);
+        TranscriptV2.absorbBytes(transcript, abi.encodePacked(view_.preprocessedRoot));
+        TranscriptV2.domainSeparate(transcript, DOMAIN_GROUP_WITNESS_V2);
+        TranscriptV2.absorbBytes(transcript, abi.encodePacked(view_.witnessRoot));
 
-        TranscriptV2.domainSeparate(derived.transcript, DOMAIN_PUBLIC_INPUT_AGGREGATION_CHALLENGE_V2);
-        derived.logChallenges.eta = TranscriptV2.squeezeExt3(derived.transcript);
+        TranscriptV2.domainSeparate(transcript, DOMAIN_PUBLIC_INPUT_AGGREGATION_CHALLENGE_V2);
+        TranscriptV2.squeezeExt3Into(transcript, derived.logChallenges.eta);
 
-        TranscriptV2.domainSeparate(derived.transcript, DOMAIN_NORM_DENOMINATOR_CHALLENGES_V2);
-        derived.logChallenges.beta = TranscriptV2.squeezeExt3(derived.transcript);
-        derived.logChallenges.gamma = TranscriptV2.squeezeExt3(derived.transcript);
-        TranscriptV2.domainSeparate(derived.transcript, DOMAIN_GROUP_NORM_INVERSE_V2);
-        TranscriptV2.absorbBytes(derived.transcript, abi.encodePacked(proof.normInverseRoot));
+        TranscriptV2.domainSeparate(transcript, DOMAIN_NORM_DENOMINATOR_CHALLENGES_V2);
+        TranscriptV2.squeezeExt3Into(transcript, derived.logChallenges.beta);
+        TranscriptV2.squeezeExt3Into(transcript, derived.logChallenges.gamma);
+        TranscriptV2.domainSeparate(transcript, DOMAIN_GROUP_NORM_INVERSE_V2);
+        TranscriptV2.absorbBytes(transcript, abi.encodePacked(view_.normInverseRoot));
 
-        TranscriptV2.domainSeparate(derived.transcript, DOMAIN_PUBLIC_INPUT_MIX_CHALLENGE_V2);
-        derived.logChallenges.xi = TranscriptV2.squeezeExt3(derived.transcript);
+        TranscriptV2.domainSeparate(transcript, DOMAIN_PUBLIC_INPUT_MIX_CHALLENGE_V2);
+        TranscriptV2.squeezeExt3Into(transcript, derived.logChallenges.xi);
 
-        TranscriptV2.domainSeparate(derived.transcript, DOMAIN_OUTER_RELATION_CHALLENGES_V2);
-        derived.logChallenges.lambda = TranscriptV2.squeezeExt3(derived.transcript);
-        derived.logChallenges.rho = TranscriptV2.squeezeExt3(derived.transcript);
-        derived.logChallenges.kappa = TranscriptV2.squeezeExt3(derived.transcript);
-        derived.logChallenges.tau = _squeezeExt3Vector(derived.transcript, config.circuit.degreeBits);
-        derived.gateAlpha = TranscriptV2.squeezeExt3(derived.transcript);
-        derived.gateTau = _squeezeExt3Vector(derived.transcript, config.circuit.degreeBits);
+        TranscriptV2.domainSeparate(transcript, DOMAIN_OUTER_RELATION_CHALLENGES_V2);
+        TranscriptV2.squeezeExt3Into(transcript, derived.logChallenges.lambda);
+        TranscriptV2.squeezeExt3Into(transcript, derived.logChallenges.rho);
+        TranscriptV2.squeezeExt3Into(transcript, derived.logChallenges.kappa);
+        derived.logChallenges.tau = _squeezeExt3Vector(transcript, config.circuit.degreeBits);
+        TranscriptV2.squeezeExt3Into(transcript, derived.gateAlpha);
+        derived.gateTau = _squeezeExt3Vector(transcript, config.circuit.degreeBits);
+    }
+
+    /// @dev The fifteen little-endian u64 schema fields absorbed under
+    /// `PACKED_PCS_SCHEMA_DOMAIN_V2`, in the reviewed wire-v3 order.
+    function _schemaMetadata(CircuitConfigV2.Parameters calldata circuit, uint256 width, uint256 indexBits)
+        private
+        pure
+        returns (bytes memory metadata)
+    {
+        uint256[15] memory fields = [
+            MLE_PROTOCOL_VERSION_CURRENT,
+            NUM_PCS_GROUPS_V2,
+            NUM_PCS_TERMINAL_POINTS_V2,
+            NUM_PCS_CLAIMS_V2,
+            circuit.numConstants,
+            circuit.numRoutedWires,
+            circuit.numWires,
+            circuit.degreeBits,
+            width,
+            indexBits,
+            NUM_PACKED_VECTORS_PER_GROUP_V2,
+            EXTENSION_FIELD_LIMBS_V2,
+            PACKED_VARIABLE_ORDER_CODE_V2,
+            GATE_SUMCHECK_COUNT_V2,
+            LOG_ROUND_DEGREE_V2
+        ];
+        metadata = new bytes(15 * 8 + 24);
+        assembly ("memory-safe") {
+            mstore(metadata, 120)
+            let dst := add(metadata, 0x20)
+            for { let i := 0 } lt(i, 15) { i := add(i, 1) } {
+                let value := mload(add(fields, shl(5, i)))
+                if gt(value, 0xFFFFFFFFFFFFFFFF) {
+                    mstore(0x00, shl(224, 0xf0783a66))
+                    revert(0x00, 0x04)
+                }
+                // 8 little-endian bytes; the 24 trailing zero bytes of each store
+                // are overwritten by the next field or land in the slack region.
+                mstore(add(dst, mul(i, 8)), shl(192, bswap64(value)))
+            }
+            function bswap64(x) -> y {
+                y := or(shl(32, and(x, 0xFFFFFFFF)), shr(32, and(x, 0xFFFFFFFF00000000)))
+                y := or(shl(16, and(y, 0x0000FFFF0000FFFF)), shr(16, and(y, 0xFFFF0000FFFF0000)))
+                y := or(shl(8, and(y, 0x00FF00FF00FF00FF)), shr(8, and(y, 0xFF00FF00FF00FF00)))
+            }
+        }
     }
 
     function _absorbClaimsAndSampleIndices(
         TranscriptV2.Transcript memory transcript,
-        PackedClaimExt3.UsedClaims memory claims,
+        ProofView memory view_,
         uint256 indexBits
     ) private pure returns (GoldilocksExt3.Ext3[][] memory points) {
         TranscriptV2.domainSeparate(transcript, DOMAIN_CONSTITUENT_CLAIMS_V2);
-        TranscriptV2.absorbExt3VecPrevalidated(transcript, claims.logPreprocessed);
-        TranscriptV2.absorbExt3VecPrevalidated(transcript, claims.logWitness);
-        TranscriptV2.absorbExt3VecPrevalidated(transcript, claims.logNormInverse);
-        TranscriptV2.absorbExt3VecPrevalidated(transcript, claims.gatePreprocessed);
-        TranscriptV2.absorbExt3VecPrevalidated(transcript, claims.gateWitness);
+        if (view_.logClaimsOffset != 0) {
+            // Compact path: the five vectors are exactly the little-endian wire
+            // records whose decoded, canonical limbs fill the flat buffers below.
+            uint256 offset = view_.logClaimsOffset;
+            uint256 count = view_.logPreprocessed.length / 3;
+            TranscriptV2.absorbExt3VecCalldataPrevalidated(transcript, offset, count);
+            offset += 24 * count;
+            count = view_.logWitness.length / 3;
+            TranscriptV2.absorbExt3VecCalldataPrevalidated(transcript, offset, count);
+            offset += 24 * count;
+            TranscriptV2.absorbExt3VecCalldataPrevalidated(transcript, offset, view_.logNormInverse.length / 3);
+            offset = view_.gateClaimsOffset;
+            count = view_.gatePreprocessed.length / 3;
+            TranscriptV2.absorbExt3VecCalldataPrevalidated(transcript, offset, count);
+            offset += 24 * count;
+            TranscriptV2.absorbExt3VecCalldataPrevalidated(transcript, offset, view_.gateWitness.length / 3);
+        } else {
+            TranscriptV2.absorbExt3VecFlatPrevalidated(transcript, view_.logPreprocessed);
+            TranscriptV2.absorbExt3VecFlatPrevalidated(transcript, view_.logWitness);
+            TranscriptV2.absorbExt3VecFlatPrevalidated(transcript, view_.logNormInverse);
+            TranscriptV2.absorbExt3VecFlatPrevalidated(transcript, view_.gatePreprocessed);
+            TranscriptV2.absorbExt3VecFlatPrevalidated(transcript, view_.gateWitness);
+        }
         TranscriptV2.absorbExt3Vec(transcript, new GoldilocksExt3.Ext3[](0));
         TranscriptV2.domainSeparate(transcript, DOMAIN_CONSTITUENT_INDEX_V2);
 
@@ -474,6 +637,234 @@ contract MleVerifierV2 {
             points[point] = _squeezeExt3Vector(transcript, indexBits);
         }
     }
+
+    // ------------------------------------------------------------------ compact parsing
+
+    /// @dev Parse the canonical `MLEWHIR3` encoding into a `ProofView`. Every
+    /// vector length is derived from the pinned circuit; only the two opaque
+    /// WHIR streams carry a length prefix. All integers are little-endian. Any
+    /// framing, cap, pin or canonical-limb violation is `InvalidMleProof`.
+    function _parseCompact(bytes calldata compact, CircuitConfigV2.Parameters calldata circuit)
+        private
+        view
+        returns (ProofView memory view_)
+    {
+        uint256 length = compact.length;
+        if (length > MAX_COMPACT_PROOF_BYTES_V2 || length < 8 + 8 + 4 + 32) revert InvalidMleProof();
+        uint256 base;
+        bytes8 magic;
+        uint256 protocolVersion;
+        uint256 constituentWidth;
+        assembly ("memory-safe") {
+            base := compact.offset
+            magic := calldataload(base)
+            protocolVersion := bswap64(shr(192, calldataload(add(base, 8))))
+            constituentWidth := and(bswap64(shr(192, calldataload(add(base, 16)))), 0xFFFFFFFF)
+            function bswap64(x) -> y {
+                y := or(shl(32, and(x, 0xFFFFFFFF)), shr(32, and(x, 0xFFFFFFFF00000000)))
+                y := or(shl(16, and(y, 0x0000FFFF0000FFFF)), shr(16, and(y, 0xFFFF0000FFFF0000)))
+                y := or(shl(8, and(y, 0x00FF00FF00FF00FF)), shr(8, and(y, 0xFF00FF00FF00FF00)))
+            }
+        }
+        if (magic != COMPACT_MAGIC_V2 || protocolVersion != MLE_PROTOCOL_VERSION_CURRENT) revert InvalidMleProof();
+        if (constituentWidth != _constituentWidth(circuit)) revert InvalidMleProof();
+
+        // Circuit digest: four little-endian limbs that must equal the pinned
+        // (canonical) digest exactly.
+        uint256[] memory digest = _readBaseVectorLe(base + 20, CIRCUIT_DIGEST_LENGTH_V2, false);
+        if (
+            digest[0] != circuitDigest0 || digest[1] != circuitDigest1 || digest[2] != circuitDigest2
+                || digest[3] != circuitDigest3
+        ) revert InvalidMleProof();
+
+        uint256 numPublicInputs = circuit.numPublicInputs;
+        if (numPublicInputs > MAX_PUBLIC_INPUTS_V2) revert InvalidMleVerifierConfiguration();
+        uint256 position = 52;
+        if (length - position < 8 * numPublicInputs + 96 + 8) revert InvalidMleProof();
+        uint256 publicInputsOffset = base + position;
+        position += 8 * numPublicInputs;
+
+        bytes32 preprocessedRoot;
+        bytes32 witnessRoot;
+        bytes32 normInverseRoot;
+        uint256 transcriptLength;
+        assembly ("memory-safe") {
+            let p := add(base, position)
+            preprocessedRoot := calldataload(p)
+            witnessRoot := calldataload(add(p, 32))
+            normInverseRoot := calldataload(add(p, 64))
+            transcriptLength := readU32(add(p, 96))
+            function readU32(ptr) -> v {
+                let w := calldataload(ptr)
+                v := or(or(byte(0, w), shl(8, byte(1, w))), or(shl(16, byte(2, w)), shl(24, byte(3, w))))
+            }
+        }
+        if (preprocessedRoot != preprocessedCommitmentRoot) revert InvalidMleProof();
+        view_.preprocessedRoot = preprocessedRoot;
+        view_.witnessRoot = witnessRoot;
+        view_.normInverseRoot = normInverseRoot;
+        position += 100;
+
+        if (transcriptLength > MAX_WHIR_NARG_BYTES_V2 || length - position < transcriptLength + 4) {
+            revert InvalidMleProof();
+        }
+        bytes memory whirTranscript = new bytes(transcriptLength);
+        uint256 hintsLength;
+        assembly ("memory-safe") {
+            calldatacopy(add(whirTranscript, 0x20), add(base, position), transcriptLength)
+            let w := calldataload(add(base, add(position, transcriptLength)))
+            hintsLength := or(or(byte(0, w), shl(8, byte(1, w))), or(shl(16, byte(2, w)), shl(24, byte(3, w))))
+        }
+        view_.whirTranscript = whirTranscript;
+        position += transcriptLength + 4;
+        if (hintsLength > MAX_WHIR_HINT_BYTES_V2 || length - position < hintsLength) revert InvalidMleProof();
+        view_.hintsOffset = base + position;
+        view_.hintsLength = hintsLength;
+        position += hintsLength;
+
+        // Fixed-length Ext3 vectors: every count comes from the pinned circuit and
+        // the remaining byte count must be consumed exactly.
+        uint256 degreeBits = circuit.degreeBits;
+        uint256 preprocessedLength = circuit.numConstants + circuit.numRoutedWires;
+        uint256 numWires = circuit.numWires;
+        uint256 normInverseLength = 2 * circuit.numRoutedWires;
+        uint256 gateDegree = circuit.quotientDegreeFactor + 2;
+        uint256 totalRecords = degreeBits * LOG_ROUND_DEGREE_V2 + 2 * preprocessedLength + 2 * numWires
+            + normInverseLength + degreeBits * gateDegree;
+        if (length - position != 24 * totalRecords) revert InvalidMleProof();
+
+        // Wire order: logRounds, logPreprocessed, logWitness, logNormInverse,
+        // gateRounds, gatePreprocessed, gateWitness.
+        uint256 logRoundsOffset = base + position;
+        uint256 logClaimsOffset = logRoundsOffset + 24 * degreeBits * LOG_ROUND_DEGREE_V2;
+        uint256 gateRoundsOffset = logClaimsOffset + 24 * (preprocessedLength + numWires + normInverseLength);
+        uint256 gateClaimsOffset = gateRoundsOffset + 24 * degreeBits * gateDegree;
+        view_.logClaimsOffset = logClaimsOffset;
+        view_.gateClaimsOffset = gateClaimsOffset;
+
+        // The six outer-verifier vectors are decoded back to back behind one
+        // reserved length word so they form a single byte string (see
+        // `ProofView.outerBlob`); the decoders allocate at the free pointer.
+        bytes memory outerBlob;
+        assembly ("memory-safe") {
+            outerBlob := mload(0x40)
+            mstore(0x40, add(outerBlob, 0x20))
+        }
+        view_.publicInputs = _readBaseVectorLe(publicInputsOffset, numPublicInputs, true);
+        view_.logRounds = _readExt3VectorLe(logRoundsOffset, degreeBits * LOG_ROUND_DEGREE_V2);
+        view_.gateRounds = _readExt3VectorLe(gateRoundsOffset, degreeBits * gateDegree);
+        view_.logPreprocessed = _readExt3VectorLe(logClaimsOffset, preprocessedLength);
+        view_.logWitness = _readExt3VectorLe(logClaimsOffset + 24 * preprocessedLength, numWires);
+        view_.logNormInverse =
+            _readExt3VectorLe(logClaimsOffset + 24 * (preprocessedLength + numWires), normInverseLength);
+        _sealOuterBlob(view_, outerBlob);
+        view_.gatePreprocessed = _readExt3VectorLe(gateClaimsOffset, preprocessedLength);
+        view_.gateWitness = _readExt3VectorLe(gateClaimsOffset + 24 * preprocessedLength, numWires);
+    }
+
+    /// @dev Set the length of the reserved blob word so it spans exactly the six
+    /// arrays decoded after it, and check that they really are laid out back to
+    /// back in blob order (a defensive guard against allocator changes).
+    function _sealOuterBlob(ProofView memory view_, bytes memory outerBlob) private pure {
+        bool contiguous;
+        assembly ("memory-safe") {
+            let cursor := add(outerBlob, 0x20)
+            contiguous := 1
+            function advance(ok, cur, arr) -> ok2, next {
+                ok2 := and(ok, eq(cur, arr))
+                next := add(add(arr, 0x20), shl(5, mload(arr)))
+            }
+            contiguous, cursor := advance(contiguous, cursor, mload(view_))
+            contiguous, cursor := advance(contiguous, cursor, mload(add(view_, 0x100)))
+            contiguous, cursor := advance(contiguous, cursor, mload(add(view_, 0x120)))
+            contiguous, cursor := advance(contiguous, cursor, mload(add(view_, 0x140)))
+            contiguous, cursor := advance(contiguous, cursor, mload(add(view_, 0x160)))
+            contiguous, cursor := advance(contiguous, cursor, mload(add(view_, 0x180)))
+            contiguous := and(contiguous, eq(cursor, mload(0x40)))
+            mstore(outerBlob, sub(cursor, add(outerBlob, 0x20)))
+        }
+        if (!contiguous) revert InvalidMleVerifierConfiguration();
+        view_.outerBlob = outerBlob;
+    }
+
+    /// @dev Read `count` little-endian u64 base-field elements from calldata into
+    /// a word array, rejecting any limb `>= p` when `canonical` is set. The
+    /// caller has bounded `[offset, offset + 8 * count)` inside the proof bytes.
+    function _readBaseVectorLe(uint256 offset, uint256 count, bool canonical)
+        private
+        pure
+        returns (uint256[] memory values)
+    {
+        assembly ("memory-safe") {
+            values := mload(0x40)
+            mstore(values, count)
+            let output := add(values, 0x20)
+            let p := 0xFFFFFFFF00000001
+            let m8 := 0x00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF
+            let m16 := 0x0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF
+            let m32 := 0x00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF
+            // Four little-endian limbs per 32-byte load, each lane byte-reversed at once.
+            for { let i := 0 } lt(i, count) { i := add(i, 4) } {
+                let w := calldataload(add(offset, mul(i, 8)))
+                w := or(shl(8, and(w, m8)), and(shr(8, w), m8))
+                w := or(shl(16, and(w, m16)), and(shr(16, w), m16))
+                w := or(shl(32, and(w, m32)), and(shr(32, w), m32))
+                let remaining := sub(count, i)
+                if gt(remaining, 4) { remaining := 4 }
+                for { let j := 0 } lt(j, remaining) { j := add(j, 1) } {
+                    let value := and(shr(sub(192, mul(j, 64)), w), 0xFFFFFFFFFFFFFFFF)
+                    if and(canonical, iszero(lt(value, p))) {
+                        mstore(0x00, shl(224, 0xf0783a66))
+                        revert(0x00, 0x04)
+                    }
+                    mstore(add(output, shl(5, add(i, j))), value)
+                }
+            }
+            mstore(0x40, add(output, shl(5, count)))
+        }
+    }
+
+    /// @dev Read `count` Ext3 wire records (24 little-endian bytes each) from
+    /// calldata into a flat limb buffer of `3 * count` canonical words,
+    /// rejecting any limb `>= p`. The caller has bounded the calldata range and
+    /// `count <= MAX_CONSTITUENT_WIDTH_V2 * MAX_GATE_ROUND_DEGREE_V2`-scale
+    /// dimensions, so `0x20 + 0x60 * count` cannot overflow.
+    function _readExt3VectorLe(uint256 offset, uint256 count) private pure returns (uint256[] memory limbs) {
+        assembly ("memory-safe") {
+            limbs := mload(0x40)
+            mstore(limbs, mul(count, 3))
+            let output := add(limbs, 0x20)
+            let p := 0xFFFFFFFF00000001
+            let end := add(offset, mul(count, 24))
+            let m8 := 0x00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF
+            let m16 := 0x0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF
+            let m32 := 0x00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF
+            for {} lt(offset, end) { offset := add(offset, 24) } {
+                // One 32-byte load covers the whole record; the last 8 bytes are
+                // the next record's first limb and are ignored here. Reversing
+                // the bytes inside every 8-byte lane of the word turns all three
+                // little-endian limbs big-endian at once.
+                let w := calldataload(offset)
+                w := or(shl(8, and(w, m8)), and(shr(8, w), m8))
+                w := or(shl(16, and(w, m16)), and(shr(16, w), m16))
+                w := or(shl(32, and(w, m32)), and(shr(32, w), m32))
+                let c0 := shr(192, w)
+                let c1 := and(shr(128, w), 0xFFFFFFFFFFFFFFFF)
+                let c2 := and(shr(64, w), 0xFFFFFFFFFFFFFFFF)
+                if iszero(and(and(lt(c0, p), lt(c1, p)), lt(c2, p))) {
+                    mstore(0x00, shl(224, 0xf0783a66))
+                    revert(0x00, 0x04)
+                }
+                mstore(output, c0)
+                mstore(add(output, 0x20), c1)
+                mstore(add(output, 0x40), c2)
+                output := add(output, 0x60)
+            }
+            mstore(0x40, output)
+        }
+    }
+
+    // ------------------------------------------------------------------ typed ABI proof
 
     function _requirePinnedConfiguration(VerificationConfig calldata config) private view {
         // The constructor performed the complete cap, circuit/VK, gate and
@@ -484,6 +875,233 @@ contract MleVerifierV2 {
         // gas and cannot strengthen that equality check.
         if (keccak256(abi.encode(config)) != verificationConfigDigest) {
             revert InvalidMleVerifierConfiguration();
+        }
+    }
+
+    function _requireCanonicalProof(MleProof calldata proof, CircuitConfigV2.Parameters calldata circuit)
+        private
+        view
+    {
+        if (proof.protocolVersion != MLE_PROTOCOL_VERSION_CURRENT) revert InvalidMleProof();
+        if (proof.circuitDigest.length != CIRCUIT_DIGEST_LENGTH_V2) revert InvalidMleProof();
+        if (
+            proof.circuitDigest[0] != circuitDigest0 || proof.circuitDigest[1] != circuitDigest1
+                || proof.circuitDigest[2] != circuitDigest2 || proof.circuitDigest[3] != circuitDigest3
+        ) revert InvalidMleProof();
+        if (proof.publicInputs.length != circuit.numPublicInputs) revert InvalidMleProof();
+        if (proof.preprocessedRoot != preprocessedCommitmentRoot) revert InvalidMleProof();
+        if (proof.whirTranscript.length > MAX_WHIR_NARG_BYTES_V2 || proof.whirHints.length > MAX_WHIR_HINT_BYTES_V2) {
+            revert InvalidMleProof();
+        }
+        if (proof.constituentWidth != _constituentWidth(circuit)) revert InvalidMleProof();
+
+        uint256 preprocessedLength = circuit.numConstants + circuit.numRoutedWires;
+        uint256 normInverseLength = 2 * circuit.numRoutedWires;
+        if (
+            proof.logPreprocessed.length != preprocessedLength || proof.logWitness.length != circuit.numWires
+                || proof.logNormInverse.length != normInverseLength
+                || proof.gatePreprocessed.length != preprocessedLength || proof.gateWitness.length != circuit.numWires
+        ) revert InvalidMleProof();
+        if (proof.logProof.rounds.length != circuit.degreeBits || proof.gateProof.rounds.length != circuit.degreeBits) {
+            revert InvalidMleProof();
+        }
+        uint256 gateDegree = circuit.quotientDegreeFactor + 2;
+        for (uint256 round = 0; round < circuit.degreeBits; ++round) {
+            if (
+                proof.logProof.rounds[round].nonConstant.length != LOG_ROUND_DEGREE_V2
+                    || proof.gateProof.rounds[round].nonConstant.length != gateDegree
+            ) revert InvalidMleProof();
+        }
+    }
+
+    /// @dev Build the pipeline view of a shape-checked typed proof, canonicalizing
+    /// every limb while flattening it.
+    function _viewFromAbi(MleProof calldata proof, CircuitConfigV2.Parameters calldata circuit)
+        private
+        pure
+        returns (ProofView memory view_)
+    {
+        view_.preprocessedRoot = proof.preprocessedRoot;
+        view_.witnessRoot = proof.witnessRoot;
+        view_.normInverseRoot = proof.normInverseRoot;
+        view_.whirTranscript = proof.whirTranscript;
+        bytes calldata hints = proof.whirHints;
+        uint256 hintsOffset;
+        assembly ("memory-safe") {
+            hintsOffset := hints.offset
+        }
+        view_.hintsOffset = hintsOffset;
+        view_.hintsLength = hints.length;
+        // Same blob layout as `_parseCompact`: six arrays allocated back to back
+        // behind one reserved length word.
+        bytes memory outerBlob;
+        assembly ("memory-safe") {
+            outerBlob := mload(0x40)
+            mstore(0x40, add(outerBlob, 0x20))
+        }
+        view_.publicInputs = _copyCanonicalBase(proof.publicInputs);
+        view_.logRounds = _flattenSumcheck(proof.logProof, LOG_ROUND_DEGREE_V2);
+        view_.gateRounds = _flattenSumcheck(proof.gateProof, circuit.quotientDegreeFactor + 2);
+        view_.logPreprocessed = _flattenCanonicalExt3(proof.logPreprocessed);
+        view_.logWitness = _flattenCanonicalExt3(proof.logWitness);
+        view_.logNormInverse = _flattenCanonicalExt3(proof.logNormInverse);
+        _sealOuterBlob(view_, outerBlob);
+        view_.gatePreprocessed = _flattenCanonicalExt3(proof.gatePreprocessed);
+        view_.gateWitness = _flattenCanonicalExt3(proof.gateWitness);
+    }
+
+    /// @dev Fuse the proof-boundary canonical check with the unavoidable
+    /// calldata-to-memory copy into a flat limb buffer.
+    function _flattenCanonicalExt3(GoldilocksExt3.Ext3[] calldata source)
+        private
+        pure
+        returns (uint256[] memory limbs)
+    {
+        uint256 count = source.length;
+        // Every caller reaches this helper only after `_requireCanonicalProof`
+        // has matched an exact protocol vector length. Keep the independent cap
+        // here as a local proof for the Yul arithmetic below.
+        if (count > MAX_CONSTITUENT_WIDTH_V2) revert InvalidMleProof();
+        assembly ("memory-safe") {
+            limbs := mload(0x40)
+            mstore(limbs, mul(count, 3))
+            let output := add(limbs, 0x20)
+            let input := source.offset
+            let end := add(input, mul(count, 0x60))
+            let p := 0xFFFFFFFF00000001
+            for {} lt(input, end) {
+                input := add(input, 0x60)
+                output := add(output, 0x60)
+            } {
+                let c0 := calldataload(input)
+                let c1 := calldataload(add(input, 0x20))
+                let c2 := calldataload(add(input, 0x40))
+                if iszero(and(and(lt(c0, p), lt(c1, p)), lt(c2, p))) {
+                    mstore(0x00, shl(224, 0xf0783a66))
+                    revert(0x00, 0x04)
+                }
+                mstore(output, c0)
+                mstore(add(output, 0x20), c1)
+                mstore(add(output, 0x40), c2)
+            }
+            mstore(0x40, output)
+        }
+    }
+
+    /// @dev Concatenate the per-round coefficient vectors (each exactly `degree`
+    /// records, as established by `_requireCanonicalProof`) into one canonical
+    /// flat buffer, round-major then coefficient-major.
+    function _flattenSumcheck(OuterLogupExt3Verifier.SumcheckProof calldata source, uint256 degree)
+        private
+        pure
+        returns (uint256[] memory limbs)
+    {
+        uint256 rounds = source.rounds.length;
+        if (rounds > MAX_ROW_VARIABLES_V2 || degree > MAX_GATE_ROUND_DEGREE_V2) revert InvalidMleProof();
+        limbs = new uint256[](3 * rounds * degree);
+        uint256 write;
+        for (uint256 round = 0; round < rounds; ++round) {
+            GoldilocksExt3.Ext3[] calldata coefficients = source.rounds[round].nonConstant;
+            if (coefficients.length != degree) revert InvalidMleProof();
+            assembly ("memory-safe") {
+                let output := add(add(limbs, 0x20), write)
+                let input := coefficients.offset
+                let end := add(input, mul(degree, 0x60))
+                let p := 0xFFFFFFFF00000001
+                for {} lt(input, end) {
+                    input := add(input, 0x60)
+                    output := add(output, 0x60)
+                } {
+                    let c0 := calldataload(input)
+                    let c1 := calldataload(add(input, 0x20))
+                    let c2 := calldataload(add(input, 0x40))
+                    if iszero(and(and(lt(c0, p), lt(c1, p)), lt(c2, p))) {
+                        mstore(0x00, shl(224, 0xf0783a66))
+                        revert(0x00, 0x04)
+                    }
+                    mstore(output, c0)
+                    mstore(add(output, 0x20), c1)
+                    mstore(add(output, 0x40), c2)
+                }
+            }
+            write += degree * 0x60;
+        }
+    }
+
+    function _copyCanonicalBase(uint256[] calldata source) private pure returns (uint256[] memory values) {
+        uint256 count = source.length;
+        // The pinned circuit already imposes this bound; repeat it next to the
+        // pointer arithmetic so a future private call site cannot invalidate
+        // the allocation/read proof.
+        if (count > MAX_PUBLIC_INPUTS_V2) revert InvalidMleProof();
+        values = new uint256[](count);
+        assembly ("memory-safe") {
+            let p := 0xFFFFFFFF00000001
+            let input := source.offset
+            let output := add(values, 0x20)
+            let end := add(input, mul(count, 0x20))
+            for {} lt(input, end) {
+                input := add(input, 0x20)
+                output := add(output, 0x20)
+            } {
+                let value := calldataload(input)
+                if iszero(lt(value, p)) {
+                    mstore(0x00, shl(224, 0xf0783a66))
+                    revert(0x00, 0x04)
+                }
+                mstore(output, value)
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ helpers
+
+    /// @dev The first `count` words of a flat limb buffer as a byte string (the
+    /// image of the words, `0x60` bytes per Fp3 value), copied so the buffer's own
+    /// length word is untouched.
+    function _limbBytes(uint256[] memory limbs, uint256 count) private pure returns (bytes memory image) {
+        if (count > limbs.length) revert InvalidMleProof();
+        image = new bytes(count << 5);
+        assembly ("memory-safe") {
+            mcopy(add(image, 0x20), add(limbs, 0x20), shl(5, count))
+        }
+    }
+
+    function _hintsSlice(ProofView memory view_) private pure returns (bytes calldata hints) {
+        uint256 offset = view_.hintsOffset;
+        uint256 length = view_.hintsLength;
+        assembly ("memory-safe") {
+            hints.offset := offset
+            hints.length := length
+        }
+    }
+
+    function _squeezeExt3Vector(TranscriptV2.Transcript memory transcript, uint256 length)
+        private
+        pure
+        returns (GoldilocksExt3.Ext3[] memory values)
+    {
+        values = new GoldilocksExt3.Ext3[](length);
+        for (uint256 i = 0; i < length; ++i) {
+            TranscriptV2.squeezeExt3Into(transcript, values[i]);
+        }
+    }
+
+    function _packedPoint(GoldilocksExt3.Ext3[] memory row, GoldilocksExt3.Ext3[] memory index)
+        private
+        pure
+        returns (GoldilocksExt3.Ext3[] memory point)
+    {
+        point = new GoldilocksExt3.Ext3[](row.length + index.length);
+        // Dense MLEs bind variables LSB-first as `[row, index]`, while WHIR's
+        // `MultilinearExtension` consumes the complete point in the opposite
+        // coordinate order. Reverse the full concatenation here; the separate
+        // PackedClaimExt3 fold above deliberately keeps `index` LSB-first.
+        for (uint256 i = 0; i < index.length; ++i) {
+            point[i] = index[index.length - 1 - i];
+        }
+        for (uint256 i = 0; i < row.length; ++i) {
+            point[index.length + i] = row[row.length - 1 - i];
         }
     }
 
@@ -548,159 +1166,6 @@ contract MleVerifierV2 {
         }
     }
 
-    function _requireCanonicalProof(MleProof calldata proof, CircuitConfigV2.Parameters calldata circuit)
-        private
-        view
-        returns (uint256 width)
-    {
-        if (proof.protocolVersion != MLE_PROTOCOL_VERSION_CURRENT) revert InvalidMleProof();
-        if (proof.circuitDigest.length != CIRCUIT_DIGEST_LENGTH_V2) revert InvalidMleProof();
-        if (
-            proof.circuitDigest[0] != circuitDigest0 || proof.circuitDigest[1] != circuitDigest1
-                || proof.circuitDigest[2] != circuitDigest2 || proof.circuitDigest[3] != circuitDigest3
-        ) revert InvalidMleProof();
-        if (proof.publicInputs.length != circuit.numPublicInputs) revert InvalidMleProof();
-        if (proof.preprocessedRoot != preprocessedCommitmentRoot) revert InvalidMleProof();
-        if (proof.whirTranscript.length > MAX_WHIR_NARG_BYTES_V2 || proof.whirHints.length > MAX_WHIR_HINT_BYTES_V2) {
-            revert InvalidMleProof();
-        }
-        width = _constituentWidth(circuit);
-        if (proof.constituentWidth != width) revert InvalidMleProof();
-
-        uint256 preprocessedLength = circuit.numConstants + circuit.numRoutedWires;
-        uint256 normInverseLength = 2 * circuit.numRoutedWires;
-        if (
-            proof.logPreprocessed.length != preprocessedLength || proof.logWitness.length != circuit.numWires
-                || proof.logNormInverse.length != normInverseLength
-                || proof.gatePreprocessed.length != preprocessedLength || proof.gateWitness.length != circuit.numWires
-        ) revert InvalidMleProof();
-        if (proof.logProof.rounds.length != circuit.degreeBits || proof.gateProof.rounds.length != circuit.degreeBits) {
-            revert InvalidMleProof();
-        }
-        uint256 gateDegree = circuit.quotientDegreeFactor + 2;
-        for (uint256 round = 0; round < circuit.degreeBits; ++round) {
-            if (
-                proof.logProof.rounds[round].nonConstant.length != LOG_ROUND_DEGREE_V2
-                    || proof.gateProof.rounds[round].nonConstant.length != gateDegree
-            ) revert InvalidMleProof();
-        }
-    }
-
-    /// @dev Fuse the proof-boundary canonical check with the unavoidable
-    /// calldata-to-memory copy.  Downstream helpers receive the same ordinary
-    /// Solidity memory layout as before, but no longer require an earlier full
-    /// scan of these large vectors.
-    function _copyCanonicalExt3(GoldilocksExt3.Ext3[] calldata source)
-        private
-        pure
-        returns (GoldilocksExt3.Ext3[] memory values)
-    {
-        uint256 count = source.length;
-        // Every caller reaches this helper only after `_requireCanonicalProof`
-        // has matched an exact protocol vector length. Keep the independent cap
-        // here as a local proof for the Yul arithmetic below: at most 160
-        // records means `0x20 + count * (0x20 + 0x60)` cannot overflow and the
-        // loop reads exactly the ABI-decoder-bounds-checked calldata elements.
-        if (count > MAX_CONSTITUENT_WIDTH_V2) revert InvalidMleProof();
-        assembly ("memory-safe") {
-            let p := 0xFFFFFFFF00000001
-            let arrayPtr := mload(0x40)
-            let pointerTable := add(arrayPtr, 0x20)
-            let records := add(pointerTable, mul(count, 0x20))
-            let input := source.offset
-            mstore(arrayPtr, count)
-
-            for { let i := 0 } lt(i, count) { i := add(i, 1) } {
-                let record := add(records, mul(i, 0x60))
-                let c0 := calldataload(input)
-                let c1 := calldataload(add(input, 0x20))
-                let c2 := calldataload(add(input, 0x40))
-                if iszero(and(and(lt(c0, p), lt(c1, p)), lt(c2, p))) {
-                    mstore(0x00, shl(224, 0xf0783a66))
-                    revert(0x00, 0x04)
-                }
-                mstore(add(pointerTable, mul(i, 0x20)), record)
-                mstore(record, c0)
-                mstore(add(record, 0x20), c1)
-                mstore(add(record, 0x40), c2)
-                input := add(input, 0x60)
-            }
-
-            mstore(0x40, add(records, mul(count, 0x60)))
-            values := arrayPtr
-        }
-    }
-
-    function _copyCanonicalBase(uint256[] calldata source) private pure returns (uint256[] memory values) {
-        uint256 count = source.length;
-        // The pinned circuit already imposes this bound; repeat it next to the
-        // pointer arithmetic so a future private call site cannot invalidate
-        // the allocation/read proof.
-        if (count > MAX_PUBLIC_INPUTS_V2) revert InvalidMleProof();
-        values = new uint256[](count);
-        assembly ("memory-safe") {
-            let p := 0xFFFFFFFF00000001
-            let input := source.offset
-            let output := add(values, 0x20)
-            let end := add(input, mul(count, 0x20))
-            for {} lt(input, end) {
-                input := add(input, 0x20)
-                output := add(output, 0x20)
-            } {
-                let value := calldataload(input)
-                if iszero(lt(value, p)) {
-                    mstore(0x00, shl(224, 0xf0783a66))
-                    revert(0x00, 0x04)
-                }
-                mstore(output, value)
-            }
-        }
-    }
-
-    function _copyCanonicalSumcheck(OuterLogupExt3Verifier.SumcheckProof calldata source)
-        private
-        pure
-        returns (OuterLogupExt3Verifier.SumcheckProof memory proof)
-    {
-        // `_requireCanonicalProof` has established both the circuit-capped
-        // number of rounds and each exact coefficient count. The per-round
-        // helper repeats its 160-record allocation cap and canonicalizes every
-        // limb while copying it.
-        proof.rounds = new OuterLogupExt3Verifier.CoefficientRound[](source.rounds.length);
-        for (uint256 round = 0; round < source.rounds.length; ++round) {
-            proof.rounds[round].nonConstant = _copyCanonicalExt3(source.rounds[round].nonConstant);
-        }
-    }
-
-    function _squeezeExt3Vector(TranscriptV2.Transcript memory transcript, uint256 length)
-        private
-        pure
-        returns (GoldilocksExt3.Ext3[] memory values)
-    {
-        values = new GoldilocksExt3.Ext3[](length);
-        for (uint256 i = 0; i < length; ++i) {
-            values[i] = TranscriptV2.squeezeExt3(transcript);
-        }
-    }
-
-    function _packedPoint(GoldilocksExt3.Ext3[] memory row, GoldilocksExt3.Ext3[] memory index)
-        private
-        pure
-        returns (GoldilocksExt3.Ext3[] memory point)
-    {
-        point = new GoldilocksExt3.Ext3[](row.length + index.length);
-        // Dense MLEs bind variables LSB-first as `[row, index]`, while WHIR's
-        // `MultilinearExtension` consumes the complete point in the opposite
-        // coordinate order. Reverse the full concatenation here; the separate
-        // PackedClaimExt3 fold above deliberately keeps `index` LSB-first.
-        for (uint256 i = 0; i < index.length; ++i) {
-            point[i] = index[index.length - 1 - i];
-        }
-        for (uint256 i = 0; i < row.length; ++i) {
-            point[index.length + i] = row[row.length - 1 - i];
-        }
-    }
-
     function _constituentWidth(CircuitConfigV2.Parameters calldata circuit) private pure returns (uint256 width) {
         width = circuit.numConstants + circuit.numRoutedWires;
         if (circuit.numWires > width) width = circuit.numWires;
@@ -734,23 +1199,5 @@ contract MleVerifierV2 {
 
     function _protocolId() private view returns (bytes memory) {
         return abi.encodePacked(whirProtocolIdFirst, whirProtocolIdSecond);
-    }
-
-    function _writeU64Le(bytes memory destination, uint256 offset, uint256 value) private pure returns (uint256) {
-        if (value > type(uint64).max || offset > destination.length || 8 > destination.length - offset) {
-            revert InvalidMleVerifierConfiguration();
-        }
-        assembly ("memory-safe") {
-            let ptr := add(add(destination, 0x20), offset)
-            mstore8(ptr, value)
-            mstore8(add(ptr, 1), shr(8, value))
-            mstore8(add(ptr, 2), shr(16, value))
-            mstore8(add(ptr, 3), shr(24, value))
-            mstore8(add(ptr, 4), shr(32, value))
-            mstore8(add(ptr, 5), shr(40, value))
-            mstore8(add(ptr, 6), shr(48, value))
-            mstore8(add(ptr, 7), shr(56, value))
-        }
-        return offset + 8;
     }
 }

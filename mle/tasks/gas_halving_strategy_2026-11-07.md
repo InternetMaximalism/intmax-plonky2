@@ -145,3 +145,63 @@ A1+A2 は 1 つの改修で扱える（「core は compact calldata を直接読
 - 配備形状（PI 103）での基準値は本セッションで未計測（README の親 cold close 16.9M は親のロジック込み）。
 - C1 の prover コスト（2^29 要素）は未計測。
 - B1 の transcript 変更は Lean モデル（Transcript フレーム定理）の更新が必要。
+
+## 9. Phase 1 の結果（2026-11-07、ブランチ `claude/mle-gas-phase1`）
+
+実装のみ（wire・ABI・証明バイト列・検査項目は不変）で以下に到達した。実測はすべて `GasBaselineV2.t.sol`（生の `staticcall`、uninstrumented）。
+
+| fixture / 入口 | Phase 0 | Phase 1 | 削減 |
+| --- | ---: | ---: | ---: |
+| 配備形状 `verifyCompact` 実行 | 17,009,357 | **7,224,965** | −57.5% |
+| 配備形状 `verifyCompactPublicInputs` 実行 | 17,018,732 | 7,254,059 | −57.4% |
+| 配備形状 `fraudVerdictCompact`（正直、PI_MISMATCH） | 17,068,394 | 7,305,952 | −57.2% |
+| 配備形状 合計上限（`verifyCompact` + calldata 2,042,512） | 19,051,869 | **9,267,477** | −51.4% |
+| 最大 fixture `verifyCompact` 実行 | 12,654,254 | 5,827,238 | −54.0% |
+| 小 fixture `verifyCompact` 実行 | 7,850,405 | 3,538,696 | −54.9% |
+
+ユーザー目標（配備形状で合計 10M 以下）は達成。calldata（2.04M、EIP-7623 floor 5.07M）は不変。
+
+### 効いた手段（実測ベース）
+
+| 手段 | 効果（配備形状、実行ガス） |
+| --- | ---: |
+| core が compact calldata を直読みし、各 Ext3 ベクトルを 1 回だけ flat limb バッファに実体化（Pinned の decode・ABI 再エンコード・core の canonical copy を廃止、claim 吸収は calldatacopy）| −1.45M |
+| TranscriptV2 を Yul 化（フレームは free pointer 先の一時メモリ、challenge は scratch 空間） | −0.37M |
+| WHIR（Merkle の in-place 層縮約、hint 行の 4 limb 同時デコード、final claim の base-field 高速路、nibble 表 `glPow`、挿入ソート）: フレーム 5.64M → 2.90M | −2.7M |
+| ゲート終端（flat limb バッファ上の Yul ゲート本体、Poseidon を limb 平面ごとの整数 FFT MDS、Karatsuba Ext2、lazy reduction）: フレーム 3.14M → 1.02M | −2.1M |
+| 公開入力 Poseidon（定数を全てリテラル化、lazy reduction、13 permutation）: 1.75M → 0.56M | −1.2M |
+| Outer（stack 常駐 Yul、lazy reduction、PI 束縛の行ごとの Horner）: 境界を除くフレーム ≈2.27M → ≈0.96M | −1.3M |
+| ライブラリ境界の引数を `uint256[]` から 1 本の `bytes` に（2,000 語で 337k → 36k を実測）: Outer 境界 375k → ≈60k、gate 境界 80k → ≈30k | −0.4M |
+| fold の lazy reduction、squeeze 展開、デコーダのレーン一括 byte 反転、ゲート終端式の core 内インライン | −0.3M |
+
+### 検証
+
+- `forge test --offline`: 455 tests pass（Phase 0 の 418 ＋ 新規の Flat/Blob 等価テスト 37）。未追跡の監査プローブ 27 件（Rust/Solidity 変異差分 201 変異、fraud 分類タクソノミ、transcript 合成、selector 設定）は全 pass、DIVERGENCE なし（`test_shiftNargHintBoundary` のみデフォルト gas 上限で OOG、監査記録どおりの既知事項）。
+- 各サブエージェントは旧ライブラリ（5c3f72e2）との差分ハーネス（乱数・境界値入力）で新旧の同値を確認した上でコミット（ハーネスは scratch、未コミット）。
+- 公開入力 Poseidon のインラインリテラル 734 個は `PoseidonConstants.sol` の blob と一致（本体で照合: 未知のリテラル 0、不足 0）。
+- 実測された EVM の実コスト: Yul でも Ext3 積 1 回 ≈350〜400 gas（mulmod/addmod 連鎖）、lazy reduction（2^64 未満の canonical limb の積和を整数で累積し limb ごとに 1 回 `mod`）で ≈25% 減。机上見積（§3）は実コストを 3〜4 倍過小評価していた。
+
+### フェーズ別の内訳（配備形状、計測器補正後、`gas_profile_2026-11-07/summary_tables_phase1.txt`）
+
+| フェーズ | Phase 0 | Phase 1 |
+| --- | ---: | ---: |
+| Compact decode／parse（Pinned の decode → core の flat limb 化） | 733,188 | 471,161 |
+| Pinned→core 境界 | 470,851 | 71,929 |
+| core: 初期 transcript | 261,431 | 138,394 |
+| core: canonical copy／views | 274,971 | 9,893 |
+| core→Outer 境界 | 568,666 | 98,929 |
+| Outer 結合 sumcheck 13 round | 905,348 | 418,231 |
+| norm/logUp 終端（PI 束縛含む） | 1,834,153 | 848,269 |
+| claim 吸収 + index squeeze | 420,829 | 54,017 |
+| packed-claim fold | 557,093 | 424,830 |
+| core→WHIR 境界 | 195,648 | 145,480 |
+| WHIR フレーム計 | 5,638,527 | 2,901,251 |
+| 公開入力 Poseidon（13 permutation） | 1,736,738 | 560,261 |
+| core→gate 境界 | 107,952 | 24,685 |
+| ゲート終端（非 Poseidon 13 行 + Poseidon） | 3,337,374 | 1,020,805 |
+| ゲート終端式（外部 → core 内） | 70,540 | 13,586 |
+| 計（補正後 callee total） | 17,050,048 | 7,258,321 |
+
+### 残り（実装レベルで各 ≲10k）とプロトコル側の選択肢
+
+実装のみでの残余は各項目 10k 未満（エージェント報告）。さらに削るなら B5（verifier 側の公開入力 Poseidon 廃止、−0.56M）、B1（squeeze の 4 limb/keccak 化）、C（rate 再調整で calldata −0.3M）が候補で、いずれも wire v4（Rust・Lean manifest・監査文書の更新）を伴う。

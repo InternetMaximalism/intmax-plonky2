@@ -9,33 +9,32 @@ def group_of(fr, a, b):
     """Return (group, subgroup) for a span; boundary spans handled separately."""
     if fr == "P":
         if a in (10, 9001, 9002, 9004, 13) or (a == 9003): return ("00 Pinned adapter: entry/chainid/config load", "glue/chainid")
-        if a in (110, 111, 112):
-            return ("00 Pinned adapter: entry/chainid/config load", {110: "EXTCODECOPY config store", 111: "abi.decode(VerificationConfig)", 112: "glue"}[a])
-        if a in (11, 127): return ("01 Compact decode", "glue")
-        if 120 <= a <= 126:
-            return ("01 Compact decode", {120: "header/digest/PIs/roots", 121: "whirTranscript copy", 122: "whirHints copy (calldatacopy)",
-                                          123: "logProof rounds (65 Ext3)", 124: "log terminal vectors (379 Ext3)", 125: "gateProof rounds (130 Ext3)",
-                                          126: "gate terminal vectors (219 Ext3)"}[a])
-        if a == 12: return ("02 BOUNDARY Pinned->core.verify (ABI-encode proof+config, STATICCALL, return)", None)
+        if a == 110: return ("00 Pinned adapter: entry/chainid/config load", "EXTCODECOPY config store")
+        if a in (111, 11): return ("00 Pinned adapter: entry/chainid/config load", "glue")
+        if a == 12: return ("02 BOUNDARY Pinned->core.verifyCompactWithConfig (compact+config calldata copy, STATICCALL, return)", None)
     if fr == "C":
-        if a == 20: return ("03 Core: config digest (abi.encode(config)+keccak)", "")
-        if a == 21: return ("04 Core: canonical shape checks", "")
+        if a == 20: return ("03 Core: config digest (keccak of encoded config)", "")
+        if a in (21, 127): return ("01 Compact parse", "glue")
+        if 120 <= a <= 126:
+            return ("01 Compact parse", {120: "header/digest/PIs/roots", 121: "whirTranscript copy", 122: "whirHints bounds (calldata slice)",
+                                         123: "PIs + logProof rounds -> flat limbs", 124: "gateProof rounds -> flat limbs",
+                                         125: "log terminal vectors -> flat limbs", 126: "blob seal + gate terminal vectors -> flat limbs"}[a])
         if a in (22, 30, 36): return ("05 Core: initial transcript", "statement absorption (16 frames)" if a == 30 else "glue")
         if a in (31, 32, 33, 34, 35):
             return ("05 Core: initial transcript", {31: "eta/beta/gamma/xi squeezes + normInverse root", 32: "lambda/rho/kappa squeezes",
                                                   33: "tau vector squeezes", 34: "gate alpha squeeze", 35: "gate tau vector squeezes"}[a])
-        if a == 23: return ("06 Core: canonical limb copies (calldata->memory)", "5 terminal vectors (598 Ext3)")
-        if a == 24: return ("06 Core: canonical limb copies (calldata->memory)", "2 sumcheck proofs (195 Ext3) + VK structs")
+        if a == 23: return ("06 Core: outer VK + views", "outer VK struct")
+        if a == 24: return ("06 Core: outer VK + views", "pointer tables / sumcheck views")
         if a == 25: return ("07 BOUNDARY core->OuterLogupExt3Verifier (DELEGATECALL ABI encode/decode)", None)
-        if a in (26, 40): return ("10 Core: constituent-claim absorption", "5 Ext3 vec frames (598 records, 14.9KB)")
+        if a in (26, 40): return ("10 Core: constituent-claim absorption", "5 Ext3 vec frames (calldatacopy of wire records)")
         if a in (41, 42): return ("11 Core: index-point squeezes", "2 x indexBits Ext3 squeezes")
         if a == 27: return ("12 Core: packed-claim folds (5 cells)", "")
         if a == 28: return ("13 Core: WHIR param prep", "")
         if a == 29: return ("14 BOUNDARY core->SpongefishWhirVerify (DELEGATECALL ABI encode/decode incl. hints copy)", None)
-        if a == 50: return ("20 Core: constants prefix copy", "")
+        if a == 50: return ("20 Core: WHIR accept check", "")
         if a == 51: return ("21 BOUNDARY core->PoseidonPublicInputsHash", None)
         if a == 52: return ("23 BOUNDARY core->Plonky2GateEvaluatorExt3 (wires+constants ABI copy)", None)
-        if a == 53: return ("27 BOUNDARY core->verifyGateTerminal", None)
+        if a == 53: return ("27 Core: gate terminal equality (eq(tau,point)*gateEval, inline)", "")
         if a == 54: return ("29 tails", "")
     if fr == "O":
         if 1000 <= a < 1200:
@@ -96,8 +95,8 @@ def group_of(fr, a, b):
         if a == 207: return ("19 WHIR: EOF checks", "")
     if fr == "PH": return ("22 Public-input Poseidon hash (hash_no_pad)", "")
     if fr == "G":
-        if a == 600 or (a - 610) % 10 == 4: return ("24 Gate terminal: non-Poseidon gates + filters", "glue")
-        s = (a - 610) % 10; r = (a - 610) // 10
+        if a == 600 or (a >= 2000 and (a - 2010) % 10 == 4): return ("24 Gate terminal: non-Poseidon gates + filters", "glue")
+        s = (a - 2010) % 10; r = (a - 2010) // 10
         if s == 0: return ("24 Gate terminal: non-Poseidon gates + filters", "selector filters")
         if s == 1 and b == a + 2: return ("25 BOUNDARY gate evaluator->PoseidonGateExt3 (wires ABI copy)", None)
         if s in (1, 2): return ("24 Gate terminal: non-Poseidon gates + filters", f"row {r}: unfiltered eval + alpha reduce")
@@ -109,7 +108,7 @@ def group_of(fr, a, b):
     if fr == "GT": return ("28 Gate terminal equality (eq(tau,point)*gateEval)", "canonical checks" if a == 800 else "eq + mul + compare")
     return ("99 unclassified", f"{fr} {a}->{b}")
 
-CALLEE = {12: "C", 25: "O", 29: "W", 51: "PH", 52: "G", 53: "GT"}
+CALLEE = {12: "C", 25: "O", 29: "W", 51: "PH", 52: "G"}
 
 def summarize(prof):
     groups = OrderedDict()
@@ -132,7 +131,8 @@ def summarize(prof):
 
 def main():
     timing = parse(sys.argv[1])
-    for name in ("test_max_verifyCompact", "test_small_verifyCompact"):
+    for name in ("test_production_verifyCompact", "test_max_verifyCompact", "test_small_verifyCompact"):
+        if name not in timing: continue
         prof = Profile(timing[name]["events"])
         total, groups = summarize(prof)
         print(f"==== {name}: corrected callee total {fmt(total)} gas ====")

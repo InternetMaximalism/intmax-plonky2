@@ -408,6 +408,143 @@ library WhirLinearAlgebra {
         }
     }
 
+    // =====================================================================
+    // Flat-limb variants used by the verifier hot paths.
+    // A "flat" Ext3 vector is a uint256[] holding 3 canonical limbs (c0, c1, c2) per element.
+    // Products use lazy reduction: with every input < 2^64 the 256-bit sums of products cannot
+    // wrap, and one `mod` per limb yields the same canonical value as the mulmod/addmod form.
+    // =====================================================================
+
+    /// @dev eq weights over the folding randomness slice r[start..start+count) in flat layout:
+    ///      weights[idx] = prod_k (bit_k(idx) ? r_(start+count-1-k) : 1 - r_(start+count-1-k)),
+    ///      identical to `eqWeightsFrom` (last randomness <-> lowest index bit).
+    function eqWeightsFlat(uint256[] memory r, uint256 start, uint256 count)
+        internal
+        pure
+        returns (uint256[] memory weights)
+    {
+        // SECURITY: Bounds check the randomness slice (see eqWeightsFrom).
+        uint256 len = r.length / 3;
+        if (start > len || count > len - start) revert InvalidMleProof();
+        uint256 size = 1 << count;
+        weights = new uint256[](3 * size);
+        assembly ("memory-safe") {
+            function mul3(a0, a1, a2, b0, b1, b2) -> c0, c1, c2 {
+                c0 := mod(add(mul(a0, b0), shl(1, add(mul(a1, b2), mul(a2, b1)))), 0xFFFFFFFF00000001)
+                c1 := mod(add(add(mul(a0, b1), mul(a1, b0)), shl(1, mul(a2, b2))), 0xFFFFFFFF00000001)
+                c2 := mod(add(add(mul(a0, b2), mul(a1, b1)), mul(a2, b0)), 0xFFFFFFFF00000001)
+            }
+            // Expand the first `half` weights by one variable r, in reverse to avoid overwriting:
+            // w[2j+1] = w[j] * r and w[2j] = w[j] * (1 - r) = w[j] - w[j] * r (one Ext3 product).
+            function expand(wData, half, r0, r1, r2) {
+                for { let j := half } j { j := sub(j, 1) } {
+                    let sp := add(wData, mul(sub(j, 1), 0x60))
+                    let s0 := mload(sp)
+                    let s1 := mload(add(sp, 0x20))
+                    let s2 := mload(add(sp, 0x40))
+                    let h0, h1, h2 := mul3(s0, s1, s2, r0, r1, r2)
+                    let lo := add(wData, mul(sub(j, 1), 0xc0))
+                    mstore(add(lo, 0x60), h0)
+                    mstore(add(lo, 0x80), h1)
+                    mstore(add(lo, 0xa0), h2)
+                    mstore(lo, addmod(s0, sub(0xFFFFFFFF00000001, h0), 0xFFFFFFFF00000001))
+                    mstore(add(lo, 0x20), addmod(s1, sub(0xFFFFFFFF00000001, h1), 0xFFFFFFFF00000001))
+                    mstore(add(lo, 0x40), addmod(s2, sub(0xFFFFFFFF00000001, h2), 0xFFFFFFFF00000001))
+                }
+            }
+            let p := P
+            let wData := add(weights, 0x20)
+            mstore(wData, 1)
+            let rp := add(add(r, 0x20), mul(start, 0x60))
+            let half := 1
+            for { let idx := 0 } lt(idx, count) { idx := add(idx, 1) } {
+                // SECURITY: Normalize ri components (they enter a subtraction).
+                expand(wData, half, mod(mload(rp), p), mod(mload(add(rp, 0x20)), p), mod(mload(add(rp, 0x40)), p))
+                rp := add(rp, 0x60)
+                half := shl(1, half)
+            }
+        }
+    }
+
+    /// @dev Tensor product of the flat slice a[aOff..aOff+aLen) with the flat vector b:
+    ///      result[i * |b| + j] = a[aOff + i] * b[j] (same layout as `tensorProduct`).
+    ///      A one-element slice equal to 1 returns `b` itself (multiplication by one is exact).
+    function tensorFlat(uint256[] memory a, uint256 aOff, uint256 aLen, uint256[] memory b)
+        internal
+        pure
+        returns (uint256[] memory result)
+    {
+        if (aOff > a.length / 3 || aLen > a.length / 3 - aOff) revert InvalidMleProof();
+        if (aLen == 1 && a[3 * aOff] == 1 && a[3 * aOff + 1] == 0 && a[3 * aOff + 2] == 0) return b;
+        uint256 bLen = b.length / 3;
+        result = new uint256[](3 * aLen * bLen);
+        assembly ("memory-safe") {
+            function mul3(a0, a1, a2, b0, b1, b2) -> c0, c1, c2 {
+                c0 := mod(add(mul(a0, b0), shl(1, add(mul(a1, b2), mul(a2, b1)))), 0xFFFFFFFF00000001)
+                c1 := mod(add(add(mul(a0, b1), mul(a1, b0)), shl(1, mul(a2, b2))), 0xFFFFFFFF00000001)
+                c2 := mod(add(add(mul(a0, b2), mul(a1, b1)), mul(a2, b0)), 0xFFFFFFFF00000001)
+            }
+            let bData := add(b, 0x20)
+            let bEnd := add(bData, mul(bLen, 0x60))
+            let rp := add(result, 0x20)
+            let ap := add(add(a, 0x20), mul(aOff, 0x60))
+            let aEnd := add(ap, mul(aLen, 0x60))
+            for {} lt(ap, aEnd) { ap := add(ap, 0x60) } {
+                let a0 := mload(ap)
+                let a1 := mload(add(ap, 0x20))
+                let a2 := mload(add(ap, 0x40))
+                for { let bp := bData } lt(bp, bEnd) { bp := add(bp, 0x60) } {
+                    let c0, c1, c2 := mul3(a0, a1, a2, mload(bp), mload(add(bp, 0x20)), mload(add(bp, 0x40)))
+                    mstore(rp, c0)
+                    mstore(add(rp, 0x20), c1)
+                    mstore(add(rp, 0x40), c2)
+                    rp := add(rp, 0x60)
+                }
+            }
+        }
+    }
+
+    /// @dev eq(point, r) with `r` in flat layout; identical to `mleEvaluateEq`.
+    function mleEvaluateEqFlat(GoldilocksExt3.Ext3[] memory point, uint256[] memory r)
+        internal
+        pure
+        returns (uint256 res0, uint256 res1, uint256 res2)
+    {
+        // SECURITY: require length equality (see mleEvaluateEq).
+        if (3 * point.length != r.length) revert InvalidMleProof();
+        assembly ("memory-safe") {
+            function mul3(a0, a1, a2, b0, b1, b2) -> c0, c1, c2 {
+                c0 := mod(add(mul(a0, b0), shl(1, add(mul(a1, b2), mul(a2, b1)))), 0xFFFFFFFF00000001)
+                c1 := mod(add(add(mul(a0, b1), mul(a1, b0)), shl(1, mul(a2, b2))), 0xFFFFFFFF00000001)
+                c2 := mod(add(add(mul(a0, b2), mul(a1, b1)), mul(a2, b0)), 0xFFFFFFFF00000001)
+            }
+            let p := P
+            res0 := 1
+            let n := mload(point)
+            let pData := add(point, 0x20)
+            let rp := add(r, 0x20)
+            for { let i := 0 } lt(i, n) { i := add(i, 1) } {
+                let lPtr := mload(add(pData, shl(5, i)))
+                // SECURITY: Normalize l and r components before negating.
+                let l0 := mod(mload(lPtr), p)
+                let l1 := mod(mload(add(lPtr, 0x20)), p)
+                let l2 := mod(mload(add(lPtr, 0x40)), p)
+                let r0 := mod(mload(rp), p)
+                let r1 := mod(mload(add(rp, 0x20)), p)
+                let r2 := mod(mload(add(rp, 0x40)), p)
+                rp := add(rp, 0x60)
+                // term = l*r + (1-l)*(1-r)
+                let t0, t1, t2 := mul3(l0, l1, l2, r0, r1, r2)
+                let q0, q1, q2 :=
+                    mul3(addmod(1, sub(p, l0), p), sub(p, l1), sub(p, l2), addmod(1, sub(p, r0), p), sub(p, r1), sub(p, r2))
+                t0 := addmod(t0, q0, p)
+                t1 := addmod(t1, q1, p)
+                t2 := addmod(t2, q2, p)
+                res0, res1, res2 := mul3(res0, res1, res2, t0, t1, t2)
+            }
+        }
+    }
+
     /// @dev Dot product of two Ext3 arrays — full assembly.
     function dotProduct(
         GoldilocksExt3.Ext3[] memory a,
