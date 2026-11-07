@@ -351,14 +351,20 @@ P(f, """        uint256[] memory source
 # ---------------------------------------------------------------- OuterLogupExt3Verifier
 f = "OuterLogupExt3Verifier.sol"
 P(f, '} from "./generated/MleWhirV2.sol";\n', '} from "./generated/MleWhirV2.sol";\n' + IMPORT_ROOT)
-# mark 60: entry of verifyPrevalidated (the flattening of the Ext3[] inputs is inside the frame)
+# mark 60: entry of verifyPrevalidatedFlat (the core's production entry)
 P(f, """    {
-        uint256[] memory logRounds = _flattenRounds(logProof, vk.numVars, MAX_DEGREE);
-        uint256[] memory gateRounds = _flattenRounds(gateProof, vk.numVars, vk.gateDegree);
+        (logPoint, gatePoint, gateFinalClaim) = _verifyFlatUnchecked(
+            logRounds, gateRounds, preprocessed, witness, normInverse, publicInputs, vk, challenges, transcript
+        );
+        nextTranscript = transcript;
+    }
 """, """    {
         GasProbe.mark(60);
-        uint256[] memory logRounds = _flattenRounds(logProof, vk.numVars, MAX_DEGREE);
-        uint256[] memory gateRounds = _flattenRounds(gateProof, vk.numVars, vk.gateDegree);
+        (logPoint, gatePoint, gateFinalClaim) = _verifyFlatUnchecked(
+            logRounds, gateRounds, preprocessed, witness, normInverse, publicInputs, vk, challenges, transcript
+        );
+        nextTranscript = transcript;
+    }
 """)
 # marks 63/64: after the coupled sumchecks / after the terminal equality
 P(f, """        (logPoint, logFinalClaim, gatePoint, gateFinalClaim) =
