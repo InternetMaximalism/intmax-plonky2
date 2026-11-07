@@ -172,23 +172,16 @@ P(f, """        DerivedState memory derived = _deriveInitialTranscript(view_, co
         GasProbe.mark(23);
 
         OuterLogupExt3Verifier.VerificationKey memory outerVk""")
-P(f, """        (logPoint, gatePoint, gateFinalClaim, derived.transcript) = OuterLogupExt3Verifier.verifyPrevalidatedFlat(
-            view_.logRounds,
+P(f, """        (logPoint, gatePoint, gateFinalClaim, derived.transcript) = OuterLogupExt3Verifier.verifyPrevalidatedBlob(
+            view_.outerBlob, outerVk, derived.logChallenges, derived.transcript
+        );
 """, """        GasProbe.mark(24);
         GasProbe.mark(25);
-        (logPoint, gatePoint, gateFinalClaim, derived.transcript) = OuterLogupExt3Verifier.verifyPrevalidatedFlat(
-            view_.logRounds,
-""")
-P(f, """            derived.logChallenges,
-            derived.transcript
-        );
-
-        GoldilocksExt3.Ext3[][] memory indexPoints""", """            derived.logChallenges,
-            derived.transcript
+        (logPoint, gatePoint, gateFinalClaim, derived.transcript) = OuterLogupExt3Verifier.verifyPrevalidatedBlob(
+            view_.outerBlob, outerVk, derived.logChallenges, derived.transcript
         );
         GasProbe.mark(26);
-
-        GoldilocksExt3.Ext3[][] memory indexPoints""")
+""")
 P(f, """        GoldilocksExt3.Ext3[][] memory indexPoints = _absorbClaimsAndSampleIndices(derived.transcript, view_, indexBits);
 """, """        GoldilocksExt3.Ext3[][] memory indexPoints = _absorbClaimsAndSampleIndices(derived.transcript, view_, indexBits);
         GasProbe.mark(27);
@@ -349,20 +342,15 @@ P(f, """        uint256[] memory source
 # ---------------------------------------------------------------- OuterLogupExt3Verifier
 f = "OuterLogupExt3Verifier.sol"
 P(f, '} from "./generated/MleWhirV2.sol";\n', '} from "./generated/MleWhirV2.sol";\n' + IMPORT_ROOT)
-# mark 60: entry of verifyPrevalidatedFlat (the core's production entry)
+# mark 60: entry of verifyPrevalidatedBlob (the core's production entry; the blob copy and
+# the six array views are inside the frame)
 P(f, """    {
-        (logPoint, gatePoint, gateFinalClaim) = _verifyFlatUnchecked(
-            logRounds, gateRounds, preprocessed, witness, normInverse, publicInputs, vk, challenges, transcript
-        );
-        nextTranscript = transcript;
-    }
+        bytes memory copy = blob;
+        uint256 cursor;
 """, """    {
         GasProbe.mark(60);
-        (logPoint, gatePoint, gateFinalClaim) = _verifyFlatUnchecked(
-            logRounds, gateRounds, preprocessed, witness, normInverse, publicInputs, vk, challenges, transcript
-        );
-        nextTranscript = transcript;
-    }
+        bytes memory copy = blob;
+        uint256 cursor;
 """)
 # marks 63/64: after the coupled sumchecks / after the terminal equality
 P(f, """        (logPoint, logFinalClaim, gatePoint, gateFinalClaim) =

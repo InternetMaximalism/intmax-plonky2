@@ -397,16 +397,8 @@ contract MleVerifierV2 {
         GoldilocksExt3.Ext3[] memory logPoint;
         GoldilocksExt3.Ext3[] memory gatePoint;
         GoldilocksExt3.Ext3 memory gateFinalClaim;
-        (logPoint, gatePoint, gateFinalClaim, derived.transcript) = OuterLogupExt3Verifier.verifyPrevalidatedFlat(
-            view_.logRounds,
-            view_.gateRounds,
-            view_.logPreprocessed,
-            view_.logWitness,
-            view_.logNormInverse,
-            view_.publicInputs,
-            outerVk,
-            derived.logChallenges,
-            derived.transcript
+        (logPoint, gatePoint, gateFinalClaim, derived.transcript) = OuterLogupExt3Verifier.verifyPrevalidatedBlob(
+            view_.outerBlob, outerVk, derived.logChallenges, derived.transcript
         );
 
         GoldilocksExt3.Ext3[][] memory indexPoints = _absorbClaimsAndSampleIndices(derived.transcript, view_, indexBits);
