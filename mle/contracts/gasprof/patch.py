@@ -218,14 +218,14 @@ P(f, """        bytes calldata hints = _hintsSlice(view_);
 P(f, """        if (!whirAccepted) revert InvalidMleProof();
 
         uint256[4] memory publicInputsHash = PoseidonPublicInputsHash.hashNoPad(view_.publicInputs);
-        GoldilocksExt3.Ext3 memory gateEvaluation = Plonky2GateEvaluatorExt3.evalCombinedPrevalidated(
+        GoldilocksExt3.Ext3 memory gateEvaluation = Plonky2GateEvaluatorExt3.evalCombinedPrevalidatedFlat(
 """, """        GasProbe.mark(50);
         if (!whirAccepted) revert InvalidMleProof();
 
         GasProbe.mark(51);
         uint256[4] memory publicInputsHash = PoseidonPublicInputsHash.hashNoPad(view_.publicInputs);
         GasProbe.mark(52);
-        GoldilocksExt3.Ext3 memory gateEvaluation = Plonky2GateEvaluatorExt3.evalCombinedPrevalidated(
+        GoldilocksExt3.Ext3 memory gateEvaluation = Plonky2GateEvaluatorExt3.evalCombinedPrevalidatedFlat(
 """)
 P(f, """        _requireGateTerminal(derived.gateTau, gatePoint, gateEvaluation, gateFinalClaim);
     }

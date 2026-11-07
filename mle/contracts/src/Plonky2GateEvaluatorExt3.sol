@@ -137,6 +137,33 @@ library Plonky2GateEvaluatorExt3 {
         return _evalCombinedUnchecked(wires, constants, publicInputsHash, alpha, gates, numSelectors);
     }
 
+    /// @notice `evalCombinedPrevalidated` over flat limb buffers: `wires` and `constants`
+    /// hold three canonical words per Fp3 value (`c0, c1, c2`) and no pointer table, so the
+    /// atomic verifier's buffers cross the library boundary as plain word copies.
+    /// @dev Same caller contract as `evalCombinedPrevalidated` (every limb canonical,
+    /// deployment-validated gate table); not a safe standalone entry for untrusted inputs.
+    function evalCombinedPrevalidatedFlat(
+        uint256[] memory wires,
+        uint256[] memory constants,
+        uint256[4] memory publicInputsHash,
+        GoldilocksExt3.Ext3 memory alpha,
+        GateInfoV2[] calldata gates,
+        uint256 numSelectors
+    ) external pure returns (GoldilocksExt3.Ext3 memory combined) {
+        if (wires.length % 3 != 0 || constants.length % 3 != 0) revert InvalidMleProof();
+        // A `uint256[]` of 3n limb words has the layout of a `bytes` of 0x60 * n bytes up to
+        // its length word; rewrite the length in place to present the same buffer as bytes.
+        bytes memory flatWires;
+        bytes memory flatConstants;
+        assembly ("memory-safe") {
+            flatWires := wires
+            mstore(flatWires, shl(5, mload(wires)))
+            flatConstants := constants
+            mstore(flatConstants, shl(5, mload(constants)))
+        }
+        return _evalFlatUnchecked(flatWires, flatConstants, publicInputsHash, alpha, gates, numSelectors);
+    }
+
     function _evalCombinedUnchecked(
         GoldilocksExt3.Ext3[] memory wires,
         GoldilocksExt3.Ext3[] memory constants,
@@ -145,8 +172,18 @@ library Plonky2GateEvaluatorExt3 {
         GateInfoV2[] calldata gates,
         uint256 numSelectors
     ) private pure returns (GoldilocksExt3.Ext3 memory combined) {
-        bytes memory flatWires = _flatten(wires);
-        bytes memory flatConstants = _flatten(constants);
+        return _evalFlatUnchecked(_flatten(wires), _flatten(constants), publicHash, alpha, gates, numSelectors);
+    }
+
+    /// @dev Evaluate over flat limb buffers (`0x60` bytes per Fp3 value).
+    function _evalFlatUnchecked(
+        bytes memory flatWires,
+        bytes memory flatConstants,
+        uint256[4] memory publicHash,
+        GoldilocksExt3.Ext3 memory alpha,
+        GateInfoV2[] calldata gates,
+        uint256 numSelectors
+    ) private pure returns (GoldilocksExt3.Ext3 memory combined) {
         uint256 maxConstraints;
         for (uint256 row = 0; row < gates.length; ++row) {
             if (uint256(gates[row].numConstraints) > maxConstraints) {
@@ -166,8 +203,8 @@ library Plonky2GateEvaluatorExt3 {
             mstore(add(fr, 0x280), flatWires)
         }
         fr.numSelectors = numSelectors;
-        fr.numWires = wires.length;
-        fr.numConstants = constants.length;
+        fr.numWires = flatWires.length / 0x60;
+        fr.numConstants = flatConstants.length / 0x60;
         _evalRows(fr, gates);
         combined.c0 = uint64(fr.acc0);
         combined.c1 = uint64(fr.acc1);

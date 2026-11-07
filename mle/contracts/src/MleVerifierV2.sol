@@ -443,9 +443,9 @@ contract MleVerifierV2 {
         if (!whirAccepted) revert InvalidMleProof();
 
         uint256[4] memory publicInputsHash = PoseidonPublicInputsHash.hashNoPad(view_.publicInputs);
-        GoldilocksExt3.Ext3 memory gateEvaluation = Plonky2GateEvaluatorExt3.evalCombinedPrevalidated(
-            _pointerTable(view_.gateWitness, circuit.numWires),
-            _pointerTable(view_.gatePreprocessed, circuit.numConstants),
+        GoldilocksExt3.Ext3 memory gateEvaluation = Plonky2GateEvaluatorExt3.evalCombinedPrevalidatedFlat(
+            view_.gateWitness,
+            _prefixWords(view_.gatePreprocessed, 3 * circuit.numConstants),
             publicInputsHash,
             derived.gateAlpha,
             config.gates,
@@ -1015,25 +1015,13 @@ contract MleVerifierV2 {
 
     // ------------------------------------------------------------------ helpers
 
-    /// @dev View the first `count` elements of a flat limb buffer as an ordinary
-    /// `Ext3[]` (a pointer table whose entries address three consecutive words
-    /// of the buffer). No limb is copied.
-    function _pointerTable(uint256[] memory limbs, uint256 count)
-        private
-        pure
-        returns (GoldilocksExt3.Ext3[] memory table)
-    {
-        if (3 * count > limbs.length) revert InvalidMleProof();
+    /// @dev Copy of the first `count` words of a flat limb buffer (the constants
+    /// prefix of the gate preprocessed vector).
+    function _prefixWords(uint256[] memory limbs, uint256 count) private pure returns (uint256[] memory prefix) {
+        if (count > limbs.length) revert InvalidMleProof();
+        prefix = new uint256[](count);
         assembly ("memory-safe") {
-            table := mload(0x40)
-            mstore(table, count)
-            let entries := add(table, 0x20)
-            let record := add(limbs, 0x20)
-            for { let i := 0 } lt(i, count) { i := add(i, 1) } {
-                mstore(add(entries, shl(5, i)), record)
-                record := add(record, 0x60)
-            }
-            mstore(0x40, add(entries, shl(5, count)))
+            mcopy(add(prefix, 0x20), add(limbs, 0x20), shl(5, count))
         }
     }
 
