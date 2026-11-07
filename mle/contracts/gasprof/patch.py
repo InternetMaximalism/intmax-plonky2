@@ -1143,6 +1143,26 @@ P(f, """    ) external pure returns (GoldilocksExt3.Ext3 memory combined) {
         GasProbe.mark(601);
     }
 """)
+P(f, """            mstore(flatConstants, shl(5, mload(constants)))
+        }
+        return _evalFlatUnchecked(flatWires, flatConstants, publicInputsHash, alpha, gates, numSelectors);
+    }
+""", """            mstore(flatConstants, shl(5, mload(constants)))
+        }
+        GasProbe.mark(600);
+        combined = _evalFlatUnchecked(flatWires, flatConstants, publicInputsHash, alpha, gates, numSelectors);
+        GasProbe.mark(601);
+    }
+""")
+P(f, """        bytes memory flatConstants = constants;
+        return _evalFlatUnchecked(flatWires, flatConstants, publicInputsHash, alpha, gates, numSelectors);
+    }
+""", """        bytes memory flatConstants = constants;
+        GasProbe.mark(600);
+        combined = _evalFlatUnchecked(flatWires, flatConstants, publicInputsHash, alpha, gates, numSelectors);
+        GasProbe.mark(601);
+    }
+""")
 P(f, """        for (uint256 row = 0; row < gates.length; ++row) {
             GateInfoV2 calldata info = gates[row];
             if (uint256(info.selectorIndex) >= fr.numConstants) revert InvalidMleProof();

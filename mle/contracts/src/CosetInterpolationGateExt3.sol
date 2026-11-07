@@ -208,10 +208,19 @@ library CosetInterpolationGateExt3 {
                 r1 := mod(add(add(mul(a0, b1), mul(a1, b0)), shl(1, mul(a2, b2))), p)
                 r2 := mod(add(add(mul(a0, b2), mul(a1, b1)), mul(a2, b0)), p)
             }
+            // mem[a] * mem[b]: operands canonical, unreduced limb sums below 2^131, one reduction
+            // per limb.
             function mul3p(a, b) -> r0, r1, r2 {
-                let a0, a1, a2 := ld(a)
-                let b0, b1, b2 := ld(b)
-                r0, r1, r2 := mul3(a0, a1, a2, b0, b1, b2)
+                let p := 0xFFFFFFFF00000001
+                let a0 := mload(a)
+                let a1 := mload(add(a, 0x20))
+                let a2 := mload(add(a, 0x40))
+                let b0 := mload(b)
+                let b1 := mload(add(b, 0x20))
+                let b2 := mload(add(b, 0x40))
+                r0 := mod(add(mul(a0, b0), shl(1, add(mul(a1, b2), mul(a2, b1)))), p)
+                r1 := mod(add(add(mul(a0, b1), mul(a1, b0)), shl(1, mul(a2, b2))), p)
+                r2 := mod(add(add(mul(a0, b2), mul(a1, b1)), mul(a2, b0)), p)
             }
             // mem[o] := mem[a] - mem[b] over one Ext2 record (six words).
             function sub2(o, a, b) {
@@ -223,33 +232,48 @@ library CosetInterpolationGateExt3 {
                 mstore(add(o, 0x80), addmod(mload(add(a, 0x80)), sub(p, mload(add(b, 0x80))), p))
                 mstore(add(o, 0xa0), addmod(mload(add(a, 0xa0)), sub(p, mload(add(b, 0xa0))), p))
             }
-            // Quadratic-extension product (t^2 = 7) of two Ext2 records with Karatsuba's three
-            // Fp3 products: m0 = a0 b0, m1 = a1 b1, m2 = (a0 + a1)(b0 + b1), c0 = m0 + 7 m1,
-            // c1 = m2 - m0 - m1 (a ring identity, so the values equal the four-product form).
-            // `o` must not alias `a` or `b`.
+            // Quadratic-extension product (t^2 = 7) of two Ext2 records of six words:
+            // (a0 + a1 t)(b0 + b1 t) = (a0 b0 + 7 a1 b1) + (a0 b1 + a1 b0) t, computed with
+            // Karatsuba's three Fp3 products m0 = a0 b0, m1 = a1 b1, m2 = (a0 + a1)(b0 + b1),
+            // c0 = m0 + 7 m1, c1 = m2 - m0 - m1 (a ring identity, so the field values equal the
+            // four-product form). Operand limbs are canonical: the unreduced Fp3 product limbs
+            // stay below 2^131, the limb sums of a0 + a1 and b0 + b1 below 2^65, and every
+            // output limb is reduced exactly once. `o` must not alias `a` or `b`.
             function q2mul(a, b, o) {
                 let p := 0xFFFFFFFF00000001
-                let x0, x1, x2 := mul3p(a, b)
-                let y0, y1, y2 := mul3p(add(a, 0x60), add(b, 0x60))
-                mstore(o, addmod(x0, mulmod(y0, 7, p), p))
-                mstore(add(o, 0x20), addmod(x1, mulmod(y1, 7, p), p))
-                mstore(add(o, 0x40), addmod(x2, mulmod(y2, 7, p), p))
-                // park m0 + m1 in the c1 slot
-                mstore(add(o, 0x60), addmod(x0, y0, p))
-                mstore(add(o, 0x80), addmod(x1, y1, p))
-                mstore(add(o, 0xa0), addmod(x2, y2, p))
-                x0, x1, x2 :=
-                    mul3(
-                    addmod(mload(a), mload(add(a, 0x60)), p),
-                    addmod(mload(add(a, 0x20)), mload(add(a, 0x80)), p),
-                    addmod(mload(add(a, 0x40)), mload(add(a, 0xa0)), p),
-                    addmod(mload(b), mload(add(b, 0x60)), p),
-                    addmod(mload(add(b, 0x20)), mload(add(b, 0x80)), p),
-                    addmod(mload(add(b, 0x40)), mload(add(b, 0xa0)), p)
-                )
-                mstore(add(o, 0x60), addmod(x0, sub(p, mload(add(o, 0x60))), p))
-                mstore(add(o, 0x80), addmod(x1, sub(p, mload(add(o, 0x80))), p))
-                mstore(add(o, 0xa0), addmod(x2, sub(p, mload(add(o, 0xa0))), p))
+                let a0 := mload(a)
+                let a1 := mload(add(a, 0x20))
+                let a2 := mload(add(a, 0x40))
+                let b0 := mload(b)
+                let b1 := mload(add(b, 0x20))
+                let b2 := mload(add(b, 0x40))
+                let m00 := add(mul(a0, b0), shl(1, add(mul(a1, b2), mul(a2, b1))))
+                let m01 := add(add(mul(a0, b1), mul(a1, b0)), shl(1, mul(a2, b2)))
+                let m02 := add(add(mul(a0, b2), mul(a1, b1)), mul(a2, b0))
+                let c0 := mload(add(a, 0x60))
+                let c1 := mload(add(a, 0x80))
+                let c2 := mload(add(a, 0xa0))
+                let s0 := add(a0, c0)
+                let s1 := add(a1, c1)
+                let s2 := add(a2, c2)
+                a0 := mload(add(b, 0x60))
+                a1 := mload(add(b, 0x80))
+                a2 := mload(add(b, 0xa0))
+                let m10 := add(mul(c0, a0), shl(1, add(mul(c1, a2), mul(c2, a1))))
+                let m11 := add(add(mul(c0, a1), mul(c1, a0)), shl(1, mul(c2, a2)))
+                let m12 := add(add(mul(c0, a2), mul(c1, a1)), mul(c2, a0))
+                mstore(o, mod(add(m00, mul(7, m10)), p))
+                mstore(add(o, 0x20), mod(add(m01, mul(7, m11)), p))
+                mstore(add(o, 0x40), mod(add(m02, mul(7, m12)), p))
+                b0 := add(b0, a0)
+                b1 := add(b1, a1)
+                b2 := add(b2, a2)
+                let n0 := add(mul(s0, b0), shl(1, add(mul(s1, b2), mul(s2, b1))))
+                let n1 := add(add(mul(s0, b1), mul(s1, b0)), shl(1, mul(s2, b2)))
+                let n2 := add(add(mul(s0, b2), mul(s1, b1)), mul(s2, b0))
+                mstore(add(o, 0x60), mod(add(n0, sub(shl(1, p), add(mod(m00, p), mod(m10, p)))), p))
+                mstore(add(o, 0x80), mod(add(n1, sub(shl(1, p), add(mod(m01, p), mod(m11, p)))), p))
+                mstore(add(o, 0xa0), mod(add(n2, sub(shl(1, p), add(mod(m02, p), mod(m12, p)))), p))
             }
             // State record `sc`:
             //   0x000 term (Ext2)   0x0c0 weighted (Ext2)   0x180 scratch n0 (Ext2)

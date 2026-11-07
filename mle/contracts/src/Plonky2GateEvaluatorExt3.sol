@@ -164,6 +164,22 @@ library Plonky2GateEvaluatorExt3 {
         return _evalFlatUnchecked(flatWires, flatConstants, publicInputsHash, alpha, gates, numSelectors);
     }
 
+    /// @notice `evalCombinedPrevalidatedFlat` with the flat limb buffers supplied as byte strings
+    /// (0x60 bytes per Fp3 value, canonical limbs; same caller contract).
+    function evalCombinedPrevalidatedBytes(
+        bytes calldata wires,
+        bytes calldata constants,
+        uint256[4] memory publicInputsHash,
+        GoldilocksExt3.Ext3 memory alpha,
+        GateInfoV2[] calldata gates,
+        uint256 numSelectors
+    ) external pure returns (GoldilocksExt3.Ext3 memory combined) {
+        if (wires.length % 0x60 != 0 || constants.length % 0x60 != 0) revert InvalidMleProof();
+        bytes memory flatWires = wires;
+        bytes memory flatConstants = constants;
+        return _evalFlatUnchecked(flatWires, flatConstants, publicInputsHash, alpha, gates, numSelectors);
+    }
+
     function _evalCombinedUnchecked(
         GoldilocksExt3.Ext3[] memory wires,
         GoldilocksExt3.Ext3[] memory constants,
@@ -609,11 +625,19 @@ library Plonky2GateEvaluatorExt3 {
                 r1 := mod(shl(1, add(mul(a0, a1), mul(a2, a2))), p)
                 r2 := mod(add(shl(1, mul(a0, a2)), mul(a1, a1)), p)
             }
-            // mem[a] * mem[b]
+            // mem[a] * mem[b]: operands canonical, unreduced limb sums below 2^131, one reduction
+            // per limb.
             function mul3p(a, b) -> r0, r1, r2 {
-                let a0, a1, a2 := ld(a)
-                let b0, b1, b2 := ld(b)
-                r0, r1, r2 := mul3(a0, a1, a2, b0, b1, b2)
+                let p := 0xFFFFFFFF00000001
+                let a0 := mload(a)
+                let a1 := mload(add(a, 0x20))
+                let a2 := mload(add(a, 0x40))
+                let b0 := mload(b)
+                let b1 := mload(add(b, 0x20))
+                let b2 := mload(add(b, 0x40))
+                r0 := mod(add(mul(a0, b0), shl(1, add(mul(a1, b2), mul(a2, b1)))), p)
+                r1 := mod(add(add(mul(a0, b1), mul(a1, b0)), shl(1, mul(a2, b2))), p)
+                r2 := mod(add(add(mul(a0, b2), mul(a1, b1)), mul(a2, b0)), p)
             }
             // mem[o] := mem[a] - mem[b]
             function subp(o, a, b) {
@@ -638,32 +662,46 @@ library Plonky2GateEvaluatorExt3 {
             }
             // Quadratic-extension product (t^2 = 7) of two Ext2 records of six words:
             // (a0 + a1 t)(b0 + b1 t) = (a0 b0 + 7 a1 b1) + (a0 b1 + a1 b0) t, computed with
-            // Karatsuba's three Fp3 products: m0 = a0 b0, m1 = a1 b1, m2 = (a0 + a1)(b0 + b1),
-            // c0 = m0 + 7 m1, c1 = m2 - m0 - m1 (an identity in the ring, so the field values
-            // are the same as the four-product form). `o` must not alias `a` or `b`.
+            // Karatsuba's three Fp3 products m0 = a0 b0, m1 = a1 b1, m2 = (a0 + a1)(b0 + b1),
+            // c0 = m0 + 7 m1, c1 = m2 - m0 - m1 (a ring identity, so the field values equal the
+            // four-product form). Operand limbs are canonical: the unreduced Fp3 product limbs
+            // stay below 2^131, the limb sums of a0 + a1 and b0 + b1 below 2^65, and every
+            // output limb is reduced exactly once. `o` must not alias `a` or `b`.
             function q2mul(a, b, o) {
                 let p := 0xFFFFFFFF00000001
-                let x0, x1, x2 := mul3p(a, b)
-                let y0, y1, y2 := mul3p(add(a, 0x60), add(b, 0x60))
-                mstore(o, addmod(x0, mulmod(y0, 7, p), p))
-                mstore(add(o, 0x20), addmod(x1, mulmod(y1, 7, p), p))
-                mstore(add(o, 0x40), addmod(x2, mulmod(y2, 7, p), p))
-                // park m0 + m1 in the c1 slot
-                mstore(add(o, 0x60), addmod(x0, y0, p))
-                mstore(add(o, 0x80), addmod(x1, y1, p))
-                mstore(add(o, 0xa0), addmod(x2, y2, p))
-                x0, x1, x2 :=
-                    mul3(
-                    addmod(mload(a), mload(add(a, 0x60)), p),
-                    addmod(mload(add(a, 0x20)), mload(add(a, 0x80)), p),
-                    addmod(mload(add(a, 0x40)), mload(add(a, 0xa0)), p),
-                    addmod(mload(b), mload(add(b, 0x60)), p),
-                    addmod(mload(add(b, 0x20)), mload(add(b, 0x80)), p),
-                    addmod(mload(add(b, 0x40)), mload(add(b, 0xa0)), p)
-                )
-                mstore(add(o, 0x60), addmod(x0, sub(p, mload(add(o, 0x60))), p))
-                mstore(add(o, 0x80), addmod(x1, sub(p, mload(add(o, 0x80))), p))
-                mstore(add(o, 0xa0), addmod(x2, sub(p, mload(add(o, 0xa0))), p))
+                let a0 := mload(a)
+                let a1 := mload(add(a, 0x20))
+                let a2 := mload(add(a, 0x40))
+                let b0 := mload(b)
+                let b1 := mload(add(b, 0x20))
+                let b2 := mload(add(b, 0x40))
+                let m00 := add(mul(a0, b0), shl(1, add(mul(a1, b2), mul(a2, b1))))
+                let m01 := add(add(mul(a0, b1), mul(a1, b0)), shl(1, mul(a2, b2)))
+                let m02 := add(add(mul(a0, b2), mul(a1, b1)), mul(a2, b0))
+                let c0 := mload(add(a, 0x60))
+                let c1 := mload(add(a, 0x80))
+                let c2 := mload(add(a, 0xa0))
+                let s0 := add(a0, c0)
+                let s1 := add(a1, c1)
+                let s2 := add(a2, c2)
+                a0 := mload(add(b, 0x60))
+                a1 := mload(add(b, 0x80))
+                a2 := mload(add(b, 0xa0))
+                let m10 := add(mul(c0, a0), shl(1, add(mul(c1, a2), mul(c2, a1))))
+                let m11 := add(add(mul(c0, a1), mul(c1, a0)), shl(1, mul(c2, a2)))
+                let m12 := add(add(mul(c0, a2), mul(c1, a1)), mul(c2, a0))
+                mstore(o, mod(add(m00, mul(7, m10)), p))
+                mstore(add(o, 0x20), mod(add(m01, mul(7, m11)), p))
+                mstore(add(o, 0x40), mod(add(m02, mul(7, m12)), p))
+                b0 := add(b0, a0)
+                b1 := add(b1, a1)
+                b2 := add(b2, a2)
+                let n0 := add(mul(s0, b0), shl(1, add(mul(s1, b2), mul(s2, b1))))
+                let n1 := add(add(mul(s0, b1), mul(s1, b0)), shl(1, mul(s2, b2)))
+                let n2 := add(add(mul(s0, b2), mul(s1, b1)), mul(s2, b0))
+                mstore(add(o, 0x60), mod(add(n0, sub(shl(1, p), add(mod(m00, p), mod(m10, p)))), p))
+                mstore(add(o, 0x80), mod(add(n1, sub(shl(1, p), add(mod(m01, p), mod(m11, p)))), p))
+                mstore(add(o, 0xa0), mod(add(n2, sub(shl(1, p), add(mod(m02, p), mod(m12, p)))), p))
             }
             function alloc(size) -> ptr {
                 ptr := mload(0x40)
@@ -887,17 +925,25 @@ library Plonky2GateEvaluatorExt3 {
                     for { let b := 0 } lt(b, bits) { b := add(b, 1) } {
                         let t0, t1, t2 := ld(add(bs, mul(b, 0x60)))
                         let half := shr(1, len)
-                        for { let j := 0 } lt(j, half) { j := add(j, 1) } {
-                            let even := add(buf, mul(j, 0xc0))
-                            let odd := add(even, 0x60)
-                            let d0 := addmod(mload(odd), sub(p, mload(even)), p)
-                            let d1 := addmod(mload(add(odd, 0x20)), sub(p, mload(add(even, 0x20))), p)
-                            let d2 := addmod(mload(add(odd, 0x40)), sub(p, mload(add(even, 0x40))), p)
-                            d0, d1, d2 := mul3(t0, t1, t2, d0, d1, d2)
-                            let dst := add(buf, mul(j, 0x60))
-                            mstore(dst, addmod(mload(even), d0, p))
-                            mstore(add(dst, 0x20), addmod(mload(add(even, 0x20)), d1, p))
-                            mstore(add(dst, 0x40), addmod(mload(add(even, 0x40)), d2, p))
+                        // list[j] = even + bit * (odd - even): the difference is taken unreduced
+                        // (odd + p - even < 2^65) and `even` is folded into the product's limb
+                        // sums before the single reduction (sums stay below 2^133).
+                        let dst := buf
+                        let even := buf
+                        for { let end := add(buf, mul(half, 0x60)) } lt(dst, end) { dst := add(dst, 0x60) } {
+                            let e0 := mload(even)
+                            let e1 := mload(add(even, 0x20))
+                            let e2 := mload(add(even, 0x40))
+                            let d0 := add(mload(add(even, 0x60)), sub(p, e0))
+                            let d1 := add(mload(add(even, 0x80)), sub(p, e1))
+                            let d2 := add(mload(add(even, 0xa0)), sub(p, e2))
+                            mstore(dst, mod(add(add(mul(t0, d0), shl(1, add(mul(t1, d2), mul(t2, d1)))), e0), p))
+                            mstore(
+                                add(dst, 0x20),
+                                mod(add(add(add(mul(t0, d1), mul(t1, d0)), shl(1, mul(t2, d2))), e1), p)
+                            )
+                            mstore(add(dst, 0x40), mod(add(add(add(mul(t0, d2), mul(t1, d1)), mul(t2, d0)), e2), p))
+                            even := add(even, 0xc0)
                         }
                         len := half
                     }
@@ -910,7 +956,9 @@ library Plonky2GateEvaluatorExt3 {
             // Dense Poseidon MDS on one 12-word limb plane `sp`, using Plonky2's exact
             // integer-FFT factorization of the fixed circulant CIRC =
             // [17,15,41,16,2,28,13,13,39,18,34,20] plus the diagonal coefficient 8 on row 0.
-            // Identical to `PoseidonGate._mdsLayerInline`; `t` is a 12-word scratch area.
+            // Identical to `PoseidonGate._mdsLayerInline`; `t` is a 12-word scratch area. The
+            // butterflies sum at most four canonical words (plus bounded multiples of p before a
+            // subtraction) and reduce once.
             function mdsPlane(sp, t) {
                 let p := 0xFFFFFFFF00000001
                 for { let g := 0 } lt(g, 3) { g := add(g, 1) } {
@@ -919,10 +967,10 @@ library Plonky2GateEvaluatorExt3 {
                     let c := mload(add(sp, mul(add(g, 6), 0x20)))
                     let d := mload(add(sp, mul(add(g, 9), 0x20)))
                     let base := add(t, mul(g, 0x80))
-                    mstore(base, addmod(addmod(a, b, p), addmod(c, d, p), p))
-                    mstore(add(base, 0x20), addmod(a, sub(p, c), p))
-                    mstore(add(base, 0x40), addmod(d, sub(p, b), p))
-                    mstore(add(base, 0x60), addmod(addmod(a, sub(p, b), p), addmod(c, sub(p, d), p), p))
+                    mstore(base, mod(add(add(a, b), add(c, d)), p))
+                    mstore(add(base, 0x20), mod(add(a, sub(p, c)), p))
+                    mstore(add(base, 0x40), mod(add(d, sub(p, b)), p))
+                    mstore(add(base, 0x60), mod(sub(add(add(a, c), shl(1, p)), add(b, d)), p))
                 }
                 {
                     let x0 := mload(t)
@@ -978,14 +1026,14 @@ library Plonky2GateEvaluatorExt3 {
                     let v1r := mload(add(base, 0x20))
                     let v1i := mload(add(base, 0x40))
                     let v2 := mload(add(base, 0x60))
-                    let z0 := addmod(v0, v2, p)
-                    let z1 := addmod(v0, sub(p, v2), p)
-                    let out0 := addmod(z0, v1r, p)
-                    if iszero(g) { out0 := addmod(out0, mulmod(mload(sp), 8, p), p) }
-                    mstore(add(sp, mul(g, 0x20)), out0)
-                    mstore(add(sp, mul(add(g, 3), 0x20)), addmod(z1, sub(p, v1i), p))
-                    mstore(add(sp, mul(add(g, 6), 0x20)), addmod(z0, sub(p, v1r), p))
-                    mstore(add(sp, mul(add(g, 9), 0x20)), addmod(z1, v1i, p))
+                    let z0 := add(v0, v2)
+                    let z1 := add(v0, sub(p, v2))
+                    let out0 := add(z0, v1r)
+                    if iszero(g) { out0 := add(out0, mul(mload(sp), 8)) }
+                    mstore(add(sp, mul(g, 0x20)), mod(out0, p))
+                    mstore(add(sp, mul(add(g, 3), 0x20)), mod(add(z1, sub(p, v1i)), p))
+                    mstore(add(sp, mul(add(g, 6), 0x20)), mod(add(z0, sub(p, v1r)), p))
+                    mstore(add(sp, mul(add(g, 9), 0x20)), mod(add(z1, v1i), p))
                 }
             }
 
@@ -996,21 +1044,32 @@ library Plonky2GateEvaluatorExt3 {
                 let p := 0xFFFFFFFF00000001
                 let planes := alloc(0xa80)
                 let t := add(planes, 0x900)
+                // plane q = 3*c + j holds limb j of Ext2 component c; element i at planes + q*0x180 + i*0x20
                 for { let i := 0 } lt(i, 12) { i := add(i, 1) } {
                     let wp := add(w, mul(i, 0xc0))
                     let dst := add(planes, shl(5, i))
-                    for { let q := 0 } lt(q, 6) { q := add(q, 1) } {
-                        mstore(add(dst, mul(q, 0x180)), mload(add(wp, mul(q, 0x20))))
-                    }
+                    mstore(dst, mload(wp))
+                    mstore(add(dst, 0x180), mload(add(wp, 0x20)))
+                    mstore(add(dst, 0x300), mload(add(wp, 0x40)))
+                    mstore(add(dst, 0x480), mload(add(wp, 0x60)))
+                    mstore(add(dst, 0x600), mload(add(wp, 0x80)))
+                    mstore(add(dst, 0x780), mload(add(wp, 0xa0)))
                 }
-                for { let q := 0 } lt(q, 6) { q := add(q, 1) } { mdsPlane(add(planes, mul(q, 0x180)), t) }
+                mdsPlane(planes, t)
+                mdsPlane(add(planes, 0x180), t)
+                mdsPlane(add(planes, 0x300), t)
+                mdsPlane(add(planes, 0x480), t)
+                mdsPlane(add(planes, 0x600), t)
+                mdsPlane(add(planes, 0x780), t)
                 let op := add(w, mul(24, 0x60))
                 for { let r := 0 } lt(r, 12) { r := add(r, 1) } {
                     let src := add(planes, shl(5, r))
-                    for { let q := 0 } lt(q, 6) { q := add(q, 1) } {
-                        let off := mul(q, 0x20)
-                        mstore(add(k, off), addmod(mload(add(op, off)), sub(p, mload(add(src, mul(q, 0x180)))), p))
-                    }
+                    mstore(k, addmod(mload(op), sub(p, mload(src)), p))
+                    mstore(add(k, 0x20), addmod(mload(add(op, 0x20)), sub(p, mload(add(src, 0x180))), p))
+                    mstore(add(k, 0x40), addmod(mload(add(op, 0x40)), sub(p, mload(add(src, 0x300))), p))
+                    mstore(add(k, 0x60), addmod(mload(add(op, 0x60)), sub(p, mload(add(src, 0x480))), p))
+                    mstore(add(k, 0x80), addmod(mload(add(op, 0x80)), sub(p, mload(add(src, 0x600))), p))
+                    mstore(add(k, 0xa0), addmod(mload(add(op, 0xa0)), sub(p, mload(add(src, 0x780))), p))
                     op := add(op, 0xc0)
                     k := add(k, 0xc0)
                 }
