@@ -529,8 +529,16 @@ library SpongefishWhirVerify {
         uint256[] memory coeffs = new uint256[](6);
         uint256[] memory foldR = vs.foldR;
         for (uint256 i = 0; i < numRounds; i++) {
-            _readInto(ts, transcript, coeffs, 0);
-            _readInto(ts, transcript, coeffs, 1);
+            (uint64 c0a, uint64 c0b, uint64 c0c) = SpongefishWhir.proverMessageField64x3(ts, transcript);
+            (uint64 c2a, uint64 c2b, uint64 c2c) = SpongefishWhir.proverMessageField64x3(ts, transcript);
+            assembly ("memory-safe") {
+                mstore(add(coeffs, 0x20), c0a)
+                mstore(add(coeffs, 0x40), c0b)
+                mstore(add(coeffs, 0x60), c0c)
+                mstore(add(coeffs, 0x80), c2a)
+                mstore(add(coeffs, 0xa0), c2b)
+                mstore(add(coeffs, 0xc0), c2c)
+            }
 
             _verifyPow(ts, transcript, powThreshold);
 
@@ -767,7 +775,6 @@ library SpongefishWhirVerify {
 
     /// @dev Consume one commitment's opening: Arkworks vec prefix, `rawIndices.length` rows,
     ///      then the Merkle decommitment against `root`. Afterwards `rowValues[i] += dot(w, row_i)`.
-    ///      `rawIndices` is copied because Merkle verification uses its arrays as scratch.
     function _openRows(
         SpongefishWhir.TranscriptState memory ts,
         SpongefishMerkle.CalldataBytes memory hints,
@@ -781,15 +788,10 @@ library SpongefishWhirVerify {
         _consumeVecPrefix(ts, hints, rawCount * o.numCols);
         uint256 rowsStart = ts.hintPos;
         bytes32[] memory leafHashes = _hashRows(hints, rowsStart, o.rowBytes, rawCount);
-        uint256[] memory idxCopy = new uint256[](rawCount);
-        assembly ("memory-safe") {
-            let src := add(rawIndices, 0x20)
-            let dst := add(idxCopy, 0x20)
-            for { let i := 0 } lt(i, rawCount) { i := add(i, 1) } {
-                mstore(add(dst, shl(5, i)), mload(add(src, shl(5, i))))
-            }
-        }
-        ts.hintPos = SpongefishMerkle.verify(root, o.md, idxCopy, leafHashes, hints, rowsStart + rawCount * o.rowBytes);
+        // SpongefishMerkle.verify packs the (index, hash) pairs into its own buffer, so the
+        // query list survives for the later commitments / the eval points.
+        ts.hintPos =
+            SpongefishMerkle.verify(root, o.md, rawIndices, leafHashes, hints, rowsStart + rawCount * o.rowBytes);
         _accumulateRowDots(rowValues, w, o.numCols, hints, rowsStart, o.rowBytes, rawCount, o.isBaseField);
     }
 
@@ -993,12 +995,9 @@ library SpongefishWhirVerify {
                     x0 := mulmod(x0, x0, 0xFFFFFFFF00000001)
                 }
             }
-            // Extension point at pp (consumed in place): term = 1 + r*(X - 1), X <- X^2; the
-            // running product lives at tmp.
-            function evalExt(pp, tmp, rp, rLow_) {
-                mstore(tmp, 1)
-                mstore(add(tmp, 0x20), 0)
-                mstore(add(tmp, 0x40), 0)
+            // Extension point X: s = prod (1 + r*(X - 1)), X <- X^2, everything on the stack.
+            function evalExt(x0, x1, x2, rp, rLow_) -> s0, s1, s2 {
+                s0 := 1
                 for {} gt(rp, rLow_) {} {
                     rp := sub(rp, 0x60)
                     let t0, t1, t2 :=
@@ -1006,26 +1005,12 @@ library SpongefishWhirVerify {
                             mload(rp),
                             mload(add(rp, 0x20)),
                             mload(add(rp, 0x40)),
-                            addmod(mload(pp), 0xFFFFFFFF00000000, 0xFFFFFFFF00000001),
-                            mload(add(pp, 0x20)),
-                            mload(add(pp, 0x40))
+                            addmod(x0, 0xFFFFFFFF00000000, 0xFFFFFFFF00000001),
+                            x1,
+                            x2
                         )
-                    t0, t1, t2 := mul3(mload(tmp), mload(add(tmp, 0x20)), mload(add(tmp, 0x40)), add(t0, 1), t1, t2)
-                    mstore(tmp, t0)
-                    mstore(add(tmp, 0x20), t1)
-                    mstore(add(tmp, 0x40), t2)
-                    t0, t1, t2 :=
-                        mul3(
-                        mload(pp),
-                        mload(add(pp, 0x20)),
-                        mload(add(pp, 0x40)),
-                        mload(pp),
-                        mload(add(pp, 0x20)),
-                        mload(add(pp, 0x40))
-                    )
-                    mstore(pp, t0)
-                    mstore(add(pp, 0x20), t1)
-                    mstore(add(pp, 0x40), t2)
+                    s0, s1, s2 := mul3(s0, s1, s2, add(t0, 1), t1, t2)
+                    x0, x1, x2 := mul3(x0, x1, x2, x0, x1, x2)
                 }
             }
             let cp := add(coeffs, 0x20)
@@ -1034,14 +1019,15 @@ library SpongefishWhirVerify {
             for {} lt(cp, cEnd) {} {
                 // Running product kept in temporary memory after the free pointer (not retained).
                 let tmp := mload(0x40)
+                let s0 := 0
+                let s1 := 0
+                let s2 := 0
                 switch or(mload(add(pp, 0x20)), mload(add(pp, 0x40)))
-                case 0 {
-                    let s0, s1, s2 := evalBase(mload(pp), rTop, rLow)
-                    mstore(tmp, s0)
-                    mstore(add(tmp, 0x20), s1)
-                    mstore(add(tmp, 0x40), s2)
-                }
-                default { evalExt(pp, tmp, rTop, rLow) }
+                case 0 { s0, s1, s2 := evalBase(mload(pp), rTop, rLow) }
+                default { s0, s1, s2 := evalExt(mload(pp), mload(add(pp, 0x20)), mload(add(pp, 0x40)), rTop, rLow) }
+                mstore(tmp, s0)
+                mstore(add(tmp, 0x20), s1)
+                mstore(add(tmp, 0x40), s2)
                 pp := add(pp, 0x60)
                 // acc -= s * coeff
                 let m0, m1, m2 :=

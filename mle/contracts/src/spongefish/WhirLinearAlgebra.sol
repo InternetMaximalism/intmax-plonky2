@@ -434,36 +434,33 @@ library WhirLinearAlgebra {
                 c1 := mod(add(add(mul(a0, b1), mul(a1, b0)), shl(1, mul(a2, b2))), 0xFFFFFFFF00000001)
                 c2 := mod(add(add(mul(a0, b2), mul(a1, b1)), mul(a2, b0)), 0xFFFFFFFF00000001)
             }
+            // Expand the first `half` weights by one variable r, in reverse to avoid overwriting:
+            // w[2j+1] = w[j] * r and w[2j] = w[j] * (1 - r) = w[j] - w[j] * r (one Ext3 product).
+            function expand(wData, half, r0, r1, r2) {
+                for { let j := half } j { j := sub(j, 1) } {
+                    let sp := add(wData, mul(sub(j, 1), 0x60))
+                    let s0 := mload(sp)
+                    let s1 := mload(add(sp, 0x20))
+                    let s2 := mload(add(sp, 0x40))
+                    let h0, h1, h2 := mul3(s0, s1, s2, r0, r1, r2)
+                    let lo := add(wData, mul(sub(j, 1), 0xc0))
+                    mstore(add(lo, 0x60), h0)
+                    mstore(add(lo, 0x80), h1)
+                    mstore(add(lo, 0xa0), h2)
+                    mstore(lo, addmod(s0, sub(0xFFFFFFFF00000001, h0), 0xFFFFFFFF00000001))
+                    mstore(add(lo, 0x20), addmod(s1, sub(0xFFFFFFFF00000001, h1), 0xFFFFFFFF00000001))
+                    mstore(add(lo, 0x40), addmod(s2, sub(0xFFFFFFFF00000001, h2), 0xFFFFFFFF00000001))
+                }
+            }
             let p := P
             let wData := add(weights, 0x20)
             mstore(wData, 1)
             let rp := add(add(r, 0x20), mul(start, 0x60))
             let half := 1
             for { let idx := 0 } lt(idx, count) { idx := add(idx, 1) } {
-                // SECURITY: Normalize ri components before negating.
-                let ri0 := mod(mload(rp), p)
-                let ri1 := mod(mload(add(rp, 0x20)), p)
-                let ri2 := mod(mload(add(rp, 0x40)), p)
+                // SECURITY: Normalize ri components (they enter a subtraction).
+                expand(wData, half, mod(mload(rp), p), mod(mload(add(rp, 0x20)), p), mod(mload(add(rp, 0x40)), p))
                 rp := add(rp, 0x60)
-                let omr0 := addmod(1, sub(p, ri0), p)
-                let omr1 := sub(p, ri1)
-                let omr2 := sub(p, ri2)
-                // Process in reverse to avoid overwriting
-                for { let j := half } j { j := sub(j, 1) } {
-                    let sp := add(wData, mul(sub(j, 1), 0x60))
-                    let s0 := mload(sp)
-                    let s1 := mload(add(sp, 0x20))
-                    let s2 := mload(add(sp, 0x40))
-                    let lo := add(wData, mul(sub(j, 1), 0xc0))
-                    let h0, h1, h2 := mul3(s0, s1, s2, ri0, ri1, ri2)
-                    mstore(add(lo, 0x60), h0)
-                    mstore(add(lo, 0x80), h1)
-                    mstore(add(lo, 0xa0), h2)
-                    let l0, l1, l2 := mul3(s0, s1, s2, omr0, omr1, omr2)
-                    mstore(lo, l0)
-                    mstore(add(lo, 0x20), l1)
-                    mstore(add(lo, 0x40), l2)
-                }
                 half := shl(1, half)
             }
         }

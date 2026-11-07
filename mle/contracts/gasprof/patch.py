@@ -686,14 +686,33 @@ P(f, """    function ratchet(Sponge memory s) internal pure {
 f = "spongefish/SpongefishMerkle.sol"
 P(f, 'import {InvalidMleProof} from "../MleProofErrors.sol";\n',
      'import {InvalidMleProof} from "../MleProofErrors.sol";\n' + IMPORT_SUB)
-P(f, """            nextLen := shr(6, sub(wp, pairs))
-            newHc := hcOut
+P(f, """        returns (uint256 nextLen, uint256 newHc)
+    {
+        assembly ("memory-safe") {
+            // Few live values keep the EVM stack shallow (no SWAP/DUP storms per node).
+""", """        returns (uint256 nextLen, uint256 newHc)
+    {
+        uint256 probeNodes;
+        assembly ("memory-safe") {
+            // Few live values keep the EVM stack shallow (no SWAP/DUP storms per node).
+""")
+P(f, """            let end := add(pairs, shl(6, n))
+            for { let layer := 0 } lt(layer, numLayers) { layer := add(layer, 1) } {
+                end, hc := reduce(pairs, end, hc, hcEnd)
+            }
+            nextLen := shr(6, sub(end, pairs))
+            newHc := hc
         }
     }
-""", """            nextLen := shr(6, sub(wp, pairs))
-            newHc := hcOut
+""", """            let end := add(pairs, shl(6, n))
+            for { let layer := 0 } lt(layer, numLayers) { layer := add(layer, 1) } {
+                end, hc := reduce(pairs, end, hc, hcEnd)
+                probeNodes := add(probeNodes, shr(6, sub(end, pairs)))
+            }
+            nextLen := shr(6, sub(end, pairs))
+            newHc := hc
         }
-        GasProbe.keccakCount(33, nextLen, 64);
+        GasProbe.keccakCount(33, probeNodes, 64);
     }
 """)
 
@@ -876,12 +895,10 @@ P(f, """        ) revert InvalidMleProof();
             let mp := add(matrix, 0x20)
 """)
 P(f, """        for (uint256 i = 0; i < numRounds; i++) {
-            _readInto(ts, transcript, coeffs, 0);
-            _readInto(ts, transcript, coeffs, 1);
+            (uint64 c0a, uint64 c0b, uint64 c0c) = SpongefishWhir.proverMessageField64x3(ts, transcript);
 """, """        for (uint256 i = 0; i < numRounds; i++) {
             GasProbe.ext3Count(50, 2);
-            _readInto(ts, transcript, coeffs, 0);
-            _readInto(ts, transcript, coeffs, 1);
+            (uint64 c0a, uint64 c0b, uint64 c0c) = SpongefishWhir.proverMessageField64x3(ts, transcript);
 """)
 P(f, """        if (threshold == type(uint64).max) return;
         bytes32 challenge = ts.sponge.squeezeWord();
@@ -1027,10 +1044,12 @@ P(f, """        uint256[] memory w,
         bytes32[] memory leafHashes = _hashRows(hints, rowsStart, o.rowBytes, rawCount);
         GasProbe.mark(mB);
 """)
-P(f, """        ts.hintPos = SpongefishMerkle.verify(root, o.md, idxCopy, leafHashes, hints, rowsStart + rawCount * o.rowBytes);
+P(f, """        ts.hintPos =
+            SpongefishMerkle.verify(root, o.md, rawIndices, leafHashes, hints, rowsStart + rawCount * o.rowBytes);
         _accumulateRowDots(rowValues, w, o.numCols, hints, rowsStart, o.rowBytes, rawCount, o.isBaseField);
     }
-""", """        ts.hintPos = SpongefishMerkle.verify(root, o.md, idxCopy, leafHashes, hints, rowsStart + rawCount * o.rowBytes);
+""", """        ts.hintPos =
+            SpongefishMerkle.verify(root, o.md, rawIndices, leafHashes, hints, rowsStart + rawCount * o.rowBytes);
         GasProbe.mark(mC);
         _accumulateRowDots(rowValues, w, o.numCols, hints, rowsStart, o.rowBytes, rawCount, o.isBaseField);
     }
