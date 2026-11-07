@@ -34,7 +34,7 @@ def group_of(fr, a, b):
         if a == 50: return ("20 Core: WHIR accept check", "")
         if a == 51: return ("21 BOUNDARY core->PoseidonPublicInputsHash", None)
         if a == 52: return ("23 BOUNDARY core->Plonky2GateEvaluatorExt3 (wires+constants ABI copy)", None)
-        if a == 53: return ("27 BOUNDARY core->verifyGateTerminal", None)
+        if a == 53: return ("27 Core: gate terminal equality (eq(tau,point)*gateEval, inline)", "")
         if a == 54: return ("29 tails", "")
     if fr == "O":
         if 1000 <= a < 1200:
@@ -108,7 +108,7 @@ def group_of(fr, a, b):
     if fr == "GT": return ("28 Gate terminal equality (eq(tau,point)*gateEval)", "canonical checks" if a == 800 else "eq + mul + compare")
     return ("99 unclassified", f"{fr} {a}->{b}")
 
-CALLEE = {12: "C", 25: "O", 29: "W", 51: "PH", 52: "G", 53: "GT"}
+CALLEE = {12: "C", 25: "O", 29: "W", 51: "PH", 52: "G"}
 
 def summarize(prof):
     groups = OrderedDict()

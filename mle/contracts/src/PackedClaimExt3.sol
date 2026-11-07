@@ -178,22 +178,17 @@ library PackedClaimExt3 {
                 let r0 := mload(challenge)
                 let r1 := mload(add(challenge, 0x20))
                 let r2 := mload(add(challenge, 0x40))
-                let next := shr(1, add(active, 1))
+                let pairs := shr(1, active)
                 let dst := buf
                 let even := buf
-                for { let i := 0 } lt(i, next) { i := add(i, 1) } {
+                // Full pairs: next = even + r * (odd - even).
+                for { let i := 0 } lt(i, pairs) { i := add(i, 1) } {
                     let e0 := mload(even)
                     let e1 := mload(add(even, 0x20))
                     let e2 := mload(add(even, 0x40))
-                    // d = odd - even, with odd = 0 for the sole element of an odd prefix.
-                    let d0 := sub(p, e0)
-                    let d1 := sub(p, e1)
-                    let d2 := sub(p, e2)
-                    if lt(add(shl(1, i), 1), active) {
-                        d0 := addmod(mload(add(even, 0x60)), d0, p)
-                        d1 := addmod(mload(add(even, 0x80)), d1, p)
-                        d2 := addmod(mload(add(even, 0xa0)), d2, p)
-                    }
+                    let d0 := addmod(mload(add(even, 0x60)), sub(p, e0), p)
+                    let d1 := addmod(mload(add(even, 0x80)), sub(p, e1), p)
+                    let d2 := addmod(mload(add(even, 0xa0)), sub(p, e2), p)
                     let t0 := addmod(mulmod(r1, d2, p), mulmod(r2, d1, p), p)
                     mstore(dst, addmod(e0, addmod(mulmod(r0, d0, p), addmod(t0, t0, p), p), p))
                     let t1 := addmod(mulmod(r0, d1, p), mulmod(r1, d0, p), p)
@@ -206,7 +201,26 @@ library PackedClaimExt3 {
                     dst := add(dst, 0x60)
                     even := add(even, 0xc0)
                 }
-                active := next
+                // The sole element of an odd prefix pairs with the zero padding:
+                // next = even + r * (0 - even) = even * (1 - r).
+                if and(active, 1) {
+                    let e0 := mload(even)
+                    let e1 := mload(add(even, 0x20))
+                    let e2 := mload(add(even, 0x40))
+                    let d0 := sub(p, e0)
+                    let d1 := sub(p, e1)
+                    let d2 := sub(p, e2)
+                    let t0 := addmod(mulmod(r1, d2, p), mulmod(r2, d1, p), p)
+                    mstore(dst, addmod(e0, addmod(mulmod(r0, d0, p), addmod(t0, t0, p), p), p))
+                    let t1 := addmod(mulmod(r0, d1, p), mulmod(r1, d0, p), p)
+                    let t2 := mulmod(r2, d2, p)
+                    mstore(add(dst, 0x20), addmod(e1, addmod(t1, addmod(t2, t2, p), p), p))
+                    mstore(
+                        add(dst, 0x40),
+                        addmod(e2, addmod(addmod(mulmod(r0, d2, p), mulmod(r1, d1, p), p), mulmod(r2, d0, p), p), p)
+                    )
+                }
+                active := shr(1, add(active, 1))
             }
             mstore(result, mload(buf))
             mstore(add(result, 0x20), mload(add(buf, 0x20)))

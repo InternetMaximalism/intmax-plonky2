@@ -85,7 +85,7 @@ LABELS = {
     ("C", 50, 51): "C: WHIR accept check",
     ("C", 51, 52): "C: PoseidonPublicInputsHash.hashNoPad DELEGATECALL",
     ("C", 52, 53): "C: Plonky2GateEvaluatorExt3.evalCombinedPrevalidated DELEGATECALL (incl. pointer tables)",
-    ("C", 53, 54): "C: OuterLogupExt3Verifier.verifyGateTerminal DELEGATECALL",
+    ("C", 53, 54): "C: inline gate terminal equality",
     ("C", 54, 55): "C: tail",
     ("O", 60, 1000): "O: prologue (alloc points)",
     ("O", 63, 70): "O: -> terminal",

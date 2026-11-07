@@ -191,14 +191,16 @@ library TranscriptV2 {
                 let digest := keccak256(0x00, 0x40)
                 mstore(add(t, 0x20), add(counter, 1))
                 let p := 0xFFFFFFFF00000001
-                let limb0 := bswap64(shr(192, digest))
-                let limb1 := bswap64(and(shr(128, digest), 0xFFFFFFFFFFFFFFFF))
-                let limb2 := bswap64(and(shr(64, digest), 0xFFFFFFFFFFFFFFFF))
-                let limb3 := bswap64(and(digest, 0xFFFFFFFFFFFFFFFF))
+                // Byte-reverse every 8-byte lane at once: the four little-endian
+                // digest limbs become big-endian lanes of `w`.
+                let w := digest
+                w := or(shl(8, and(w, 0x00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF)), and(shr(8, w), 0x00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF))
+                w := or(shl(16, and(w, 0x0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF)), and(shr(16, w), 0x0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF))
+                w := or(shl(32, and(w, 0x00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF)), and(shr(32, w), 0x00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF))
                 let radix := 0xFFFFFFFF
-                value := addmod(mulmod(limb3, radix, p), limb2, p)
-                value := addmod(mulmod(value, radix, p), limb1, p)
-                value := addmod(mulmod(value, radix, p), limb0, p)
+                value := addmod(mulmod(and(w, 0xFFFFFFFFFFFFFFFF), radix, p), and(shr(64, w), 0xFFFFFFFFFFFFFFFF), p)
+                value := addmod(mulmod(value, radix, p), and(shr(128, w), 0xFFFFFFFFFFFFFFFF), p)
+                value := addmod(mulmod(value, radix, p), shr(192, w), p)
             }
             function bswap64(x) -> y {
                 y := or(shl(32, and(x, 0xFFFFFFFF)), shr(32, and(x, 0xFFFFFFFF00000000)))
@@ -228,14 +230,16 @@ library TranscriptV2 {
                 let digest := keccak256(0x00, 0x40)
                 mstore(add(t, 0x20), add(counter, 1))
                 let p := 0xFFFFFFFF00000001
-                let limb0 := bswap64(shr(192, digest))
-                let limb1 := bswap64(and(shr(128, digest), 0xFFFFFFFFFFFFFFFF))
-                let limb2 := bswap64(and(shr(64, digest), 0xFFFFFFFFFFFFFFFF))
-                let limb3 := bswap64(and(digest, 0xFFFFFFFFFFFFFFFF))
+                // Byte-reverse every 8-byte lane at once: the four little-endian
+                // digest limbs become big-endian lanes of `w`.
+                let w := digest
+                w := or(shl(8, and(w, 0x00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF)), and(shr(8, w), 0x00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF))
+                w := or(shl(16, and(w, 0x0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF)), and(shr(16, w), 0x0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF))
+                w := or(shl(32, and(w, 0x00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF)), and(shr(32, w), 0x00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF))
                 let radix := 0xFFFFFFFF
-                value := addmod(mulmod(limb3, radix, p), limb2, p)
-                value := addmod(mulmod(value, radix, p), limb1, p)
-                value := addmod(mulmod(value, radix, p), limb0, p)
+                value := addmod(mulmod(and(w, 0xFFFFFFFFFFFFFFFF), radix, p), and(shr(64, w), 0xFFFFFFFFFFFFFFFF), p)
+                value := addmod(mulmod(value, radix, p), and(shr(128, w), 0xFFFFFFFFFFFFFFFF), p)
+                value := addmod(mulmod(value, radix, p), shr(192, w), p)
             }
             function bswap64(x) -> y {
                 y := or(shl(32, and(x, 0xFFFFFFFF)), shr(32, and(x, 0xFFFFFFFF00000000)))

@@ -223,10 +223,10 @@ P(f, """        if (!whirAccepted) revert InvalidMleProof();
         GasProbe.mark(52);
         GoldilocksExt3.Ext3 memory gateEvaluation = Plonky2GateEvaluatorExt3.evalCombinedPrevalidated(
 """)
-P(f, """        OuterLogupExt3Verifier.verifyGateTerminal(derived.gateTau, gatePoint, gateEvaluation, gateFinalClaim);
+P(f, """        _requireGateTerminal(derived.gateTau, gatePoint, gateEvaluation, gateFinalClaim);
     }
 """, """        GasProbe.mark(53);
-        OuterLogupExt3Verifier.verifyGateTerminal(derived.gateTau, gatePoint, gateEvaluation, gateFinalClaim);
+        _requireGateTerminal(derived.gateTau, gatePoint, gateEvaluation, gateFinalClaim);
         GasProbe.mark(54);
     }
 """)

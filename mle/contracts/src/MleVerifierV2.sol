@@ -441,7 +441,62 @@ contract MleVerifierV2 {
             config.gates,
             circuit.numSelectors
         );
-        OuterLogupExt3Verifier.verifyGateTerminal(derived.gateTau, gatePoint, gateEvaluation, gateFinalClaim);
+        _requireGateTerminal(derived.gateTau, gatePoint, gateEvaluation, gateFinalClaim);
+    }
+
+    /// @dev The Ext3 gate sumcheck terminal: `eq(tau, point) * gateEvaluation == finalClaim`.
+    /// Same statement as `OuterLogupExt3Verifier.verifyGateTerminal`, evaluated in place
+    /// over verifier-derived canonical values (tau and point are transcript squeezes, the
+    /// evaluation and claim are outputs of linked canonical arithmetic), so no external
+    /// call and no re-validation of operand canonicality is needed here.
+    function _requireGateTerminal(
+        GoldilocksExt3.Ext3[] memory tau,
+        GoldilocksExt3.Ext3[] memory point,
+        GoldilocksExt3.Ext3 memory gateEvaluation,
+        GoldilocksExt3.Ext3 memory finalClaim
+    ) private pure {
+        uint256 count = tau.length;
+        if (count == 0 || count != point.length || count > MAX_ROW_VARIABLES_V2) revert InvalidMleProof();
+        bool accepted;
+        assembly ("memory-safe") {
+            let p := 0xFFFFFFFF00000001
+            // eq accumulator starts at gateEvaluation so one product is saved.
+            let a0 := mload(gateEvaluation)
+            let a1 := mload(add(gateEvaluation, 0x20))
+            let a2 := mload(add(gateEvaluation, 0x40))
+            let tauTable := add(tau, 0x20)
+            let pointTable := add(point, 0x20)
+            for { let i := 0 } lt(i, count) { i := add(i, 1) } {
+                let t := mload(add(tauTable, shl(5, i)))
+                let x := mload(add(pointTable, shl(5, i)))
+                let t0 := mload(t)
+                let t1 := mload(add(t, 0x20))
+                let t2 := mload(add(t, 0x40))
+                let x0 := mload(x)
+                let x1 := mload(add(x, 0x20))
+                let x2 := mload(add(x, 0x40))
+                // factor = 1 - tau - x + 2 * tau * x
+                let m0 := addmod(mulmod(t0, x0, p), mulmod(2, addmod(mulmod(t1, x2, p), mulmod(t2, x1, p), p), p), p)
+                let m1 := addmod(addmod(mulmod(t0, x1, p), mulmod(t1, x0, p), p), mulmod(2, mulmod(t2, x2, p), p), p)
+                let m2 := addmod(addmod(mulmod(t0, x2, p), mulmod(t1, x1, p), p), mulmod(t2, x0, p), p)
+                let f0 := addmod(addmod(addmod(1, sub(p, t0), p), sub(p, x0), p), addmod(m0, m0, p), p)
+                let f1 := addmod(addmod(sub(p, t1), sub(p, x1), p), addmod(m1, m1, p), p)
+                let f2 := addmod(addmod(sub(p, t2), sub(p, x2), p), addmod(m2, m2, p), p)
+                // accumulator *= factor
+                let n0 := addmod(mulmod(a0, f0, p), mulmod(2, addmod(mulmod(a1, f2, p), mulmod(a2, f1, p), p), p), p)
+                let n1 := addmod(addmod(mulmod(a0, f1, p), mulmod(a1, f0, p), p), mulmod(2, mulmod(a2, f2, p), p), p)
+                let n2 := addmod(addmod(mulmod(a0, f2, p), mulmod(a1, f1, p), p), mulmod(a2, f0, p), p)
+                a0 := n0
+                a1 := n1
+                a2 := n2
+            }
+            accepted :=
+                and(
+                    and(eq(a0, mod(mload(finalClaim), p)), eq(a1, mod(mload(add(finalClaim, 0x20)), p))),
+                    eq(a2, mod(mload(add(finalClaim, 0x40)), p))
+                )
+        }
+        if (!accepted) revert InvalidMleProof();
     }
 
     /// @dev Coupled outer sumchecks and the norm/logUp terminal over the flat
@@ -757,20 +812,27 @@ contract MleVerifierV2 {
             mstore(values, count)
             let output := add(values, 0x20)
             let p := 0xFFFFFFFF00000001
-            for { let i := 0 } lt(i, count) { i := add(i, 1) } {
-                let value := bswap64(shr(192, calldataload(add(offset, mul(i, 8)))))
-                if and(canonical, iszero(lt(value, p))) {
-                    mstore(0x00, shl(224, 0xf0783a66))
-                    revert(0x00, 0x04)
+            let m8 := 0x00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF
+            let m16 := 0x0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF
+            let m32 := 0x00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF
+            // Four little-endian limbs per 32-byte load, each lane byte-reversed at once.
+            for { let i := 0 } lt(i, count) { i := add(i, 4) } {
+                let w := calldataload(add(offset, mul(i, 8)))
+                w := or(shl(8, and(w, m8)), and(shr(8, w), m8))
+                w := or(shl(16, and(w, m16)), and(shr(16, w), m16))
+                w := or(shl(32, and(w, m32)), and(shr(32, w), m32))
+                let remaining := sub(count, i)
+                if gt(remaining, 4) { remaining := 4 }
+                for { let j := 0 } lt(j, remaining) { j := add(j, 1) } {
+                    let value := and(shr(sub(192, mul(j, 64)), w), 0xFFFFFFFFFFFFFFFF)
+                    if and(canonical, iszero(lt(value, p))) {
+                        mstore(0x00, shl(224, 0xf0783a66))
+                        revert(0x00, 0x04)
+                    }
+                    mstore(add(output, shl(5, add(i, j))), value)
                 }
-                mstore(add(output, shl(5, i)), value)
             }
             mstore(0x40, add(output, shl(5, count)))
-            function bswap64(x) -> y {
-                y := or(shl(32, and(x, 0xFFFFFFFF)), shr(32, and(x, 0xFFFFFFFF00000000)))
-                y := or(shl(16, and(y, 0x0000FFFF0000FFFF)), shr(16, and(y, 0xFFFF0000FFFF0000)))
-                y := or(shl(8, and(y, 0x00FF00FF00FF00FF)), shr(8, and(y, 0xFF00FF00FF00FF00)))
-            }
         }
     }
 
@@ -786,13 +848,21 @@ contract MleVerifierV2 {
             let output := add(limbs, 0x20)
             let p := 0xFFFFFFFF00000001
             let end := add(offset, mul(count, 24))
+            let m8 := 0x00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF
+            let m16 := 0x0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF
+            let m32 := 0x00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF
             for {} lt(offset, end) { offset := add(offset, 24) } {
                 // One 32-byte load covers the whole record; the last 8 bytes are
-                // the next record's first limb and are ignored here.
-                let word := calldataload(offset)
-                let c0 := bswap64(shr(192, word))
-                let c1 := bswap64(and(shr(128, word), 0xFFFFFFFFFFFFFFFF))
-                let c2 := bswap64(and(shr(64, word), 0xFFFFFFFFFFFFFFFF))
+                // the next record's first limb and are ignored here. Reversing
+                // the bytes inside every 8-byte lane of the word turns all three
+                // little-endian limbs big-endian at once.
+                let w := calldataload(offset)
+                w := or(shl(8, and(w, m8)), and(shr(8, w), m8))
+                w := or(shl(16, and(w, m16)), and(shr(16, w), m16))
+                w := or(shl(32, and(w, m32)), and(shr(32, w), m32))
+                let c0 := shr(192, w)
+                let c1 := and(shr(128, w), 0xFFFFFFFFFFFFFFFF)
+                let c2 := and(shr(64, w), 0xFFFFFFFFFFFFFFFF)
                 if iszero(and(and(lt(c0, p), lt(c1, p)), lt(c2, p))) {
                     mstore(0x00, shl(224, 0xf0783a66))
                     revert(0x00, 0x04)
@@ -803,11 +873,6 @@ contract MleVerifierV2 {
                 output := add(output, 0x60)
             }
             mstore(0x40, output)
-            function bswap64(x) -> y {
-                y := or(shl(32, and(x, 0xFFFFFFFF)), shr(32, and(x, 0xFFFFFFFF00000000)))
-                y := or(shl(16, and(y, 0x0000FFFF0000FFFF)), shr(16, and(y, 0xFFFF0000FFFF0000)))
-                y := or(shl(8, and(y, 0x00FF00FF00FF00FF)), shr(8, and(y, 0xFF00FF00FF00FF00)))
-            }
         }
     }
 
