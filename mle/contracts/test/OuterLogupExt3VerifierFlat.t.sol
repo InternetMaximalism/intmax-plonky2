@@ -81,6 +81,76 @@ contract OuterLogupExt3VerifierFlatTest is Test {
         _assertPerturbedWitnessRejected(_load(vm.readFile(PRODUCTION_FIXTURE)));
     }
 
+    function test_blobMatchesFlat_max() external {
+        _assertBlobMatchesFlat("max", _load(vm.readFile(MAX_FIXTURE)));
+    }
+
+    function test_blobMatchesFlat_production() external {
+        _assertBlobMatchesFlat("production", _load(vm.readFile(PRODUCTION_FIXTURE)));
+    }
+
+    function test_blobRejectsTrailingBytesAndShortArrays_max() external {
+        OuterInputs memory inputs = _prepare(_load(vm.readFile(MAX_FIXTURE)));
+        bytes memory blob = _pack(inputs);
+        this.callBlob(blob, inputs);
+        // one trailing byte
+        vm.expectRevert(InvalidMleProof.selector);
+        this.callBlob(bytes.concat(blob, hex"00"), inputs);
+        // a seventh (empty) array
+        vm.expectRevert(InvalidMleProof.selector);
+        this.callBlob(bytes.concat(blob, new bytes(32)), inputs);
+        // last word missing: the sixth array announces more words than remain
+        bytes memory truncated = new bytes(blob.length - 32);
+        for (uint256 i = 0; i < truncated.length; ++i) {
+            truncated[i] = blob[i];
+        }
+        vm.expectRevert(InvalidMleProof.selector);
+        this.callBlob(truncated, inputs);
+        // a length word pointing past the end (first array claims the whole blob)
+        bytes memory inflated = bytes.concat(abi.encodePacked(uint256(blob.length)), blob);
+        vm.expectRevert(InvalidMleProof.selector);
+        this.callBlob(inflated, inputs);
+        // too short to hold even one length word
+        vm.expectRevert(InvalidMleProof.selector);
+        this.callBlob(hex"0102", inputs);
+        // a length that would overflow the bound arithmetic in a naive multiplication
+        bytes memory huge = bytes.concat(abi.encodePacked(type(uint256).max), blob);
+        vm.expectRevert(InvalidMleProof.selector);
+        this.callBlob(huge, inputs);
+    }
+
+    function _assertBlobMatchesFlat(string memory label, Fixture memory fixture) private {
+        OuterInputs memory inputs = _prepare(fixture);
+        Outcome memory flat = _runFlat(inputs);
+        bytes memory blob = _pack(inputs);
+        TranscriptV2.Transcript memory transcript = _copyTranscript(inputs.transcript);
+        Outcome memory packed;
+        uint256 before = gasleft();
+        (packed.logPoint, packed.gatePoint, packed.gateFinalClaim, packed.transcript) =
+            OuterLogupExt3Verifier.verifyPrevalidatedBlob(blob, inputs.vk, inputs.challenges, transcript);
+        packed.gas = before - gasleft();
+        _assertSameOutcome(flat, packed, "flat vs blob");
+        emit log_named_uint(string.concat("gas/", label, "/verifyPrevalidatedBlob"), packed.gas);
+        emit log_named_uint(string.concat("gas/", label, "/verifyPrevalidatedFlat"), flat.gas);
+    }
+
+    /// @dev Six length-prefixed word arrays in the documented order: the memory image of each `uint256[]`.
+    function _pack(OuterInputs memory inputs) private pure returns (bytes memory) {
+        return bytes.concat(
+            abi.encodePacked(inputs.terminal.publicInputs.length, inputs.terminal.publicInputs),
+            abi.encodePacked(inputs.logRounds.length, inputs.logRounds),
+            abi.encodePacked(inputs.gateRounds.length, inputs.gateRounds),
+            abi.encodePacked(inputs.preprocessed.length, inputs.preprocessed),
+            abi.encodePacked(inputs.witness.length, inputs.witness),
+            abi.encodePacked(inputs.normInverse.length, inputs.normInverse)
+        );
+    }
+
+    /// @dev External so `vm.expectRevert` observes the library revert.
+    function callBlob(bytes calldata blob, OuterInputs memory inputs) external view {
+        OuterLogupExt3Verifier.verifyPrevalidatedBlob(blob, inputs.vk, inputs.challenges, _copyTranscript(inputs.transcript));
+    }
+
     /// @dev The direct-PI binding is evaluated by run-grouped Horner with memoised rows and a lazily
     /// built eta-power table; this pins it to the plain definition
     /// sum_i eta^i eq(row_i, point) (W_col_i - PI_i) over run shapes of every length class
