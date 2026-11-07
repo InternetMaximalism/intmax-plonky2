@@ -284,7 +284,9 @@ recorded by lowering the budget in the same commit. The test emits one
 (`gas/<fixture>/<entry>/{execution,calldataBytes,calldataIntrinsic,calldataFloor7623,budget}`).
 
 Measured on the local Forge EVM (prague, via-IR, 200 runs) at the current
-sources. "Intrinsic" is the legacy calldata pricing (21,000 + 4 per zero byte
+sources (after the Phase 1 gas work of `tasks/gas_halving_strategy_2026-11-07.md`;
+the pre-optimisation values were 12,654,254 / 17,009,357 / 7,850,405 for the
+three `verifyCompact` rows). "Intrinsic" is the legacy calldata pricing (21,000 + 4 per zero byte
 + 16 per non-zero byte) and "7623 floor" the EIP-7623 floor
 (21,000 + 10 x (zero bytes + 4 x non-zero bytes)), both over the full
 ABI-encoded calldata of the call; a transaction pays the larger of its
@@ -292,18 +294,18 @@ execution-plus-intrinsic total and the floor.
 
 | Fixture | Entry point | Execution | Calldata bytes | Intrinsic | 7623 floor |
 |---|---|---:|---:|---:|---:|
-| `v2_max_resource.json` (sampled degree-13 maximum, 1 PI) | `PinnedMleVerifierV2.verifyCompact` | 12,654,254 | 129,380 | 2,014,964 | 5,005,910 |
-| | `verifyCompactPublicInputs` | 12,654,347 | 129,380 | 2,014,964 | 5,005,910 |
-| | `fraudVerdictCompact` (honest, PI_MISMATCH) | 12,712,019 | 129,412 | 2,015,092 | 5,006,230 |
-| | `MleVerifierV2.verify` | 11,500,469 | 197,316 | 2,299,260 | 5,716,650 |
-| `v2_production_shape.json` (largest admitted parent profile, 103 PIs) | `PinnedMleVerifierV2.verifyCompact` | 17,009,357 | 131,236 | 2,042,512 | 5,074,780 |
-| | `verifyCompactPublicInputs` | 17,018,732 | 131,236 | 2,042,512 | 5,074,780 |
-| | `fraudVerdictCompact` (honest, PI_MISMATCH) | 17,068,394 | 131,268 | 2,042,640 | 5,075,100 |
-| | `MleVerifierV2.verify` | 15,773,391 | 204,804 | 2,353,644 | 5,852,610 |
-| `v2_cross_language.json` cases[0] (small parity circuit, 1 PI) | `PinnedMleVerifierV2.verifyCompact` | 7,850,405 | 56,900 | 862,052 | 2,123,630 |
-| | `verifyCompactPublicInputs` | 7,850,498 | 56,900 | 862,052 | 2,123,630 |
-| | `fraudVerdictCompact` (honest, PI_MISMATCH) | 7,868,754 | 56,932 | 862,180 | 2,123,950 |
-| | `MleVerifierV2.verify` | 7,133,880 | 109,060 | 1,080,244 | 2,669,110 |
+| `v2_max_resource.json` (sampled degree-13 maximum, 1 PI) | `PinnedMleVerifierV2.verifyCompact` | 5,827,238 | 129,380 | 2,014,964 | 5,005,910 |
+| | `verifyCompactPublicInputs` | 5,827,874 | 129,380 | 2,014,964 | 5,005,910 |
+| | `fraudVerdictCompact` (honest, PI_MISMATCH) | 5,885,553 | 129,412 | 2,015,092 | 5,006,230 |
+| | `MleVerifierV2.verify` | 5,842,792 | 197,316 | 2,299,260 | 5,716,650 |
+| `v2_production_shape.json` (largest admitted parent profile, 103 PIs) | `PinnedMleVerifierV2.verifyCompact` | 7,224,965 | 131,236 | 2,042,512 | 5,074,780 |
+| | `verifyCompactPublicInputs` | 7,254,059 | 131,236 | 2,042,512 | 5,074,780 |
+| | `fraudVerdictCompact` (honest, PI_MISMATCH) | 7,305,952 | 131,268 | 2,042,640 | 5,075,100 |
+| | `MleVerifierV2.verify` | 7,225,080 | 204,804 | 2,353,644 | 5,852,610 |
+| `v2_cross_language.json` cases[0] (small parity circuit, 1 PI) | `PinnedMleVerifierV2.verifyCompact` | 3,538,696 | 56,900 | 862,052 | 2,123,630 |
+| | `verifyCompactPublicInputs` | 3,539,332 | 56,900 | 862,052 | 2,123,630 |
+| | `fraudVerdictCompact` (honest, PI_MISMATCH) | 3,557,598 | 56,932 | 862,180 | 2,123,950 |
+| | `MleVerifierV2.verify` | 3,621,522 | 109,060 | 1,080,244 | 2,669,110 |
 
 The production-shape fixture is optional: the production rows of the test log
 and skip when `test/fixtures/v2_production_shape.json` is absent. The

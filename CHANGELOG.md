@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Performance
+- MLE wire-v3 Solidity verifier: execution gas of `PinnedMleVerifierV2.verifyCompact` on the production-shape fixture (degree 13, 14 gate families, 103 public inputs) reduced from 17,009,357 to 7,224,965 (max-dimension fixture 12,654,254 to 5,827,238; small fixture 7,850,405 to 3,538,696), with the same acceptance set: the core verifies the compact encoding straight from calldata into flat limb buffers (`MleVerifierV2.verifyCompactWithConfig`), the transcript, outer sumcheck/terminal, packed-claim fold, WHIR, gate and public-input Poseidon code paths are stack-resident Yul with lazily reduced Goldilocks arithmetic, and library boundaries pass their vectors as single byte strings (`OuterLogupExt3Verifier.verifyPrevalidatedBlob`, `Plonky2GateEvaluatorExt3.evalCombinedPrevalidatedBytes`). The parent-facing ABI (`verifyCompact`, `verifyCompactPublicInputs`, `fraudVerdictCompact`), the compact proof format, every verifier check and every revert classification are unchanged; the tracked budgets in `mle/contracts/test/GasBaselineV2.t.sol` were lowered accordingly.
+
 ### Security
 - Lookup argument: pin every partial Sum/LDC polynomial to zero on the `InitSre` row (native, batch and circuit verifiers). The running chain is seeded from the last partial polynomial, so pinning only the first left its start unconstrained.
 - Compressed proofs: `CompressedProofWithPublicInputs::{verify, decompress}` now validate the decompressed proof shape before any identity check.

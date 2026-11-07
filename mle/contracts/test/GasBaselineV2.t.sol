@@ -20,22 +20,22 @@ import {PinnedMleVerifierV2} from "../src/PinnedMleVerifierV2.sol";
 contract GasBaselineV2Test is Test {
     // ---------------------------------------------------------------- budgets (execution gas)
     // v2_max_resource.json: degree-13 sampled resource maximum (max rows/wires/gate constraints).
-    uint256 private constant BUDGET_MAX_VERIFY_COMPACT = 12_717_526;
-    uint256 private constant BUDGET_MAX_VERIFY_COMPACT_PUBLIC_INPUTS = 12_717_619;
-    uint256 private constant BUDGET_MAX_FRAUD_VERDICT_COMPACT = 12_775_580;
-    uint256 private constant BUDGET_MAX_CORE_VERIFY = 11_557_972;
+    uint256 private constant BUDGET_MAX_VERIFY_COMPACT = 5_856_375;
+    uint256 private constant BUDGET_MAX_VERIFY_COMPACT_PUBLIC_INPUTS = 5_857_014;
+    uint256 private constant BUDGET_MAX_FRAUD_VERDICT_COMPACT = 5_914_981;
+    uint256 private constant BUDGET_MAX_CORE_VERIFY = 5_872_006;
     // v2_cross_language.json cases[0]: the small cross-language parity circuit.
-    uint256 private constant BUDGET_SMALL_VERIFY_COMPACT = 7_889_658;
-    uint256 private constant BUDGET_SMALL_VERIFY_COMPACT_PUBLIC_INPUTS = 7_889_751;
-    uint256 private constant BUDGET_SMALL_FRAUD_VERDICT_COMPACT = 7_908_098;
-    uint256 private constant BUDGET_SMALL_CORE_VERIFY = 7_169_550;
+    uint256 private constant BUDGET_SMALL_VERIFY_COMPACT = 3_556_390;
+    uint256 private constant BUDGET_SMALL_VERIFY_COMPACT_PUBLIC_INPUTS = 3_557_029;
+    uint256 private constant BUDGET_SMALL_FRAUD_VERDICT_COMPACT = 3_575_386;
+    uint256 private constant BUDGET_SMALL_CORE_VERIFY = 3_639_630;
     // v2_production_shape.json: the largest admitted parent profile (103 public inputs). The
     // fixture is generated separately: when it is absent the production tests log that and pass.
     // (A budget of 0 would mean "not yet measured": numbers logged, assertion skipped.)
-    uint256 private constant BUDGET_PRODUCTION_VERIFY_COMPACT = 17_094_404;
-    uint256 private constant BUDGET_PRODUCTION_VERIFY_COMPACT_PUBLIC_INPUTS = 17_103_826;
-    uint256 private constant BUDGET_PRODUCTION_FRAUD_VERDICT_COMPACT = 17_153_736;
-    uint256 private constant BUDGET_PRODUCTION_CORE_VERIFY = 15_852_258;
+    uint256 private constant BUDGET_PRODUCTION_VERIFY_COMPACT = 7_261_090;
+    uint256 private constant BUDGET_PRODUCTION_VERIFY_COMPACT_PUBLIC_INPUTS = 7_290_330;
+    uint256 private constant BUDGET_PRODUCTION_FRAUD_VERDICT_COMPACT = 7_342_482;
+    uint256 private constant BUDGET_PRODUCTION_CORE_VERIFY = 7_261_206;
 
     string private constant MAX_FIXTURE = "test/fixtures/v2_max_resource.json";
     string private constant SMALL_FIXTURE = "test/fixtures/v2_cross_language.json";
