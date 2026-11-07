@@ -137,27 +137,25 @@ P(f, """        view_.hintsLength = hintsLength;
         position += hintsLength;
         GasProbe.mark(123);
 """)
-P(f, """        view_.logRounds = _readExt3VectorLe(cursor, degreeBits * LOG_ROUND_DEGREE_V2);
-        cursor += 24 * degreeBits * LOG_ROUND_DEGREE_V2;
-""", """        view_.logRounds = _readExt3VectorLe(cursor, degreeBits * LOG_ROUND_DEGREE_V2);
-        cursor += 24 * degreeBits * LOG_ROUND_DEGREE_V2;
+P(f, """        view_.publicInputs = _readBaseVectorLe(publicInputsOffset, numPublicInputs, true);
+        view_.logRounds = _readExt3VectorLe(logRoundsOffset, degreeBits * LOG_ROUND_DEGREE_V2);
+""", """        view_.publicInputs = _readBaseVectorLe(publicInputsOffset, numPublicInputs, true);
+        view_.logRounds = _readExt3VectorLe(logRoundsOffset, degreeBits * LOG_ROUND_DEGREE_V2);
         GasProbe.mark(124);
 """)
-P(f, """        view_.logNormInverse = _readExt3VectorLe(cursor, normInverseLength);
-        cursor += 24 * normInverseLength;
-""", """        view_.logNormInverse = _readExt3VectorLe(cursor, normInverseLength);
-        cursor += 24 * normInverseLength;
+P(f, """        view_.gateRounds = _readExt3VectorLe(gateRoundsOffset, degreeBits * gateDegree);
+""", """        view_.gateRounds = _readExt3VectorLe(gateRoundsOffset, degreeBits * gateDegree);
         GasProbe.mark(125);
 """)
-P(f, """        view_.gateRounds = _readExt3VectorLe(cursor, degreeBits * gateDegree);
-        cursor += 24 * degreeBits * gateDegree;
-""", """        view_.gateRounds = _readExt3VectorLe(cursor, degreeBits * gateDegree);
-        cursor += 24 * degreeBits * gateDegree;
-        GasProbe.mark(126);
+P(f, """        _sealOuterBlob(view_, outerBlob);
+        view_.gatePreprocessed = _readExt3VectorLe(gateClaimsOffset, preprocessedLength);
+""", """        GasProbe.mark(126);
+        _sealOuterBlob(view_, outerBlob);
+        view_.gatePreprocessed = _readExt3VectorLe(gateClaimsOffset, preprocessedLength);
 """)
-P(f, """        view_.gateWitness = _readExt3VectorLe(cursor, numWires);
+P(f, """        view_.gateWitness = _readExt3VectorLe(gateClaimsOffset + 24 * preprocessedLength, numWires);
     }
-""", """        view_.gateWitness = _readExt3VectorLe(cursor, numWires);
+""", """        view_.gateWitness = _readExt3VectorLe(gateClaimsOffset + 24 * preprocessedLength, numWires);
         GasProbe.mark(127);
     }
 """)

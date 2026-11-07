@@ -17,8 +17,8 @@ def group_of(fr, a, b):
         if a in (21, 127): return ("01 Compact parse", "glue")
         if 120 <= a <= 126:
             return ("01 Compact parse", {120: "header/digest/PIs/roots", 121: "whirTranscript copy", 122: "whirHints bounds (calldata slice)",
-                                         123: "logProof rounds -> flat limbs", 124: "log terminal vectors -> flat limbs",
-                                         125: "gateProof rounds -> flat limbs", 126: "gate terminal vectors -> flat limbs"}[a])
+                                         123: "PIs + logProof rounds -> flat limbs", 124: "gateProof rounds -> flat limbs",
+                                         125: "log terminal vectors -> flat limbs", 126: "blob seal + gate terminal vectors -> flat limbs"}[a])
         if a in (22, 30, 36): return ("05 Core: initial transcript", "statement absorption (16 frames)" if a == 30 else "glue")
         if a in (31, 32, 33, 34, 35):
             return ("05 Core: initial transcript", {31: "eta/beta/gamma/xi squeezes + normInverse root", 32: "lambda/rho/kappa squeezes",

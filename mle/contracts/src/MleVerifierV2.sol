@@ -143,6 +143,11 @@ contract MleVerifierV2 {
         bytes whirTranscript;
         uint256 hintsOffset;
         uint256 hintsLength;
+        /// @dev The six vectors consumed by the outer verifier, laid out back to back as
+        /// length-prefixed word arrays (`publicInputs`, `logRounds`, `gateRounds`,
+        /// `logPreprocessed`, `logWitness`, `logNormInverse`); the six array fields below
+        /// are views into this byte string, which crosses the library boundary as one copy.
+        bytes outerBlob;
         uint256[] logRounds;
         uint256[] gateRounds;
         uint256[] logPreprocessed;
@@ -684,7 +689,7 @@ contract MleVerifierV2 {
         if (numPublicInputs > MAX_PUBLIC_INPUTS_V2) revert InvalidMleVerifierConfiguration();
         uint256 position = 52;
         if (length - position < 8 * numPublicInputs + 96 + 8) revert InvalidMleProof();
-        view_.publicInputs = _readBaseVectorLe(base + position, numPublicInputs, true);
+        uint256 publicInputsOffset = base + position;
         position += 8 * numPublicInputs;
 
         bytes32 preprocessedRoot;
@@ -736,22 +741,58 @@ contract MleVerifierV2 {
             + normInverseLength + degreeBits * gateDegree;
         if (length - position != 24 * totalRecords) revert InvalidMleProof();
 
-        uint256 cursor = base + position;
-        view_.logRounds = _readExt3VectorLe(cursor, degreeBits * LOG_ROUND_DEGREE_V2);
-        cursor += 24 * degreeBits * LOG_ROUND_DEGREE_V2;
-        view_.logClaimsOffset = cursor;
-        view_.logPreprocessed = _readExt3VectorLe(cursor, preprocessedLength);
-        cursor += 24 * preprocessedLength;
-        view_.logWitness = _readExt3VectorLe(cursor, numWires);
-        cursor += 24 * numWires;
-        view_.logNormInverse = _readExt3VectorLe(cursor, normInverseLength);
-        cursor += 24 * normInverseLength;
-        view_.gateRounds = _readExt3VectorLe(cursor, degreeBits * gateDegree);
-        cursor += 24 * degreeBits * gateDegree;
-        view_.gateClaimsOffset = cursor;
-        view_.gatePreprocessed = _readExt3VectorLe(cursor, preprocessedLength);
-        cursor += 24 * preprocessedLength;
-        view_.gateWitness = _readExt3VectorLe(cursor, numWires);
+        // Wire order: logRounds, logPreprocessed, logWitness, logNormInverse,
+        // gateRounds, gatePreprocessed, gateWitness.
+        uint256 logRoundsOffset = base + position;
+        uint256 logClaimsOffset = logRoundsOffset + 24 * degreeBits * LOG_ROUND_DEGREE_V2;
+        uint256 gateRoundsOffset = logClaimsOffset + 24 * (preprocessedLength + numWires + normInverseLength);
+        uint256 gateClaimsOffset = gateRoundsOffset + 24 * degreeBits * gateDegree;
+        view_.logClaimsOffset = logClaimsOffset;
+        view_.gateClaimsOffset = gateClaimsOffset;
+
+        // The six outer-verifier vectors are decoded back to back behind one
+        // reserved length word so they form a single byte string (see
+        // `ProofView.outerBlob`); the decoders allocate at the free pointer.
+        bytes memory outerBlob;
+        assembly ("memory-safe") {
+            outerBlob := mload(0x40)
+            mstore(0x40, add(outerBlob, 0x20))
+        }
+        view_.publicInputs = _readBaseVectorLe(publicInputsOffset, numPublicInputs, true);
+        view_.logRounds = _readExt3VectorLe(logRoundsOffset, degreeBits * LOG_ROUND_DEGREE_V2);
+        view_.gateRounds = _readExt3VectorLe(gateRoundsOffset, degreeBits * gateDegree);
+        view_.logPreprocessed = _readExt3VectorLe(logClaimsOffset, preprocessedLength);
+        view_.logWitness = _readExt3VectorLe(logClaimsOffset + 24 * preprocessedLength, numWires);
+        view_.logNormInverse =
+            _readExt3VectorLe(logClaimsOffset + 24 * (preprocessedLength + numWires), normInverseLength);
+        _sealOuterBlob(view_, outerBlob);
+        view_.gatePreprocessed = _readExt3VectorLe(gateClaimsOffset, preprocessedLength);
+        view_.gateWitness = _readExt3VectorLe(gateClaimsOffset + 24 * preprocessedLength, numWires);
+    }
+
+    /// @dev Set the length of the reserved blob word so it spans exactly the six
+    /// arrays decoded after it, and check that they really are laid out back to
+    /// back in blob order (a defensive guard against allocator changes).
+    function _sealOuterBlob(ProofView memory view_, bytes memory outerBlob) private pure {
+        bool contiguous;
+        assembly ("memory-safe") {
+            let cursor := add(outerBlob, 0x20)
+            contiguous := 1
+            function advance(ok, cur, arr) -> ok2, next {
+                ok2 := and(ok, eq(cur, arr))
+                next := add(add(arr, 0x20), shl(5, mload(arr)))
+            }
+            contiguous, cursor := advance(contiguous, cursor, mload(view_))
+            contiguous, cursor := advance(contiguous, cursor, mload(add(view_, 0x100)))
+            contiguous, cursor := advance(contiguous, cursor, mload(add(view_, 0x120)))
+            contiguous, cursor := advance(contiguous, cursor, mload(add(view_, 0x140)))
+            contiguous, cursor := advance(contiguous, cursor, mload(add(view_, 0x160)))
+            contiguous, cursor := advance(contiguous, cursor, mload(add(view_, 0x180)))
+            contiguous := and(contiguous, eq(cursor, mload(0x40)))
+            mstore(outerBlob, sub(cursor, add(outerBlob, 0x20)))
+        }
+        if (!contiguous) revert InvalidMleVerifierConfiguration();
+        view_.outerBlob = outerBlob;
     }
 
     /// @dev Read `count` little-endian u64 base-field elements from calldata into
@@ -888,7 +929,6 @@ contract MleVerifierV2 {
         pure
         returns (ProofView memory view_)
     {
-        view_.publicInputs = _copyCanonicalBase(proof.publicInputs);
         view_.preprocessedRoot = proof.preprocessedRoot;
         view_.witnessRoot = proof.witnessRoot;
         view_.normInverseRoot = proof.normInverseRoot;
@@ -900,11 +940,20 @@ contract MleVerifierV2 {
         }
         view_.hintsOffset = hintsOffset;
         view_.hintsLength = hints.length;
+        // Same blob layout as `_parseCompact`: six arrays allocated back to back
+        // behind one reserved length word.
+        bytes memory outerBlob;
+        assembly ("memory-safe") {
+            outerBlob := mload(0x40)
+            mstore(0x40, add(outerBlob, 0x20))
+        }
+        view_.publicInputs = _copyCanonicalBase(proof.publicInputs);
         view_.logRounds = _flattenSumcheck(proof.logProof, LOG_ROUND_DEGREE_V2);
         view_.gateRounds = _flattenSumcheck(proof.gateProof, circuit.quotientDegreeFactor + 2);
         view_.logPreprocessed = _flattenCanonicalExt3(proof.logPreprocessed);
         view_.logWitness = _flattenCanonicalExt3(proof.logWitness);
         view_.logNormInverse = _flattenCanonicalExt3(proof.logNormInverse);
+        _sealOuterBlob(view_, outerBlob);
         view_.gatePreprocessed = _flattenCanonicalExt3(proof.gatePreprocessed);
         view_.gateWitness = _flattenCanonicalExt3(proof.gateWitness);
     }
