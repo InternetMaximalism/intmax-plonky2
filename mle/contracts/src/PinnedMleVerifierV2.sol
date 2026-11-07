@@ -49,6 +49,9 @@ contract PinnedMleVerifierV2 {
     /// @dev Exact byte length of the ABI-encoded configuration, pinned so a store whose code was
     /// somehow shortened or extended can never decode as a different configuration.
     uint256 private immutable _configLength;
+    /// @dev `config_.circuit.numPublicInputs`, pinned so the compact public-input vector can be
+    /// returned without re-decoding the configuration after the core has accepted the proof.
+    uint256 private immutable _numPublicInputs;
 
     constructor(MleVerifierV2 core_, MleVerifierV2.VerificationConfig memory config_) {
         if (address(core_) == address(0) || address(core_).code.length == 0) {
@@ -88,6 +91,7 @@ contract PinnedMleVerifierV2 {
 
         core = core_;
         allowedChainId = pinnedChainId;
+        _numPublicInputs = config_.circuit.numPublicInputs;
         bytes memory encodedConfig = abi.encode(config_);
         _configLength = encodedConfig.length;
         _configStore = _deployConfigurationStore(encodedConfig);
@@ -103,33 +107,32 @@ contract PinnedMleVerifierV2 {
     }
 
     /// @notice Verify the unique two-blob-capable `MLEWHIR3` DA encoding.
-    /// @dev The compact decoder derives every array length from this adapter's
-    /// constructor-pinned circuit. Applications should authenticate these exact
-    /// bytes against proof DA and call this entry point; no caller-supplied ABI
-    /// tuple or second representation is trusted.
+    /// @dev The compact bytes are forwarded verbatim, together with the exact ABI encoding of the
+    /// constructor-pinned configuration, to the core's compact entry point, which derives every
+    /// array length from that configuration and enforces the complete compact grammar.
+    /// Applications should authenticate these exact bytes against proof DA and call this entry
+    /// point; no caller-supplied ABI tuple or second representation is trusted.
     function verifyCompact(bytes calldata compactProof) external view returns (bool) {
         if (block.chainid != allowedChainId) revert MleProofEngineUnavailable(block.chainid);
-        MleVerifierV2.VerificationConfig memory config = _loadConfiguration();
-        MleVerifierV2.MleProof memory proof = CompactMleProofV2.decodeForCoreVerification(compactProof, config.circuit);
-        return core.verify(proof, config);
+        return core.verifyCompactWithConfig(compactProof, _loadEncodedConfiguration());
     }
 
     /// @notice Verify canonical compact bytes and return their authenticated public inputs.
     /// @dev Parent protocols must bind application state to the public inputs of the exact proof
-    /// bytes they verify. Returning the decoded vector only after the pinned core accepts avoids a
-    /// second decoder and prevents callers from treating unauthenticated compact prefixes as proof
-    /// outputs. The production core returns only `true`; any other successful return is a broken
-    /// deployment/configuration condition, not proof-dependent fraud.
+    /// bytes they verify. The vector is read from the compact prefix only after the pinned core
+    /// accepted those exact bytes, so callers can never treat unauthenticated compact prefixes as
+    /// proof outputs. The production core returns only `true`; any other successful return is a
+    /// broken deployment/configuration condition, not proof-dependent fraud.
     function verifyCompactPublicInputs(bytes calldata compactProof)
         external
         view
         returns (uint256[] memory publicInputs)
     {
         if (block.chainid != allowedChainId) revert MleProofEngineUnavailable(block.chainid);
-        MleVerifierV2.VerificationConfig memory config = _loadConfiguration();
-        MleVerifierV2.MleProof memory proof = CompactMleProofV2.decodeForCoreVerification(compactProof, config.circuit);
-        if (!core.verify(proof, config)) revert InvalidMleVerifierConfiguration();
-        publicInputs = proof.publicInputs;
+        if (!core.verifyCompactWithConfig(compactProof, _loadEncodedConfiguration())) {
+            revert InvalidMleVerifierConfiguration();
+        }
+        publicInputs = _compactPublicInputs(compactProof, _numPublicInputs);
     }
 
     /// @notice Classify authenticated compact DA bytes through the pinned core.
@@ -179,10 +182,13 @@ contract PinnedMleVerifierV2 {
         returns (uint8)
     {
         if (msg.sender != address(this)) revert InvalidMleVerifierConfiguration();
-        MleVerifierV2.VerificationConfig memory config = _loadConfiguration();
-        MleVerifierV2.MleProof memory proof = CompactMleProofV2.decode(compactProof, config.circuit);
-        bool piMatches = _publicInputsMatch(proof.publicInputs, expectedPiHash);
-        if (!core.verify(proof, config)) return ENCODED_UNEVALUABLE;
+        // The core's compact entry enforces the complete strict grammar (including canonical
+        // limbs) with `InvalidMleProof()` before any verification step, so only it can convict.
+        // The public-input comparison below never reverts: it reads the pinned number of
+        // little-endian limbs from the prefix and is only consulted after the core accepted the
+        // exact same bytes.
+        bool piMatches = _publicInputsMatch(_compactPublicInputs(compactProof, _numPublicInputs), expectedPiHash);
+        if (!core.verifyCompactWithConfig(compactProof, _loadEncodedConfiguration())) return ENCODED_UNEVALUABLE;
         return piMatches ? ENCODED_VALID : ENCODED_PI_MISMATCH;
     }
 
@@ -277,14 +283,42 @@ contract PinnedMleVerifierV2 {
     }
 
     function _loadConfiguration() private view returns (MleVerifierV2.VerificationConfig memory config) {
+        config = abi.decode(_loadEncodedConfiguration(), (MleVerifierV2.VerificationConfig));
+    }
+
+    /// @dev The exact `abi.encode(config_)` bytes the constructor validated and stored; the core
+    /// pins their keccak as `verificationConfigDigest`.
+    function _loadEncodedConfiguration() private view returns (bytes memory encodedConfig) {
         address store = _configStore;
         uint256 length = _configLength;
         if (store.code.length != length + 1) revert InvalidMleVerifierConfiguration();
-        bytes memory encodedConfig = new bytes(length);
+        encodedConfig = new bytes(length);
         assembly ("memory-safe") {
             extcodecopy(store, add(encodedConfig, 0x20), 1, length)
         }
-        config = abi.decode(encodedConfig, (MleVerifierV2.VerificationConfig));
+    }
+
+    /// @dev Read the `count` little-endian u64 public inputs of a compact proof (fixed offset 52:
+    /// magic, version, width and the four digest limbs precede them). Reads past the end of a
+    /// short byte string yield zero limbs rather than reverting; callers only rely on the result
+    /// after the core accepted the same bytes, or treat it as a non-reverting pre-check.
+    function _compactPublicInputs(bytes calldata compactProof, uint256 count)
+        private
+        pure
+        returns (uint256[] memory publicInputs)
+    {
+        publicInputs = new uint256[](count);
+        assembly ("memory-safe") {
+            let source := add(compactProof.offset, 52)
+            let output := add(publicInputs, 0x20)
+            for { let i := 0 } lt(i, count) { i := add(i, 1) } {
+                let value := shr(192, calldataload(add(source, mul(i, 8))))
+                value := or(shl(32, and(value, 0xFFFFFFFF)), shr(32, and(value, 0xFFFFFFFF00000000)))
+                value := or(shl(16, and(value, 0x0000FFFF0000FFFF)), shr(16, and(value, 0xFFFF0000FFFF0000)))
+                value := or(shl(8, and(value, 0x00FF00FF00FF00FF)), shr(8, and(value, 0xFF00FF00FF00FF00)))
+                mstore(add(output, shl(5, i)), value)
+            }
+        }
     }
 
     function _publicInputsMatch(uint256[] memory publicInputs, bytes32 piHash) private pure returns (bool) {

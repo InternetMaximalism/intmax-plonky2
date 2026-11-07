@@ -1329,7 +1329,7 @@ contract V2CrossLanguageFixtureTest is Test {
         PinnedMleVerifierV2 pinned = new PinnedMleVerifierV2(core, fixture.config);
         bytes memory compact = vm.parseJsonBytes(json, string.concat(CASE, ".compactProof.bytes"));
 
-        vm.mockCallRevert(address(core), MleVerifierV2.verify.selector, hex"deadbeef");
+        vm.mockCallRevert(address(core), MleVerifierV2.verifyCompactWithConfig.selector, hex"deadbeef");
         assertEq(
             pinned.fraudVerdictCompact(compact, bytes32(0)),
             2,

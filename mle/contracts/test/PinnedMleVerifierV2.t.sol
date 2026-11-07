@@ -64,6 +64,46 @@ contract MockMleVerifierV2Core {
         if (proof.witnessRoot == bytes32(uint256(4))) return false;
         return true;
     }
+
+    /// @dev Compact twin of `verify`: the same behaviour tags are read from the witness root of
+    /// the compact prefix (offset 52 + 8 * numPublicInputs + 32).
+    function verifyCompactWithConfig(bytes calldata compactProof, bytes calldata encodedConfig)
+        external
+        view
+        returns (bool)
+    {
+        if (block.chainid != allowedChainId) revert MleProofEngineUnavailable(block.chainid);
+        if (keccak256(encodedConfig) != _configEncodingHash) revert InvalidMleVerifierConfiguration();
+        if (compactProof.length < 16) revert InvalidMleProof();
+        bytes8 magic;
+        uint256 version;
+        uint256 numPublicInputs;
+        assembly ("memory-safe") {
+            magic := calldataload(compactProof.offset)
+            let w := calldataload(add(compactProof.offset, 8))
+            for { let i := 0 } lt(i, 8) { i := add(i, 1) } {
+                version := or(version, shl(mul(8, i), byte(i, w)))
+            }
+            // circuit.numPublicInputs is the second word of the encoded tuple (after the 0x20 head).
+            numPublicInputs := calldataload(add(encodedConfig.offset, 0x40))
+        }
+        if (magic != COMPACT_MAGIC_V2 || version != MLE_PROTOCOL_VERSION_CURRENT) revert InvalidMleProof();
+        uint256 witnessRootOffset = 52 + 8 * numPublicInputs + 32;
+        if (compactProof.length < witnessRootOffset + 32) revert InvalidMleProof();
+        bytes32 witnessRoot;
+        assembly ("memory-safe") {
+            witnessRoot := calldataload(add(compactProof.offset, witnessRootOffset))
+        }
+        if (witnessRoot == bytes32(uint256(1))) revert InvalidMleProof();
+        if (witnessRoot == bytes32(uint256(2))) revert InvalidMleVerifierConfiguration();
+        if (witnessRoot == bytes32(uint256(3))) {
+            assembly ("memory-safe") {
+                invalid()
+            }
+        }
+        if (witnessRoot == bytes32(uint256(4))) return false;
+        return true;
+    }
 }
 
 contract PinnedMleVerifierV2Test is Test {
@@ -218,14 +258,14 @@ contract PinnedMleVerifierV2Test is Test {
         bytes memory compact = _compactProof(0);
 
         vm.mockCallRevert(
-            address(setup.mockCore), MleVerifierV2.verify.selector, abi.encodeWithSelector(InvalidMleProof.selector)
+            address(setup.mockCore), MleVerifierV2.verifyCompactWithConfig.selector, abi.encodeWithSelector(InvalidMleProof.selector)
         );
         assertEq(setup.adapter.fraudVerdictCompact(compact, bytes32(0)), 0, "exact selector");
         vm.clearMockedCalls();
 
         vm.mockCallRevert(
             address(setup.mockCore),
-            MleVerifierV2.verify.selector,
+            MleVerifierV2.verifyCompactWithConfig.selector,
             bytes.concat(abi.encodeWithSelector(InvalidMleProof.selector), hex"00")
         );
         assertEq(
@@ -233,7 +273,7 @@ contract PinnedMleVerifierV2Test is Test {
         );
         vm.clearMockedCalls();
 
-        vm.mockCallRevert(address(setup.mockCore), MleVerifierV2.verify.selector, hex"deadbeef");
+        vm.mockCallRevert(address(setup.mockCore), MleVerifierV2.verifyCompactWithConfig.selector, hex"deadbeef");
         assertEq(
             setup.adapter.fraudVerdictCompact(compact, bytes32(0)),
             2,
