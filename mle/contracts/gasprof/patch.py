@@ -645,6 +645,12 @@ P(f, """    function absorb(Sponge memory s, bytes memory input) internal pure {
         GasProbe.keccakCount(34, 1, 32 + input.length);
         bytes32 st = s.state;
 """)
+P(f, """    function absorbSlice(Sponge memory s, bytes memory data, uint256 offset, uint256 len) internal pure {
+        assembly ("memory-safe") {
+""", """    function absorbSlice(Sponge memory s, bytes memory data, uint256 offset, uint256 len) internal pure {
+        GasProbe.keccakCount(34, 1, 32 + len);
+        assembly ("memory-safe") {
+""")
 P(f, """        uint256 blocksNeeded = (n + 31) / 32;
         require(counter + blocksNeeded <= type(uint64).max, "Keccak256Chain: squeeze counter overflow");
 """, """        uint256 blocksNeeded = (n + 31) / 32;
@@ -657,6 +663,18 @@ P(f, """        require(counter < type(uint64).max, "Keccak256Chain: squeeze cou
         GasProbe.keccakCount(36, 1, 47);
         assembly {
 """)
+P(f, """        require(counter + 1 <= type(uint64).max, "Keccak256Chain: squeeze counter overflow");
+        bytes32 st = s.state;
+""", """        require(counter + 1 <= type(uint64).max, "Keccak256Chain: squeeze counter overflow");
+        GasProbe.keccakCount(35, 1, 47);
+        bytes32 st = s.state;
+""")
+P(f, """        require(counter + 4 <= type(uint64).max, "Keccak256Chain: squeeze counter overflow");
+        bytes32 st = s.state;
+""", """        require(counter + 4 <= type(uint64).max, "Keccak256Chain: squeeze counter overflow");
+        GasProbe.keccakCount(35, 4, 47);
+        bytes32 st = s.state;
+""")
 P(f, """    function ratchet(Sponge memory s) internal pure {
         bytes32 st = s.state;
 """, """    function ratchet(Sponge memory s) internal pure {
@@ -668,14 +686,12 @@ P(f, """    function ratchet(Sponge memory s) internal pure {
 f = "spongefish/SpongefishMerkle.sol"
 P(f, 'import {InvalidMleProof} from "../MleProofErrors.sol";\n',
      'import {InvalidMleProof} from "../MleProofErrors.sol";\n' + IMPORT_SUB)
-P(f, """                mstore(add(nextHashData, mul(nextLen, 0x20)), keccak256(0x00, 0x40))
-                nextLen := add(nextLen, 1)
-            }
+P(f, """            nextLen := shr(6, sub(wp, pairs))
+            newHc := hcOut
         }
     }
-""", """                mstore(add(nextHashData, mul(nextLen, 0x20)), keccak256(0x00, 0x40))
-                nextLen := add(nextLen, 1)
-            }
+""", """            nextLen := shr(6, sub(wp, pairs))
+            newHc := hcOut
         }
         GasProbe.keccakCount(33, nextLen, 64);
     }
@@ -686,74 +702,41 @@ f = "spongefish/SpongefishWhir.sol"
 P(f, 'import {InvalidMleProof} from "../MleProofErrors.sol";\n',
      'import {InvalidMleProof} from "../MleProofErrors.sol";\n' + IMPORT_SUB)
 P(f, """        (uint64 c0, uint64 c1, uint64 c2) = verifierMessageField64x3(ts);
-        coeffs = new GoldilocksExt3.Ext3[](count);
-        coeffs[0] = GoldilocksExt3.one();
+        assembly ("memory-safe") {
+            let p := 0xFFFFFFFF00000001
+            let x0 := c0
 """, """        (uint64 c0, uint64 c1, uint64 c2) = verifierMessageField64x3(ts);
         GasProbe.ext3Count(52, count - 1);
-        coeffs = new GoldilocksExt3.Ext3[](count);
-        coeffs[0] = GoldilocksExt3.one();
+        assembly ("memory-safe") {
+            let p := 0xFFFFFFFF00000001
+            let x0 := c0
 """)
 
 # ---------------------------------------------------------------- WhirLinearAlgebra
 f = "spongefish/WhirLinearAlgebra.sol"
 P(f, 'import {InvalidMleProof} from "../MleProofErrors.sol";\n',
      'import {InvalidMleProof} from "../MleProofErrors.sol";\n' + IMPORT_SUB)
-P(f, """        uint256 start
-    ) internal pure returns (GoldilocksExt3.Ext3 memory result) {
-        assembly {
-            let p := P
-
-            // result = 1
-""", """        uint256 start
-    ) internal pure returns (GoldilocksExt3.Ext3 memory result) {
-        if (GasProbe.COUNTING) {
-            uint256 iterations = point.length > start ? point.length - start : 0;
-            if (x.c1 == 0 && x.c2 == 0) {
-                GasProbe.ext3Count(60, iterations);
-                GasProbe.scalarCount(61, iterations);
-                GasProbe.baseCount(61, iterations);
-            } else {
-                GasProbe.ext3Count(62, 3 * iterations);
-            }
-        }
-        assembly {
-            let p := P
-
-            // result = 1
-""")
-P(f, """        if (point.length != evalPoint.length) revert InvalidMleProof();
-        assembly {
-            let p := P
-            let res0 := 1
-            let res1 := 0
-            let res2 := 0
-
-            let pLen := mload(point)
-""", """        if (point.length != evalPoint.length) revert InvalidMleProof();
+P(f, """        if (3 * point.length != r.length) revert InvalidMleProof();
+        assembly ("memory-safe") {
+""", """        if (3 * point.length != r.length) revert InvalidMleProof();
         GasProbe.ext3Count(63, 3 * point.length);
-        assembly {
-            let p := P
-            let res0 := 1
-            let res1 := 0
-            let res2 := 0
-
-            let pLen := mload(point)
+        assembly ("memory-safe") {
 """)
-P(f, """        if (start > arr.length || count > arr.length - start) revert InvalidMleProof();
+P(f, """        uint256 len = r.length / 3;
+        if (start > len || count > len - start) revert InvalidMleProof();
         uint256 size = 1 << count;
-        weights = new GoldilocksExt3.Ext3[](size);
-""", """        if (start > arr.length || count > arr.length - start) revert InvalidMleProof();
+        weights = new uint256[](3 * size);
+""", """        uint256 len = r.length / 3;
+        if (start > len || count > len - start) revert InvalidMleProof();
         uint256 size = 1 << count;
         GasProbe.ext3Count(53, 2 * (size - 1));
-        weights = new GoldilocksExt3.Ext3[](size);
+        weights = new uint256[](3 * size);
 """)
-P(f, """        uint256 aLen = a.length;
-        uint256 bLen = b.length;
-        result = new GoldilocksExt3.Ext3[](aLen * bLen);
-""", """        uint256 aLen = a.length;
-        uint256 bLen = b.length;
+P(f, """        uint256 bLen = b.length / 3;
+        result = new uint256[](3 * aLen * bLen);
+""", """        uint256 bLen = b.length / 3;
         GasProbe.ext3Count(64, aLen * bLen);
-        result = new GoldilocksExt3.Ext3[](aLen * bLen);
+        result = new uint256[](3 * aLen * bLen);
 """)
 
 # ---------------------------------------------------------------- SpongefishWhirVerify
@@ -785,10 +768,12 @@ P(f, """        vs.roundConstraints = new RoundConstraintEntry[](1 + params.numR
         _phaseSumcheck(ts, transcript, params.initialSumcheckRounds, params.initialSumcheckPowThreshold, vs);
 
         // Phase 3: Intermediate rounds
-        _phaseIntermediateRounds(ts, transcript, hints, params, vs);
+        for (uint256 round = 0; round < params.numRounds; round++) {
+            _doIntermediateRound(ts, transcript, hints, params, vs, round);
+        }
 
         // Phase 4: Final vector + final Merkle open
-        GoldilocksExt3.Ext3[] memory finalVector = _phaseFinalVectorAndMerkle(ts, transcript, hints, params, vs);
+        uint256[] memory finalVector = _phaseFinalVectorAndMerkle(ts, transcript, hints, params, vs);
 
         // Phase 5: Final sumcheck
         _phaseSumcheck(ts, transcript, params.finalSumcheckRounds, params.finalSumcheckPowThreshold, vs);
@@ -811,10 +796,12 @@ P(f, """        vs.roundConstraints = new RoundConstraintEntry[](1 + params.numR
         GasProbe.mark(204);
 
         // Phase 3: Intermediate rounds
-        _phaseIntermediateRounds(ts, transcript, hints, params, vs);
+        for (uint256 round = 0; round < params.numRounds; round++) {
+            _doIntermediateRound(ts, transcript, hints, params, vs, round);
+        }
 
         // Phase 4: Final vector + final Merkle open
-        GoldilocksExt3.Ext3[] memory finalVector = _phaseFinalVectorAndMerkle(ts, transcript, hints, params, vs);
+        uint256[] memory finalVector = _phaseFinalVectorAndMerkle(ts, transcript, hints, params, vs);
         GasProbe.mark(205);
 
         // Phase 5: Final sumcheck
@@ -831,64 +818,76 @@ P(f, """        vs.roundConstraints = new RoundConstraintEntry[](1 + params.numR
         return true;
 """)
 P(f, """        // Phase 1a: Receive per-commitment roots and OOD data
-        GoldilocksExt3.Ext3[] memory allOodPoints = new GoldilocksExt3.Ext3[](totalOodPoints);
-        GoldilocksExt3.Ext3[][] memory perCommitOod;
-        (perCommitOod, allOodPoints) = _receiveCommitmentsAndOod(ts, transcript, expectedRoots, params, vs);
+        (uint256[] memory perCommitOod, uint256[] memory allOodPoints) =
+            _receiveCommitmentsAndOod(ts, transcript, expectedRoots, params, vs);
 """, """        GasProbe.mark(210);
         // Phase 1a: Receive per-commitment roots and OOD data
-        GoldilocksExt3.Ext3[] memory allOodPoints = new GoldilocksExt3.Ext3[](totalOodPoints);
-        GoldilocksExt3.Ext3[][] memory perCommitOod;
-        (perCommitOod, allOodPoints) = _receiveCommitmentsAndOod(ts, transcript, expectedRoots, params, vs);
+        (uint256[] memory perCommitOod, uint256[] memory allOodPoints) =
+            _receiveCommitmentsAndOod(ts, transcript, expectedRoots, params, vs);
         GasProbe.mark(211);
 """)
-P(f, """            evaluations[i] = GoldilocksExt3.Ext3(e0, e1, e2);
-        }
-
-        // Cross-commitment OOD terms are emitted by WHIR prove() only after
-""", """            evaluations[i] = GoldilocksExt3.Ext3(e0, e1, e2);
-        }
+P(f, """        uint256[] memory evalsFlat = _readEvaluationStatement(ts, transcript, evaluations, evaluationMask);
+""", """        uint256[] memory evalsFlat = _readEvaluationStatement(ts, transcript, evaluations, evaluationMask);
         GasProbe.mark(212);
-
-        // Cross-commitment OOD terms are emitted by WHIR prove() only after
 """)
-P(f, """        GoldilocksExt3.Ext3[] memory oodMatrix = _completeOodMatrix(ts, transcript, perCommitOod, params);
+P(f, """        uint256[] memory oodMatrix = _completeOodMatrix(ts, transcript, perCommitOod, params);
 
         // Phase 1b: RLC and sum computation
-        GoldilocksExt3.Ext3[] memory vectorRlc = SpongefishWhir.geometricChallenge(ts, totalVectors);
-        vs.vectorRlc = vectorRlc;
+        vs.vectorRlc = SpongefishWhir.geometricChallengeFlat(ts, totalVectors);
         vs.numLinearForms = evaluations.length / totalVectors;
-        vs.initialConstraintRlc = SpongefishWhir.geometricChallenge(ts, totalOodPoints + vs.numLinearForms);
-""", """        GoldilocksExt3.Ext3[] memory oodMatrix = _completeOodMatrix(ts, transcript, perCommitOod, params);
+        vs.initialConstraintRlc = SpongefishWhir.geometricChallengeFlat(ts, totalOodPoints + vs.numLinearForms);
+""", """        uint256[] memory oodMatrix = _completeOodMatrix(ts, transcript, perCommitOod, params);
         GasProbe.mark(213);
 
         // Phase 1b: RLC and sum computation
-        GoldilocksExt3.Ext3[] memory vectorRlc = SpongefishWhir.geometricChallenge(ts, totalVectors);
-        vs.vectorRlc = vectorRlc;
+        vs.vectorRlc = SpongefishWhir.geometricChallengeFlat(ts, totalVectors);
         vs.numLinearForms = evaluations.length / totalVectors;
-        vs.initialConstraintRlc = SpongefishWhir.geometricChallenge(ts, totalOodPoints + vs.numLinearForms);
+        vs.initialConstraintRlc = SpongefishWhir.geometricChallengeFlat(ts, totalOodPoints + vs.numLinearForms);
         GasProbe.mark(214);
 """)
 P(f, """        _accumulateTheSum(
-            vs.theSum, oodMatrix, vectorRlc, vs.initialConstraintRlc, vs.numLinearForms, totalOodPoints, totalVectors
+            vs.theSum, oodMatrix, vs.vectorRlc, vs.initialConstraintRlc, vs.numLinearForms, totalOodPoints, totalVectors
         );
     }
 """, """        _accumulateTheSum(
-            vs.theSum, oodMatrix, vectorRlc, vs.initialConstraintRlc, vs.numLinearForms, totalOodPoints, totalVectors
+            vs.theSum, oodMatrix, vs.vectorRlc, vs.initialConstraintRlc, vs.numLinearForms, totalOodPoints, totalVectors
         );
         GasProbe.mark(215);
     }
 """)
+P(f, """        ) revert InvalidMleProof();
+        assembly ("memory-safe") {
+            function mul3(a0, a1, a2, b0, b1, b2) -> c0, c1, c2 {
+                c0 := mod(add(mul(a0, b0), shl(1, add(mul(a1, b2), mul(a2, b1)))), 0xFFFFFFFF00000001)
+                c1 := mod(add(add(mul(a0, b1), mul(a1, b0)), shl(1, mul(a2, b2))), 0xFFFFFFFF00000001)
+                c2 := mod(add(add(mul(a0, b2), mul(a1, b1)), mul(a2, b0)), 0xFFFFFFFF00000001)
+            }
+            let p := 0xFFFFFFFF00000001
+            let mp := add(matrix, 0x20)
+""", """        ) revert InvalidMleProof();
+        GasProbe.ext3Count(51, count * numVectors + count);
+        assembly ("memory-safe") {
+            function mul3(a0, a1, a2, b0, b1, b2) -> c0, c1, c2 {
+                c0 := mod(add(mul(a0, b0), shl(1, add(mul(a1, b2), mul(a2, b1)))), 0xFFFFFFFF00000001)
+                c1 := mod(add(add(mul(a0, b1), mul(a1, b0)), shl(1, mul(a2, b2))), 0xFFFFFFFF00000001)
+                c2 := mod(add(add(mul(a0, b2), mul(a1, b1)), mul(a2, b0)), 0xFFFFFFFF00000001)
+            }
+            let p := 0xFFFFFFFF00000001
+            let mp := add(matrix, 0x20)
+""")
 P(f, """        for (uint256 i = 0; i < numRounds; i++) {
-            (uint64 c0a, uint64 c0b, uint64 c0c) = SpongefishWhir.proverMessageField64x3(ts, transcript);
-            (uint64 c2a, uint64 c2b, uint64 c2c) = SpongefishWhir.proverMessageField64x3(ts, transcript);
-
-            _verifyPow(ts, transcript, powThreshold);
+            _readInto(ts, transcript, coeffs, 0);
+            _readInto(ts, transcript, coeffs, 1);
 """, """        for (uint256 i = 0; i < numRounds; i++) {
             GasProbe.ext3Count(50, 2);
-            (uint64 c0a, uint64 c0b, uint64 c0c) = SpongefishWhir.proverMessageField64x3(ts, transcript);
-            (uint64 c2a, uint64 c2b, uint64 c2c) = SpongefishWhir.proverMessageField64x3(ts, transcript);
-
-            _verifyPow(ts, transcript, powThreshold);
+            _readInto(ts, transcript, coeffs, 0);
+            _readInto(ts, transcript, coeffs, 1);
+""")
+P(f, """        if (threshold == type(uint64).max) return;
+        bytes32 challenge = ts.sponge.squeezeWord();
+""", """        if (threshold == type(uint64).max) return;
+        GasProbe.keccakCount(32, 1, 64);
+        bytes32 challenge = ts.sponge.squeezeWord();
 """)
 P(f, """        RoundParams memory rp = params.rounds[round];
 
@@ -897,15 +896,13 @@ P(f, """        RoundParams memory rp = params.rounds[round];
 
         // OOD for this round: ALL points squeezed first, then ALL answers absorbed
         // (matches Rust irs_commit::receive_commitment order)
-        GoldilocksExt3.Ext3[] memory roundOodPoints = new GoldilocksExt3.Ext3[](rp.outDomainSamples);
+        uint256[] memory roundOodPoints = new uint256[](3 * rp.outDomainSamples);
         for (uint256 i = 0; i < rp.outDomainSamples; i++) {
-            (uint64 c0, uint64 c1, uint64 c2) = SpongefishWhir.verifierMessageField64x3(ts);
-            roundOodPoints[i] = GoldilocksExt3.Ext3(c0, c1, c2);
+            _squeezeInto(ts, roundOodPoints, i);
         }
-        GoldilocksExt3.Ext3[] memory roundOodAnswers = new GoldilocksExt3.Ext3[](rp.outDomainSamples);
+        uint256[] memory roundOodAnswers = new uint256[](3 * rp.outDomainSamples);
         for (uint256 i = 0; i < rp.outDomainSamples; i++) {
-            (uint64 a0, uint64 a1, uint64 a2) = SpongefishWhir.proverMessageField64x3(ts, transcript);
-            roundOodAnswers[i] = GoldilocksExt3.Ext3(a0, a1, a2);
+            _readInto(ts, transcript, roundOodAnswers, i);
         }
 
         _verifyPow(ts, transcript, rp.powThreshold);
@@ -927,16 +924,14 @@ P(f, """        RoundParams memory rp = params.rounds[round];
 
         // OOD for this round: ALL points squeezed first, then ALL answers absorbed
         // (matches Rust irs_commit::receive_commitment order)
-        GoldilocksExt3.Ext3[] memory roundOodPoints = new GoldilocksExt3.Ext3[](rp.outDomainSamples);
+        uint256[] memory roundOodPoints = new uint256[](3 * rp.outDomainSamples);
         for (uint256 i = 0; i < rp.outDomainSamples; i++) {
-            (uint64 c0, uint64 c1, uint64 c2) = SpongefishWhir.verifierMessageField64x3(ts);
-            roundOodPoints[i] = GoldilocksExt3.Ext3(c0, c1, c2);
+            _squeezeInto(ts, roundOodPoints, i);
         }
         GasProbe.mark(302 + 20 * round);
-        GoldilocksExt3.Ext3[] memory roundOodAnswers = new GoldilocksExt3.Ext3[](rp.outDomainSamples);
+        uint256[] memory roundOodAnswers = new uint256[](3 * rp.outDomainSamples);
         for (uint256 i = 0; i < rp.outDomainSamples; i++) {
-            (uint64 a0, uint64 a1, uint64 a2) = SpongefishWhir.proverMessageField64x3(ts, transcript);
-            roundOodAnswers[i] = GoldilocksExt3.Ext3(a0, a1, a2);
+            _readInto(ts, transcript, roundOodAnswers, i);
         }
         GasProbe.mark(303 + 20 * round);
 
@@ -954,24 +949,113 @@ P(f, """        RoundParams memory rp = params.rounds[round];
         vs.prevRoot = roundRoot;
     }
 """)
-P(f, """        finalVector = new GoldilocksExt3.Ext3[](params.finalSize);
+# Round openings. Marks inside `_openRows` are parameterised (patch-only extra arguments):
+# mA starts the "vec prefix + leaf row hashing" span, mB the Merkle span, mC the row-dot span.
+P(f, """        uint256[] memory rawIndices = _challengeIndices(ts, o.cl, o.inDomainSamples);
+        uint256 rawCount = rawIndices.length;
+
+        // eq_weights from the folding randomness of the fold just completed
+        uint256 ff = (round == 0) ? params.initialSumcheckRounds : params.rounds[round - 1].sumcheckRounds;
+        uint256[] memory eqW = WhirLinearAlgebra.eqWeightsFlat(vs.foldR, vs.foldIdx - ff, ff);
+        uint256[] memory inDomainEvalPoints = _computeEvalPoints(rawIndices, o);
+        uint256[] memory rowValues = new uint256[](3 * rawCount);
+""", """        uint256[] memory rawIndices = _challengeIndices(ts, o.cl, o.inDomainSamples);
+        uint256 rawCount = rawIndices.length;
+        GasProbe.mark(305 + 20 * round);
+
+        // eq_weights from the folding randomness of the fold just completed
+        uint256 ff = (round == 0) ? params.initialSumcheckRounds : params.rounds[round - 1].sumcheckRounds;
+        GasProbe.mark(420);
+        uint256[] memory eqW = WhirLinearAlgebra.eqWeightsFlat(vs.foldR, vs.foldIdx - ff, ff);
+        GasProbe.mark(421);
+        GasProbe.mark(306 + 20 * round);
+        uint256[] memory inDomainEvalPoints = _computeEvalPoints(rawIndices, o);
+        uint256[] memory rowValues = new uint256[](3 * rawCount);
+""")
+P(f, """                _openRows(ts, hints, o, rawIndices, vs.initialRoots[c], w, rowValues);
+            }
+        } else {
+            _openRows(ts, hints, o, rawIndices, vs.prevRoot, eqW, rowValues);
+        }
+
+        // Constraint RLC and accumulation into theSum (OOD values, then in-domain values)
+        uint256 constraintCount = rp.outDomainSamples + rawCount;
+        uint256[] memory roundRlc = SpongefishWhir.geometricChallengeFlat(ts, constraintCount);
+        _mulAddFlat(vs.theSum, roundOodAnswers, roundRlc, 0, rp.outDomainSamples);
+        _mulAddFlat(vs.theSum, rowValues, roundRlc, rp.outDomainSamples, rawCount);
+""", """                _openRows(ts, hints, o, rawIndices, vs.initialRoots[c], w, rowValues, 305 + 20 * round, 307 + 20 * round, 422);
+            }
+        } else {
+            _openRows(ts, hints, o, rawIndices, vs.prevRoot, eqW, rowValues, 305 + 20 * round, 307 + 20 * round, 422);
+        }
+        GasProbe.mark(421);
+
+        // Constraint RLC and accumulation into theSum (OOD values, then in-domain values)
+        uint256 constraintCount = rp.outDomainSamples + rawCount;
+        uint256[] memory roundRlc = SpongefishWhir.geometricChallengeFlat(ts, constraintCount);
+        GasProbe.mark(422);
+        _mulAddFlat(vs.theSum, roundOodAnswers, roundRlc, 0, rp.outDomainSamples);
+        _mulAddFlat(vs.theSum, rowValues, roundRlc, rp.outDomainSamples, rawCount);
+        GasProbe.ext3Count(57, rp.outDomainSamples + rawCount);
+        GasProbe.mark(423);
+""")
+P(f, """        vs.roundConstraints[1 + round] =
+            RoundConstraintEntry({rlcCoeffs: roundRlc, points: allEvalPoints, numVariables: rp.numVariables});
+    }
+""", """        vs.roundConstraints[1 + round] =
+            RoundConstraintEntry({rlcCoeffs: roundRlc, points: allEvalPoints, numVariables: rp.numVariables});
+        GasProbe.mark(424);
+    }
+""")
+P(f, """        uint256[] memory w,
+        uint256[] memory rowValues
+    ) private pure {
+        uint256 rawCount = rawIndices.length;
+        _consumeVecPrefix(ts, hints, rawCount * o.numCols);
+        uint256 rowsStart = ts.hintPos;
+        bytes32[] memory leafHashes = _hashRows(hints, rowsStart, o.rowBytes, rawCount);
+""", """        uint256[] memory w,
+        uint256[] memory rowValues,
+        uint256 mA,
+        uint256 mB,
+        uint256 mC
+    ) private pure {
+        uint256 rawCount = rawIndices.length;
+        GasProbe.mark(mA);
+        _consumeVecPrefix(ts, hints, rawCount * o.numCols);
+        uint256 rowsStart = ts.hintPos;
+        bytes32[] memory leafHashes = _hashRows(hints, rowsStart, o.rowBytes, rawCount);
+        GasProbe.mark(mB);
+""")
+P(f, """        ts.hintPos = SpongefishMerkle.verify(root, o.md, idxCopy, leafHashes, hints, rowsStart + rawCount * o.rowBytes);
+        _accumulateRowDots(rowValues, w, o.numCols, hints, rowsStart, o.rowBytes, rawCount, o.isBaseField);
+    }
+""", """        ts.hintPos = SpongefishMerkle.verify(root, o.md, idxCopy, leafHashes, hints, rowsStart + rawCount * o.rowBytes);
+        GasProbe.mark(mC);
+        _accumulateRowDots(rowValues, w, o.numCols, hints, rowsStart, o.rowBytes, rawCount, o.isBaseField);
+    }
+""")
+P(f, """        finalVector = new uint256[](3 * params.finalSize);
         for (uint256 i = 0; i < params.finalSize; i++) {
-            (uint64 c0, uint64 c1, uint64 c2) = SpongefishWhir.proverMessageField64x3(ts, transcript);
-            finalVector[i] = GoldilocksExt3.Ext3(c0, c1, c2);
+            _readInto(ts, transcript, finalVector, i);
         }
 
         _verifyPow(ts, transcript, params.finalPowThreshold);
 
         // The final opening is the same IRS commitment that the next intermediate round would
-        // open: the initial commitment when numRounds == 0, otherwise the last round commitment.
+        // open: the initial commitment(s) when numRounds == 0, otherwise the last round commitment.
         OpenParams memory o = _getOpenParams(params, params.numRounds);
-        bool isSplitInitial = params.numRounds == 0 && params.numCommitments > 1;
         uint256[] memory rawFinalIndices = _challengeIndices(ts, o.cl, o.inDomainSamples);
+        uint256 foldingRounds =
+            params.numRounds == 0 ? params.initialSumcheckRounds : params.rounds[params.numRounds - 1].sumcheckRounds;
+        uint256[] memory finalWeights =
+            WhirLinearAlgebra.eqWeightsFlat(vs.foldR, vs.foldIdx - foldingRounds, foldingRounds);
+        uint256[] memory finalEvalPoints = _computeEvalPoints(rawFinalIndices, o);
+        uint256[] memory openedValues = new uint256[](3 * rawFinalIndices.length);
 """, """        GasProbe.mark(500);
-        finalVector = new GoldilocksExt3.Ext3[](params.finalSize);
+        finalVector = new uint256[](3 * params.finalSize);
         for (uint256 i = 0; i < params.finalSize; i++) {
-            (uint64 c0, uint64 c1, uint64 c2) = SpongefishWhir.proverMessageField64x3(ts, transcript);
-            finalVector[i] = GoldilocksExt3.Ext3(c0, c1, c2);
+            _readInto(ts, transcript, finalVector, i);
         }
         GasProbe.mark(501);
 
@@ -979,79 +1063,43 @@ P(f, """        finalVector = new GoldilocksExt3.Ext3[](params.finalSize);
         GasProbe.mark(502);
 
         // The final opening is the same IRS commitment that the next intermediate round would
-        // open: the initial commitment when numRounds == 0, otherwise the last round commitment.
+        // open: the initial commitment(s) when numRounds == 0, otherwise the last round commitment.
         OpenParams memory o = _getOpenParams(params, params.numRounds);
-        bool isSplitInitial = params.numRounds == 0 && params.numCommitments > 1;
         uint256[] memory rawFinalIndices = _challengeIndices(ts, o.cl, o.inDomainSamples);
         GasProbe.mark(503);
+        uint256 foldingRounds =
+            params.numRounds == 0 ? params.initialSumcheckRounds : params.rounds[params.numRounds - 1].sumcheckRounds;
+        uint256[] memory finalWeights =
+            WhirLinearAlgebra.eqWeightsFlat(vs.foldR, vs.foldIdx - foldingRounds, foldingRounds);
+        GasProbe.mark(504);
+        uint256[] memory finalEvalPoints = _computeEvalPoints(rawFinalIndices, o);
+        uint256[] memory openedValues = new uint256[](3 * rawFinalIndices.length);
 """)
-P(f, """            GoldilocksExt3.Ext3[] memory finalWeights =
-                WhirLinearAlgebra.eqWeightsFrom(vs.allFoldingRandomness, vs.foldIdx - foldingRounds, foldingRounds);
-            if (params.numRounds == 0) {
-                finalWeights = WhirLinearAlgebra.tensorProduct(vs.vectorRlc, finalWeights);
+P(f, """                _openRows(ts, hints, o, rawFinalIndices, vs.initialRoots[c], w, openedValues);
             }
-            GoldilocksExt3.Ext3[] memory finalEvalPoints =
-                _computeEvalPoints(rawFinalIndices, rawFinalIndices.length, o.domainGen, o.numCosets, o.cosetSize);
-            _consumeVecPrefix(ts, hints, rawFinalIndices.length * o.numCols);
-            uint256 rowsStart = ts.hintPos;
-            bytes32[] memory rawFinalHashes = new bytes32[](rawFinalIndices.length);
-            for (uint256 i = 0; i < rawFinalIndices.length; i++) {
-                rawFinalHashes[i] = _keccak256At(hints, ts.hintPos, o.rowBytes);
-                ts.hintPos += o.rowBytes;
-            }
-
-            ts.hintPos = SpongefishMerkle.verify(vs.prevRoot, o.md, rawFinalIndices, rawFinalHashes, hints, ts.hintPos);
-            for (uint256 i = 0; i < finalEvalPoints.length; i++) {
-                _requireFinalOpening(
-                    finalVector,
-                    finalEvalPoints[i],
-                    _dotEqWithRow(finalWeights, hints, rowsStart + i * o.rowBytes, o.numCols, o.isBaseField)
-                );
-            }
+        } else {
+            _openRows(ts, hints, o, rawFinalIndices, vs.prevRoot, finalWeights, openedValues);
         }
-    }
-""", """            GoldilocksExt3.Ext3[] memory finalWeights =
-                WhirLinearAlgebra.eqWeightsFrom(vs.allFoldingRandomness, vs.foldIdx - foldingRounds, foldingRounds);
-            if (params.numRounds == 0) {
-                finalWeights = WhirLinearAlgebra.tensorProduct(vs.vectorRlc, finalWeights);
-            }
-            GasProbe.mark(504);
-            GoldilocksExt3.Ext3[] memory finalEvalPoints =
-                _computeEvalPoints(rawFinalIndices, rawFinalIndices.length, o.domainGen, o.numCosets, o.cosetSize);
-            GasProbe.mark(505);
-            _consumeVecPrefix(ts, hints, rawFinalIndices.length * o.numCols);
-            uint256 rowsStart = ts.hintPos;
-            bytes32[] memory rawFinalHashes = new bytes32[](rawFinalIndices.length);
-            for (uint256 i = 0; i < rawFinalIndices.length; i++) {
-                rawFinalHashes[i] = _keccak256At(hints, ts.hintPos, o.rowBytes);
-                ts.hintPos += o.rowBytes;
-            }
-            GasProbe.mark(506);
 
-            ts.hintPos = SpongefishMerkle.verify(vs.prevRoot, o.md, rawFinalIndices, rawFinalHashes, hints, ts.hintPos);
-            GasProbe.mark(507);
-            for (uint256 i = 0; i < finalEvalPoints.length; i++) {
-                _requireFinalOpening(
-                    finalVector,
-                    finalEvalPoints[i],
-                    _dotEqWithRow(finalWeights, hints, rowsStart + i * o.rowBytes, o.numCols, o.isBaseField)
-                );
+        _requireFinalOpenings(finalVector, finalEvalPoints, openedValues);
+""", """                _openRows(ts, hints, o, rawFinalIndices, vs.initialRoots[c], w, openedValues, 505, 506, 507);
             }
-            GasProbe.mark(508);
+        } else {
+            _openRows(ts, hints, o, rawFinalIndices, vs.prevRoot, finalWeights, openedValues, 505, 506, 507);
         }
-    }
+        GasProbe.mark(508);
+
+        _requireFinalOpenings(finalVector, finalEvalPoints, openedValues);
 """)
 P(f, """        uint256 foldStart = vs.foldIdx - params.finalSumcheckRounds;
-        GoldilocksExt3.Ext3 memory polyEval =
-            _foldEval(finalVector, vs.allFoldingRandomness, foldStart, params.finalSumcheckRounds);
+        GoldilocksExt3.Ext3 memory polyEval = _foldEval(finalVector, vs.foldR, foldStart, params.finalSumcheckRounds);
         if (GoldilocksExt3.isZero(polyEval)) revert InvalidMleProof();
 
         // linear_form_rlc = theSum / polyEval
         GoldilocksExt3.Ext3 memory linearFormRlc = vs.theSum.mul(GoldilocksExt3.inv(polyEval));
 """, """        GasProbe.mark(520);
         uint256 foldStart = vs.foldIdx - params.finalSumcheckRounds;
-        GoldilocksExt3.Ext3 memory polyEval =
-            _foldEval(finalVector, vs.allFoldingRandomness, foldStart, params.finalSumcheckRounds);
+        GoldilocksExt3.Ext3 memory polyEval = _foldEval(finalVector, vs.foldR, foldStart, params.finalSumcheckRounds);
         if (GoldilocksExt3.isZero(polyEval)) revert InvalidMleProof();
         GasProbe.mark(521);
 
@@ -1059,15 +1107,17 @@ P(f, """        uint256 foldStart = vs.foldIdx - params.finalSumcheckRounds;
         GoldilocksExt3.Ext3 memory linearFormRlc = vs.theSum.mul(GoldilocksExt3.inv(polyEval));
         GasProbe.mark(522);
 """)
-P(f, """            for (uint256 i = 0; i < entry.rlcCoeffs.length; i++) {
-                GoldilocksExt3.Ext3 memory mleVal = WhirLinearAlgebra.mleEvaluateUnivariateFrom(
-                    entry.univariatePoints[i], vs.allFoldingRandomness, start
-                );
-""", """            GasProbe.ext3Count(65, entry.rlcCoeffs.length);
-            for (uint256 i = 0; i < entry.rlcCoeffs.length; i++) {
-                GoldilocksExt3.Ext3 memory mleVal = WhirLinearAlgebra.mleEvaluateUnivariateFrom(
-                    entry.univariatePoints[i], vs.allFoldingRandomness, start
-                );
+P(f, """            if (entry.rlcCoeffs.length == 0) continue;
+            _subtractRoundConstraints(linearFormRlc, entry, vs.foldR, vs.totalFoldingLen - entry.numVariables);
+""", """            if (entry.rlcCoeffs.length == 0) continue;
+            GasProbe.ext3Count(65, entry.rlcCoeffs.length / 3);
+            if (GasProbe.COUNTING) {
+                uint256 iterations = entry.numVariables * (entry.rlcCoeffs.length / 3);
+                GasProbe.ext3Count(60, iterations);
+                GasProbe.scalarCount(61, iterations);
+                GasProbe.baseCount(61, iterations);
+            }
+            _subtractRoundConstraints(linearFormRlc, entry, vs.foldR, vs.totalFoldingLen - entry.numVariables);
 """)
 P(f, """        // Compute expectedRlc = Σ rlc[i] * eq(point_i, foldingRandomness)
         // For single-point: expectedRlc = rlc[0] * eq(point1, folding)
@@ -1095,349 +1145,32 @@ P(f, """        uint256 sizeBytes = _ceilDiv(_log2(numLeaves), 8);
         indices = new uint256[](count);
         uint256 counter = uint256(ts.sponge.squeezeCounter);
 """)
-P(f, """        // In-domain values
-        for (uint256 i = 0; i < rawCount; i++) {
-            GoldilocksExt3.Ext3 memory val = _dotEqWithRow(eqW, hints, rowOffsets[i], numCols, isBaseField);
-            _mulAddToSum(theSum_, val, roundRlc[oodSamples + i]);
-        }
-    }
-""", """        // In-domain values
-        for (uint256 i = 0; i < rawCount; i++) {
-            GoldilocksExt3.Ext3 memory val = _dotEqWithRow(eqW, hints, rowOffsets[i], numCols, isBaseField);
-            _mulAddToSum(theSum_, val, roundRlc[oodSamples + i]);
-        }
-        GasProbe.ext3Count(57, oodSamples + rawCount);
-    }
+P(f, """        if (start > hints.length || count * rowBytes > hints.length - start) revert InvalidMleProof();
+        hashes = new bytes32[](count);
+""", """        if (start > hints.length || count * rowBytes > hints.length - start) revert InvalidMleProof();
+        GasProbe.keccakCount(31, count, rowBytes);
+        hashes = new bytes32[](count);
 """)
-P(f, """    ) private pure {
-        assembly {
-            let p := 0xFFFFFFFF00000001
-            let mData := add(matrix, 0x20)
-            let vData := add(vectorRlc, 0x20)
-            let cData := add(constraintRlc, 0x20)
-""", """    ) private pure {
-        GasProbe.ext3Count(51, count * numVectors + count);
-        assembly {
-            let p := 0xFFFFFFFF00000001
-            let mData := add(matrix, 0x20)
-            let vData := add(vectorRlc, 0x20)
-            let cData := add(constraintRlc, 0x20)
+P(f, """        uint256 count = rawIndices.length;
+        pts = new uint256[](count);
+        uint256 depth = o.md;
+""", """        uint256 count = rawIndices.length;
+        pts = new uint256[](count);
+        GasProbe.baseCount(58, count);
+        uint256 depth = o.md;
 """)
-P(f, """        if (offset > buf.length || len > buf.length - offset) revert InvalidMleProof();
+P(f, """                || numCols * limbsPerCol * 8 > rowBytes || w.length < 3 * numCols || rowValues.length < 3 * count
+        ) revert InvalidMleProof();
+""", """                || numCols * limbsPerCol * 8 > rowBytes || w.length < 3 * numCols || rowValues.length < 3 * count
+        ) revert InvalidMleProof();
+        if (isBaseField) GasProbe.scalarCount(54, numCols * count);
+        else GasProbe.ext3Count(55, numCols * count);
+""")
+P(f, """        if (rStart > r.length / 3 || numRounds > r.length / 3 - rStart) revert InvalidMleProof();
         assembly ("memory-safe") {
-            // KECCAK256 only reads memory. Use ephemeral free-memory scratch;
-""", """        if (offset > buf.length || len > buf.length - offset) revert InvalidMleProof();
-        GasProbe.keccakCount(31, 1, len);
+""", """        if (rStart > r.length / 3 || numRounds > r.length / 3 - rStart) revert InvalidMleProof();
+        GasProbe.ext3Count(59, vec.length > 3 ? 2 * (vec.length / 3 - 1) : 0);
         assembly ("memory-safe") {
-            // KECCAK256 only reads memory. Use ephemeral free-memory scratch;
-""")
-P(f, """        if (threshold == type(uint64).max) return;
-        bytes memory challenge = SpongefishWhir.verifierMessage(ts, 32);
-        bytes memory nonceBytes = SpongefishWhir.proverMessage(ts, transcript, 8);
-""", """        if (threshold == type(uint64).max) return;
-        GasProbe.keccakCount(32, 1, 64);
-        bytes memory challenge = SpongefishWhir.verifierMessage(ts, 32);
-        bytes memory nonceBytes = SpongefishWhir.proverMessage(ts, transcript, 8);
-""")
-P(f, """        OpenParams memory o = _getOpenParams(params, round);
-
-        uint256[] memory rawIndices = _challengeIndices(ts, o.cl, o.inDomainSamples);
-        uint256 rawCount = rawIndices.length;
-
-        if (round == 0 && params.numCommitments > 1) {
-            _openSplitCommitments(ts, hints, params, vs, o, rawIndices, rawCount, roundOodAnswers, roundOodPoints);
-        } else {
-            // Standard mode (single commitment or round > 0)
-            _consumeVecPrefix(ts, hints, rawCount * o.numCols);
-
-            bytes32[] memory rawLeafHashes = new bytes32[](rawCount);
-            uint256[] memory rowOffsets = new uint256[](rawCount);
-
-            for (uint256 i = 0; i < rawCount; i++) {
-                uint256 rowOff = ts.hintPos;
-                rowOffsets[i] = rowOff;
-                rawLeafHashes[i] = _keccak256At(hints, rowOff, o.rowBytes);
-                ts.hintPos += o.rowBytes;
-            }
-
-            GoldilocksExt3.Ext3[] memory inDomainEvalPoints =
-                _computeEvalPoints(rawIndices, rawCount, o.domainGen, o.numCosets, o.cosetSize);
-
-            ts.hintPos = SpongefishMerkle.verify(vs.prevRoot, o.md, rawIndices, rawLeafHashes, hints, ts.hintPos);
-
-            _addConstraintValues(
-""", """        OpenParams memory o = _getOpenParams(params, round);
-
-        uint256[] memory rawIndices = _challengeIndices(ts, o.cl, o.inDomainSamples);
-        uint256 rawCount = rawIndices.length;
-        GasProbe.mark(305 + 20 * round);
-
-        if (round == 0 && params.numCommitments > 1) {
-            _openSplitCommitments(ts, hints, params, vs, o, rawIndices, rawCount, roundOodAnswers, roundOodPoints);
-        } else {
-            // Standard mode (single commitment or round > 0)
-            _consumeVecPrefix(ts, hints, rawCount * o.numCols);
-
-            bytes32[] memory rawLeafHashes = new bytes32[](rawCount);
-            uint256[] memory rowOffsets = new uint256[](rawCount);
-
-            for (uint256 i = 0; i < rawCount; i++) {
-                uint256 rowOff = ts.hintPos;
-                rowOffsets[i] = rowOff;
-                rawLeafHashes[i] = _keccak256At(hints, rowOff, o.rowBytes);
-                ts.hintPos += o.rowBytes;
-            }
-            GasProbe.mark(306 + 20 * round);
-
-            GoldilocksExt3.Ext3[] memory inDomainEvalPoints =
-                _computeEvalPoints(rawIndices, rawCount, o.domainGen, o.numCosets, o.cosetSize);
-            GasProbe.mark(307 + 20 * round);
-
-            ts.hintPos = SpongefishMerkle.verify(vs.prevRoot, o.md, rawIndices, rawLeafHashes, hints, ts.hintPos);
-            GasProbe.mark(308 + 20 * round);
-
-            _addConstraintValues(
-""")
-P(f, """        for (uint256 c = 0; c < params.numCommitments; c++) {
-            _consumeVecPrefix(ts, hints, rawCount * o.numCols);
-
-            perCommitRowOffsets[c] = new uint256[](rawCount);
-            bytes32[] memory rawLeafHashes = new bytes32[](rawCount);
-            for (uint256 i = 0; i < rawCount; i++) {
-                perCommitRowOffsets[c][i] = ts.hintPos;
-                rawLeafHashes[i] = _keccak256At(hints, ts.hintPos, o.rowBytes);
-                ts.hintPos += o.rowBytes;
-            }
-
-            // SpongefishMerkle uses the index array as alternating layer
-            // scratch, so retain the canonical query list for later groups.
-            uint256[] memory idxCopy = new uint256[](rawCount);
-            for (uint256 i = 0; i < rawCount; i++) {
-                idxCopy[i] = rawIndices[i];
-            }
-
-            ts.hintPos = SpongefishMerkle.verify(vs.initialRoots[c], o.md, idxCopy, rawLeafHashes, hints, ts.hintPos);
-        }
-
-        GoldilocksExt3.Ext3[] memory inDomainEvalPoints =
-            _computeEvalPoints(rawIndices, rawCount, o.domainGen, o.numCosets, o.cosetSize);
-
-        // Compute constraint values using per-commitment rows + vector RLC.
-""", """        for (uint256 c = 0; c < params.numCommitments; c++) {
-            _consumeVecPrefix(ts, hints, rawCount * o.numCols);
-
-            perCommitRowOffsets[c] = new uint256[](rawCount);
-            bytes32[] memory rawLeafHashes = new bytes32[](rawCount);
-            for (uint256 i = 0; i < rawCount; i++) {
-                perCommitRowOffsets[c][i] = ts.hintPos;
-                rawLeafHashes[i] = _keccak256At(hints, ts.hintPos, o.rowBytes);
-                ts.hintPos += o.rowBytes;
-            }
-            GasProbe.mark(450 + 10 * c);
-
-            // SpongefishMerkle uses the index array as alternating layer
-            // scratch, so retain the canonical query list for later groups.
-            uint256[] memory idxCopy = new uint256[](rawCount);
-            for (uint256 i = 0; i < rawCount; i++) {
-                idxCopy[i] = rawIndices[i];
-            }
-
-            ts.hintPos = SpongefishMerkle.verify(vs.initialRoots[c], o.md, idxCopy, rawLeafHashes, hints, ts.hintPos);
-            GasProbe.mark(451 + 10 * c);
-        }
-        GasProbe.mark(306);
-
-        GoldilocksExt3.Ext3[] memory inDomainEvalPoints =
-            _computeEvalPoints(rawIndices, rawCount, o.domainGen, o.numCosets, o.cosetSize);
-        GasProbe.mark(307);
-
-        // Compute constraint values using per-commitment rows + vector RLC.
-""")
-P(f, """        RoundParams memory rp = params.rounds[0];
-        uint256 ff = params.initialSumcheckRounds;
-        uint256 eqBase = vs.foldIdx - ff;
-        GoldilocksExt3.Ext3[] memory eqW = WhirLinearAlgebra.eqWeightsFrom(vs.allFoldingRandomness, eqBase, ff);
-
-        uint256 constraintCount = rp.outDomainSamples + rawCount;
-        GoldilocksExt3.Ext3[] memory roundRlc = SpongefishWhir.geometricChallenge(ts, constraintCount);
-
-        // OOD values
-        for (uint256 i = 0; i < rp.outDomainSamples; i++) {
-            _mulAddToSum(vs.theSum, roundOodAnswers[i], roundRlc[i]);
-        }
-
-        // In-domain values: combine per-commitment rows with vector RLC
-        for (uint256 i = 0; i < rawCount; i++) {
-            // Each commitment row contains numVectors consecutive subvectors.
-            GoldilocksExt3.Ext3 memory combined = GoldilocksExt3.zero();
-            for (uint256 c = 0; c < params.numCommitments; c++) {
-                GoldilocksExt3.Ext3 memory perCommitDot = _dotGroupedRow(
-                    eqW,
-                    vs.vectorRlc,
-                    c * params.numVectors,
-                    params.numVectors,
-                    hints,
-                    perCommitRowOffsets[c][i],
-                    isBaseField
-                );
-                _addToExt3(combined, perCommitDot);
-            }
-            _mulAddToSum(vs.theSum, combined, roundRlc[rp.outDomainSamples + i]);
-        }
-
-        // Store round constraints for FinalClaim
-""", """        RoundParams memory rp = params.rounds[0];
-        uint256 ff = params.initialSumcheckRounds;
-        uint256 eqBase = vs.foldIdx - ff;
-        GasProbe.mark(420);
-        GoldilocksExt3.Ext3[] memory eqW = WhirLinearAlgebra.eqWeightsFrom(vs.allFoldingRandomness, eqBase, ff);
-        GasProbe.mark(421);
-
-        uint256 constraintCount = rp.outDomainSamples + rawCount;
-        GoldilocksExt3.Ext3[] memory roundRlc = SpongefishWhir.geometricChallenge(ts, constraintCount);
-        GasProbe.mark(422);
-
-        // OOD values
-        for (uint256 i = 0; i < rp.outDomainSamples; i++) {
-            _mulAddToSum(vs.theSum, roundOodAnswers[i], roundRlc[i]);
-        }
-
-        // In-domain values: combine per-commitment rows with vector RLC
-        for (uint256 i = 0; i < rawCount; i++) {
-            // Each commitment row contains numVectors consecutive subvectors.
-            GoldilocksExt3.Ext3 memory combined = GoldilocksExt3.zero();
-            for (uint256 c = 0; c < params.numCommitments; c++) {
-                GoldilocksExt3.Ext3 memory perCommitDot = _dotGroupedRow(
-                    eqW,
-                    vs.vectorRlc,
-                    c * params.numVectors,
-                    params.numVectors,
-                    hints,
-                    perCommitRowOffsets[c][i],
-                    isBaseField
-                );
-                _addToExt3(combined, perCommitDot);
-            }
-            _mulAddToSum(vs.theSum, combined, roundRlc[rp.outDomainSamples + i]);
-        }
-        GasProbe.ext3Count(57, rp.outDomainSamples + rawCount);
-        GasProbe.mark(423);
-
-        // Store round constraints for FinalClaim
-""")
-P(f, """        vs.roundConstraints[1] =
-            RoundConstraintEntry({rlcCoeffs: roundRlc, univariatePoints: allEvalPoints, numVariables: rp.numVariables});
-    }
-""", """        vs.roundConstraints[1] =
-            RoundConstraintEntry({rlcCoeffs: roundRlc, univariatePoints: allEvalPoints, numVariables: rp.numVariables});
-        GasProbe.mark(424);
-    }
-""")
-P(f, """        combined = GoldilocksExt3.zero();
-        uint256 elementBytes = isBaseField ? 8 : 24;
-        uint256 subvectorBytes = eqW.length * elementBytes;
-""", """        combined = GoldilocksExt3.zero();
-        uint256 elementBytes = isBaseField ? 8 : 24;
-        uint256 subvectorBytes = eqW.length * elementBytes;
-        GasProbe.ext3Count(56, numVectors);
-""")
-P(f, """        pts = new GoldilocksExt3.Ext3[](rawCount);
-        for (uint256 i = 0; i < rawCount; i++) {
-            uint256 idx = rawIndices[i];
-""", """        pts = new GoldilocksExt3.Ext3[](rawCount);
-        GasProbe.baseCount(58, rawCount);
-        for (uint256 i = 0; i < rawCount; i++) {
-            uint256 idx = rawIndices[i];
-""")
-P(f, """        RoundParams memory rp = params.rounds[round];
-
-        // eq_weights from last folding randomness (read directly, no copy)
-        uint256 ff = (round == 0) ? params.initialSumcheckRounds : params.rounds[round - 1].sumcheckRounds;
-        uint256 eqBase = vs.foldIdx - ff;
-        GoldilocksExt3.Ext3[] memory eqW = WhirLinearAlgebra.eqWeightsFrom(vs.allFoldingRandomness, eqBase, ff);
-
-        // Constraint RLC
-        uint256 constraintCount = rp.outDomainSamples + rawCount;
-        GoldilocksExt3.Ext3[] memory roundRlc = SpongefishWhir.geometricChallenge(ts, constraintCount);
-
-        // Add OOD + in-domain constraint values to theSum
-        _addOodAndInDomainToSum(
-            vs.theSum,
-            roundOodAnswers,
-            roundRlc,
-            rp.outDomainSamples,
-            eqW,
-            hints,
-            rowOffsets,
-            rawCount,
-            numCols,
-            isBaseField
-        );
-
-        // Build evaluation points for FinalClaim
-""", """        RoundParams memory rp = params.rounds[round];
-
-        // eq_weights from last folding randomness (read directly, no copy)
-        uint256 ff = (round == 0) ? params.initialSumcheckRounds : params.rounds[round - 1].sumcheckRounds;
-        uint256 eqBase = vs.foldIdx - ff;
-        GasProbe.mark(420);
-        GoldilocksExt3.Ext3[] memory eqW = WhirLinearAlgebra.eqWeightsFrom(vs.allFoldingRandomness, eqBase, ff);
-        GasProbe.mark(421);
-
-        // Constraint RLC
-        uint256 constraintCount = rp.outDomainSamples + rawCount;
-        GoldilocksExt3.Ext3[] memory roundRlc = SpongefishWhir.geometricChallenge(ts, constraintCount);
-        GasProbe.mark(422);
-
-        // Add OOD + in-domain constraint values to theSum
-        _addOodAndInDomainToSum(
-            vs.theSum,
-            roundOodAnswers,
-            roundRlc,
-            rp.outDomainSamples,
-            eqW,
-            hints,
-            rowOffsets,
-            rawCount,
-            numCols,
-            isBaseField
-        );
-        GasProbe.mark(423);
-
-        // Build evaluation points for FinalClaim
-""")
-P(f, """        vs.roundConstraints[1 + round] =
-            RoundConstraintEntry({rlcCoeffs: roundRlc, univariatePoints: allEvalPoints, numVariables: rp.numVariables});
-    }
-""", """        vs.roundConstraints[1 + round] =
-            RoundConstraintEntry({rlcCoeffs: roundRlc, univariatePoints: allEvalPoints, numVariables: rp.numVariables});
-        GasProbe.mark(424);
-    }
-""")
-P(f, """    ) private pure returns (GoldilocksExt3.Ext3 memory result) {
-        assembly {
-            let p := 0xFFFFFFFF00000001
-            let size := mload(vec)
-            let vecData := add(vec, 0x20) // pointer to array of Ext3 pointers
-""", """    ) private pure returns (GoldilocksExt3.Ext3 memory result) {
-        GasProbe.ext3Count(59, vec.length > 0 ? 2 * (vec.length - 1) : 0);
-        assembly {
-            let p := 0xFFFFFFFF00000001
-            let size := mload(vec)
-            let vecData := add(vec, 0x20) // pointer to array of Ext3 pointers
-""")
-P(f, """        uint256 elementBytes = isBaseField ? 8 : 24;
-        if (rowOff > hints.length || numCols > (hints.length - rowOff) / elementBytes) {
-            revert InvalidMleProof();
-        }
-        assembly {
-""", """        uint256 elementBytes = isBaseField ? 8 : 24;
-        if (rowOff > hints.length || numCols > (hints.length - rowOff) / elementBytes) {
-            revert InvalidMleProof();
-        }
-        if (isBaseField) GasProbe.scalarCount(54, numCols);
-        else GasProbe.ext3Count(55, numCols);
-        assembly {
 """)
 
 # ---------------------------------------------------------------- Plonky2GateEvaluatorExt3
