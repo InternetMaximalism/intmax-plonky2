@@ -39,9 +39,7 @@ P(f, 'import {MLE_PROTOCOL_VERSION_CURRENT} from "./generated/MleWhirV2.sol";\n'
      'import {MLE_PROTOCOL_VERSION_CURRENT} from "./generated/MleWhirV2.sol";\n' + IMPORT_ROOT)
 P(f, """    function verifyCompact(bytes calldata compactProof) external view returns (bool) {
         if (block.chainid != allowedChainId) revert MleProofEngineUnavailable(block.chainid);
-        MleVerifierV2.VerificationConfig memory config = _loadConfiguration();
-        MleVerifierV2.MleProof memory proof = CompactMleProofV2.decodeForCoreVerification(compactProof, config.circuit);
-        return core.verify(proof, config);
+        return core.verifyCompactWithConfig(compactProof, _loadEncodedConfiguration());
     }
 """, """    function verifyCompact(bytes calldata compactProof) external view returns (bool) {
         GasProbe.mark(10);
@@ -49,11 +47,10 @@ P(f, """    function verifyCompact(bytes calldata compactProof) external view re
         GasProbe.mark(9002);
         GasProbe.mark(9003);
         if (block.chainid != allowedChainId) revert MleProofEngineUnavailable(block.chainid);
-        MleVerifierV2.VerificationConfig memory config = _loadConfiguration();
+        bytes memory encodedConfig = _loadEncodedConfiguration();
         GasProbe.mark(11);
-        MleVerifierV2.MleProof memory proof = CompactMleProofV2.decodeForCoreVerification(compactProof, config.circuit);
         GasProbe.mark(12);
-        bool ok = core.verify(proof, config);
+        bool ok = core.verifyCompactWithConfig(compactProof, encodedConfig);
         GasProbe.mark(13);
         GasProbe.mark(9004);
         GasProbe.mark(9005);
@@ -61,285 +58,230 @@ P(f, """    function verifyCompact(bytes calldata compactProof) external view re
     }
 """)
 P(f, """        if (block.chainid != allowedChainId) revert MleProofEngineUnavailable(block.chainid);
-        MleVerifierV2.VerificationConfig memory config = _loadConfiguration();
-        MleVerifierV2.MleProof memory proof = CompactMleProofV2.decodeForCoreVerification(compactProof, config.circuit);
-        if (!core.verify(proof, config)) revert InvalidMleVerifierConfiguration();
-        publicInputs = proof.publicInputs;
-    }
+        if (!core.verifyCompactWithConfig(compactProof, _loadEncodedConfiguration())) {
+            revert InvalidMleVerifierConfiguration();
+        }
+        publicInputs = _compactPublicInputs(compactProof, _numPublicInputs);
 """, """        GasProbe.mark(10);
         if (block.chainid != allowedChainId) revert MleProofEngineUnavailable(block.chainid);
-        MleVerifierV2.VerificationConfig memory config = _loadConfiguration();
+        bytes memory encodedConfig = _loadEncodedConfiguration();
         GasProbe.mark(11);
-        MleVerifierV2.MleProof memory proof = CompactMleProofV2.decodeForCoreVerification(compactProof, config.circuit);
         GasProbe.mark(12);
-        if (!core.verify(proof, config)) revert InvalidMleVerifierConfiguration();
+        if (!core.verifyCompactWithConfig(compactProof, encodedConfig)) {
+            revert InvalidMleVerifierConfiguration();
+        }
         GasProbe.mark(13);
-        publicInputs = proof.publicInputs;
-    }
+        publicInputs = _compactPublicInputs(compactProof, _numPublicInputs);
 """)
-P(f, """        address store = _configStore;
-        uint256 length = _configLength;
-        if (store.code.length != length + 1) revert InvalidMleVerifierConfiguration();
-        bytes memory encodedConfig = new bytes(length);
+P(f, """    function _loadEncodedConfiguration() private view returns (bytes memory encodedConfig) {
+        address store = _configStore;
+""", """    function _loadEncodedConfiguration() private view returns (bytes memory encodedConfig) {
+        GasProbe.mark(110);
+        address store = _configStore;
+""")
+P(f, """        encodedConfig = new bytes(length);
         assembly ("memory-safe") {
             extcodecopy(store, add(encodedConfig, 0x20), 1, length)
         }
-        config = abi.decode(encodedConfig, (MleVerifierV2.VerificationConfig));
-""", """        GasProbe.mark(110);
-        address store = _configStore;
-        uint256 length = _configLength;
-        if (store.code.length != length + 1) revert InvalidMleVerifierConfiguration();
-        bytes memory encodedConfig = new bytes(length);
+    }
+""", """        encodedConfig = new bytes(length);
         assembly ("memory-safe") {
             extcodecopy(store, add(encodedConfig, 0x20), 1, length)
         }
         GasProbe.mark(111);
-        config = abi.decode(encodedConfig, (MleVerifierV2.VerificationConfig));
-        GasProbe.mark(112);
-""")
-
-# ---------------------------------------------------------------- CompactMleProofV2
-f = "CompactMleProofV2.sol"
-P(f, '} from "./generated/MleWhirV2.sol";\n', '} from "./generated/MleWhirV2.sol";\n' + IMPORT_ROOT)
-P(f, """        if (encoded.length > MAX_COMPACT_PROOF_BYTES_V2 || encoded.length < 8) revert InvalidMleProof();
-
-        bytes8 magic;
-""", """        GasProbe.mark(120);
-        if (encoded.length > MAX_COMPACT_PROOF_BYTES_V2 || encoded.length < 8) revert InvalidMleProof();
-
-        bytes8 magic;
-""")
-P(f, """        proof.normInverseRoot = _readBytes32(encoded, cursor);
-        proof.whirTranscript = _readBlob(encoded, cursor, MAX_WHIR_NARG_BYTES_V2);
-        proof.whirHints = _readBlob(encoded, cursor, MAX_WHIR_HINT_BYTES_V2);
-
-        proof.logProof.rounds = new OuterLogupExt3Verifier.CoefficientRound[](circuit.degreeBits);
-        for (uint256 round = 0; round < circuit.degreeBits; ++round) {
-            proof.logProof.rounds[round].nonConstant =
-                _readExt3Vector(encoded, cursor, LOG_ROUND_DEGREE_V2, requireCanonicalLimbs);
-        }
-
-        uint256 preprocessedLength = circuit.numConstants + circuit.numRoutedWires;
-        proof.logPreprocessed = _readExt3Vector(encoded, cursor, preprocessedLength, requireCanonicalLimbs);
-        proof.logWitness = _readExt3Vector(encoded, cursor, circuit.numWires, requireCanonicalLimbs);
-        proof.logNormInverse = _readExt3Vector(encoded, cursor, normInverseLength, requireCanonicalLimbs);
-
-        proof.gateProof.rounds = new OuterLogupExt3Verifier.CoefficientRound[](circuit.degreeBits);
-        uint256 gateDegree = circuit.quotientDegreeFactor + 2;
-        for (uint256 round = 0; round < circuit.degreeBits; ++round) {
-            proof.gateProof.rounds[round].nonConstant =
-                _readExt3Vector(encoded, cursor, gateDegree, requireCanonicalLimbs);
-        }
-        proof.gatePreprocessed = _readExt3Vector(encoded, cursor, preprocessedLength, requireCanonicalLimbs);
-        proof.gateWitness = _readExt3Vector(encoded, cursor, circuit.numWires, requireCanonicalLimbs);
-
-        if (cursor.offset != encoded.length) revert InvalidMleProof();
-""", """        proof.normInverseRoot = _readBytes32(encoded, cursor);
-        GasProbe.mark(121);
-        proof.whirTranscript = _readBlob(encoded, cursor, MAX_WHIR_NARG_BYTES_V2);
-        GasProbe.mark(122);
-        proof.whirHints = _readBlob(encoded, cursor, MAX_WHIR_HINT_BYTES_V2);
-        GasProbe.mark(123);
-
-        proof.logProof.rounds = new OuterLogupExt3Verifier.CoefficientRound[](circuit.degreeBits);
-        for (uint256 round = 0; round < circuit.degreeBits; ++round) {
-            proof.logProof.rounds[round].nonConstant =
-                _readExt3Vector(encoded, cursor, LOG_ROUND_DEGREE_V2, requireCanonicalLimbs);
-        }
-        GasProbe.mark(124);
-
-        uint256 preprocessedLength = circuit.numConstants + circuit.numRoutedWires;
-        proof.logPreprocessed = _readExt3Vector(encoded, cursor, preprocessedLength, requireCanonicalLimbs);
-        proof.logWitness = _readExt3Vector(encoded, cursor, circuit.numWires, requireCanonicalLimbs);
-        proof.logNormInverse = _readExt3Vector(encoded, cursor, normInverseLength, requireCanonicalLimbs);
-        GasProbe.mark(125);
-
-        proof.gateProof.rounds = new OuterLogupExt3Verifier.CoefficientRound[](circuit.degreeBits);
-        uint256 gateDegree = circuit.quotientDegreeFactor + 2;
-        for (uint256 round = 0; round < circuit.degreeBits; ++round) {
-            proof.gateProof.rounds[round].nonConstant =
-                _readExt3Vector(encoded, cursor, gateDegree, requireCanonicalLimbs);
-        }
-        GasProbe.mark(126);
-        proof.gatePreprocessed = _readExt3Vector(encoded, cursor, preprocessedLength, requireCanonicalLimbs);
-        proof.gateWitness = _readExt3Vector(encoded, cursor, circuit.numWires, requireCanonicalLimbs);
-
-        if (cursor.offset != encoded.length) revert InvalidMleProof();
-        GasProbe.mark(127);
+    }
 """)
 
 # ---------------------------------------------------------------- MleVerifierV2
 f = "MleVerifierV2.sol"
-P(f, 'import {SpongefishWhirVerify} from "./spongefish/SpongefishWhirVerify.sol";\n',
-     'import {SpongefishWhirVerify} from "./spongefish/SpongefishWhirVerify.sol";\n' + IMPORT_ROOT)
-P(f, """    function verify(MleProof calldata proof, VerificationConfig calldata config) external view returns (bool) {
+P(f, '} from "./generated/MleWhirV2.sol";\n', '} from "./generated/MleWhirV2.sol";\n' + IMPORT_ROOT)
+P(f, """    {
         if (block.chainid != allowedChainId) revert MleProofEngineUnavailable(block.chainid);
-
-        _requirePinnedConfiguration(config);
-        uint256 width = _requireCanonicalProof(proof, config.circuit);
-
-        _verifyAtomic(proof, config, width);
-        return true;
-    }
-""", """    function verify(MleProof calldata proof, VerificationConfig calldata config) external view returns (bool) {
+        if (keccak256(encodedConfig) != verificationConfigDigest) revert InvalidMleVerifierConfiguration();
+""", """    {
         GasProbe.mark(20);
         if (block.chainid != allowedChainId) revert MleProofEngineUnavailable(block.chainid);
-
-        _requirePinnedConfiguration(config);
+        if (keccak256(encodedConfig) != verificationConfigDigest) revert InvalidMleVerifierConfiguration();
         GasProbe.mark(21);
-        uint256 width = _requireCanonicalProof(proof, config.circuit);
-        GasProbe.mark(22);
-
-        _verifyAtomic(proof, config, width);
+""")
+P(f, """        ProofView memory view_ = _parseCompact(compactProof, config.circuit);
+        _verifyView(view_, config);
+        return true;
+""", """        ProofView memory view_ = _parseCompact(compactProof, config.circuit);
+        _verifyView(view_, config);
         GasProbe.mark(55);
         return true;
+""")
+# _parseCompact
+P(f, """        uint256 length = compact.length;
+        if (length > MAX_COMPACT_PROOF_BYTES_V2 || length < 8 + 8 + 4 + 32) revert InvalidMleProof();
+""", """        GasProbe.mark(120);
+        uint256 length = compact.length;
+        if (length > MAX_COMPACT_PROOF_BYTES_V2 || length < 8 + 8 + 4 + 32) revert InvalidMleProof();
+""")
+P(f, """        view_.normInverseRoot = normInverseRoot;
+        position += 100;
+""", """        view_.normInverseRoot = normInverseRoot;
+        position += 100;
+        GasProbe.mark(121);
+""")
+P(f, """        view_.whirTranscript = whirTranscript;
+        position += transcriptLength + 4;
+""", """        view_.whirTranscript = whirTranscript;
+        position += transcriptLength + 4;
+        GasProbe.mark(122);
+""")
+P(f, """        view_.hintsLength = hintsLength;
+        position += hintsLength;
+""", """        view_.hintsLength = hintsLength;
+        position += hintsLength;
+        GasProbe.mark(123);
+""")
+P(f, """        view_.logRounds = _readExt3VectorLe(cursor, degreeBits * LOG_ROUND_DEGREE_V2);
+        cursor += 24 * degreeBits * LOG_ROUND_DEGREE_V2;
+""", """        view_.logRounds = _readExt3VectorLe(cursor, degreeBits * LOG_ROUND_DEGREE_V2);
+        cursor += 24 * degreeBits * LOG_ROUND_DEGREE_V2;
+        GasProbe.mark(124);
+""")
+P(f, """        view_.logNormInverse = _readExt3VectorLe(cursor, normInverseLength);
+        cursor += 24 * normInverseLength;
+""", """        view_.logNormInverse = _readExt3VectorLe(cursor, normInverseLength);
+        cursor += 24 * normInverseLength;
+        GasProbe.mark(125);
+""")
+P(f, """        view_.gateRounds = _readExt3VectorLe(cursor, degreeBits * gateDegree);
+        cursor += 24 * degreeBits * gateDegree;
+""", """        view_.gateRounds = _readExt3VectorLe(cursor, degreeBits * gateDegree);
+        cursor += 24 * degreeBits * gateDegree;
+        GasProbe.mark(126);
+""")
+P(f, """        view_.gateWitness = _readExt3VectorLe(cursor, numWires);
+    }
+""", """        view_.gateWitness = _readExt3VectorLe(cursor, numWires);
+        GasProbe.mark(127);
     }
 """)
-P(f, """        uint256 indexBits = _constituentIndexBits(width);
-        DerivedState memory derived = _deriveInitialTranscript(proof, config, width, indexBits);
-""", """        uint256 indexBits = _constituentIndexBits(width);
-        DerivedState memory derived = _deriveInitialTranscript(proof, config, width, indexBits);
+# _verifyView
+P(f, """    function _verifyView(ProofView memory view_, VerificationConfig calldata config) private view {
+        CircuitConfigV2.Parameters calldata circuit = config.circuit;
+""", """    function _verifyView(ProofView memory view_, VerificationConfig calldata config) private view {
+        GasProbe.mark(22);
+        CircuitConfigV2.Parameters calldata circuit = config.circuit;
+""")
+P(f, """        DerivedState memory derived = _deriveInitialTranscript(view_, config, width, indexBits);
+
+        OuterLogupExt3Verifier.VerificationKey memory outerVk""", """        DerivedState memory derived = _deriveInitialTranscript(view_, config, width, indexBits);
         GasProbe.mark(23);
-""")
-P(f, """            gateWitness: _copyCanonicalExt3(proof.gateWitness)
-        });
-        uint256[] memory kIs = config.kIs;
-""", """            gateWitness: _copyCanonicalExt3(proof.gateWitness)
-        });
-        GasProbe.mark(24);
-        uint256[] memory kIs = config.kIs;
-""")
-P(f, """        OuterLogupExt3Verifier.SumcheckProof memory gateProof = _copyCanonicalSumcheck(proof.gateProof);
 
-        GoldilocksExt3.Ext3[] memory logPoint;
-        GoldilocksExt3.Ext3[] memory gatePoint;
-        GoldilocksExt3.Ext3 memory gateFinalClaim;
-        (logPoint, gatePoint, gateFinalClaim, derived.transcript) = OuterLogupExt3Verifier.verifyPrevalidated(
-            logProof, gateProof, outerVk, derived.logChallenges, logTerminal, derived.transcript
+        OuterLogupExt3Verifier.VerificationKey memory outerVk""")
+P(f, """        (logPoint, gatePoint, gateFinalClaim) = _runOuter(view_, outerVk, derived);
+""", """        GasProbe.mark(24);
+        (logPoint, gatePoint, gateFinalClaim) = _runOuter(view_, outerVk, derived);
+""")
+P(f, """        (logPoint, gatePoint, gateFinalClaim, derived.transcript) = OuterLogupExt3Verifier.verifyPrevalidated(
+            logProof, gateProof, outerVk, derived.logChallenges, terminal, derived.transcript
         );
-
-        GoldilocksExt3.Ext3[][] memory indexPoints =
-            _absorbClaimsAndSampleIndices(derived.transcript, usedClaims, indexBits);
-        (GoldilocksExt3.Ext3[] memory evaluations, bytes memory evaluationMask) =
-            PackedClaimExt3.foldV2UsedCellsPrevalidatedInternal(usedClaims, uint256(1) << indexBits, indexPoints);
-""", """        OuterLogupExt3Verifier.SumcheckProof memory gateProof = _copyCanonicalSumcheck(proof.gateProof);
-        GasProbe.mark(25);
-
-        GoldilocksExt3.Ext3[] memory logPoint;
-        GoldilocksExt3.Ext3[] memory gatePoint;
-        GoldilocksExt3.Ext3 memory gateFinalClaim;
+""", """        GasProbe.mark(25);
         (logPoint, gatePoint, gateFinalClaim, derived.transcript) = OuterLogupExt3Verifier.verifyPrevalidated(
-            logProof, gateProof, outerVk, derived.logChallenges, logTerminal, derived.transcript
+            logProof, gateProof, outerVk, derived.logChallenges, terminal, derived.transcript
         );
         GasProbe.mark(26);
-
-        GoldilocksExt3.Ext3[][] memory indexPoints =
-            _absorbClaimsAndSampleIndices(derived.transcript, usedClaims, indexBits);
-        GasProbe.mark(27);
-        (GoldilocksExt3.Ext3[] memory evaluations, bytes memory evaluationMask) =
-            PackedClaimExt3.foldV2UsedCellsPrevalidatedInternal(usedClaims, uint256(1) << indexBits, indexPoints);
-        GasProbe.mark(28);
 """)
-P(f, """        roots[2] = proof.normInverseRoot;
+P(f, """        GoldilocksExt3.Ext3[][] memory indexPoints = _absorbClaimsAndSampleIndices(derived.transcript, view_, indexBits);
+""", """        GoldilocksExt3.Ext3[][] memory indexPoints = _absorbClaimsAndSampleIndices(derived.transcript, view_, indexBits);
+        GasProbe.mark(27);
+""")
+P(f, """        if (
+            evaluations.length != NUM_PCS_CLAIMS_V2 || evaluationMask.length != 1
+                || evaluationMask[0] != PACKED_BOUND_CLAIM_MASK_V2
+        ) revert InvalidMleVerifierConfiguration();
+
+        SpongefishWhirVerify.WhirParams memory whir = config.whir;
+""", """        GasProbe.mark(28);
+        if (
+            evaluations.length != NUM_PCS_CLAIMS_V2 || evaluationMask.length != 1
+                || evaluationMask[0] != PACKED_BOUND_CLAIM_MASK_V2
+        ) revert InvalidMleVerifierConfiguration();
+
+        SpongefishWhirVerify.WhirParams memory whir = config.whir;
+""")
+P(f, """        bytes calldata hints = _hintsSlice(view_);
         bool whirAccepted = SpongefishWhirVerify.verifyWhirProofBound(
-""", """        roots[2] = proof.normInverseRoot;
+""", """        bytes calldata hints = _hintsSlice(view_);
         GasProbe.mark(29);
         bool whirAccepted = SpongefishWhirVerify.verifyWhirProofBound(
 """)
 P(f, """        if (!whirAccepted) revert InvalidMleProof();
 
-        GoldilocksExt3.Ext3[] memory constants = new GoldilocksExt3.Ext3[](config.circuit.numConstants);
-        for (uint256 i = 0; i < constants.length; ++i) {
-            constants[i] = usedClaims.gatePreprocessed[i];
-        }
-        uint256[4] memory publicInputsHash = PoseidonPublicInputsHash.hashNoPad(proof.publicInputs);
+        uint256[4] memory publicInputsHash = PoseidonPublicInputsHash.hashNoPad(view_.publicInputs);
         GoldilocksExt3.Ext3 memory gateEvaluation = Plonky2GateEvaluatorExt3.evalCombinedPrevalidated(
-            usedClaims.gateWitness,
-            constants,
-            publicInputsHash,
-            derived.gateAlpha,
-            config.gates,
-            config.circuit.numSelectors
-        );
-        OuterLogupExt3Verifier.verifyGateTerminal(derived.gateTau, gatePoint, gateEvaluation, gateFinalClaim);
-    }
 """, """        GasProbe.mark(50);
         if (!whirAccepted) revert InvalidMleProof();
 
-        GoldilocksExt3.Ext3[] memory constants = new GoldilocksExt3.Ext3[](config.circuit.numConstants);
-        for (uint256 i = 0; i < constants.length; ++i) {
-            constants[i] = usedClaims.gatePreprocessed[i];
-        }
         GasProbe.mark(51);
-        uint256[4] memory publicInputsHash = PoseidonPublicInputsHash.hashNoPad(proof.publicInputs);
+        uint256[4] memory publicInputsHash = PoseidonPublicInputsHash.hashNoPad(view_.publicInputs);
         GasProbe.mark(52);
         GoldilocksExt3.Ext3 memory gateEvaluation = Plonky2GateEvaluatorExt3.evalCombinedPrevalidated(
-            usedClaims.gateWitness,
-            constants,
-            publicInputsHash,
-            derived.gateAlpha,
-            config.gates,
-            config.circuit.numSelectors
-        );
-        GasProbe.mark(53);
+""")
+P(f, """        OuterLogupExt3Verifier.verifyGateTerminal(derived.gateTau, gatePoint, gateEvaluation, gateFinalClaim);
+    }
+""", """        GasProbe.mark(53);
         OuterLogupExt3Verifier.verifyGateTerminal(derived.gateTau, gatePoint, gateEvaluation, gateFinalClaim);
         GasProbe.mark(54);
     }
 """)
-P(f, """    ) private view returns (DerivedState memory derived) {
-        derived.transcript = TranscriptV2.create();
-""", """    ) private view returns (DerivedState memory derived) {
-        GasProbe.mark(30);
-        derived.transcript = TranscriptV2.create();
+# _deriveInitialTranscript
+P(f, """        TranscriptV2.Transcript memory transcript = derived.transcript;
+        TranscriptV2.init(transcript);
+""", """        GasProbe.mark(30);
+        TranscriptV2.Transcript memory transcript = derived.transcript;
+        TranscriptV2.init(transcript);
 """)
-P(f, """        TranscriptV2.absorbBytes(derived.transcript, abi.encodePacked(proof.witnessRoot));
-
-        TranscriptV2.domainSeparate(derived.transcript, DOMAIN_PUBLIC_INPUT_AGGREGATION_CHALLENGE_V2);
-""", """        TranscriptV2.absorbBytes(derived.transcript, abi.encodePacked(proof.witnessRoot));
-        GasProbe.mark(31);
-
-        TranscriptV2.domainSeparate(derived.transcript, DOMAIN_PUBLIC_INPUT_AGGREGATION_CHALLENGE_V2);
+P(f, """        TranscriptV2.domainSeparate(transcript, DOMAIN_PUBLIC_INPUT_AGGREGATION_CHALLENGE_V2);
+        TranscriptV2.squeezeExt3Into(transcript, derived.logChallenges.eta);
+""", """        GasProbe.mark(31);
+        TranscriptV2.domainSeparate(transcript, DOMAIN_PUBLIC_INPUT_AGGREGATION_CHALLENGE_V2);
+        TranscriptV2.squeezeExt3Into(transcript, derived.logChallenges.eta);
 """)
-P(f, """        derived.logChallenges.xi = TranscriptV2.squeezeExt3(derived.transcript);
-
-        TranscriptV2.domainSeparate(derived.transcript, DOMAIN_OUTER_RELATION_CHALLENGES_V2);
-        derived.logChallenges.lambda = TranscriptV2.squeezeExt3(derived.transcript);
-        derived.logChallenges.rho = TranscriptV2.squeezeExt3(derived.transcript);
-        derived.logChallenges.kappa = TranscriptV2.squeezeExt3(derived.transcript);
-        derived.logChallenges.tau = _squeezeExt3Vector(derived.transcript, config.circuit.degreeBits);
-        derived.gateAlpha = TranscriptV2.squeezeExt3(derived.transcript);
-        derived.gateTau = _squeezeExt3Vector(derived.transcript, config.circuit.degreeBits);
+P(f, """        TranscriptV2.domainSeparate(transcript, DOMAIN_OUTER_RELATION_CHALLENGES_V2);
+        TranscriptV2.squeezeExt3Into(transcript, derived.logChallenges.lambda);
+        TranscriptV2.squeezeExt3Into(transcript, derived.logChallenges.rho);
+        TranscriptV2.squeezeExt3Into(transcript, derived.logChallenges.kappa);
+        derived.logChallenges.tau = _squeezeExt3Vector(transcript, config.circuit.degreeBits);
+        TranscriptV2.squeezeExt3Into(transcript, derived.gateAlpha);
+        derived.gateTau = _squeezeExt3Vector(transcript, config.circuit.degreeBits);
     }
-""", """        derived.logChallenges.xi = TranscriptV2.squeezeExt3(derived.transcript);
-        GasProbe.mark(32);
-
-        TranscriptV2.domainSeparate(derived.transcript, DOMAIN_OUTER_RELATION_CHALLENGES_V2);
-        derived.logChallenges.lambda = TranscriptV2.squeezeExt3(derived.transcript);
-        derived.logChallenges.rho = TranscriptV2.squeezeExt3(derived.transcript);
-        derived.logChallenges.kappa = TranscriptV2.squeezeExt3(derived.transcript);
+""", """        GasProbe.mark(32);
+        TranscriptV2.domainSeparate(transcript, DOMAIN_OUTER_RELATION_CHALLENGES_V2);
+        TranscriptV2.squeezeExt3Into(transcript, derived.logChallenges.lambda);
+        TranscriptV2.squeezeExt3Into(transcript, derived.logChallenges.rho);
+        TranscriptV2.squeezeExt3Into(transcript, derived.logChallenges.kappa);
         GasProbe.mark(33);
-        derived.logChallenges.tau = _squeezeExt3Vector(derived.transcript, config.circuit.degreeBits);
+        derived.logChallenges.tau = _squeezeExt3Vector(transcript, config.circuit.degreeBits);
         GasProbe.mark(34);
-        derived.gateAlpha = TranscriptV2.squeezeExt3(derived.transcript);
+        TranscriptV2.squeezeExt3Into(transcript, derived.gateAlpha);
         GasProbe.mark(35);
-        derived.gateTau = _squeezeExt3Vector(derived.transcript, config.circuit.degreeBits);
+        derived.gateTau = _squeezeExt3Vector(transcript, config.circuit.degreeBits);
         GasProbe.mark(36);
     }
 """)
+# _absorbClaimsAndSampleIndices
 P(f, """    ) private pure returns (GoldilocksExt3.Ext3[][] memory points) {
         TranscriptV2.domainSeparate(transcript, DOMAIN_CONSTITUENT_CLAIMS_V2);
 """, """    ) private pure returns (GoldilocksExt3.Ext3[][] memory points) {
         GasProbe.mark(40);
         TranscriptV2.domainSeparate(transcript, DOMAIN_CONSTITUENT_CLAIMS_V2);
 """)
-P(f, """        TranscriptV2.domainSeparate(transcript, DOMAIN_CONSTITUENT_INDEX_V2);
+P(f, """        TranscriptV2.absorbExt3Vec(transcript, new GoldilocksExt3.Ext3[](0));
+        TranscriptV2.domainSeparate(transcript, DOMAIN_CONSTITUENT_INDEX_V2);
 
         points = new GoldilocksExt3.Ext3[][](NUM_PCS_TERMINAL_POINTS_V2);
         for (uint256 point = 0; point < points.length; ++point) {
             points[point] = _squeezeExt3Vector(transcript, indexBits);
         }
     }
-""", """        TranscriptV2.domainSeparate(transcript, DOMAIN_CONSTITUENT_INDEX_V2);
+""", """        TranscriptV2.absorbExt3Vec(transcript, new GoldilocksExt3.Ext3[](0));
+        TranscriptV2.domainSeparate(transcript, DOMAIN_CONSTITUENT_INDEX_V2);
         GasProbe.mark(41);
 
         points = new GoldilocksExt3.Ext3[][](NUM_PCS_TERMINAL_POINTS_V2);
@@ -349,47 +291,57 @@ P(f, """        TranscriptV2.domainSeparate(transcript, DOMAIN_CONSTITUENT_INDEX
         GasProbe.mark(42);
     }
 """)
-P(f, """        if (keccak256(abi.encode(config)) != verificationConfigDigest) {
-            revert InvalidMleVerifierConfiguration();
-        }
-""", """        bytes memory encodedConfig = abi.encode(config);
-        GasProbe.keccakCount(1, 1, encodedConfig.length);
-        if (keccak256(encodedConfig) != verificationConfigDigest) {
-            revert InvalidMleVerifierConfiguration();
-        }
-""")
 
 # ---------------------------------------------------------------- TranscriptV2
 f = "TranscriptV2.sol"
 P(f, '} from "./generated/MleWhirV2.sol";\n', '} from "./generated/MleWhirV2.sol";\n' + IMPORT_ROOT)
-P(f, """        if (payload.length > type(uint64).max) revert InvalidMleProof();
-        transcript.state = keccak256(
-            abi.encodePacked(
-                TRANSCRIPT_FRAME_PREFIX_V2, transcript.state, bytes1(tag), _u64Le(uint64(payload.length)), payload
-            )
-        );
-        transcript.squeezeCounter = 0;
-""", """        if (payload.length > type(uint64).max) revert InvalidMleProof();
-        bytes memory frame = abi.encodePacked(
-            TRANSCRIPT_FRAME_PREFIX_V2, transcript.state, bytes1(tag), _u64Le(uint64(payload.length)), payload
-        );
-        GasProbe.keccakCount(10, 1, frame.length);
-        transcript.state = keccak256(frame);
-        transcript.squeezeCounter = 0;
+P(f, """        if (count > type(uint64).max) revert InvalidMleProof();
+        assembly ("memory-safe") {
+            let payloadLength := add(8, mul(count, 24))
+            let frame := mload(0x40)
+            let payload := add(frame, FRAME_HEADER_LENGTH)
+""", """        if (count > type(uint64).max) revert InvalidMleProof();
+        GasProbe.keccakCount(11, 1, FRAME_HEADER_LENGTH + 8 + 24 * count);
+        assembly ("memory-safe") {
+            let payloadLength := add(8, mul(count, 24))
+            let frame := mload(0x40)
+            let payload := add(frame, FRAME_HEADER_LENGTH)
 """)
-P(f, """    function _closeFrame(Transcript memory transcript, bytes memory frame) private pure {
-        transcript.state = keccak256(frame);
-""", """    function _closeFrame(Transcript memory transcript, bytes memory frame) private pure {
-        GasProbe.keccakCount(11, 1, frame.length);
-        transcript.state = keccak256(frame);
+P(f, """    function squeezeChallenge(Transcript memory transcript) internal pure returns (uint256 challenge) {
+        assembly ("memory-safe") {
+""", """    function squeezeChallenge(Transcript memory transcript) internal pure returns (uint256 challenge) {
+        GasProbe.keccakCount(12, 1, 64);
+        assembly ("memory-safe") {
 """)
-P(f, """        bytes32 digest = keccak256(
-            abi.encodePacked(TRANSCRIPT_CHALLENGE_PREFIX_V2, transcript.state, _u64Le(transcript.squeezeCounter))
-        );
-""", """        GasProbe.keccakCount(12, 1, 64);
-        bytes32 digest = keccak256(
-            abi.encodePacked(TRANSCRIPT_CHALLENGE_PREFIX_V2, transcript.state, _u64Le(transcript.squeezeCounter))
-        );
+P(f, """    function squeezeExt3Into(Transcript memory transcript, GoldilocksExt3.Ext3 memory destination) internal pure {
+        assembly ("memory-safe") {
+""", """    function squeezeExt3Into(Transcript memory transcript, GoldilocksExt3.Ext3 memory destination) internal pure {
+        GasProbe.keccakCount(12, 3, 64);
+        assembly ("memory-safe") {
+""")
+P(f, """        uint256 payloadLength = payload.length;
+        if (payloadLength > type(uint64).max) revert InvalidMleProof();
+        assembly ("memory-safe") {
+""", """        uint256 payloadLength = payload.length;
+        if (payloadLength > type(uint64).max) revert InvalidMleProof();
+        GasProbe.keccakCount(10, 1, FRAME_HEADER_LENGTH + payloadLength);
+        assembly ("memory-safe") {
+""")
+P(f, """        uint256 payloadLength
+    ) private pure {
+        assembly ("memory-safe") {
+""", """        uint256 payloadLength
+    ) private pure {
+        GasProbe.keccakCount(10, 1, FRAME_HEADER_LENGTH + payloadLength);
+        assembly ("memory-safe") {
+""")
+P(f, """        uint256[] memory source
+    ) private pure {
+        assembly ("memory-safe") {
+""", """        uint256[] memory source
+    ) private pure {
+        GasProbe.keccakCount(11, 1, FRAME_HEADER_LENGTH + 8 + count * elementBytes);
+        assembly ("memory-safe") {
 """)
 
 # ---------------------------------------------------------------- OuterLogupExt3Verifier
