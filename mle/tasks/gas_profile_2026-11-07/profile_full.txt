@@ -1,0 +1,1232 @@
+=== test_max_coreVerify ===
+  CODESIZE core pinned 21954 14200
+  CALLDATA bytes zeros nonzeros 197316 73233 124083
+  INTRINSIC legacy floor7623 2299260 5716650
+  BEGIN max core.verify
+  END max core.verify
+  TOTAL staticcall gas / return bytes 11579304 32
+  marks 214; probe overhead/mark 0 (cal [])
+  counting run mark sequence identical: True
+  TOTAL keccak256 invocations 3,463 hashing 265,496 bytes; Ext3 full mul-equivalents 6,584 (library mul 375, square 0, inv 1); Ext3*scalar 4,224 (library mulScalar 39); base mulmod (glPow/inv/univariate) 1,115
+    keccak site  1 config digest               :       1 invocations,     7,456 bytes
+    keccak site 10 TranscriptV2 absorbFrame    :      61 invocations,     5,435 bytes
+    keccak site 11 TranscriptV2 vec frame      :      34 invocations,    21,418 bytes
+    keccak site 12 TranscriptV2 squeeze        :     228 invocations,    14,592 bytes
+    keccak site 30 WHIR challenge-index bytes  :     252 invocations,    11,844 bytes
+    keccak site 31 WHIR leaf row hash          :     142 invocations,    32,256 bytes
+    keccak site 32 WHIR PoW                    :       9 invocations,       576 bytes
+    keccak site 33 Merkle node                 :   2,506 invocations,   160,384 bytes
+    keccak site 34 Keccak256Chain absorb       :      85 invocations,     4,720 bytes
+    keccak site 35 Keccak256Chain squeeze block:     145 invocations,     6,815 bytes
+  -- frame totals (corrected) --
+  C   raw   11,578,124 corrected   11,578,124  keccak 3,463/265,496B ext3 6,584 scalar 4,224
+  O   raw    2,229,599 corrected    2,229,599  keccak 143/14,846B ext3 2,419 scalar 119
+  W   raw    5,658,606 corrected    5,658,606  keccak 3,139/216,595B ext3 2,817 scalar 2,318
+  PH  raw      139,889 corrected      139,889  keccak 0/0B ext3 0 scalar 0
+  G   raw    1,086,318 corrected    1,086,318  keccak 0/0B ext3 708 scalar 1,787
+  PS  raw      863,203 corrected      863,203  keccak 0/0B ext3 600 scalar 1,787
+  GT  raw       50,512 corrected       50,512  keccak 0/0B ext3 27 scalar 0
+  -- spans --
+  C      20->21          13,119  C: _requirePinnedConfiguration (abi.encode(config) + keccak)   [keccak 1/7,456B ext3 0 sc 0]
+  C      21->22          21,609  C: _requireCanonicalProof (shape checks)
+  C      22->30           2,839  C: indexBits + call derive
+  C      30->31          26,785  C: transcript: statement absorption (digest, PIs, metadata, config digest, WHIR ids, 2 roots)   [keccak 16/1,515B ext3 0 sc 0]
+  C      31->32          26,780  C: transcript: eta/beta/gamma squeeze + normInverse root + xi squeeze   [keccak 17/1,226B ext3 0 sc 0]
+  C      32->33          17,160  C: transcript: lambda/rho/kappa squeeze   [keccak 10/665B ext3 0 sc 0]
+  C      33->34          75,063  C: transcript: tau vector squeeze (degreeBits Ext3)   [keccak 39/2,496B ext3 0 sc 0]
+  C      34->35           5,514  C: transcript: gate alpha squeeze   [keccak 3/192B ext3 0 sc 0]
+  C      35->36          75,396  C: transcript: gate tau vector squeeze (degreeBits Ext3)   [keccak 39/2,496B ext3 0 sc 0]
+  C      36->23             218  C: derive return
+  C      23->24         169,208  C: canonical limb copy of 5 terminal vectors (calldata->memory)
+  C      24->25         101,829  C: VK/terminal structs + canonical copy of 2 sumcheck proofs
+  C      25->26       2,775,040  C: OuterLogupExt3Verifier.verifyPrevalidated DELEGATECALL (incl. ABI encode/decode)   [keccak 143/14,846B ext3 2,419 sc 119]
+  O      60->1000         9,217  O: prologue (alloc points)
+  O    1000->1001        35,619  O: round 0: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1001->1002        31,602  O: round 0: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1002->1010           493  O: round 0: loop tail
+  O    1010->1011        35,691  O: round 1: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1011->1012        31,788  O: round 1: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1012->1020           495  O: round 1: loop tail
+  O    1020->1021        35,789  O: round 2: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1021->1022        31,975  O: round 2: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1022->1030           497  O: round 2: loop tail
+  O    1030->1031        35,887  O: round 3: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1031->1032        32,161  O: round 3: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1032->1040           500  O: round 3: loop tail
+  O    1040->1041        35,985  O: round 4: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1041->1042        32,348  O: round 4: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1042->1050           502  O: round 4: loop tail
+  O    1050->1051        36,084  O: round 5: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1051->1052        32,533  O: round 5: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1052->1060           504  O: round 5: loop tail
+  O    1060->1061        36,182  O: round 6: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1061->1062        32,721  O: round 6: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1062->1070           506  O: round 6: loop tail
+  O    1070->1071        36,280  O: round 7: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1071->1072        32,907  O: round 7: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1072->1080           508  O: round 7: loop tail
+  O    1080->1081        36,379  O: round 8: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1081->1082        33,093  O: round 8: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1082->1090           510  O: round 8: loop tail
+  O    1090->1091        36,478  O: round 9: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1091->1092        33,279  O: round 9: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1092->1100           512  O: round 9: loop tail
+  O    1100->1101        36,576  O: round 10: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1101->1102        33,465  O: round 10: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1102->1110           515  O: round 10: loop tail
+  O    1110->1111        36,674  O: round 11: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1111->1112        33,652  O: round 11: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1112->1120           517  O: round 11: loop tail
+  O    1120->1121        36,773  O: round 12: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1121->1122        33,838  O: round 12: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1122->63             416  O: round 12: loop exit
+  O      63->70             687  O: -> terminal
+  O      70->71          45,355  O: terminal: eq(tau, point)   [keccak 0/0B ext3 26 sc 0]
+  O      71->72          23,188  O: terminal: subgroup evaluation   [keccak 0/0B ext3 13 sc 13]
+  O      72->73       1,221,054  O: terminal: per-routed-wire denominators/norms/adjugates/logUp accumulate (80 wires)   [keccak 0/0B ext3 1,920 sc 80]
+  O      73->74           1,976  O: terminal: final combine   [keccak 0/0B ext3 2 sc 0]
+  O      74->75             522  O: -> PI binding
+  O      75->76           4,643  O: terminal: PI binding loop   [keccak 0/0B ext3 1 sc 0]
+  O      76->77          18,683  O: terminal: PI eq-row evaluation   [keccak 0/0B ext3 14 sc 0]
+  O      77->64           2,040  O: terminal: xi*binding add + eq check + return   [keccak 0/0B ext3 1 sc 0]
+  C      26->40             216  C: -> absorb claims
+  C      40->41         327,827  C: absorb 5 constituent claim vectors (+empty vec, 2 domains)   [keccak 8/14,937B ext3 0 sc 0]
+  C      41->42          91,308  C: squeeze 2 index points (2*indexBits Ext3)   [keccak 48/3,072B ext3 0 sc 0]
+  C      42->27             204  C: absorb return
+  C      27->28         553,740  C: PackedClaimExt3 fold of 5 used cells (internal)   [keccak 0/0B ext3 613 sc 0]
+  C      28->29          39,474  C: WHIR param prep (config.whir copy, packed points, roots)
+  C      29->50       5,849,724  C: SpongefishWhirVerify.verifyWhirProofBound DELEGATECALL (incl. ABI encode/decode)   [keccak 3,139/216,595B ext3 2,817 sc 2,318]
+  W     200->201         28,063  W: _validateParameters
+  W     201->202          9,000  W: initTranscript (3 absorbs) + VerifyState alloc   [keccak 3/192B ext3 0 sc 0]
+  W     202->210            503  W: -> phaseInitial
+  W     210->211         31,729  W: initial: 3 roots + OOD point squeezes + OOD answers (absorbs)   [keccak 21/1,116B ext3 0 sc 0]
+  W     211->212         15,741  W: initial: 6 evaluation claims read/absorb + mask check   [keccak 6/336B ext3 0 sc 0]
+  W     212->213         21,368  W: initial: cross-commitment OOD matrix read   [keccak 6/336B ext3 0 sc 0]
+  W     213->214         15,323  W: initial: vector RLC + constraint RLC geometric challenges   [keccak 8/376B ext3 6 sc 0]
+  W     214->215         14,028  W: initial: theSum accumulation   [keccak 0/0B ext3 20 sc 0]
+  W     215->203            252  W: initial: return
+  W     203->204         30,984  W: initial sumcheck (initialSumcheckRounds rounds)   [keccak 24/1,200B ext3 8 sc 0]
+  W     204->300            530  W: -> rounds
+  W     300->301          1,421  W: round 0: root read   [keccak 1/64B ext3 0 sc 0]
+  W     301->302          4,572  W: round 0: OOD point squeeze   [keccak 4/188B ext3 0 sc 0]
+  W     302->303          3,145  W: round 0: OOD answers absorb   [keccak 1/56B ext3 0 sc 0]
+  W     303->304          2,688  W: round 0: PoW   [keccak 3/151B ext3 0 sc 0]
+  W     304->305         95,348  W: round 0: challenge indices (squeeze+sort)   [keccak 87/4,089B ext3 0 sc 0]
+  W     305->450         22,915  W: round 0 split: commitment 0: vec prefix + leaf row hashing   [keccak 29/3,712B ext3 0 sc 0]
+  W     450->451        305,845  W: round 0 split: commitment 0: Merkle authentication   [keccak 524/33,536B ext3 0 sc 0]
+  W     451->460         22,283  W: round 0 split: commitment 1: vec prefix + leaf row hashing   [keccak 29/3,712B ext3 0 sc 0]
+  W     460->461        305,894  W: round 0 split: commitment 1: Merkle authentication   [keccak 524/33,536B ext3 0 sc 0]
+  W     461->470         22,321  W: round 0 split: commitment 2: vec prefix + leaf row hashing   [keccak 29/3,712B ext3 0 sc 0]
+  W     470->471        305,945  W: round 0 split: commitment 2: Merkle authentication   [keccak 524/33,536B ext3 0 sc 0]
+  W     471->306            364  W: round 0 split: commitments done
+  W     306->307        105,736  W: round 0: eval points (glPow)
+  W     307->420            485  W: 307->420
+  W     420->421         24,772  W: constraint values: eq weights (2^foldingFactor)   [keccak 0/0B ext3 30 sc 0]
+  W     421->422         36,759  W: constraint values: constraint RLC geometric challenge   [keccak 4/188B ext3 29 sc 0]
+  W     422->423        856,599  W: constraint values: OOD + in-domain dot products into theSum   [keccak 0/0B ext3 117 sc 1,392]
+  W     423->424         19,875  W: constraint values: store round constraints
+  W     424->309            416  W: constraint values: return
+  W     309->310         31,430  W: round 0: sumcheck (4 rounds)   [keccak 24/1,200B ext3 8 sc 0]
+  W     310->320            548  W: round 0: loop tail
+  W     320->321          1,437  W: round 1: root read   [keccak 1/64B ext3 0 sc 0]
+  W     321->322          4,663  W: round 1: OOD point squeeze   [keccak 4/188B ext3 0 sc 0]
+  W     322->323          3,226  W: round 1: OOD answers absorb   [keccak 1/56B ext3 0 sc 0]
+  W     323->324          2,736  W: round 1: PoW   [keccak 3/151B ext3 0 sc 0]
+  W     324->325         55,053  W: round 1: challenge indices (squeeze+sort)   [keccak 57/2,679B ext3 0 sc 0]
+  W     325->326         15,386  W: round 1: vec prefix + leaf row hashing   [keccak 19/7,296B ext3 0 sc 0]
+  W     326->327         69,794  W: round 1: eval points (glPow)
+  W     327->328        198,524  W: round 1: Merkle authentication   [keccak 345/22,080B ext3 0 sc 0]
+  W     328->420            743  W: round 1: -> constraint values
+  W     420->421         25,492  W: constraint values: eq weights (2^foldingFactor)   [keccak 0/0B ext3 30 sc 0]
+  W     421->422         26,586  W: constraint values: constraint RLC geometric challenge   [keccak 4/188B ext3 19 sc 0]
+  W     422->423        307,331  W: constraint values: OOD + in-domain dot products into theSum   [keccak 0/0B ext3 324 sc 0]
+  W     423->424         13,906  W: constraint values: store round constraints
+  W     424->329            412  W: constraint values: return
+  W     329->330         31,530  W: round 1: sumcheck (4 rounds)   [keccak 24/1,200B ext3 8 sc 0]
+  W     330->340            548  W: round 1: loop tail
+  W     340->341          1,443  W: round 2: root read   [keccak 1/64B ext3 0 sc 0]
+  W     341->342          4,692  W: round 2: OOD point squeeze   [keccak 4/188B ext3 0 sc 0]
+  W     342->343          3,255  W: round 2: OOD answers absorb   [keccak 1/56B ext3 0 sc 0]
+  W     343->344          2,752  W: round 2: PoW   [keccak 3/151B ext3 0 sc 0]
+  W     344->345         41,536  W: round 2: challenge indices (squeeze+sort)   [keccak 42/1,974B ext3 0 sc 0]
+  W     345->346         11,949  W: round 2: vec prefix + leaf row hashing   [keccak 14/5,376B ext3 0 sc 0]
+  W     346->347         49,948  W: round 2: eval points (glPow)
+  W     347->348        140,333  W: round 2: Merkle authentication   [keccak 241/15,424B ext3 0 sc 0]
+  W     348->420            748  W: round 2: -> constraint values
+  W     420->421         25,773  W: constraint values: eq weights (2^foldingFactor)   [keccak 0/0B ext3 30 sc 0]
+  W     421->422         21,093  W: constraint values: constraint RLC geometric challenge   [keccak 4/188B ext3 14 sc 0]
+  W     422->423        226,844  W: constraint values: OOD + in-domain dot products into theSum   [keccak 0/0B ext3 239 sc 0]
+  W     423->424         10,843  W: constraint values: store round constraints
+  W     424->349            416  W: constraint values: return
+  W     349->350         31,611  W: round 2: sumcheck (4 rounds)   [keccak 24/1,200B ext3 8 sc 0]
+  W     350->360            548  W: round 2: loop tail
+  W     360->361          1,448  W: round 3: root read   [keccak 1/64B ext3 0 sc 0]
+  W     361->362          4,718  W: round 3: OOD point squeeze   [keccak 4/188B ext3 0 sc 0]
+  W     362->363          3,276  W: round 3: OOD answers absorb   [keccak 1/56B ext3 0 sc 0]
+  W     363->364          2,767  W: round 3: PoW   [keccak 3/151B ext3 0 sc 0]
+  W     364->365         37,764  W: round 3: challenge indices (squeeze+sort)   [keccak 36/1,692B ext3 0 sc 0]
+  W     365->366         10,603  W: round 3: vec prefix + leaf row hashing   [keccak 12/4,608B ext3 0 sc 0]
+  W     366->367         42,026  W: round 3: eval points (glPow)
+  W     367->368        113,633  W: round 3: Merkle authentication   [keccak 193/12,352B ext3 0 sc 0]
+  W     368->420            752  W: round 3: -> constraint values
+  W     420->421         26,013  W: constraint values: eq weights (2^foldingFactor)   [keccak 0/0B ext3 30 sc 0]
+  W     421->422         18,959  W: constraint values: constraint RLC geometric challenge   [keccak 4/188B ext3 12 sc 0]
+  W     422->423        194,671  W: constraint values: OOD + in-domain dot products into theSum   [keccak 0/0B ext3 205 sc 0]
+  W     423->424          9,657  W: constraint values: store round constraints
+  W     424->369            420  W: constraint values: return
+  W     369->370         40,567  W: round 3: sumcheck (4 rounds)   [keccak 36/1,804B ext3 8 sc 0]
+  W     370->500            392  W: round 3: loop tail
+  W     500->501          5,483  W: final: read final vector   [keccak 2/112B ext3 0 sc 0]
+  W     501->502          2,620  W: final: PoW   [keccak 3/151B ext3 0 sc 0]
+  W     502->503         28,380  W: final: challenge indices (sort/dedup)   [keccak 30/1,410B ext3 0 sc 0]
+  W     503->504         26,581  W: final: eq weights   [keccak 0/0B ext3 30 sc 0]
+  W     504->505         33,206  W: final: eval points (glPow)
+  W     505->506          7,155  W: final: vec prefix + leaf row hashing   [keccak 10/3,840B ext3 0 sc 0]
+  W     506->507         91,595  W: final: Merkle authentication   [keccak 155/9,920B ext3 0 sc 0]
+  W     507->508        195,435  W: final: per-query final-vector openings (reduceWithPowers + dotEqWithRow)   [keccak 0/0B ext3 180 sc 0]
+  W     508->205            289  W: final: return
+  W     205->206          8,179  W: final sumcheck   [keccak 6/300B ext3 2 sc 0]
+  W     206->520            252  W: -> final claim
+  W     520->521          2,122  W: finalClaim: foldEval of final vector   [keccak 0/0B ext3 2 sc 0]
+  W     521->522         10,062  W: finalClaim: Ext3 inverse + mul   [keccak 0/0B ext3 2 sc 0]
+  W     522->523        934,531  W: finalClaim: subtract round constraints (mleEvaluateUnivariate per OOD/in-domain point)   [keccak 0/0B ext3 1,328 sc 926]
+  W     523->524        135,709  W: finalClaim: eq(evalPoint, r) for 2 points + expectedRlc   [keccak 0/0B ext3 128 sc 0]
+  W     524->207          1,003  W: finalClaim: eq check + return
+  W     207->208            305  W: EOF checks
+  C      50->51           2,744  C: constants prefix copy
+  C      51->52         144,857  C: PoseidonPublicInputsHash.hashNoPad DELEGATECALL
+  PH    850->851        139,889  PH: Poseidon hash_no_pad of public inputs
+  C      52->53       1,185,663  C: Plonky2GateEvaluatorExt3.evalCombinedPrevalidated DELEGATECALL   [keccak 0/0B ext3 708 sc 1,787]
+  G     600->610            818  G: prologue
+  G     610->611          7,004  G: gate row 0: selector filter   [keccak 0/0B ext3 4 sc 0]
+  G     611->612          1,331  G: gate row 0: evaluate unfiltered constraints
+  G     612->613            925  G: gate row 0: alpha reduce
+  G     613->614          1,306  G: gate row 0: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     614->620            508  G: gate row 0: loop tail
+  G     620->621          7,002  G: gate row 1: selector filter   [keccak 0/0B ext3 4 sc 0]
+  G     621->622          3,730  G: gate row 1: evaluate unfiltered constraints
+  G     622->623          3,214  G: gate row 1: alpha reduce   [keccak 0/0B ext3 2 sc 0]
+  G     623->624          1,308  G: gate row 1: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     624->630            509  G: gate row 1: loop tail
+  G     630->631          7,016  G: gate row 2: selector filter   [keccak 0/0B ext3 4 sc 0]
+  G     631->632          6,719  G: gate row 2: evaluate unfiltered constraints
+  G     632->633          5,490  G: gate row 2: alpha reduce   [keccak 0/0B ext3 4 sc 0]
+  G     633->634          1,310  G: gate row 2: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     634->640            510  G: gate row 2: loop tail
+  G     640->641          7,035  G: gate row 3: selector filter   [keccak 0/0B ext3 4 sc 0]
+  G     641->642         42,837  G: gate row 3: evaluate unfiltered constraints   [keccak 0/0B ext3 60 sc 0]
+  G     642->643         23,724  G: gate row 3: alpha reduce   [keccak 0/0B ext3 20 sc 0]
+  G     643->644          1,317  G: gate row 3: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     644->650            511  G: gate row 3: loop tail
+  G     650->651          2,592  G: gate row 4: selector filter   [keccak 0/0B ext3 1 sc 0]
+  G     651->653        958,009  G: gate row 4: Poseidon DELEGATECALL (evalPoseidonReduced)   [keccak 0/0B ext3 600 sc 1,787]
+  PS    700->701         13,392  PS: Poseidon: load constants + allocate state/scratch/constraints
+  PS    701->702          6,465  PS: Poseidon: swap/delta constraints   [keccak 0/0B ext3 5 sc 0]
+  PS    702->703        239,684  PS: Poseidon: first 4 full rounds (S-box + MDS)   [keccak 0/0B ext3 192 sc 580]
+  PS    703->704         42,418  PS: Poseidon: partial first constant layer + MDS partial init   [keccak 0/0B ext3 0 sc 121]
+  PS    704->705        246,462  PS: Poseidon: 22 partial rounds   [keccak 0/0B ext3 88 sc 506]
+  PS    705->706        243,722  PS: Poseidon: second 4 full rounds   [keccak 0/0B ext3 192 sc 580]
+  PS    706->707          3,804  PS: Poseidon: output constraints
+  PS    707->708         67,256  PS: Poseidon: alpha-reduce 123 constraints   [keccak 0/0B ext3 123 sc 0]
+  G     653->654          1,273  G: gate row 4: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     654->601            320  G: last row exit
+  C      53->54          71,611  C: OuterLogupExt3Verifier.verifyGateTerminal DELEGATECALL   [keccak 0/0B ext3 27 sc 0]
+  GT    800->801          9,692  GT: canonical checks
+  GT    801->802         40,820  GT: eq(tau, point) * gateEval + compare   [keccak 0/0B ext3 27 sc 0]
+  C      54->55             196  C: tail
+
+=== test_max_verifyCompact ===
+  CODESIZE core pinned 21954 14200
+  CALLDATA bytes zeros nonzeros 129380 6343 123037
+  INTRINSIC legacy floor7623 2014964 5005910
+  BEGIN max verifyCompact
+  END max verifyCompact
+  TOTAL staticcall gas / return bytes 12737514 32
+  marks 234; probe overhead/mark 207 (cal [207, 207, 207])
+  counting run mark sequence identical: True
+  TOTAL keccak256 invocations 3,463 hashing 265,496 bytes; Ext3 full mul-equivalents 6,584 (library mul 375, square 0, inv 1); Ext3*scalar 4,224 (library mulScalar 39); base mulmod (glPow/inv/univariate) 1,115
+    keccak site  1 config digest               :       1 invocations,     7,456 bytes
+    keccak site 10 TranscriptV2 absorbFrame    :      61 invocations,     5,435 bytes
+    keccak site 11 TranscriptV2 vec frame      :      34 invocations,    21,418 bytes
+    keccak site 12 TranscriptV2 squeeze        :     228 invocations,    14,592 bytes
+    keccak site 30 WHIR challenge-index bytes  :     252 invocations,    11,844 bytes
+    keccak site 31 WHIR leaf row hash          :     142 invocations,    32,256 bytes
+    keccak site 32 WHIR PoW                    :       9 invocations,       576 bytes
+    keccak site 33 Merkle node                 :   2,506 invocations,   160,384 bytes
+    keccak site 34 Keccak256Chain absorb       :      85 invocations,     4,720 bytes
+    keccak site 35 Keccak256Chain squeeze block:     145 invocations,     6,815 bytes
+  -- frame totals (corrected) --
+  P   raw   12,736,420 corrected   12,688,189  keccak 3,463/265,496B ext3 6,584 scalar 4,224
+  C   raw   11,578,124 corrected   11,534,033  keccak 3,463/265,496B ext3 6,584 scalar 4,224
+  O   raw    2,229,599 corrected    2,219,456  keccak 143/14,846B ext3 2,419 scalar 119
+  W   raw    5,658,606 corrected    5,638,527  keccak 3,139/216,595B ext3 2,817 scalar 2,318
+  PH  raw      139,889 corrected      139,682  keccak 0/0B ext3 0 scalar 0
+  G   raw    1,086,318 corrected    1,079,280  keccak 0/0B ext3 708 scalar 1,787
+  PS  raw      863,203 corrected      861,547  keccak 0/0B ext3 600 scalar 1,787
+  GT  raw       50,512 corrected       50,098  keccak 0/0B ext3 27 scalar 0
+  -- spans --
+  P      10->9001            18  P: entry -> calibration
+  P    9001->9002             0  P: 9001->9002
+  P    9002->9003             0  P: 9002->9003
+  P    9003->110            962  P: chainid check
+  P     110->111          2,878  P: _loadConfiguration: EXTCODECOPY config store
+  P     111->112         18,968  P: _loadConfiguration: abi.decode(VerificationConfig)
+  P     112->11              37  P: tail of _loadConfiguration
+  P      11->120          1,332  P: call into compact decoder
+  P     120->121          4,077  P: decode: magic/version/width/digest/PIs/roots
+  P     121->122          1,734  P: decode: whirTranscript blob copy
+  P     122->123         62,051  P: decode: whirHints blob copy (calldatacopy)
+  P     123->124         57,304  P: decode: logProof rounds (Ext3 vectors)
+  P     124->125        285,452  P: decode: logPreprocessed/logWitness/logNormInverse
+  P     125->126        110,858  P: decode: gateProof rounds
+  P     126->127        171,075  P: decode: gatePreprocessed/gateWitness + EOF check
+  P     127->12              96  P: decoder return
+  P      12->13      11,971,338  P: core.verify external call (ABI-encode proof+config, STATICCALL, callee, return)   [keccak 3,463/265,496B ext3 6,584 sc 4,224]
+  C      20->21          12,912  C: _requirePinnedConfiguration (abi.encode(config) + keccak)   [keccak 1/7,456B ext3 0 sc 0]
+  C      21->22          21,402  C: _requireCanonicalProof (shape checks)
+  C      22->30           2,632  C: indexBits + call derive
+  C      30->31          26,578  C: transcript: statement absorption (digest, PIs, metadata, config digest, WHIR ids, 2 roots)   [keccak 16/1,515B ext3 0 sc 0]
+  C      31->32          26,573  C: transcript: eta/beta/gamma squeeze + normInverse root + xi squeeze   [keccak 17/1,226B ext3 0 sc 0]
+  C      32->33          16,953  C: transcript: lambda/rho/kappa squeeze   [keccak 10/665B ext3 0 sc 0]
+  C      33->34          74,856  C: transcript: tau vector squeeze (degreeBits Ext3)   [keccak 39/2,496B ext3 0 sc 0]
+  C      34->35           5,307  C: transcript: gate alpha squeeze   [keccak 3/192B ext3 0 sc 0]
+  C      35->36          75,189  C: transcript: gate tau vector squeeze (degreeBits Ext3)   [keccak 39/2,496B ext3 0 sc 0]
+  C      36->23              11  C: derive return
+  C      23->24         169,001  C: canonical limb copy of 5 terminal vectors (calldata->memory)
+  C      24->25         101,622  C: VK/terminal structs + canonical copy of 2 sumcheck proofs
+  C      25->26       2,764,483  C: OuterLogupExt3Verifier.verifyPrevalidated DELEGATECALL (incl. ABI encode/decode)   [keccak 143/14,846B ext3 2,419 sc 119]
+  O      60->1000         9,010  O: prologue (alloc points)
+  O    1000->1001        35,412  O: round 0: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1001->1002        31,395  O: round 0: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1002->1010           286  O: round 0: loop tail
+  O    1010->1011        35,484  O: round 1: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1011->1012        31,581  O: round 1: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1012->1020           288  O: round 1: loop tail
+  O    1020->1021        35,582  O: round 2: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1021->1022        31,768  O: round 2: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1022->1030           290  O: round 2: loop tail
+  O    1030->1031        35,680  O: round 3: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1031->1032        31,954  O: round 3: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1032->1040           293  O: round 3: loop tail
+  O    1040->1041        35,778  O: round 4: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1041->1042        32,141  O: round 4: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1042->1050           295  O: round 4: loop tail
+  O    1050->1051        35,877  O: round 5: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1051->1052        32,326  O: round 5: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1052->1060           297  O: round 5: loop tail
+  O    1060->1061        35,975  O: round 6: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1061->1062        32,514  O: round 6: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1062->1070           299  O: round 6: loop tail
+  O    1070->1071        36,073  O: round 7: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1071->1072        32,700  O: round 7: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1072->1080           301  O: round 7: loop tail
+  O    1080->1081        36,172  O: round 8: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1081->1082        32,886  O: round 8: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1082->1090           303  O: round 8: loop tail
+  O    1090->1091        36,271  O: round 9: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1091->1092        33,072  O: round 9: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1092->1100           305  O: round 9: loop tail
+  O    1100->1101        36,369  O: round 10: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1101->1102        33,258  O: round 10: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1102->1110           308  O: round 10: loop tail
+  O    1110->1111        36,467  O: round 11: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1111->1112        33,445  O: round 11: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1112->1120           310  O: round 11: loop tail
+  O    1120->1121        36,566  O: round 12: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1121->1122        33,631  O: round 12: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1122->63             209  O: round 12: loop exit
+  O      63->70             480  O: -> terminal
+  O      70->71          45,148  O: terminal: eq(tau, point)   [keccak 0/0B ext3 26 sc 0]
+  O      71->72          22,981  O: terminal: subgroup evaluation   [keccak 0/0B ext3 13 sc 13]
+  O      72->73       1,220,847  O: terminal: per-routed-wire denominators/norms/adjugates/logUp accumulate (80 wires)   [keccak 0/0B ext3 1,920 sc 80]
+  O      73->74           1,769  O: terminal: final combine   [keccak 0/0B ext3 2 sc 0]
+  O      74->75             315  O: -> PI binding
+  O      75->76           4,436  O: terminal: PI binding loop   [keccak 0/0B ext3 1 sc 0]
+  O      76->77          18,476  O: terminal: PI eq-row evaluation   [keccak 0/0B ext3 14 sc 0]
+  O      77->64           1,833  O: terminal: xi*binding add + eq check + return   [keccak 0/0B ext3 1 sc 0]
+  C      26->40               9  C: -> absorb claims
+  C      40->41         327,620  C: absorb 5 constituent claim vectors (+empty vec, 2 domains)   [keccak 8/14,937B ext3 0 sc 0]
+  C      41->42          91,101  C: squeeze 2 index points (2*indexBits Ext3)   [keccak 48/3,072B ext3 0 sc 0]
+  C      42->27              -3  C: absorb return
+  C      27->28         553,533  C: PackedClaimExt3 fold of 5 used cells (internal)   [keccak 0/0B ext3 613 sc 0]
+  C      28->29          39,267  C: WHIR param prep (config.whir copy, packed points, roots)
+  C      29->50       5,829,231  C: SpongefishWhirVerify.verifyWhirProofBound DELEGATECALL (incl. ABI encode/decode)   [keccak 3,139/216,595B ext3 2,817 sc 2,318]
+  W     200->201         27,856  W: _validateParameters
+  W     201->202          8,793  W: initTranscript (3 absorbs) + VerifyState alloc   [keccak 3/192B ext3 0 sc 0]
+  W     202->210            296  W: -> phaseInitial
+  W     210->211         31,522  W: initial: 3 roots + OOD point squeezes + OOD answers (absorbs)   [keccak 21/1,116B ext3 0 sc 0]
+  W     211->212         15,534  W: initial: 6 evaluation claims read/absorb + mask check   [keccak 6/336B ext3 0 sc 0]
+  W     212->213         21,161  W: initial: cross-commitment OOD matrix read   [keccak 6/336B ext3 0 sc 0]
+  W     213->214         15,116  W: initial: vector RLC + constraint RLC geometric challenges   [keccak 8/376B ext3 6 sc 0]
+  W     214->215         13,821  W: initial: theSum accumulation   [keccak 0/0B ext3 20 sc 0]
+  W     215->203             45  W: initial: return
+  W     203->204         30,777  W: initial sumcheck (initialSumcheckRounds rounds)   [keccak 24/1,200B ext3 8 sc 0]
+  W     204->300            323  W: -> rounds
+  W     300->301          1,214  W: round 0: root read   [keccak 1/64B ext3 0 sc 0]
+  W     301->302          4,365  W: round 0: OOD point squeeze   [keccak 4/188B ext3 0 sc 0]
+  W     302->303          2,938  W: round 0: OOD answers absorb   [keccak 1/56B ext3 0 sc 0]
+  W     303->304          2,481  W: round 0: PoW   [keccak 3/151B ext3 0 sc 0]
+  W     304->305         95,141  W: round 0: challenge indices (squeeze+sort)   [keccak 87/4,089B ext3 0 sc 0]
+  W     305->450         22,708  W: round 0 split: commitment 0: vec prefix + leaf row hashing   [keccak 29/3,712B ext3 0 sc 0]
+  W     450->451        305,638  W: round 0 split: commitment 0: Merkle authentication   [keccak 524/33,536B ext3 0 sc 0]
+  W     451->460         22,076  W: round 0 split: commitment 1: vec prefix + leaf row hashing   [keccak 29/3,712B ext3 0 sc 0]
+  W     460->461        305,687  W: round 0 split: commitment 1: Merkle authentication   [keccak 524/33,536B ext3 0 sc 0]
+  W     461->470         22,114  W: round 0 split: commitment 2: vec prefix + leaf row hashing   [keccak 29/3,712B ext3 0 sc 0]
+  W     470->471        305,738  W: round 0 split: commitment 2: Merkle authentication   [keccak 524/33,536B ext3 0 sc 0]
+  W     471->306            157  W: round 0 split: commitments done
+  W     306->307        105,529  W: round 0: eval points (glPow)
+  W     307->420            278  W: 307->420
+  W     420->421         24,565  W: constraint values: eq weights (2^foldingFactor)   [keccak 0/0B ext3 30 sc 0]
+  W     421->422         36,552  W: constraint values: constraint RLC geometric challenge   [keccak 4/188B ext3 29 sc 0]
+  W     422->423        856,392  W: constraint values: OOD + in-domain dot products into theSum   [keccak 0/0B ext3 117 sc 1,392]
+  W     423->424         19,668  W: constraint values: store round constraints
+  W     424->309            209  W: constraint values: return
+  W     309->310         31,223  W: round 0: sumcheck (4 rounds)   [keccak 24/1,200B ext3 8 sc 0]
+  W     310->320            341  W: round 0: loop tail
+  W     320->321          1,230  W: round 1: root read   [keccak 1/64B ext3 0 sc 0]
+  W     321->322          4,456  W: round 1: OOD point squeeze   [keccak 4/188B ext3 0 sc 0]
+  W     322->323          3,019  W: round 1: OOD answers absorb   [keccak 1/56B ext3 0 sc 0]
+  W     323->324          2,529  W: round 1: PoW   [keccak 3/151B ext3 0 sc 0]
+  W     324->325         54,846  W: round 1: challenge indices (squeeze+sort)   [keccak 57/2,679B ext3 0 sc 0]
+  W     325->326         15,179  W: round 1: vec prefix + leaf row hashing   [keccak 19/7,296B ext3 0 sc 0]
+  W     326->327         69,587  W: round 1: eval points (glPow)
+  W     327->328        198,317  W: round 1: Merkle authentication   [keccak 345/22,080B ext3 0 sc 0]
+  W     328->420            536  W: round 1: -> constraint values
+  W     420->421         25,285  W: constraint values: eq weights (2^foldingFactor)   [keccak 0/0B ext3 30 sc 0]
+  W     421->422         26,379  W: constraint values: constraint RLC geometric challenge   [keccak 4/188B ext3 19 sc 0]
+  W     422->423        307,124  W: constraint values: OOD + in-domain dot products into theSum   [keccak 0/0B ext3 324 sc 0]
+  W     423->424         13,699  W: constraint values: store round constraints
+  W     424->329            205  W: constraint values: return
+  W     329->330         31,323  W: round 1: sumcheck (4 rounds)   [keccak 24/1,200B ext3 8 sc 0]
+  W     330->340            341  W: round 1: loop tail
+  W     340->341          1,236  W: round 2: root read   [keccak 1/64B ext3 0 sc 0]
+  W     341->342          4,485  W: round 2: OOD point squeeze   [keccak 4/188B ext3 0 sc 0]
+  W     342->343          3,048  W: round 2: OOD answers absorb   [keccak 1/56B ext3 0 sc 0]
+  W     343->344          2,545  W: round 2: PoW   [keccak 3/151B ext3 0 sc 0]
+  W     344->345         41,329  W: round 2: challenge indices (squeeze+sort)   [keccak 42/1,974B ext3 0 sc 0]
+  W     345->346         11,742  W: round 2: vec prefix + leaf row hashing   [keccak 14/5,376B ext3 0 sc 0]
+  W     346->347         49,741  W: round 2: eval points (glPow)
+  W     347->348        140,126  W: round 2: Merkle authentication   [keccak 241/15,424B ext3 0 sc 0]
+  W     348->420            541  W: round 2: -> constraint values
+  W     420->421         25,566  W: constraint values: eq weights (2^foldingFactor)   [keccak 0/0B ext3 30 sc 0]
+  W     421->422         20,886  W: constraint values: constraint RLC geometric challenge   [keccak 4/188B ext3 14 sc 0]
+  W     422->423        226,637  W: constraint values: OOD + in-domain dot products into theSum   [keccak 0/0B ext3 239 sc 0]
+  W     423->424         10,636  W: constraint values: store round constraints
+  W     424->349            209  W: constraint values: return
+  W     349->350         31,404  W: round 2: sumcheck (4 rounds)   [keccak 24/1,200B ext3 8 sc 0]
+  W     350->360            341  W: round 2: loop tail
+  W     360->361          1,241  W: round 3: root read   [keccak 1/64B ext3 0 sc 0]
+  W     361->362          4,511  W: round 3: OOD point squeeze   [keccak 4/188B ext3 0 sc 0]
+  W     362->363          3,069  W: round 3: OOD answers absorb   [keccak 1/56B ext3 0 sc 0]
+  W     363->364          2,560  W: round 3: PoW   [keccak 3/151B ext3 0 sc 0]
+  W     364->365         37,557  W: round 3: challenge indices (squeeze+sort)   [keccak 36/1,692B ext3 0 sc 0]
+  W     365->366         10,396  W: round 3: vec prefix + leaf row hashing   [keccak 12/4,608B ext3 0 sc 0]
+  W     366->367         41,819  W: round 3: eval points (glPow)
+  W     367->368        113,426  W: round 3: Merkle authentication   [keccak 193/12,352B ext3 0 sc 0]
+  W     368->420            545  W: round 3: -> constraint values
+  W     420->421         25,806  W: constraint values: eq weights (2^foldingFactor)   [keccak 0/0B ext3 30 sc 0]
+  W     421->422         18,752  W: constraint values: constraint RLC geometric challenge   [keccak 4/188B ext3 12 sc 0]
+  W     422->423        194,464  W: constraint values: OOD + in-domain dot products into theSum   [keccak 0/0B ext3 205 sc 0]
+  W     423->424          9,450  W: constraint values: store round constraints
+  W     424->369            213  W: constraint values: return
+  W     369->370         40,360  W: round 3: sumcheck (4 rounds)   [keccak 36/1,804B ext3 8 sc 0]
+  W     370->500            185  W: round 3: loop tail
+  W     500->501          5,276  W: final: read final vector   [keccak 2/112B ext3 0 sc 0]
+  W     501->502          2,413  W: final: PoW   [keccak 3/151B ext3 0 sc 0]
+  W     502->503         28,173  W: final: challenge indices (sort/dedup)   [keccak 30/1,410B ext3 0 sc 0]
+  W     503->504         26,374  W: final: eq weights   [keccak 0/0B ext3 30 sc 0]
+  W     504->505         32,999  W: final: eval points (glPow)
+  W     505->506          6,948  W: final: vec prefix + leaf row hashing   [keccak 10/3,840B ext3 0 sc 0]
+  W     506->507         91,388  W: final: Merkle authentication   [keccak 155/9,920B ext3 0 sc 0]
+  W     507->508        195,228  W: final: per-query final-vector openings (reduceWithPowers + dotEqWithRow)   [keccak 0/0B ext3 180 sc 0]
+  W     508->205             82  W: final: return
+  W     205->206          7,972  W: final sumcheck   [keccak 6/300B ext3 2 sc 0]
+  W     206->520             45  W: -> final claim
+  W     520->521          1,915  W: finalClaim: foldEval of final vector   [keccak 0/0B ext3 2 sc 0]
+  W     521->522          9,855  W: finalClaim: Ext3 inverse + mul   [keccak 0/0B ext3 2 sc 0]
+  W     522->523        934,324  W: finalClaim: subtract round constraints (mleEvaluateUnivariate per OOD/in-domain point)   [keccak 0/0B ext3 1,328 sc 926]
+  W     523->524        135,502  W: finalClaim: eq(evalPoint, r) for 2 points + expectedRlc   [keccak 0/0B ext3 128 sc 0]
+  W     524->207            796  W: finalClaim: eq check + return
+  W     207->208             98  W: EOF checks
+  C      50->51           2,537  C: constants prefix copy
+  C      51->52         144,236  C: PoseidonPublicInputsHash.hashNoPad DELEGATECALL
+  PH    850->851        139,682  PH: Poseidon hash_no_pad of public inputs
+  C      52->53       1,178,211  C: Plonky2GateEvaluatorExt3.evalCombinedPrevalidated DELEGATECALL   [keccak 0/0B ext3 708 sc 1,787]
+  G     600->610            611  G: prologue
+  G     610->611          6,797  G: gate row 0: selector filter   [keccak 0/0B ext3 4 sc 0]
+  G     611->612          1,124  G: gate row 0: evaluate unfiltered constraints
+  G     612->613            718  G: gate row 0: alpha reduce
+  G     613->614          1,099  G: gate row 0: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     614->620            301  G: gate row 0: loop tail
+  G     620->621          6,795  G: gate row 1: selector filter   [keccak 0/0B ext3 4 sc 0]
+  G     621->622          3,523  G: gate row 1: evaluate unfiltered constraints
+  G     622->623          3,007  G: gate row 1: alpha reduce   [keccak 0/0B ext3 2 sc 0]
+  G     623->624          1,101  G: gate row 1: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     624->630            302  G: gate row 1: loop tail
+  G     630->631          6,809  G: gate row 2: selector filter   [keccak 0/0B ext3 4 sc 0]
+  G     631->632          6,512  G: gate row 2: evaluate unfiltered constraints
+  G     632->633          5,283  G: gate row 2: alpha reduce   [keccak 0/0B ext3 4 sc 0]
+  G     633->634          1,103  G: gate row 2: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     634->640            303  G: gate row 2: loop tail
+  G     640->641          6,828  G: gate row 3: selector filter   [keccak 0/0B ext3 4 sc 0]
+  G     641->642         42,630  G: gate row 3: evaluate unfiltered constraints   [keccak 0/0B ext3 60 sc 0]
+  G     642->643         23,517  G: gate row 3: alpha reduce   [keccak 0/0B ext3 20 sc 0]
+  G     643->644          1,110  G: gate row 3: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     644->650            304  G: gate row 3: loop tail
+  G     650->651          2,385  G: gate row 4: selector filter   [keccak 0/0B ext3 1 sc 0]
+  G     651->653        955,939  G: gate row 4: Poseidon DELEGATECALL (evalPoseidonReduced)   [keccak 0/0B ext3 600 sc 1,787]
+  PS    700->701         13,185  PS: Poseidon: load constants + allocate state/scratch/constraints
+  PS    701->702          6,258  PS: Poseidon: swap/delta constraints   [keccak 0/0B ext3 5 sc 0]
+  PS    702->703        239,477  PS: Poseidon: first 4 full rounds (S-box + MDS)   [keccak 0/0B ext3 192 sc 580]
+  PS    703->704         42,211  PS: Poseidon: partial first constant layer + MDS partial init   [keccak 0/0B ext3 0 sc 121]
+  PS    704->705        246,255  PS: Poseidon: 22 partial rounds   [keccak 0/0B ext3 88 sc 506]
+  PS    705->706        243,515  PS: Poseidon: second 4 full rounds   [keccak 0/0B ext3 192 sc 580]
+  PS    706->707          3,597  PS: Poseidon: output constraints
+  PS    707->708         67,049  PS: Poseidon: alpha-reduce 123 constraints   [keccak 0/0B ext3 123 sc 0]
+  G     653->654          1,066  G: gate row 4: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     654->601            113  G: last row exit
+  C      53->54          70,783  C: OuterLogupExt3Verifier.verifyGateTerminal DELEGATECALL   [keccak 0/0B ext3 27 sc 0]
+  GT    800->801          9,485  GT: canonical checks
+  GT    801->802         40,613  GT: eq(tau, point) * gateEval + compare   [keccak 0/0B ext3 27 sc 0]
+  C      54->55             -11  C: tail
+  P      13->9004             9  P: after core.verify
+  P    9004->9005             0  P: 9004->9005
+
+=== test_max_verifyCompactPublicInputs ===
+  CODESIZE core pinned 21954 14200
+  CALLDATA bytes zeros nonzeros 129380 6343 123037
+  INTRINSIC legacy floor7623 2014964 5005910
+  BEGIN max PI
+  END max PI
+  TOTAL staticcall gas / return bytes 12736575 96
+  marks 229; probe overhead/mark 0 (cal [])
+  counting run mark sequence identical: True
+  TOTAL keccak256 invocations 3,463 hashing 265,496 bytes; Ext3 full mul-equivalents 6,584 (library mul 375, square 0, inv 1); Ext3*scalar 4,224 (library mulScalar 39); base mulmod (glPow/inv/univariate) 1,115
+    keccak site  1 config digest               :       1 invocations,     7,456 bytes
+    keccak site 10 TranscriptV2 absorbFrame    :      61 invocations,     5,435 bytes
+    keccak site 11 TranscriptV2 vec frame      :      34 invocations,    21,418 bytes
+    keccak site 12 TranscriptV2 squeeze        :     228 invocations,    14,592 bytes
+    keccak site 30 WHIR challenge-index bytes  :     252 invocations,    11,844 bytes
+    keccak site 31 WHIR leaf row hash          :     142 invocations,    32,256 bytes
+    keccak site 32 WHIR PoW                    :       9 invocations,       576 bytes
+    keccak site 33 Merkle node                 :   2,506 invocations,   160,384 bytes
+    keccak site 34 Keccak256Chain absorb       :      85 invocations,     4,720 bytes
+    keccak site 35 Keccak256Chain squeeze block:     145 invocations,     6,815 bytes
+  -- frame totals (corrected) --
+  C   raw   11,578,124 corrected   11,578,124  keccak 3,463/265,496B ext3 6,584 scalar 4,224
+  O   raw    2,229,599 corrected    2,229,599  keccak 143/14,846B ext3 2,419 scalar 119
+  W   raw    5,658,606 corrected    5,658,606  keccak 3,139/216,595B ext3 2,817 scalar 2,318
+  PH  raw      139,889 corrected      139,889  keccak 0/0B ext3 0 scalar 0
+  G   raw    1,086,318 corrected    1,086,318  keccak 0/0B ext3 708 scalar 1,787
+  PS  raw      863,203 corrected      863,203  keccak 0/0B ext3 600 scalar 1,787
+  GT  raw       50,512 corrected       50,512  keccak 0/0B ext3 27 scalar 0
+  -- spans --
+  P      10->110          1,184  P: 10->110
+  P     110->111          3,085  P: _loadConfiguration: EXTCODECOPY config store
+  P     111->112         19,175  P: _loadConfiguration: abi.decode(VerificationConfig)
+  P     112->11             244  P: tail of _loadConfiguration
+  P      11->120          1,539  P: call into compact decoder
+  P     120->121          4,284  P: decode: magic/version/width/digest/PIs/roots
+  P     121->122          1,941  P: decode: whirTranscript blob copy
+  P     122->123         62,258  P: decode: whirHints blob copy (calldatacopy)
+  P     123->124         57,511  P: decode: logProof rounds (Ext3 vectors)
+  P     124->125        285,659  P: decode: logPreprocessed/logWitness/logNormInverse
+  P     125->126        111,065  P: decode: gateProof rounds
+  P     126->127        171,282  P: decode: gatePreprocessed/gateWitness + EOF check
+  P     127->12             306  P: decoder return
+  P      12->13      12,015,867  P: core.verify external call (ABI-encode proof+config, STATICCALL, callee, return)   [keccak 3,463/265,496B ext3 6,584 sc 4,224]
+  C      20->21          13,119  C: _requirePinnedConfiguration (abi.encode(config) + keccak)   [keccak 1/7,456B ext3 0 sc 0]
+  C      21->22          21,609  C: _requireCanonicalProof (shape checks)
+  C      22->30           2,839  C: indexBits + call derive
+  C      30->31          26,785  C: transcript: statement absorption (digest, PIs, metadata, config digest, WHIR ids, 2 roots)   [keccak 16/1,515B ext3 0 sc 0]
+  C      31->32          26,780  C: transcript: eta/beta/gamma squeeze + normInverse root + xi squeeze   [keccak 17/1,226B ext3 0 sc 0]
+  C      32->33          17,160  C: transcript: lambda/rho/kappa squeeze   [keccak 10/665B ext3 0 sc 0]
+  C      33->34          75,063  C: transcript: tau vector squeeze (degreeBits Ext3)   [keccak 39/2,496B ext3 0 sc 0]
+  C      34->35           5,514  C: transcript: gate alpha squeeze   [keccak 3/192B ext3 0 sc 0]
+  C      35->36          75,396  C: transcript: gate tau vector squeeze (degreeBits Ext3)   [keccak 39/2,496B ext3 0 sc 0]
+  C      36->23             218  C: derive return
+  C      23->24         169,208  C: canonical limb copy of 5 terminal vectors (calldata->memory)
+  C      24->25         101,829  C: VK/terminal structs + canonical copy of 2 sumcheck proofs
+  C      25->26       2,775,040  C: OuterLogupExt3Verifier.verifyPrevalidated DELEGATECALL (incl. ABI encode/decode)   [keccak 143/14,846B ext3 2,419 sc 119]
+  O      60->1000         9,217  O: prologue (alloc points)
+  O    1000->1001        35,619  O: round 0: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1001->1002        31,602  O: round 0: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1002->1010           493  O: round 0: loop tail
+  O    1010->1011        35,691  O: round 1: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1011->1012        31,788  O: round 1: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1012->1020           495  O: round 1: loop tail
+  O    1020->1021        35,789  O: round 2: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1021->1022        31,975  O: round 2: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1022->1030           497  O: round 2: loop tail
+  O    1030->1031        35,887  O: round 3: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1031->1032        32,161  O: round 3: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1032->1040           500  O: round 3: loop tail
+  O    1040->1041        35,985  O: round 4: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1041->1042        32,348  O: round 4: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1042->1050           502  O: round 4: loop tail
+  O    1050->1051        36,084  O: round 5: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1051->1052        32,533  O: round 5: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1052->1060           504  O: round 5: loop tail
+  O    1060->1061        36,182  O: round 6: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1061->1062        32,721  O: round 6: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1062->1070           506  O: round 6: loop tail
+  O    1070->1071        36,280  O: round 7: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1071->1072        32,907  O: round 7: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1072->1080           508  O: round 7: loop tail
+  O    1080->1081        36,379  O: round 8: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1081->1082        33,093  O: round 8: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1082->1090           510  O: round 8: loop tail
+  O    1090->1091        36,478  O: round 9: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1091->1092        33,279  O: round 9: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1092->1100           512  O: round 9: loop tail
+  O    1100->1101        36,576  O: round 10: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1101->1102        33,465  O: round 10: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1102->1110           515  O: round 10: loop tail
+  O    1110->1111        36,674  O: round 11: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1111->1112        33,652  O: round 11: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1112->1120           517  O: round 11: loop tail
+  O    1120->1121        36,773  O: round 12: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1121->1122        33,838  O: round 12: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1122->63             416  O: round 12: loop exit
+  O      63->70             687  O: -> terminal
+  O      70->71          45,355  O: terminal: eq(tau, point)   [keccak 0/0B ext3 26 sc 0]
+  O      71->72          23,188  O: terminal: subgroup evaluation   [keccak 0/0B ext3 13 sc 13]
+  O      72->73       1,221,054  O: terminal: per-routed-wire denominators/norms/adjugates/logUp accumulate (80 wires)   [keccak 0/0B ext3 1,920 sc 80]
+  O      73->74           1,976  O: terminal: final combine   [keccak 0/0B ext3 2 sc 0]
+  O      74->75             522  O: -> PI binding
+  O      75->76           4,643  O: terminal: PI binding loop   [keccak 0/0B ext3 1 sc 0]
+  O      76->77          18,683  O: terminal: PI eq-row evaluation   [keccak 0/0B ext3 14 sc 0]
+  O      77->64           2,040  O: terminal: xi*binding add + eq check + return   [keccak 0/0B ext3 1 sc 0]
+  C      26->40             216  C: -> absorb claims
+  C      40->41         327,827  C: absorb 5 constituent claim vectors (+empty vec, 2 domains)   [keccak 8/14,937B ext3 0 sc 0]
+  C      41->42          91,308  C: squeeze 2 index points (2*indexBits Ext3)   [keccak 48/3,072B ext3 0 sc 0]
+  C      42->27             204  C: absorb return
+  C      27->28         553,740  C: PackedClaimExt3 fold of 5 used cells (internal)   [keccak 0/0B ext3 613 sc 0]
+  C      28->29          39,474  C: WHIR param prep (config.whir copy, packed points, roots)
+  C      29->50       5,849,724  C: SpongefishWhirVerify.verifyWhirProofBound DELEGATECALL (incl. ABI encode/decode)   [keccak 3,139/216,595B ext3 2,817 sc 2,318]
+  W     200->201         28,063  W: _validateParameters
+  W     201->202          9,000  W: initTranscript (3 absorbs) + VerifyState alloc   [keccak 3/192B ext3 0 sc 0]
+  W     202->210            503  W: -> phaseInitial
+  W     210->211         31,729  W: initial: 3 roots + OOD point squeezes + OOD answers (absorbs)   [keccak 21/1,116B ext3 0 sc 0]
+  W     211->212         15,741  W: initial: 6 evaluation claims read/absorb + mask check   [keccak 6/336B ext3 0 sc 0]
+  W     212->213         21,368  W: initial: cross-commitment OOD matrix read   [keccak 6/336B ext3 0 sc 0]
+  W     213->214         15,323  W: initial: vector RLC + constraint RLC geometric challenges   [keccak 8/376B ext3 6 sc 0]
+  W     214->215         14,028  W: initial: theSum accumulation   [keccak 0/0B ext3 20 sc 0]
+  W     215->203            252  W: initial: return
+  W     203->204         30,984  W: initial sumcheck (initialSumcheckRounds rounds)   [keccak 24/1,200B ext3 8 sc 0]
+  W     204->300            530  W: -> rounds
+  W     300->301          1,421  W: round 0: root read   [keccak 1/64B ext3 0 sc 0]
+  W     301->302          4,572  W: round 0: OOD point squeeze   [keccak 4/188B ext3 0 sc 0]
+  W     302->303          3,145  W: round 0: OOD answers absorb   [keccak 1/56B ext3 0 sc 0]
+  W     303->304          2,688  W: round 0: PoW   [keccak 3/151B ext3 0 sc 0]
+  W     304->305         95,348  W: round 0: challenge indices (squeeze+sort)   [keccak 87/4,089B ext3 0 sc 0]
+  W     305->450         22,915  W: round 0 split: commitment 0: vec prefix + leaf row hashing   [keccak 29/3,712B ext3 0 sc 0]
+  W     450->451        305,845  W: round 0 split: commitment 0: Merkle authentication   [keccak 524/33,536B ext3 0 sc 0]
+  W     451->460         22,283  W: round 0 split: commitment 1: vec prefix + leaf row hashing   [keccak 29/3,712B ext3 0 sc 0]
+  W     460->461        305,894  W: round 0 split: commitment 1: Merkle authentication   [keccak 524/33,536B ext3 0 sc 0]
+  W     461->470         22,321  W: round 0 split: commitment 2: vec prefix + leaf row hashing   [keccak 29/3,712B ext3 0 sc 0]
+  W     470->471        305,945  W: round 0 split: commitment 2: Merkle authentication   [keccak 524/33,536B ext3 0 sc 0]
+  W     471->306            364  W: round 0 split: commitments done
+  W     306->307        105,736  W: round 0: eval points (glPow)
+  W     307->420            485  W: 307->420
+  W     420->421         24,772  W: constraint values: eq weights (2^foldingFactor)   [keccak 0/0B ext3 30 sc 0]
+  W     421->422         36,759  W: constraint values: constraint RLC geometric challenge   [keccak 4/188B ext3 29 sc 0]
+  W     422->423        856,599  W: constraint values: OOD + in-domain dot products into theSum   [keccak 0/0B ext3 117 sc 1,392]
+  W     423->424         19,875  W: constraint values: store round constraints
+  W     424->309            416  W: constraint values: return
+  W     309->310         31,430  W: round 0: sumcheck (4 rounds)   [keccak 24/1,200B ext3 8 sc 0]
+  W     310->320            548  W: round 0: loop tail
+  W     320->321          1,437  W: round 1: root read   [keccak 1/64B ext3 0 sc 0]
+  W     321->322          4,663  W: round 1: OOD point squeeze   [keccak 4/188B ext3 0 sc 0]
+  W     322->323          3,226  W: round 1: OOD answers absorb   [keccak 1/56B ext3 0 sc 0]
+  W     323->324          2,736  W: round 1: PoW   [keccak 3/151B ext3 0 sc 0]
+  W     324->325         55,053  W: round 1: challenge indices (squeeze+sort)   [keccak 57/2,679B ext3 0 sc 0]
+  W     325->326         15,386  W: round 1: vec prefix + leaf row hashing   [keccak 19/7,296B ext3 0 sc 0]
+  W     326->327         69,794  W: round 1: eval points (glPow)
+  W     327->328        198,524  W: round 1: Merkle authentication   [keccak 345/22,080B ext3 0 sc 0]
+  W     328->420            743  W: round 1: -> constraint values
+  W     420->421         25,492  W: constraint values: eq weights (2^foldingFactor)   [keccak 0/0B ext3 30 sc 0]
+  W     421->422         26,586  W: constraint values: constraint RLC geometric challenge   [keccak 4/188B ext3 19 sc 0]
+  W     422->423        307,331  W: constraint values: OOD + in-domain dot products into theSum   [keccak 0/0B ext3 324 sc 0]
+  W     423->424         13,906  W: constraint values: store round constraints
+  W     424->329            412  W: constraint values: return
+  W     329->330         31,530  W: round 1: sumcheck (4 rounds)   [keccak 24/1,200B ext3 8 sc 0]
+  W     330->340            548  W: round 1: loop tail
+  W     340->341          1,443  W: round 2: root read   [keccak 1/64B ext3 0 sc 0]
+  W     341->342          4,692  W: round 2: OOD point squeeze   [keccak 4/188B ext3 0 sc 0]
+  W     342->343          3,255  W: round 2: OOD answers absorb   [keccak 1/56B ext3 0 sc 0]
+  W     343->344          2,752  W: round 2: PoW   [keccak 3/151B ext3 0 sc 0]
+  W     344->345         41,536  W: round 2: challenge indices (squeeze+sort)   [keccak 42/1,974B ext3 0 sc 0]
+  W     345->346         11,949  W: round 2: vec prefix + leaf row hashing   [keccak 14/5,376B ext3 0 sc 0]
+  W     346->347         49,948  W: round 2: eval points (glPow)
+  W     347->348        140,333  W: round 2: Merkle authentication   [keccak 241/15,424B ext3 0 sc 0]
+  W     348->420            748  W: round 2: -> constraint values
+  W     420->421         25,773  W: constraint values: eq weights (2^foldingFactor)   [keccak 0/0B ext3 30 sc 0]
+  W     421->422         21,093  W: constraint values: constraint RLC geometric challenge   [keccak 4/188B ext3 14 sc 0]
+  W     422->423        226,844  W: constraint values: OOD + in-domain dot products into theSum   [keccak 0/0B ext3 239 sc 0]
+  W     423->424         10,843  W: constraint values: store round constraints
+  W     424->349            416  W: constraint values: return
+  W     349->350         31,611  W: round 2: sumcheck (4 rounds)   [keccak 24/1,200B ext3 8 sc 0]
+  W     350->360            548  W: round 2: loop tail
+  W     360->361          1,448  W: round 3: root read   [keccak 1/64B ext3 0 sc 0]
+  W     361->362          4,718  W: round 3: OOD point squeeze   [keccak 4/188B ext3 0 sc 0]
+  W     362->363          3,276  W: round 3: OOD answers absorb   [keccak 1/56B ext3 0 sc 0]
+  W     363->364          2,767  W: round 3: PoW   [keccak 3/151B ext3 0 sc 0]
+  W     364->365         37,764  W: round 3: challenge indices (squeeze+sort)   [keccak 36/1,692B ext3 0 sc 0]
+  W     365->366         10,603  W: round 3: vec prefix + leaf row hashing   [keccak 12/4,608B ext3 0 sc 0]
+  W     366->367         42,026  W: round 3: eval points (glPow)
+  W     367->368        113,633  W: round 3: Merkle authentication   [keccak 193/12,352B ext3 0 sc 0]
+  W     368->420            752  W: round 3: -> constraint values
+  W     420->421         26,013  W: constraint values: eq weights (2^foldingFactor)   [keccak 0/0B ext3 30 sc 0]
+  W     421->422         18,959  W: constraint values: constraint RLC geometric challenge   [keccak 4/188B ext3 12 sc 0]
+  W     422->423        194,671  W: constraint values: OOD + in-domain dot products into theSum   [keccak 0/0B ext3 205 sc 0]
+  W     423->424          9,657  W: constraint values: store round constraints
+  W     424->369            420  W: constraint values: return
+  W     369->370         40,567  W: round 3: sumcheck (4 rounds)   [keccak 36/1,804B ext3 8 sc 0]
+  W     370->500            392  W: round 3: loop tail
+  W     500->501          5,483  W: final: read final vector   [keccak 2/112B ext3 0 sc 0]
+  W     501->502          2,620  W: final: PoW   [keccak 3/151B ext3 0 sc 0]
+  W     502->503         28,380  W: final: challenge indices (sort/dedup)   [keccak 30/1,410B ext3 0 sc 0]
+  W     503->504         26,581  W: final: eq weights   [keccak 0/0B ext3 30 sc 0]
+  W     504->505         33,206  W: final: eval points (glPow)
+  W     505->506          7,155  W: final: vec prefix + leaf row hashing   [keccak 10/3,840B ext3 0 sc 0]
+  W     506->507         91,595  W: final: Merkle authentication   [keccak 155/9,920B ext3 0 sc 0]
+  W     507->508        195,435  W: final: per-query final-vector openings (reduceWithPowers + dotEqWithRow)   [keccak 0/0B ext3 180 sc 0]
+  W     508->205            289  W: final: return
+  W     205->206          8,179  W: final sumcheck   [keccak 6/300B ext3 2 sc 0]
+  W     206->520            252  W: -> final claim
+  W     520->521          2,122  W: finalClaim: foldEval of final vector   [keccak 0/0B ext3 2 sc 0]
+  W     521->522         10,062  W: finalClaim: Ext3 inverse + mul   [keccak 0/0B ext3 2 sc 0]
+  W     522->523        934,531  W: finalClaim: subtract round constraints (mleEvaluateUnivariate per OOD/in-domain point)   [keccak 0/0B ext3 1,328 sc 926]
+  W     523->524        135,709  W: finalClaim: eq(evalPoint, r) for 2 points + expectedRlc   [keccak 0/0B ext3 128 sc 0]
+  W     524->207          1,003  W: finalClaim: eq check + return
+  W     207->208            305  W: EOF checks
+  C      50->51           2,744  C: constants prefix copy
+  C      51->52         144,857  C: PoseidonPublicInputsHash.hashNoPad DELEGATECALL
+  PH    850->851        139,889  PH: Poseidon hash_no_pad of public inputs
+  C      52->53       1,185,663  C: Plonky2GateEvaluatorExt3.evalCombinedPrevalidated DELEGATECALL   [keccak 0/0B ext3 708 sc 1,787]
+  G     600->610            818  G: prologue
+  G     610->611          7,004  G: gate row 0: selector filter   [keccak 0/0B ext3 4 sc 0]
+  G     611->612          1,331  G: gate row 0: evaluate unfiltered constraints
+  G     612->613            925  G: gate row 0: alpha reduce
+  G     613->614          1,306  G: gate row 0: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     614->620            508  G: gate row 0: loop tail
+  G     620->621          7,002  G: gate row 1: selector filter   [keccak 0/0B ext3 4 sc 0]
+  G     621->622          3,730  G: gate row 1: evaluate unfiltered constraints
+  G     622->623          3,214  G: gate row 1: alpha reduce   [keccak 0/0B ext3 2 sc 0]
+  G     623->624          1,308  G: gate row 1: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     624->630            509  G: gate row 1: loop tail
+  G     630->631          7,016  G: gate row 2: selector filter   [keccak 0/0B ext3 4 sc 0]
+  G     631->632          6,719  G: gate row 2: evaluate unfiltered constraints
+  G     632->633          5,490  G: gate row 2: alpha reduce   [keccak 0/0B ext3 4 sc 0]
+  G     633->634          1,310  G: gate row 2: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     634->640            510  G: gate row 2: loop tail
+  G     640->641          7,035  G: gate row 3: selector filter   [keccak 0/0B ext3 4 sc 0]
+  G     641->642         42,837  G: gate row 3: evaluate unfiltered constraints   [keccak 0/0B ext3 60 sc 0]
+  G     642->643         23,724  G: gate row 3: alpha reduce   [keccak 0/0B ext3 20 sc 0]
+  G     643->644          1,317  G: gate row 3: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     644->650            511  G: gate row 3: loop tail
+  G     650->651          2,592  G: gate row 4: selector filter   [keccak 0/0B ext3 1 sc 0]
+  G     651->653        958,009  G: gate row 4: Poseidon DELEGATECALL (evalPoseidonReduced)   [keccak 0/0B ext3 600 sc 1,787]
+  PS    700->701         13,392  PS: Poseidon: load constants + allocate state/scratch/constraints
+  PS    701->702          6,465  PS: Poseidon: swap/delta constraints   [keccak 0/0B ext3 5 sc 0]
+  PS    702->703        239,684  PS: Poseidon: first 4 full rounds (S-box + MDS)   [keccak 0/0B ext3 192 sc 580]
+  PS    703->704         42,418  PS: Poseidon: partial first constant layer + MDS partial init   [keccak 0/0B ext3 0 sc 121]
+  PS    704->705        246,462  PS: Poseidon: 22 partial rounds   [keccak 0/0B ext3 88 sc 506]
+  PS    705->706        243,722  PS: Poseidon: second 4 full rounds   [keccak 0/0B ext3 192 sc 580]
+  PS    706->707          3,804  PS: Poseidon: output constraints
+  PS    707->708         67,256  PS: Poseidon: alpha-reduce 123 constraints   [keccak 0/0B ext3 123 sc 0]
+  G     653->654          1,273  G: gate row 4: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     654->601            320  G: last row exit
+  C      53->54          71,611  C: OuterLogupExt3Verifier.verifyGateTerminal DELEGATECALL   [keccak 0/0B ext3 27 sc 0]
+  GT    800->801          9,692  GT: canonical checks
+  GT    801->802         40,820  GT: eq(tau, point) * gateEval + compare   [keccak 0/0B ext3 27 sc 0]
+  C      54->55             196  C: tail
+
+=== test_small_coreVerify ===
+  CODESIZE core pinned 21954 14200
+  CALLDATA bytes zeros nonzeros 109060 57143 51917
+  INTRINSIC legacy floor7623 1080244 2669110
+  BEGIN small core.verify
+  END small core.verify
+  TOTAL staticcall gas / return bytes 7173850 32
+  marks 128; probe overhead/mark 0 (cal [])
+  counting run mark sequence identical: True
+  TOTAL keccak256 invocations 1,250 hashing 110,013 bytes; Ext3 full mul-equivalents 4,336 (library mul 170, square 0, inv 1); Ext3*scalar 3,439 (library mulScalar 6); base mulmod (glPow/inv/univariate) 327
+    keccak site  1 config digest               :       1 invocations,     5,664 bytes
+    keccak site 10 TranscriptV2 absorbFrame    :      28 invocations,     2,575 bytes
+    keccak site 11 TranscriptV2 vec frame      :      12 invocations,    15,940 bytes
+    keccak site 12 TranscriptV2 squeeze        :      96 invocations,     6,144 bytes
+    keccak site 30 WHIR challenge-index bytes  :      96 invocations,     4,512 bytes
+    keccak site 31 WHIR leaf row hash          :     106 invocations,    18,432 bytes
+    keccak site 32 WHIR PoW                    :       2 invocations,       128 bytes
+    keccak site 33 Merkle node                 :     787 invocations,    50,368 bytes
+    keccak site 34 Keccak256Chain absorb       :      52 invocations,     2,960 bytes
+    keccak site 35 Keccak256Chain squeeze block:      70 invocations,     3,290 bytes
+  -- frame totals (corrected) --
+  C   raw    7,172,670 corrected    7,172,670  keccak 1,250/110,013B ext3 4,336 scalar 3,439
+  O   raw    1,383,128 corrected    1,383,128  keccak 22/2,284B ext3 2,001 scalar 86
+  W   raw    2,721,845 corrected    2,721,845  keccak 1,113/79,690B ext3 1,017 scalar 1,566
+  PH  raw      139,889 corrected      139,889  keccak 0/0B ext3 0 scalar 0
+  G   raw    1,070,534 corrected    1,070,534  keccak 0/0B ext3 700 scalar 1,787
+  PS  raw      863,203 corrected      863,203  keccak 0/0B ext3 600 scalar 1,787
+  GT  raw       10,297 corrected       10,297  keccak 0/0B ext3 5 scalar 0
+  -- spans --
+  C      20->21           9,812  C: _requirePinnedConfiguration (abi.encode(config) + keccak)   [keccak 1/5,664B ext3 0 sc 0]
+  C      21->22           7,155  C: _requireCanonicalProof (shape checks)
+  C      22->30           2,830  C: indexBits + call derive
+  C      30->31          26,754  C: transcript: statement absorption (digest, PIs, metadata, config digest, WHIR ids, 2 roots)   [keccak 16/1,515B ext3 0 sc 0]
+  C      31->32          26,755  C: transcript: eta/beta/gamma squeeze + normInverse root + xi squeeze   [keccak 17/1,226B ext3 0 sc 0]
+  C      32->33          17,147  C: transcript: lambda/rho/kappa squeeze   [keccak 10/665B ext3 0 sc 0]
+  C      33->34          12,100  C: transcript: tau vector squeeze (degreeBits Ext3)   [keccak 6/384B ext3 0 sc 0]
+  C      34->35           5,493  C: transcript: gate alpha squeeze   [keccak 3/192B ext3 0 sc 0]
+  C      35->36          12,102  C: transcript: gate tau vector squeeze (degreeBits Ext3)   [keccak 6/384B ext3 0 sc 0]
+  C      36->23             215  C: derive return
+  C      23->24         164,146  C: canonical limb copy of 5 terminal vectors (calldata->memory)
+  C      24->25          24,285  C: VK/terminal structs + canonical copy of 2 sumcheck proofs
+  C      25->26       1,737,002  C: OuterLogupExt3Verifier.verifyPrevalidated DELEGATECALL (incl. ABI encode/decode)   [keccak 22/2,284B ext3 2,001 sc 86]
+  O      60->1000         3,207  O: prologue (alloc points)
+  O    1000->1001        35,297  O: round 0: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1001->1002        31,005  O: round 0: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1002->1010           486  O: round 0: loop tail
+  O    1010->1011        35,374  O: round 1: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1011->1012        31,191  O: round 1: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1012->63             387  O: round 1: loop exit
+  O      63->70             626  O: -> terminal
+  O      70->71           7,197  O: terminal: eq(tau, point)   [keccak 0/0B ext3 4 sc 0]
+  O      71->72           4,055  O: terminal: subgroup evaluation   [keccak 0/0B ext3 2 sc 2]
+  O      72->73       1,220,228  O: terminal: per-routed-wire denominators/norms/adjugates/logUp accumulate (80 wires)   [keccak 0/0B ext3 1,920 sc 80]
+  O      73->74           1,830  O: terminal: final combine   [keccak 0/0B ext3 2 sc 0]
+  O      74->75             474  O: -> PI binding
+  O      75->76           4,286  O: terminal: PI binding loop   [keccak 0/0B ext3 1 sc 0]
+  O      76->77           5,543  O: terminal: PI eq-row evaluation   [keccak 0/0B ext3 3 sc 0]
+  O      77->64           1,942  O: terminal: xi*binding add + eq check + return   [keccak 0/0B ext3 1 sc 0]
+  C      26->40             216  C: -> absorb claims
+  C      40->41         327,827  C: absorb 5 constituent claim vectors (+empty vec, 2 domains)   [keccak 8/14,937B ext3 0 sc 0]
+  C      41->42          91,308  C: squeeze 2 index points (2*indexBits Ext3)   [keccak 48/3,072B ext3 0 sc 0]
+  C      42->27             204  C: absorb return
+  C      27->28         560,767  C: PackedClaimExt3 fold of 5 used cells (internal)   [keccak 0/0B ext3 613 sc 0]
+  C      28->29          21,698  C: WHIR param prep (config.whir copy, packed points, roots)
+  C      29->50       2,791,913  C: SpongefishWhirVerify.verifyWhirProofBound DELEGATECALL (incl. ABI encode/decode)   [keccak 1,113/79,690B ext3 1,017 sc 1,566]
+  W     200->201         13,659  W: _validateParameters
+  W     201->202          5,702  W: initTranscript (3 absorbs) + VerifyState alloc   [keccak 3/192B ext3 0 sc 0]
+  W     202->210            501  W: -> phaseInitial
+  W     210->211         31,649  W: initial: 3 roots + OOD point squeezes + OOD answers (absorbs)   [keccak 21/1,116B ext3 0 sc 0]
+  W     211->212         15,719  W: initial: 6 evaluation claims read/absorb + mask check   [keccak 6/336B ext3 0 sc 0]
+  W     212->213         21,315  W: initial: cross-commitment OOD matrix read   [keccak 6/336B ext3 0 sc 0]
+  W     213->214         15,268  W: initial: vector RLC + constraint RLC geometric challenges   [keccak 8/376B ext3 6 sc 0]
+  W     214->215         14,012  W: initial: theSum accumulation   [keccak 0/0B ext3 20 sc 0]
+  W     215->203            251  W: initial: return
+  W     203->204         30,955  W: initial sumcheck (initialSumcheckRounds rounds)   [keccak 24/1,200B ext3 8 sc 0]
+  W     204->300            530  W: -> rounds
+  W     300->301          1,420  W: round 0: root read   [keccak 1/64B ext3 0 sc 0]
+  W     301->302          4,564  W: round 0: OOD point squeeze   [keccak 4/188B ext3 0 sc 0]
+  W     302->303          3,136  W: round 0: OOD answers absorb   [keccak 1/56B ext3 0 sc 0]
+  W     303->304          2,683  W: round 0: PoW   [keccak 3/151B ext3 0 sc 0]
+  W     304->305         85,266  W: round 0: challenge indices (squeeze+sort)   [keccak 58/2,726B ext3 0 sc 0]
+  W     305->450         22,860  W: round 0 split: commitment 0: vec prefix + leaf row hashing   [keccak 29/3,712B ext3 0 sc 0]
+  W     450->451        137,683  W: round 0 split: commitment 0: Merkle authentication   [keccak 218/13,952B ext3 0 sc 0]
+  W     451->460         22,232  W: round 0 split: commitment 1: vec prefix + leaf row hashing   [keccak 29/3,712B ext3 0 sc 0]
+  W     460->461        137,732  W: round 0 split: commitment 1: Merkle authentication   [keccak 218/13,952B ext3 0 sc 0]
+  W     461->470         22,270  W: round 0 split: commitment 2: vec prefix + leaf row hashing   [keccak 29/3,712B ext3 0 sc 0]
+  W     470->471        137,783  W: round 0 split: commitment 2: Merkle authentication   [keccak 218/13,952B ext3 0 sc 0]
+  W     471->306            362  W: round 0 split: commitments done
+  W     306->307         67,172  W: round 0: eval points (glPow)
+  W     307->420            484  W: 307->420
+  W     420->421         24,684  W: constraint values: eq weights (2^foldingFactor)   [keccak 0/0B ext3 30 sc 0]
+  W     421->422         36,585  W: constraint values: constraint RLC geometric challenge   [keccak 4/188B ext3 29 sc 0]
+  W     422->423        855,903  W: constraint values: OOD + in-domain dot products into theSum   [keccak 0/0B ext3 117 sc 1,392]
+  W     423->424         19,776  W: constraint values: store round constraints
+  W     424->309            413  W: constraint values: return
+  W     309->310         31,402  W: round 0: sumcheck (4 rounds)   [keccak 24/1,200B ext3 8 sc 0]
+  W     310->500            392  W: round 0: loop tail
+  W     500->501         10,057  W: final: read final vector   [keccak 4/224B ext3 0 sc 0]
+  W     501->502          2,573  W: final: PoW   [keccak 3/151B ext3 0 sc 0]
+  W     502->503         54,560  W: final: challenge indices (sort/dedup)   [keccak 38/1,786B ext3 0 sc 0]
+  W     503->504         25,694  W: final: eq weights   [keccak 0/0B ext3 30 sc 0]
+  W     504->505         44,381  W: final: eval points (glPow)
+  W     505->506         12,009  W: final: vec prefix + leaf row hashing   [keccak 19/7,296B ext3 0 sc 0]
+  W     506->507         80,933  W: final: Merkle authentication   [keccak 133/8,512B ext3 0 sc 0]
+  W     507->508        414,609  W: final: per-query final-vector openings (reduceWithPowers + dotEqWithRow)   [keccak 0/0B ext3 380 sc 0]
+  W     508->205            278  W: final: return
+  W     205->206         15,882  W: final sumcheck   [keccak 12/600B ext3 4 sc 0]
+  W     206->520            252  W: -> final claim
+  W     520->521          4,227  W: finalClaim: foldEval of final vector   [keccak 0/0B ext3 6 sc 0]
+  W     521->522         10,027  W: finalClaim: Ext3 inverse + mul   [keccak 0/0B ext3 2 sc 0]
+  W     522->523        214,389  W: finalClaim: subtract round constraints (mleEvaluateUnivariate per OOD/in-domain point)   [keccak 0/0B ext3 315 sc 174]
+  W     523->524         66,316  W: finalClaim: eq(evalPoint, r) for 2 points + expectedRlc   [keccak 0/0B ext3 62 sc 0]
+  W     524->207            990  W: finalClaim: eq check + return
+  W     207->208            305  W: EOF checks
+  C      50->51           2,744  C: constants prefix copy
+  C      51->52         144,857  C: PoseidonPublicInputsHash.hashNoPad DELEGATECALL
+  PH    850->851        139,889  PH: Poseidon hash_no_pad of public inputs
+  C      52->53       1,169,022  C: Plonky2GateEvaluatorExt3.evalCombinedPrevalidated DELEGATECALL   [keccak 0/0B ext3 700 sc 1,787]
+  G     600->610            818  G: prologue
+  G     610->611          5,528  G: gate row 0: selector filter   [keccak 0/0B ext3 3 sc 0]
+  G     611->612          3,724  G: gate row 0: evaluate unfiltered constraints
+  G     612->613          3,210  G: gate row 0: alpha reduce   [keccak 0/0B ext3 2 sc 0]
+  G     613->614          1,306  G: gate row 0: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     614->620            508  G: gate row 0: loop tail
+  G     620->621          5,527  G: gate row 1: selector filter   [keccak 0/0B ext3 3 sc 0]
+  G     621->622          6,706  G: gate row 1: evaluate unfiltered constraints
+  G     622->623          5,481  G: gate row 1: alpha reduce   [keccak 0/0B ext3 4 sc 0]
+  G     623->624          1,309  G: gate row 1: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     624->630            509  G: gate row 1: loop tail
+  G     630->631          5,539  G: gate row 2: selector filter   [keccak 0/0B ext3 3 sc 0]
+  G     631->632         42,809  G: gate row 2: evaluate unfiltered constraints   [keccak 0/0B ext3 60 sc 0]
+  G     632->633         23,683  G: gate row 2: alpha reduce   [keccak 0/0B ext3 20 sc 0]
+  G     633->634          1,315  G: gate row 2: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     634->640            511  G: gate row 2: loop tail
+  G     640->641          2,587  G: gate row 3: selector filter   [keccak 0/0B ext3 1 sc 0]
+  G     641->643        957,871  G: gate row 3: Poseidon DELEGATECALL (evalPoseidonReduced)   [keccak 0/0B ext3 600 sc 1,787]
+  PS    700->701         13,392  PS: Poseidon: load constants + allocate state/scratch/constraints
+  PS    701->702          6,465  PS: Poseidon: swap/delta constraints   [keccak 0/0B ext3 5 sc 0]
+  PS    702->703        239,684  PS: Poseidon: first 4 full rounds (S-box + MDS)   [keccak 0/0B ext3 192 sc 580]
+  PS    703->704         42,418  PS: Poseidon: partial first constant layer + MDS partial init   [keccak 0/0B ext3 0 sc 121]
+  PS    704->705        246,462  PS: Poseidon: 22 partial rounds   [keccak 0/0B ext3 88 sc 506]
+  PS    705->706        243,722  PS: Poseidon: second 4 full rounds   [keccak 0/0B ext3 192 sc 580]
+  PS    706->707          3,804  PS: Poseidon: output constraints
+  PS    707->708         67,256  PS: Poseidon: alpha-reduce 123 constraints   [keccak 0/0B ext3 123 sc 0]
+  G     643->644          1,273  G: gate row 3: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     644->601            320  G: last row exit
+  C      53->54          16,122  C: OuterLogupExt3Verifier.verifyGateTerminal DELEGATECALL   [keccak 0/0B ext3 5 sc 0]
+  GT    800->801          2,244  GT: canonical checks
+  GT    801->802          8,053  GT: eq(tau, point) * gateEval + compare   [keccak 0/0B ext3 5 sc 0]
+  C      54->55             196  C: tail
+
+=== test_small_verifyCompact ===
+  CODESIZE core pinned 21954 14200
+  CALLDATA bytes zeros nonzeros 56900 5779 51121
+  INTRINSIC legacy floor7623 862052 2123630
+  BEGIN small verifyCompact
+  END small verifyCompact
+  TOTAL staticcall gas / return bytes 7894800 32
+  marks 148; probe overhead/mark 207 (cal [207, 207, 207])
+  counting run mark sequence identical: True
+  TOTAL keccak256 invocations 1,250 hashing 110,013 bytes; Ext3 full mul-equivalents 4,336 (library mul 170, square 0, inv 1); Ext3*scalar 3,439 (library mulScalar 6); base mulmod (glPow/inv/univariate) 327
+    keccak site  1 config digest               :       1 invocations,     5,664 bytes
+    keccak site 10 TranscriptV2 absorbFrame    :      28 invocations,     2,575 bytes
+    keccak site 11 TranscriptV2 vec frame      :      12 invocations,    15,940 bytes
+    keccak site 12 TranscriptV2 squeeze        :      96 invocations,     6,144 bytes
+    keccak site 30 WHIR challenge-index bytes  :      96 invocations,     4,512 bytes
+    keccak site 31 WHIR leaf row hash          :     106 invocations,    18,432 bytes
+    keccak site 32 WHIR PoW                    :       2 invocations,       128 bytes
+    keccak site 33 Merkle node                 :     787 invocations,    50,368 bytes
+    keccak site 34 Keccak256Chain absorb       :      52 invocations,     2,960 bytes
+    keccak site 35 Keccak256Chain squeeze block:      70 invocations,     3,290 bytes
+  -- frame totals (corrected) --
+  P   raw    7,893,706 corrected    7,863,277  keccak 1,250/110,013B ext3 4,336 scalar 3,439
+  C   raw    7,172,670 corrected    7,146,381  keccak 1,250/110,013B ext3 4,336 scalar 3,439
+  O   raw    1,383,128 corrected    1,379,816  keccak 22/2,284B ext3 2,001 scalar 86
+  W   raw    2,721,845 corrected    2,711,702  keccak 1,113/79,690B ext3 1,017 scalar 1,566
+  PH  raw      139,889 corrected      139,682  keccak 0/0B ext3 0 scalar 0
+  G   raw    1,070,534 corrected    1,064,531  keccak 0/0B ext3 700 scalar 1,787
+  PS  raw      863,203 corrected      861,547  keccak 0/0B ext3 600 scalar 1,787
+  GT  raw       10,297 corrected        9,883  keccak 0/0B ext3 5 scalar 0
+  -- spans --
+  P      10->9001            18  P: entry -> calibration
+  P    9001->9002             0  P: 9001->9002
+  P    9002->9003             0  P: 9002->9003
+  P    9003->110            962  P: chainid check
+  P     110->111          2,320  P: _loadConfiguration: EXTCODECOPY config store
+  P     111->112         15,100  P: _loadConfiguration: abi.decode(VerificationConfig)
+  P     112->11              36  P: tail of _loadConfiguration
+  P      11->120          1,317  P: call into compact decoder
+  P     120->121          4,074  P: decode: magic/version/width/digest/PIs/roots
+  P     121->122          1,465  P: decode: whirTranscript blob copy
+  P     122->123         17,918  P: decode: whirHints blob copy (calldatacopy)
+  P     123->124          8,794  P: decode: logProof rounds (Ext3 vectors)
+  P     124->125        270,558  P: decode: logPreprocessed/logWitness/logNormInverse
+  P     125->126         16,598  P: decode: gateProof rounds
+  P     126->127        160,844  P: decode: gatePreprocessed/gateWitness + EOF check
+  P     127->12              72  P: decoder return
+  P      12->13       7,363,192  P: core.verify external call (ABI-encode proof+config, STATICCALL, callee, return)   [keccak 1,250/110,013B ext3 4,336 sc 3,439]
+  C      20->21           9,605  C: _requirePinnedConfiguration (abi.encode(config) + keccak)   [keccak 1/5,664B ext3 0 sc 0]
+  C      21->22           6,948  C: _requireCanonicalProof (shape checks)
+  C      22->30           2,623  C: indexBits + call derive
+  C      30->31          26,547  C: transcript: statement absorption (digest, PIs, metadata, config digest, WHIR ids, 2 roots)   [keccak 16/1,515B ext3 0 sc 0]
+  C      31->32          26,548  C: transcript: eta/beta/gamma squeeze + normInverse root + xi squeeze   [keccak 17/1,226B ext3 0 sc 0]
+  C      32->33          16,940  C: transcript: lambda/rho/kappa squeeze   [keccak 10/665B ext3 0 sc 0]
+  C      33->34          11,893  C: transcript: tau vector squeeze (degreeBits Ext3)   [keccak 6/384B ext3 0 sc 0]
+  C      34->35           5,286  C: transcript: gate alpha squeeze   [keccak 3/192B ext3 0 sc 0]
+  C      35->36          11,895  C: transcript: gate tau vector squeeze (degreeBits Ext3)   [keccak 6/384B ext3 0 sc 0]
+  C      36->23               8  C: derive return
+  C      23->24         163,939  C: canonical limb copy of 5 terminal vectors (calldata->memory)
+  C      24->25          24,078  C: VK/terminal structs + canonical copy of 2 sumcheck proofs
+  C      25->26       1,733,276  C: OuterLogupExt3Verifier.verifyPrevalidated DELEGATECALL (incl. ABI encode/decode)   [keccak 22/2,284B ext3 2,001 sc 86]
+  O      60->1000         3,000  O: prologue (alloc points)
+  O    1000->1001        35,090  O: round 0: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1001->1002        30,798  O: round 0: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1002->1010           279  O: round 0: loop tail
+  O    1010->1011        35,167  O: round 1: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1011->1012        30,984  O: round 1: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1012->63             180  O: round 1: loop exit
+  O      63->70             419  O: -> terminal
+  O      70->71           6,990  O: terminal: eq(tau, point)   [keccak 0/0B ext3 4 sc 0]
+  O      71->72           3,848  O: terminal: subgroup evaluation   [keccak 0/0B ext3 2 sc 2]
+  O      72->73       1,220,021  O: terminal: per-routed-wire denominators/norms/adjugates/logUp accumulate (80 wires)   [keccak 0/0B ext3 1,920 sc 80]
+  O      73->74           1,623  O: terminal: final combine   [keccak 0/0B ext3 2 sc 0]
+  O      74->75             267  O: -> PI binding
+  O      75->76           4,079  O: terminal: PI binding loop   [keccak 0/0B ext3 1 sc 0]
+  O      76->77           5,336  O: terminal: PI eq-row evaluation   [keccak 0/0B ext3 3 sc 0]
+  O      77->64           1,735  O: terminal: xi*binding add + eq check + return   [keccak 0/0B ext3 1 sc 0]
+  C      26->40               9  C: -> absorb claims
+  C      40->41         327,620  C: absorb 5 constituent claim vectors (+empty vec, 2 domains)   [keccak 8/14,937B ext3 0 sc 0]
+  C      41->42          91,101  C: squeeze 2 index points (2*indexBits Ext3)   [keccak 48/3,072B ext3 0 sc 0]
+  C      42->27              -3  C: absorb return
+  C      27->28         560,560  C: PackedClaimExt3 fold of 5 used cells (internal)   [keccak 0/0B ext3 613 sc 0]
+  C      28->29          21,491  C: WHIR param prep (config.whir copy, packed points, roots)
+  C      29->50       2,781,356  C: SpongefishWhirVerify.verifyWhirProofBound DELEGATECALL (incl. ABI encode/decode)   [keccak 1,113/79,690B ext3 1,017 sc 1,566]
+  W     200->201         13,452  W: _validateParameters
+  W     201->202          5,495  W: initTranscript (3 absorbs) + VerifyState alloc   [keccak 3/192B ext3 0 sc 0]
+  W     202->210            294  W: -> phaseInitial
+  W     210->211         31,442  W: initial: 3 roots + OOD point squeezes + OOD answers (absorbs)   [keccak 21/1,116B ext3 0 sc 0]
+  W     211->212         15,512  W: initial: 6 evaluation claims read/absorb + mask check   [keccak 6/336B ext3 0 sc 0]
+  W     212->213         21,108  W: initial: cross-commitment OOD matrix read   [keccak 6/336B ext3 0 sc 0]
+  W     213->214         15,061  W: initial: vector RLC + constraint RLC geometric challenges   [keccak 8/376B ext3 6 sc 0]
+  W     214->215         13,805  W: initial: theSum accumulation   [keccak 0/0B ext3 20 sc 0]
+  W     215->203             44  W: initial: return
+  W     203->204         30,748  W: initial sumcheck (initialSumcheckRounds rounds)   [keccak 24/1,200B ext3 8 sc 0]
+  W     204->300            323  W: -> rounds
+  W     300->301          1,213  W: round 0: root read   [keccak 1/64B ext3 0 sc 0]
+  W     301->302          4,357  W: round 0: OOD point squeeze   [keccak 4/188B ext3 0 sc 0]
+  W     302->303          2,929  W: round 0: OOD answers absorb   [keccak 1/56B ext3 0 sc 0]
+  W     303->304          2,476  W: round 0: PoW   [keccak 3/151B ext3 0 sc 0]
+  W     304->305         85,059  W: round 0: challenge indices (squeeze+sort)   [keccak 58/2,726B ext3 0 sc 0]
+  W     305->450         22,653  W: round 0 split: commitment 0: vec prefix + leaf row hashing   [keccak 29/3,712B ext3 0 sc 0]
+  W     450->451        137,476  W: round 0 split: commitment 0: Merkle authentication   [keccak 218/13,952B ext3 0 sc 0]
+  W     451->460         22,025  W: round 0 split: commitment 1: vec prefix + leaf row hashing   [keccak 29/3,712B ext3 0 sc 0]
+  W     460->461        137,525  W: round 0 split: commitment 1: Merkle authentication   [keccak 218/13,952B ext3 0 sc 0]
+  W     461->470         22,063  W: round 0 split: commitment 2: vec prefix + leaf row hashing   [keccak 29/3,712B ext3 0 sc 0]
+  W     470->471        137,576  W: round 0 split: commitment 2: Merkle authentication   [keccak 218/13,952B ext3 0 sc 0]
+  W     471->306            155  W: round 0 split: commitments done
+  W     306->307         66,965  W: round 0: eval points (glPow)
+  W     307->420            277  W: 307->420
+  W     420->421         24,477  W: constraint values: eq weights (2^foldingFactor)   [keccak 0/0B ext3 30 sc 0]
+  W     421->422         36,378  W: constraint values: constraint RLC geometric challenge   [keccak 4/188B ext3 29 sc 0]
+  W     422->423        855,696  W: constraint values: OOD + in-domain dot products into theSum   [keccak 0/0B ext3 117 sc 1,392]
+  W     423->424         19,569  W: constraint values: store round constraints
+  W     424->309            206  W: constraint values: return
+  W     309->310         31,195  W: round 0: sumcheck (4 rounds)   [keccak 24/1,200B ext3 8 sc 0]
+  W     310->500            185  W: round 0: loop tail
+  W     500->501          9,850  W: final: read final vector   [keccak 4/224B ext3 0 sc 0]
+  W     501->502          2,366  W: final: PoW   [keccak 3/151B ext3 0 sc 0]
+  W     502->503         54,353  W: final: challenge indices (sort/dedup)   [keccak 38/1,786B ext3 0 sc 0]
+  W     503->504         25,487  W: final: eq weights   [keccak 0/0B ext3 30 sc 0]
+  W     504->505         44,174  W: final: eval points (glPow)
+  W     505->506         11,802  W: final: vec prefix + leaf row hashing   [keccak 19/7,296B ext3 0 sc 0]
+  W     506->507         80,726  W: final: Merkle authentication   [keccak 133/8,512B ext3 0 sc 0]
+  W     507->508        414,402  W: final: per-query final-vector openings (reduceWithPowers + dotEqWithRow)   [keccak 0/0B ext3 380 sc 0]
+  W     508->205             71  W: final: return
+  W     205->206         15,675  W: final sumcheck   [keccak 12/600B ext3 4 sc 0]
+  W     206->520             45  W: -> final claim
+  W     520->521          4,020  W: finalClaim: foldEval of final vector   [keccak 0/0B ext3 6 sc 0]
+  W     521->522          9,820  W: finalClaim: Ext3 inverse + mul   [keccak 0/0B ext3 2 sc 0]
+  W     522->523        214,182  W: finalClaim: subtract round constraints (mleEvaluateUnivariate per OOD/in-domain point)   [keccak 0/0B ext3 315 sc 174]
+  W     523->524         66,109  W: finalClaim: eq(evalPoint, r) for 2 points + expectedRlc   [keccak 0/0B ext3 62 sc 0]
+  W     524->207            783  W: finalClaim: eq check + return
+  W     207->208             98  W: EOF checks
+  C      50->51           2,537  C: constants prefix copy
+  C      51->52         144,236  C: PoseidonPublicInputsHash.hashNoPad DELEGATECALL
+  PH    850->851        139,682  PH: Poseidon hash_no_pad of public inputs
+  C      52->53       1,162,605  C: Plonky2GateEvaluatorExt3.evalCombinedPrevalidated DELEGATECALL   [keccak 0/0B ext3 700 sc 1,787]
+  G     600->610            611  G: prologue
+  G     610->611          5,321  G: gate row 0: selector filter   [keccak 0/0B ext3 3 sc 0]
+  G     611->612          3,517  G: gate row 0: evaluate unfiltered constraints
+  G     612->613          3,003  G: gate row 0: alpha reduce   [keccak 0/0B ext3 2 sc 0]
+  G     613->614          1,099  G: gate row 0: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     614->620            301  G: gate row 0: loop tail
+  G     620->621          5,320  G: gate row 1: selector filter   [keccak 0/0B ext3 3 sc 0]
+  G     621->622          6,499  G: gate row 1: evaluate unfiltered constraints
+  G     622->623          5,274  G: gate row 1: alpha reduce   [keccak 0/0B ext3 4 sc 0]
+  G     623->624          1,102  G: gate row 1: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     624->630            302  G: gate row 1: loop tail
+  G     630->631          5,332  G: gate row 2: selector filter   [keccak 0/0B ext3 3 sc 0]
+  G     631->632         42,602  G: gate row 2: evaluate unfiltered constraints   [keccak 0/0B ext3 60 sc 0]
+  G     632->633         23,476  G: gate row 2: alpha reduce   [keccak 0/0B ext3 20 sc 0]
+  G     633->634          1,108  G: gate row 2: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     634->640            304  G: gate row 2: loop tail
+  G     640->641          2,380  G: gate row 3: selector filter   [keccak 0/0B ext3 1 sc 0]
+  G     641->643        955,801  G: gate row 3: Poseidon DELEGATECALL (evalPoseidonReduced)   [keccak 0/0B ext3 600 sc 1,787]
+  PS    700->701         13,185  PS: Poseidon: load constants + allocate state/scratch/constraints
+  PS    701->702          6,258  PS: Poseidon: swap/delta constraints   [keccak 0/0B ext3 5 sc 0]
+  PS    702->703        239,477  PS: Poseidon: first 4 full rounds (S-box + MDS)   [keccak 0/0B ext3 192 sc 580]
+  PS    703->704         42,211  PS: Poseidon: partial first constant layer + MDS partial init   [keccak 0/0B ext3 0 sc 121]
+  PS    704->705        246,255  PS: Poseidon: 22 partial rounds   [keccak 0/0B ext3 88 sc 506]
+  PS    705->706        243,515  PS: Poseidon: second 4 full rounds   [keccak 0/0B ext3 192 sc 580]
+  PS    706->707          3,597  PS: Poseidon: output constraints
+  PS    707->708         67,049  PS: Poseidon: alpha-reduce 123 constraints   [keccak 0/0B ext3 123 sc 0]
+  G     643->644          1,066  G: gate row 3: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     644->601            113  G: last row exit
+  C      53->54          15,294  C: OuterLogupExt3Verifier.verifyGateTerminal DELEGATECALL   [keccak 0/0B ext3 5 sc 0]
+  GT    800->801          2,037  GT: canonical checks
+  GT    801->802          7,846  GT: eq(tau, point) * gateEval + compare   [keccak 0/0B ext3 5 sc 0]
+  C      54->55             -11  C: tail
+  P      13->9004             9  P: after core.verify
+  P    9004->9005             0  P: 9004->9005
+
+=== test_small_verifyCompactPublicInputs ===
+  CODESIZE core pinned 21954 14200
+  CALLDATA bytes zeros nonzeros 56900 5779 51121
+  INTRINSIC legacy floor7623 862052 2123630
+  BEGIN small PI
+  END small PI
+  TOTAL staticcall gas / return bytes 7893861 96
+  marks 143; probe overhead/mark 0 (cal [])
+  counting run mark sequence identical: True
+  TOTAL keccak256 invocations 1,250 hashing 110,013 bytes; Ext3 full mul-equivalents 4,336 (library mul 170, square 0, inv 1); Ext3*scalar 3,439 (library mulScalar 6); base mulmod (glPow/inv/univariate) 327
+    keccak site  1 config digest               :       1 invocations,     5,664 bytes
+    keccak site 10 TranscriptV2 absorbFrame    :      28 invocations,     2,575 bytes
+    keccak site 11 TranscriptV2 vec frame      :      12 invocations,    15,940 bytes
+    keccak site 12 TranscriptV2 squeeze        :      96 invocations,     6,144 bytes
+    keccak site 30 WHIR challenge-index bytes  :      96 invocations,     4,512 bytes
+    keccak site 31 WHIR leaf row hash          :     106 invocations,    18,432 bytes
+    keccak site 32 WHIR PoW                    :       2 invocations,       128 bytes
+    keccak site 33 Merkle node                 :     787 invocations,    50,368 bytes
+    keccak site 34 Keccak256Chain absorb       :      52 invocations,     2,960 bytes
+    keccak site 35 Keccak256Chain squeeze block:      70 invocations,     3,290 bytes
+  -- frame totals (corrected) --
+  C   raw    7,172,670 corrected    7,172,670  keccak 1,250/110,013B ext3 4,336 scalar 3,439
+  O   raw    1,383,128 corrected    1,383,128  keccak 22/2,284B ext3 2,001 scalar 86
+  W   raw    2,721,845 corrected    2,721,845  keccak 1,113/79,690B ext3 1,017 scalar 1,566
+  PH  raw      139,889 corrected      139,889  keccak 0/0B ext3 0 scalar 0
+  G   raw    1,070,534 corrected    1,070,534  keccak 0/0B ext3 700 scalar 1,787
+  PS  raw      863,203 corrected      863,203  keccak 0/0B ext3 600 scalar 1,787
+  GT  raw       10,297 corrected       10,297  keccak 0/0B ext3 5 scalar 0
+  -- spans --
+  P      10->110          1,184  P: 10->110
+  P     110->111          2,527  P: _loadConfiguration: EXTCODECOPY config store
+  P     111->112         15,307  P: _loadConfiguration: abi.decode(VerificationConfig)
+  P     112->11             243  P: tail of _loadConfiguration
+  P      11->120          1,524  P: call into compact decoder
+  P     120->121          4,281  P: decode: magic/version/width/digest/PIs/roots
+  P     121->122          1,672  P: decode: whirTranscript blob copy
+  P     122->123         18,125  P: decode: whirHints blob copy (calldatacopy)
+  P     123->124          9,001  P: decode: logProof rounds (Ext3 vectors)
+  P     124->125        270,765  P: decode: logPreprocessed/logWitness/logNormInverse
+  P     125->126         16,805  P: decode: gateProof rounds
+  P     126->127        161,051  P: decode: gatePreprocessed/gateWitness + EOF check
+  P     127->12             282  P: decoder return
+  P      12->13       7,389,919  P: core.verify external call (ABI-encode proof+config, STATICCALL, callee, return)   [keccak 1,250/110,013B ext3 4,336 sc 3,439]
+  C      20->21           9,812  C: _requirePinnedConfiguration (abi.encode(config) + keccak)   [keccak 1/5,664B ext3 0 sc 0]
+  C      21->22           7,155  C: _requireCanonicalProof (shape checks)
+  C      22->30           2,830  C: indexBits + call derive
+  C      30->31          26,754  C: transcript: statement absorption (digest, PIs, metadata, config digest, WHIR ids, 2 roots)   [keccak 16/1,515B ext3 0 sc 0]
+  C      31->32          26,755  C: transcript: eta/beta/gamma squeeze + normInverse root + xi squeeze   [keccak 17/1,226B ext3 0 sc 0]
+  C      32->33          17,147  C: transcript: lambda/rho/kappa squeeze   [keccak 10/665B ext3 0 sc 0]
+  C      33->34          12,100  C: transcript: tau vector squeeze (degreeBits Ext3)   [keccak 6/384B ext3 0 sc 0]
+  C      34->35           5,493  C: transcript: gate alpha squeeze   [keccak 3/192B ext3 0 sc 0]
+  C      35->36          12,102  C: transcript: gate tau vector squeeze (degreeBits Ext3)   [keccak 6/384B ext3 0 sc 0]
+  C      36->23             215  C: derive return
+  C      23->24         164,146  C: canonical limb copy of 5 terminal vectors (calldata->memory)
+  C      24->25          24,285  C: VK/terminal structs + canonical copy of 2 sumcheck proofs
+  C      25->26       1,737,002  C: OuterLogupExt3Verifier.verifyPrevalidated DELEGATECALL (incl. ABI encode/decode)   [keccak 22/2,284B ext3 2,001 sc 86]
+  O      60->1000         3,207  O: prologue (alloc points)
+  O    1000->1001        35,297  O: round 0: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1001->1002        31,005  O: round 0: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1002->1010           486  O: round 0: loop tail
+  O    1010->1011        35,374  O: round 1: transcript commit (2 domains, idx, 2 Ext3 vecs, 6 squeezes)   [keccak 11/1,142B ext3 0 sc 0]
+  O    1011->1012        31,191  O: round 1: evaluate log (deg 5) + gate (deg 10) round polys   [keccak 0/0B ext3 34 sc 2]
+  O    1012->63             387  O: round 1: loop exit
+  O      63->70             626  O: -> terminal
+  O      70->71           7,197  O: terminal: eq(tau, point)   [keccak 0/0B ext3 4 sc 0]
+  O      71->72           4,055  O: terminal: subgroup evaluation   [keccak 0/0B ext3 2 sc 2]
+  O      72->73       1,220,228  O: terminal: per-routed-wire denominators/norms/adjugates/logUp accumulate (80 wires)   [keccak 0/0B ext3 1,920 sc 80]
+  O      73->74           1,830  O: terminal: final combine   [keccak 0/0B ext3 2 sc 0]
+  O      74->75             474  O: -> PI binding
+  O      75->76           4,286  O: terminal: PI binding loop   [keccak 0/0B ext3 1 sc 0]
+  O      76->77           5,543  O: terminal: PI eq-row evaluation   [keccak 0/0B ext3 3 sc 0]
+  O      77->64           1,942  O: terminal: xi*binding add + eq check + return   [keccak 0/0B ext3 1 sc 0]
+  C      26->40             216  C: -> absorb claims
+  C      40->41         327,827  C: absorb 5 constituent claim vectors (+empty vec, 2 domains)   [keccak 8/14,937B ext3 0 sc 0]
+  C      41->42          91,308  C: squeeze 2 index points (2*indexBits Ext3)   [keccak 48/3,072B ext3 0 sc 0]
+  C      42->27             204  C: absorb return
+  C      27->28         560,767  C: PackedClaimExt3 fold of 5 used cells (internal)   [keccak 0/0B ext3 613 sc 0]
+  C      28->29          21,698  C: WHIR param prep (config.whir copy, packed points, roots)
+  C      29->50       2,791,913  C: SpongefishWhirVerify.verifyWhirProofBound DELEGATECALL (incl. ABI encode/decode)   [keccak 1,113/79,690B ext3 1,017 sc 1,566]
+  W     200->201         13,659  W: _validateParameters
+  W     201->202          5,702  W: initTranscript (3 absorbs) + VerifyState alloc   [keccak 3/192B ext3 0 sc 0]
+  W     202->210            501  W: -> phaseInitial
+  W     210->211         31,649  W: initial: 3 roots + OOD point squeezes + OOD answers (absorbs)   [keccak 21/1,116B ext3 0 sc 0]
+  W     211->212         15,719  W: initial: 6 evaluation claims read/absorb + mask check   [keccak 6/336B ext3 0 sc 0]
+  W     212->213         21,315  W: initial: cross-commitment OOD matrix read   [keccak 6/336B ext3 0 sc 0]
+  W     213->214         15,268  W: initial: vector RLC + constraint RLC geometric challenges   [keccak 8/376B ext3 6 sc 0]
+  W     214->215         14,012  W: initial: theSum accumulation   [keccak 0/0B ext3 20 sc 0]
+  W     215->203            251  W: initial: return
+  W     203->204         30,955  W: initial sumcheck (initialSumcheckRounds rounds)   [keccak 24/1,200B ext3 8 sc 0]
+  W     204->300            530  W: -> rounds
+  W     300->301          1,420  W: round 0: root read   [keccak 1/64B ext3 0 sc 0]
+  W     301->302          4,564  W: round 0: OOD point squeeze   [keccak 4/188B ext3 0 sc 0]
+  W     302->303          3,136  W: round 0: OOD answers absorb   [keccak 1/56B ext3 0 sc 0]
+  W     303->304          2,683  W: round 0: PoW   [keccak 3/151B ext3 0 sc 0]
+  W     304->305         85,266  W: round 0: challenge indices (squeeze+sort)   [keccak 58/2,726B ext3 0 sc 0]
+  W     305->450         22,860  W: round 0 split: commitment 0: vec prefix + leaf row hashing   [keccak 29/3,712B ext3 0 sc 0]
+  W     450->451        137,683  W: round 0 split: commitment 0: Merkle authentication   [keccak 218/13,952B ext3 0 sc 0]
+  W     451->460         22,232  W: round 0 split: commitment 1: vec prefix + leaf row hashing   [keccak 29/3,712B ext3 0 sc 0]
+  W     460->461        137,732  W: round 0 split: commitment 1: Merkle authentication   [keccak 218/13,952B ext3 0 sc 0]
+  W     461->470         22,270  W: round 0 split: commitment 2: vec prefix + leaf row hashing   [keccak 29/3,712B ext3 0 sc 0]
+  W     470->471        137,783  W: round 0 split: commitment 2: Merkle authentication   [keccak 218/13,952B ext3 0 sc 0]
+  W     471->306            362  W: round 0 split: commitments done
+  W     306->307         67,172  W: round 0: eval points (glPow)
+  W     307->420            484  W: 307->420
+  W     420->421         24,684  W: constraint values: eq weights (2^foldingFactor)   [keccak 0/0B ext3 30 sc 0]
+  W     421->422         36,585  W: constraint values: constraint RLC geometric challenge   [keccak 4/188B ext3 29 sc 0]
+  W     422->423        855,903  W: constraint values: OOD + in-domain dot products into theSum   [keccak 0/0B ext3 117 sc 1,392]
+  W     423->424         19,776  W: constraint values: store round constraints
+  W     424->309            413  W: constraint values: return
+  W     309->310         31,402  W: round 0: sumcheck (4 rounds)   [keccak 24/1,200B ext3 8 sc 0]
+  W     310->500            392  W: round 0: loop tail
+  W     500->501         10,057  W: final: read final vector   [keccak 4/224B ext3 0 sc 0]
+  W     501->502          2,573  W: final: PoW   [keccak 3/151B ext3 0 sc 0]
+  W     502->503         54,560  W: final: challenge indices (sort/dedup)   [keccak 38/1,786B ext3 0 sc 0]
+  W     503->504         25,694  W: final: eq weights   [keccak 0/0B ext3 30 sc 0]
+  W     504->505         44,381  W: final: eval points (glPow)
+  W     505->506         12,009  W: final: vec prefix + leaf row hashing   [keccak 19/7,296B ext3 0 sc 0]
+  W     506->507         80,933  W: final: Merkle authentication   [keccak 133/8,512B ext3 0 sc 0]
+  W     507->508        414,609  W: final: per-query final-vector openings (reduceWithPowers + dotEqWithRow)   [keccak 0/0B ext3 380 sc 0]
+  W     508->205            278  W: final: return
+  W     205->206         15,882  W: final sumcheck   [keccak 12/600B ext3 4 sc 0]
+  W     206->520            252  W: -> final claim
+  W     520->521          4,227  W: finalClaim: foldEval of final vector   [keccak 0/0B ext3 6 sc 0]
+  W     521->522         10,027  W: finalClaim: Ext3 inverse + mul   [keccak 0/0B ext3 2 sc 0]
+  W     522->523        214,389  W: finalClaim: subtract round constraints (mleEvaluateUnivariate per OOD/in-domain point)   [keccak 0/0B ext3 315 sc 174]
+  W     523->524         66,316  W: finalClaim: eq(evalPoint, r) for 2 points + expectedRlc   [keccak 0/0B ext3 62 sc 0]
+  W     524->207            990  W: finalClaim: eq check + return
+  W     207->208            305  W: EOF checks
+  C      50->51           2,744  C: constants prefix copy
+  C      51->52         144,857  C: PoseidonPublicInputsHash.hashNoPad DELEGATECALL
+  PH    850->851        139,889  PH: Poseidon hash_no_pad of public inputs
+  C      52->53       1,169,022  C: Plonky2GateEvaluatorExt3.evalCombinedPrevalidated DELEGATECALL   [keccak 0/0B ext3 700 sc 1,787]
+  G     600->610            818  G: prologue
+  G     610->611          5,528  G: gate row 0: selector filter   [keccak 0/0B ext3 3 sc 0]
+  G     611->612          3,724  G: gate row 0: evaluate unfiltered constraints
+  G     612->613          3,210  G: gate row 0: alpha reduce   [keccak 0/0B ext3 2 sc 0]
+  G     613->614          1,306  G: gate row 0: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     614->620            508  G: gate row 0: loop tail
+  G     620->621          5,527  G: gate row 1: selector filter   [keccak 0/0B ext3 3 sc 0]
+  G     621->622          6,706  G: gate row 1: evaluate unfiltered constraints
+  G     622->623          5,481  G: gate row 1: alpha reduce   [keccak 0/0B ext3 4 sc 0]
+  G     623->624          1,309  G: gate row 1: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     624->630            509  G: gate row 1: loop tail
+  G     630->631          5,539  G: gate row 2: selector filter   [keccak 0/0B ext3 3 sc 0]
+  G     631->632         42,809  G: gate row 2: evaluate unfiltered constraints   [keccak 0/0B ext3 60 sc 0]
+  G     632->633         23,683  G: gate row 2: alpha reduce   [keccak 0/0B ext3 20 sc 0]
+  G     633->634          1,315  G: gate row 2: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     634->640            511  G: gate row 2: loop tail
+  G     640->641          2,587  G: gate row 3: selector filter   [keccak 0/0B ext3 1 sc 0]
+  G     641->643        957,871  G: gate row 3: Poseidon DELEGATECALL (evalPoseidonReduced)   [keccak 0/0B ext3 600 sc 1,787]
+  PS    700->701         13,392  PS: Poseidon: load constants + allocate state/scratch/constraints
+  PS    701->702          6,465  PS: Poseidon: swap/delta constraints   [keccak 0/0B ext3 5 sc 0]
+  PS    702->703        239,684  PS: Poseidon: first 4 full rounds (S-box + MDS)   [keccak 0/0B ext3 192 sc 580]
+  PS    703->704         42,418  PS: Poseidon: partial first constant layer + MDS partial init   [keccak 0/0B ext3 0 sc 121]
+  PS    704->705        246,462  PS: Poseidon: 22 partial rounds   [keccak 0/0B ext3 88 sc 506]
+  PS    705->706        243,722  PS: Poseidon: second 4 full rounds   [keccak 0/0B ext3 192 sc 580]
+  PS    706->707          3,804  PS: Poseidon: output constraints
+  PS    707->708         67,256  PS: Poseidon: alpha-reduce 123 constraints   [keccak 0/0B ext3 123 sc 0]
+  G     643->644          1,273  G: gate row 3: filter*reduced accumulate   [keccak 0/0B ext3 1 sc 0]
+  G     644->601            320  G: last row exit
+  C      53->54          16,122  C: OuterLogupExt3Verifier.verifyGateTerminal DELEGATECALL   [keccak 0/0B ext3 5 sc 0]
+  GT    800->801          2,244  GT: canonical checks
+  GT    801->802          8,053  GT: eq(tau, point) * gateEval + compare   [keccak 0/0B ext3 5 sc 0]
+  C      54->55             196  C: tail
+
