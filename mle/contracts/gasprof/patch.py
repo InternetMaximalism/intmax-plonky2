@@ -395,76 +395,63 @@ P(f, """        bytes32 digest = keccak256(
 # ---------------------------------------------------------------- OuterLogupExt3Verifier
 f = "OuterLogupExt3Verifier.sol"
 P(f, '} from "./generated/MleWhirV2.sol";\n', '} from "./generated/MleWhirV2.sol";\n' + IMPORT_ROOT)
+# mark 60: entry of verifyPrevalidated (the flattening of the Ext3[] inputs is inside the frame)
 P(f, """    {
-        GoldilocksExt3.Ext3 memory logFinalClaim;
-        (logPoint, logFinalClaim, gatePoint, gateFinalClaim) =
-            _verifyCoupledSumchecksUnchecked(logProof, gateProof, vk.numVars, transcript);
-        GoldilocksExt3.Ext3 memory terminalValue = _evaluateTerminalUnchecked(vk, challenges, terminal, logPoint);
-        if (!GoldilocksExt3.eq(logFinalClaim, terminalValue)) revert InvalidMleProof();
-        nextTranscript = transcript;
-    }
-
-    /// @notice Verify all coefficient rounds without evaluating either terminal family.
+        uint256[] memory logRounds = _flattenRounds(logProof, vk.numVars, MAX_DEGREE);
+        uint256[] memory gateRounds = _flattenRounds(gateProof, vk.numVars, vk.gateDegree);
 """, """    {
         GasProbe.mark(60);
-        GoldilocksExt3.Ext3 memory logFinalClaim;
-        (logPoint, logFinalClaim, gatePoint, gateFinalClaim) =
-            _verifyCoupledSumchecksUnchecked(logProof, gateProof, vk.numVars, transcript);
-        GasProbe.mark(63);
-        GoldilocksExt3.Ext3 memory terminalValue = _evaluateTerminalUnchecked(vk, challenges, terminal, logPoint);
+        uint256[] memory logRounds = _flattenRounds(logProof, vk.numVars, MAX_DEGREE);
+        uint256[] memory gateRounds = _flattenRounds(gateProof, vk.numVars, vk.gateDegree);
+""")
+# marks 63/64: after the coupled sumchecks / after the terminal equality
+P(f, """        (logPoint, logFinalClaim, gatePoint, gateFinalClaim) =
+            _coupledSumchecksFlat(logRounds, gateRounds, vk.numVars, vk.gateDegree, transcript);
+        GoldilocksExt3.Ext3 memory terminalValue =
+            _terminalFlat(vk, challenges, preprocessed, witness, normInverse, publicInputs, logPoint);
         if (!GoldilocksExt3.eq(logFinalClaim, terminalValue)) revert InvalidMleProof();
-        nextTranscript = transcript;
+    }
+""", """        (logPoint, logFinalClaim, gatePoint, gateFinalClaim) =
+            _coupledSumchecksFlat(logRounds, gateRounds, vk.numVars, vk.gateDegree, transcript);
+        GasProbe.mark(63);
+        GoldilocksExt3.Ext3 memory terminalValue =
+            _terminalFlat(vk, challenges, preprocessed, witness, normInverse, publicInputs, logPoint);
+        if (!GoldilocksExt3.eq(logFinalClaim, terminalValue)) revert InvalidMleProof();
         GasProbe.mark(64);
     }
-
-    /// @notice Verify all coefficient rounds without evaluating either terminal family.
 """)
+# per-round marks: 1000+10r loop entry, 1001+10r after the transcript commit, 1002+10r after both evaluations
 P(f, """        for (uint256 roundIndex = 0; roundIndex < numVars; ++roundIndex) {
-            GoldilocksExt3.Ext3[] memory logCoefficients = logProof.rounds[roundIndex].nonConstant;
-            GoldilocksExt3.Ext3[] memory gateCoefficients = gateProof.rounds[roundIndex].nonConstant;
-            TranscriptV2.CoupledOuterRoundChallenges memory roundChallenges =
-                TranscriptV2.commitCoupledOuterRound(transcript, roundIndex, logCoefficients, gateCoefficients);
-
-            logPoint[roundIndex] = roundChallenges.log;
-            logClaim = _evaluateExt3Round(logClaim, logCoefficients, roundChallenges.log);
-            gatePoint[roundIndex] = roundChallenges.gate;
-            gateClaim = _evaluateExt3RoundDynamic(gateClaim, gateCoefficients, roundChallenges.gate);
-        }
+            assembly ("memory-safe") {
+                let base := add(mload(ctx), mul(roundIndex, 0x1e0))
 """, """        for (uint256 roundIndex = 0; roundIndex < numVars; ++roundIndex) {
             GasProbe.mark(1000 + 10 * roundIndex);
-            GoldilocksExt3.Ext3[] memory logCoefficients = logProof.rounds[roundIndex].nonConstant;
-            GoldilocksExt3.Ext3[] memory gateCoefficients = gateProof.rounds[roundIndex].nonConstant;
-            TranscriptV2.CoupledOuterRoundChallenges memory roundChallenges =
+            assembly ("memory-safe") {
+                let base := add(mload(ctx), mul(roundIndex, 0x1e0))
+""")
+P(f, """            TranscriptV2.CoupledOuterRoundChallenges memory roundChallenges =
+                TranscriptV2.commitCoupledOuterRound(transcript, roundIndex, logCoefficients, gateCoefficients);
+            // Round polynomial evaluation: a0 = (claim - sum a_j) / 2, then Horner at the challenge.
+""", """            TranscriptV2.CoupledOuterRoundChallenges memory roundChallenges =
                 TranscriptV2.commitCoupledOuterRound(transcript, roundIndex, logCoefficients, gateCoefficients);
             GasProbe.mark(1001 + 10 * roundIndex);
-
-            logPoint[roundIndex] = roundChallenges.log;
-            logClaim = _evaluateExt3Round(logClaim, logCoefficients, roundChallenges.log);
-            gatePoint[roundIndex] = roundChallenges.gate;
-            gateClaim = _evaluateExt3RoundDynamic(gateClaim, gateCoefficients, roundChallenges.gate);
+            GasProbe.ext3Count(20, MAX_DEGREE);
+            GasProbe.ext3Count(21, gateDegree);
+            // Round polynomial evaluation: a0 = (claim - sum a_j) / 2, then Horner at the challenge.
+""")
+P(f, """                record := add(mload(add(ctx, 0x20)), mul(roundIndex, mload(add(ctx, 0x40))))
+                evaluateRound(mload(add(ctx, 0x100)), record, add(record, mload(add(ctx, 0x40))), challenge)
+            }
+        }
+    }
+""", """                record := add(mload(add(ctx, 0x20)), mul(roundIndex, mload(add(ctx, 0x40))))
+                evaluateRound(mload(add(ctx, 0x100)), record, add(record, mload(add(ctx, 0x40))), challenge)
+            }
             GasProbe.mark(1002 + 10 * roundIndex);
         }
+    }
 """)
-P(f, """        GoldilocksExt3.Ext3 memory coefficientSum = GoldilocksExt3.zero();
-        for (uint256 i = 0; i < MAX_DEGREE; ++i) {
-            coefficientSum = GoldilocksExt3.add(coefficientSum, coefficients[i]);
-        }
-""", """        GasProbe.ext3Count(20, MAX_DEGREE + 1);
-        GoldilocksExt3.Ext3 memory coefficientSum = GoldilocksExt3.zero();
-        for (uint256 i = 0; i < MAX_DEGREE; ++i) {
-            coefficientSum = GoldilocksExt3.add(coefficientSum, coefficients[i]);
-        }
-""")
-P(f, """        GoldilocksExt3.Ext3 memory coefficientSum = GoldilocksExt3.zero();
-        for (uint256 i = 0; i < coefficients.length; ++i) {
-            coefficientSum = GoldilocksExt3.add(coefficientSum, coefficients[i]);
-        }
-""", """        GasProbe.ext3Count(21, coefficients.length + 1);
-        GoldilocksExt3.Ext3 memory coefficientSum = GoldilocksExt3.zero();
-        for (uint256 i = 0; i < coefficients.length; ++i) {
-            coefficientSum = GoldilocksExt3.add(coefficientSum, coefficients[i]);
-        }
-""")
+# norm/logUp terminal: 70 entry, 71 after eq(tau, point), 72 after subgroup(point), 73 after the wire loop, 74 after combine
 P(f, """    ) private pure returns (GoldilocksExt3.Ext3 memory permutationValue) {
         GoldilocksExt3.Ext3 memory eqValue = _eqEvaluation(challenges.tau, point);
         GoldilocksExt3.Ext3 memory subgroup = _subgroupEvaluation(vk.subgroupGenPowers, point);
@@ -475,75 +462,81 @@ P(f, """    ) private pure returns (GoldilocksExt3.Ext3 memory permutationValue)
         GoldilocksExt3.Ext3 memory subgroup = _subgroupEvaluation(vk.subgroupGenPowers, point);
         GasProbe.mark(72);
 """)
-P(f, """                challenges.lambda,
-                scratch
-            );
+P(f, """            for { let i := numRoutedWires } i {} {
+                i := sub(i, 1)
+                wireStep(w, i)
+            }
         }
-
-        permutationValue = GoldilocksExt3.add(
-            GoldilocksExt3.mul(eqValue, helperZeroChecks), GoldilocksExt3.mul(challenges.kappa, logupSum)
-        );
-    }
-""", """                challenges.lambda,
-                scratch
-            );
+        // permutationValue = eq(tau, point) * helperZeroChecks + kappa * logUpSum
+""", """            for { let i := numRoutedWires } i {} {
+                i := sub(i, 1)
+                wireStep(w, i)
+            }
         }
         GasProbe.ext3Count(23, 24 * vk.numRoutedWires);
         GasProbe.scalarCount(24, vk.numRoutedWires);
         GasProbe.mark(73);
-
-        permutationValue = GoldilocksExt3.add(
-            GoldilocksExt3.mul(eqValue, helperZeroChecks), GoldilocksExt3.mul(challenges.kappa, logupSum)
-        );
+        // permutationValue = eq(tau, point) * helperZeroChecks + kappa * logUpSum
+""")
+P(f, """        _mulAddInPlace(permutationValue, eqValue, _recordAt(w, 0x1e0));
+        _mulAddInPlace(permutationValue, challenges.kappa, _recordAt(w, 0x240));
+    }
+""", """        _mulAddInPlace(permutationValue, eqValue, _recordAt(w, 0x1e0));
+        _mulAddInPlace(permutationValue, challenges.kappa, _recordAt(w, 0x240));
         GasProbe.mark(74);
     }
 """)
-P(f, """        uint256 count = terminal.publicInputs.length;
+# direct-PI binding: 75 entry, 76/77 after the Horner loop (eq rows are memoised inside the same loop)
+P(f, """        uint256 count = publicInputs.length;
         if (count == 0) return binding;
-        PublicInputBindingScratch memory scratch;
+        // Scratch (byte offsets): 0x00 map data, 0x20 point table, 0x40 numVars, 0x60 witness data,
 """, """        GasProbe.mark(75);
-        uint256 count = terminal.publicInputs.length;
+        uint256 count = publicInputs.length;
         if (count == 0) return binding;
-        PublicInputBindingScratch memory scratch;
+        // Scratch (byte offsets): 0x00 map data, 0x20 point table, 0x40 numVars, 0x60 witness data,
 """)
-P(f, """            if (i + 1 < count) _mulExt3InPlace(scratch.etaPower, eta);
+P(f, """            mstore(binding, mload(add(w, 0x1e0)))
+            mstore(add(binding, 0x20), mload(add(w, 0x200)))
+            mstore(add(binding, 0x40), mload(add(w, 0x220)))
         }
-        GoldilocksExt3.Ext3 memory commonEq = _eqBooleanRowSelectedBits(
-""", """            if (i + 1 < count) _mulExt3InPlace(scratch.etaPower, eta);
-        }
-        GasProbe.ext3Count(28, 2 * count - 1);
-        GasProbe.mark(76);
-        GoldilocksExt3.Ext3 memory commonEq = _eqBooleanRowSelectedBits(
-""")
-P(f, """                GoldilocksExt3.add(scratch.binding, GoldilocksExt3.mul(eqRow, scratch.rowBindings[rowIndex]));
-        }
-        binding = scratch.binding;
     }
-""", """                GoldilocksExt3.add(scratch.binding, GoldilocksExt3.mul(eqRow, scratch.rowBindings[rowIndex]));
+""", """            mstore(binding, mload(add(w, 0x1e0)))
+            mstore(add(binding, 0x20), mload(add(w, 0x200)))
+            mstore(add(binding, 0x40), mload(add(w, 0x220)))
         }
-        binding = scratch.binding;
+        GasProbe.ext3Count(28, 2 * count);
+        GasProbe.mark(76);
         GasProbe.mark(77);
     }
 """)
-P(f, """        value = GoldilocksExt3.one();
-        GoldilocksExt3.Ext3 memory one = GoldilocksExt3.one();
-        for (uint256 i = 0; i < point.length; ++i) {
-            // tau*x + (1-tau)*(1-x) = 1 - tau - x + 2*tau*x.
-""", """        value = GoldilocksExt3.one();
-        GoldilocksExt3.Ext3 memory one = GoldilocksExt3.one();
-        GasProbe.ext3Count(25, 0);
-        for (uint256 i = 0; i < point.length; ++i) {
-            // tau*x + (1-tau)*(1-x) = 1 - tau - x + 2*tau*x.
+P(f, """    function _eqEvaluation(GoldilocksExt3.Ext3[] memory tau, GoldilocksExt3.Ext3[] memory point)
+        private
+        pure
+        returns (GoldilocksExt3.Ext3 memory value)
+    {
+        GoldilocksExt3.Ext3 memory factor;
+""", """    function _eqEvaluation(GoldilocksExt3.Ext3[] memory tau, GoldilocksExt3.Ext3[] memory point)
+        private
+        pure
+        returns (GoldilocksExt3.Ext3 memory value)
+    {
+        GasProbe.ext3Count(25, 2 * point.length);
+        GoldilocksExt3.Ext3 memory factor;
 """)
-P(f, """        value = GoldilocksExt3.one();
-        GoldilocksExt3.Ext3 memory one = GoldilocksExt3.one();
-        for (uint256 i = 0; i < point.length; ++i) {
-            // (1-x) + x*g = 1 + x*(g-1). Since g is base-field
-""", """        value = GoldilocksExt3.one();
-        GoldilocksExt3.Ext3 memory one = GoldilocksExt3.one();
-        GasProbe.ext3Count(26, 0);
-        for (uint256 i = 0; i < point.length; ++i) {
-            // (1-x) + x*g = 1 + x*(g-1). Since g is base-field
+P(f, """    function _subgroupEvaluation(uint256[] memory subgroupGenPowers, GoldilocksExt3.Ext3[] memory point)
+        private
+        pure
+        returns (GoldilocksExt3.Ext3 memory value)
+    {
+        GoldilocksExt3.Ext3 memory factor;
+""", """    function _subgroupEvaluation(uint256[] memory subgroupGenPowers, GoldilocksExt3.Ext3[] memory point)
+        private
+        pure
+        returns (GoldilocksExt3.Ext3 memory value)
+    {
+        GasProbe.ext3Count(26, point.length);
+        GasProbe.scalarCount(26, point.length);
+        GoldilocksExt3.Ext3 memory factor;
 """)
 P(f, """        if (tau.length == 0 || tau.length != point.length || tau.length > MAX_ROW_VARIABLES) {
             revert InvalidMleProof();
@@ -554,7 +547,8 @@ P(f, """        if (tau.length == 0 || tau.length != point.length || tau.length 
         }
         _checkCanonical(gateEvaluation);
         _checkCanonical(finalClaim);
-        GoldilocksExt3.Ext3 memory expected = GoldilocksExt3.mul(_eqEvaluation(tau, point), gateEvaluation);
+        GoldilocksExt3.Ext3 memory expected = _eqEvaluation(tau, point);
+        _mulInPlace(expected, gateEvaluation);
         if (!GoldilocksExt3.eq(expected, finalClaim)) revert InvalidMleProof();
     }
 """, """        GasProbe.mark(800);
@@ -568,7 +562,9 @@ P(f, """        if (tau.length == 0 || tau.length != point.length || tau.length 
         _checkCanonical(gateEvaluation);
         _checkCanonical(finalClaim);
         GasProbe.mark(801);
-        GoldilocksExt3.Ext3 memory expected = GoldilocksExt3.mul(_eqEvaluation(tau, point), gateEvaluation);
+        GoldilocksExt3.Ext3 memory expected = _eqEvaluation(tau, point);
+        _mulInPlace(expected, gateEvaluation);
+        GasProbe.ext3Count(27, 1);
         if (!GoldilocksExt3.eq(expected, finalClaim)) revert InvalidMleProof();
         GasProbe.mark(802);
     }
