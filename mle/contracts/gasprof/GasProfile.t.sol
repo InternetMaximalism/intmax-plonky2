@@ -47,6 +47,20 @@ contract GasProfileTest is Test {
         );
     }
 
+    function _production() internal view returns (Fx memory fx) {
+        string memory json = vm.readFile("test/fixtures/v2_production_shape.json");
+        fx.proof = abi.decode(vm.parseJsonBytes(json, ".solidityAbiProof.bytes"), (MleVerifierV2.MleProof));
+        fx.config = abi.decode(
+            vm.parseJsonBytes(json, ".solidityAbiVerificationConfig.bytes"), (MleVerifierV2.VerificationConfig)
+        );
+        fx.compact = vm.parseJsonBytes(json, ".compactProof.bytes");
+        _ids(
+            fx,
+            vm.parseJsonBytes(json, ".pinnedVerifier.whirProtocolId"),
+            vm.parseJsonBytes32(json, ".pinnedVerifier.whirSessionId")
+        );
+    }
+
     function _ids(Fx memory fx, bytes memory protocolId, bytes32 sessionId) internal pure {
         require(protocolId.length == 64, "protocol id length");
         bytes32 a;
@@ -104,6 +118,10 @@ contract GasProfileTest is Test {
 
     function test_max_verifyCompact() external {
         _runAll(_max(), "max verifyCompact");
+    }
+
+    function test_production_verifyCompact() external {
+        _runAll(_production(), "production verifyCompact");
     }
 
     function test_small_verifyCompactPublicInputs() external {

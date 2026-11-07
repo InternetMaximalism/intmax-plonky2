@@ -1480,11 +1480,11 @@ P(f, """        combined = GoldilocksExt3.zero();
         }
 """, """        combined = GoldilocksExt3.zero();
         for (uint256 row = 0; row < gates.length; ++row) {
-            GasProbe.mark(610 + 10 * row);
+            GasProbe.mark(2010 + 10 * row);
             GateInfoV2 calldata info = gates[row];
             GoldilocksExt3.Ext3 memory filter =
                 _computeFilter(info, constants[uint256(info.selectorIndex)], numSelectors > 1);
-            GasProbe.mark(611 + 10 * row);
+            GasProbe.mark(2011 + 10 * row);
             // Metadata for every gate was validated above. A zero selector filter
             // therefore makes this gate's entire contribution identically zero;
             // avoid evaluating expensive inactive Poseidon/coset constraints.
@@ -1501,13 +1501,13 @@ P(f, """        combined = GoldilocksExt3.zero();
             } else {
                 GoldilocksExt3.Ext3[] memory unfiltered =
                     _evaluateUnfiltered(info, wires, constants, publicHash, numSelectors);
-                GasProbe.mark(612 + 10 * row);
+                GasProbe.mark(2012 + 10 * row);
                 if (unfiltered.length != uint256(info.numConstraints)) revert InvalidMleVerifierConfiguration();
                 reduced = GoldilocksExt3.reduceWithPowers(unfiltered, alpha);
             }
-            GasProbe.mark(613 + 10 * row);
+            GasProbe.mark(2013 + 10 * row);
             combined = GoldilocksExt3.add(combined, GoldilocksExt3.mul(filter, reduced));
-            GasProbe.mark(614 + 10 * row);
+            GasProbe.mark(2014 + 10 * row);
         }
 """)
 P(f, """        if (wires.length < 4 * count || constants.length < constantOffset + 2) revert InvalidMleProof();

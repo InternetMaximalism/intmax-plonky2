@@ -15,7 +15,7 @@ def frame_of(i):
     if 20 <= i <= 55: return "C"
     if 60 <= i <= 77 or 1000 <= i <= 1199: return "O"
     if 200 <= i <= 599: return "W"
-    if 600 <= i <= 699: return "G"
+    if 600 <= i <= 699 or 2000 <= i <= 2999: return "G"
     if 700 <= i <= 708: return "PS"
     if 800 <= i <= 802: return "GT"
     if 850 <= i <= 851: return "PH"

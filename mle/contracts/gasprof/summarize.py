@@ -96,8 +96,8 @@ def group_of(fr, a, b):
         if a == 207: return ("19 WHIR: EOF checks", "")
     if fr == "PH": return ("22 Public-input Poseidon hash (hash_no_pad)", "")
     if fr == "G":
-        if a == 600 or (a - 610) % 10 == 4: return ("24 Gate terminal: non-Poseidon gates + filters", "glue")
-        s = (a - 610) % 10; r = (a - 610) // 10
+        if a == 600 or (a >= 2000 and (a - 2010) % 10 == 4): return ("24 Gate terminal: non-Poseidon gates + filters", "glue")
+        s = (a - 2010) % 10; r = (a - 2010) // 10
         if s == 0: return ("24 Gate terminal: non-Poseidon gates + filters", "selector filters")
         if s == 1 and b == a + 2: return ("25 BOUNDARY gate evaluator->PoseidonGateExt3 (wires ABI copy)", None)
         if s in (1, 2): return ("24 Gate terminal: non-Poseidon gates + filters", f"row {r}: unfiltered eval + alpha reduce")
@@ -132,7 +132,8 @@ def summarize(prof):
 
 def main():
     timing = parse(sys.argv[1])
-    for name in ("test_max_verifyCompact", "test_small_verifyCompact"):
+    for name in ("test_production_verifyCompact", "test_max_verifyCompact", "test_small_verifyCompact"):
+        if name not in timing: continue
         prof = Profile(timing[name]["events"])
         total, groups = summarize(prof)
         print(f"==== {name}: corrected callee total {fmt(total)} gas ====")
