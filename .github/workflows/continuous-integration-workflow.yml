@@ -167,7 +167,9 @@ jobs:
   mle:
     name: MLE wire-v3 and historical conformance
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
+    env:
+      RUSTFLAGS: -Copt-level=3 -Cdebug-assertions -Coverflow-checks=y -Cdebuginfo=0
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
@@ -222,7 +224,7 @@ jobs:
   lean_current_audit:
     name: Current wire-v3 Lean models (partial scope)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
         with:

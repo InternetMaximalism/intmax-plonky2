@@ -10,7 +10,7 @@
     },
     {
       "path": ".github/workflows/continuous-integration-workflow.yml",
-      "sha256": "f6a82f7f78e77c934c8d98281a4a7bec5615a3e310dd69d7c51c452c7b5e73ed",
+      "sha256": "3317b083715f9ce045cd6910714365e029a30131ddad62a55d9969ecf60cf4d6",
       "kind": "tooling"
     },
     {
@@ -1145,7 +1145,7 @@
     },
     {
       "path": "mle/audit/check-wire3.py",
-      "sha256": "47f4952865276c950080ccccd570a88cba0ba0e2587b6c64a6e92e2426e6e8a2",
+      "sha256": "422ac560b0203f438b2c4903e3c9ecd0d9b0f5e0ff45f45239f6350be4817ca5",
       "kind": "tooling"
     },
     {
