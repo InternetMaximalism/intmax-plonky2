@@ -347,7 +347,7 @@ def audit_theorems(root, records):
     lake = shutil.which("lake")
     require(lake is not None, "lake not on PATH")
     # Building the pinned Mathlib sources from scratch takes more than 20 minutes on a
-    # standard GitHub runner; the job-level timeout remains the outer bound.
+    # standard GitHub runner.
     command([lake, "build"], cwd=root / PROJECT, capture=False, timeout=3600)
     with tempfile.TemporaryDirectory(prefix="wire3-axioms-") as temp:
         for index, record in enumerate(records):
