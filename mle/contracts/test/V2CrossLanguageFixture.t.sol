@@ -87,12 +87,12 @@ contract V2CrossLanguageFixtureTest is Test {
     string internal constant HISTORICAL_WIRE_V2_FIXTURE = "../testdata/historical_wire_v2_compact.json";
     string internal constant CASE = ".cases[0]";
     uint256 internal constant EVENT_COUNT = 78;
-    uint256 internal constant RUST_SOLIDITY_ABI_PROOF_BYTES = 103392;
+    uint256 internal constant RUST_SOLIDITY_ABI_PROOF_BYTES = 100064;
     bytes32 internal constant RUST_SOLIDITY_ABI_PROOF_KECCAK =
-        0xa32bc6bf5c3f90780ce9e0a632a6a155ec4b35c707e39c8661b6db7bcb13f6f0;
+        0x2ecaee964f80c5386d168f28fbb83442422fd3fd25549694526950aa4516bd17;
     uint256 internal constant RUST_SOLIDITY_ABI_CONFIG_BYTES = 5664;
     bytes32 internal constant RUST_SOLIDITY_ABI_CONFIG_KECCAK =
-        0xa5ea7da5546f4628cb268bcda9e7c5e550732a12eeadcb14c39fc280d1c724fd;
+        0xff4e3111229fe34875edaaa97a514118991ed134042c5b5b40fe64d07b7483ab;
     MleVerifierV2 private encodedVerifier;
 
     struct AtomicFixture {
