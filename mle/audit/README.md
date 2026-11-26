@@ -7,7 +7,7 @@ The `V2` in file names is an API-generation name; it does not mean that old wire
 **Status: a partial executable model and deterministic properties have been proved.
 Lean-ification of the whole implementation, formal equivalence with Rust/Solidity, and proof of cryptographic soundness are not complete.**
 
-We do not repurpose the old audit as a proof about the current implementation. The ordinary `lake build` and CI inspect the current
+We do not repurpose the old audit as a proof about the current implementation. The ordinary `lake build` inspects the current
 `Audit.lean`. The July models, the axiom on the number of roots, and the old findings are separated into
 [historical material](HISTORICAL-README.md) and an explicit `HistoricalAudit` target.
 
@@ -176,6 +176,9 @@ It does not mean that all code, including dependent libraries and the compiler, 
 ## Running
 
 Put Lean 4.10.0's `lake` on the PATH and run from the repository root.
+
+These checks are not part of GitHub CI: building the pinned Mathlib sources from scratch takes more than
+20 minutes per run. Run them by hand after changing anything the manifest covers.
 
 ```sh
 python3 -B mle/audit/test-check-wire3.py

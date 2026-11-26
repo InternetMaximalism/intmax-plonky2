@@ -3,7 +3,7 @@
 This fork repository was originally for [Plonky2 with FRI](https://github.com/0xPolygonZero/plonky2). In its mle/ directory, WHIR verification is available now. 
 Periodic auditing and maintenance of this fork repository, including the MLE/WHIR proving system, is conducted by the Intmax team.
 
-**WARNING: EXPERIMENTAL — PRODUCTION RELEASE REMAINS NO-GO.**
+**WARNING: EXPERIMENTAL**
 
 The current MLE implementation uses PCS wire v3 through the historical `V2`
 Rust APIs and `MleVerifierV2` / `PinnedMleVerifierV2` Solidity contracts. Its
