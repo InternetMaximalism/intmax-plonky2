@@ -825,3 +825,53 @@ fn target140_pow20_all_native_profiles_two_blob_diagnostic() {
     println!("target140_pow20_max_solidity_abi={abi_max}");
     assert_eq!(abi_max, 279_808);
 }
+
+#[test]
+#[ignore = "read-only target-105 sweep against the 128 KiB txpool cap; run explicitly with --nocapture"]
+fn target105_candidates_against_the_txpool_size_cap() {
+    use plonky2_mle::protocol_schema_v2::{WHIR_POW_BITS_V2, WHIR_SECURITY_LEVEL_V2};
+    // Validity parent: fixed compact bytes from the exported config's sizeUpperBound.
+    const VALIDITY_FIXED_COMPACT_BYTES: usize = 19_300;
+    let baseline = metrics_for_n(21, WHIR_SECURITY_LEVEL_V2, WHIR_POW_BITS_V2, 6, 4);
+    for (pow, rate, fold) in [
+        (22, 6, 4),
+        (23, 6, 4),
+        (24, 6, 4),
+        (25, 6, 4),
+        (26, 6, 4),
+        (27, 6, 4),
+        (28, 6, 4),
+        (30, 6, 4),
+        (22, 7, 4),
+        (24, 7, 4),
+        (26, 7, 4),
+        (22, 6, 5),
+        (24, 6, 5),
+        (26, 6, 5),
+        (22, 5, 5),
+        (22, 6, 3),
+        (26, 6, 3),
+    ] {
+        let m = metrics_for_n(21, WHIR_SECURITY_LEVEL_V2, pow, rate, fold);
+        println!(
+            "t105 pow={pow} rate=1/{} f={fold} effective={:.3} samples={:?} rounds={} narg={} hint_max={} whir_max={} validity_compact_max={} delta={} merkle_hashes={}({:.1}%) leaf_limbs={}({:.1}%) committed_limbs={}({:.1}%) max_pow={:.2} pow_work_log2={:.2}",
+            1usize << rate,
+            m.effective_security_bits,
+            m.samples,
+            m.num_rounds,
+            m.proof_size.narg_bytes,
+            m.proof_size.max_hint_bytes,
+            m.proof_size.max_total_bytes,
+            VALIDITY_FIXED_COMPACT_BYTES + m.proof_size.max_total_bytes,
+            m.proof_size.max_total_bytes as i64 - baseline.proof_size.max_total_bytes as i64,
+            m.merkle_hashes,
+            percent(m.merkle_hashes, baseline.merkle_hashes),
+            m.queried_leaf_limbs,
+            percent(m.queried_leaf_limbs, baseline.queried_leaf_limbs),
+            m.committed_codeword_limbs,
+            percent(m.committed_codeword_limbs, baseline.committed_codeword_limbs),
+            m.max_generated_pow_bits,
+            m.expected_pow_work_log2,
+        );
+    }
+}

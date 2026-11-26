@@ -109,7 +109,7 @@ fn production_fixture_round_trips_all_native_and_wire_views() {
     assert_eq!(fixture.solidity_abi_verification_config.byte_length, 5664);
     assert_eq!(
         fixture.solidity_abi_verification_config.keccak256,
-        "0xdeb7b1c55030dc60b29c93c02880e2e07dde6aefef3bb50f17f84290d44a15a1"
+        "0xc48afe2357bf420798839f3d45d07e38747d14dfe7eea054128f7ef070703b79"
     );
     assert!(fixture.stats.solidity_abi_bytes > fixture.stats.compact_bytes);
     eprintln!(
@@ -354,15 +354,15 @@ fn every_canonical_whir_profile_fits_the_two_blob_compact_boundary() {
     }
     assert_eq!(max_narg_bytes, MAX_WHIR_NARG_BYTES_V2);
     assert_eq!(max_hint_bytes, MAX_WHIR_HINT_BYTES_V2);
-    assert_eq!(worst_profile, (21, 134_372));
+    assert_eq!(worst_profile, (21, 126_852));
 
     let upper = proof_encoding_size_upper_bound_v2(&shape).unwrap();
     assert_eq!(upper.packed_num_variables, 21);
     assert_eq!(upper.fixed_compact_bytes, 20_060);
     assert_eq!(upper.max_whir_transcript_bytes, 1_904);
-    assert_eq!(upper.max_whir_hint_bytes, 112_408);
-    assert_eq!(upper.max_compact_bytes, 134_372);
-    assert_eq!(upper.max_solidity_abi_bytes, 197_536);
+    assert_eq!(upper.max_whir_hint_bytes, 104_888);
+    assert_eq!(upper.max_compact_bytes, 126_852);
+    assert_eq!(upper.max_solidity_abi_bytes, 190_016);
     assert!(upper.fits_whir_blob_caps);
     assert!(upper.fits_compact_cap);
     eprintln!(

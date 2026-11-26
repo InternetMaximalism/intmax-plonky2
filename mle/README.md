@@ -216,7 +216,7 @@ The schema-fixed input caps are:
 | Input | Cap |
 |---|---:|
 | WHIR NARG/transcript | 1,904 bytes |
-| WHIR hints | 112,408 bytes |
+| WHIR hints | 104,888 bytes |
 | compact proof | 253,921 bytes |
 
 For the checked-in degree-13 resource fixture (maximum row, wire and gate-
@@ -224,13 +224,13 @@ constraint dimensions; one public input and five configured gate families):
 
 | Measurement | Bytes |
 |---|---:|
-| compact proof, actual | 129,284 |
-| compact proof, grammar-theoretic maximum | 133,508 |
-| Solidity proof ABI, actual | 189,856 |
-| Solidity proof ABI, grammar-theoretic maximum | 194,080 |
-| Solidity verification config ABI | 5,664 |
+| compact proof, actual | 122,052 |
+| compact proof, grammar-theoretic maximum | 125,988 |
+| Solidity proof ABI, actual | 182,624 |
+| Solidity proof ABI, grammar-theoretic maximum | 186,560 |
+| Solidity verification config ABI | 7,456 |
 | WHIR NARG/transcript, actual | 1,904 |
-| WHIR hints, actual | 108,184 |
+| WHIR hints, actual | 100,952 |
 
 The compact grammar maximum is below the strict two-SimpleCoder-blob cap. The
 larger Solidity ABI number is an execution/calldata representation, not the
@@ -447,15 +447,21 @@ omega_WHIR,work(21) ~= 2^-101.534561723.
 ```
 
 Target 104 is retained as a negative regression: its aggregate is only about
-`2^-100.674765149`. The selected target-105/PoW-22/inverse-rate-6/fold-4
-profile uses the dimension-21 sample schedule `[29,19,14,12,10]`; the retired
-target-133/inverse-rate-4 profile needed `[58,33,23,18,14]`. Its maximum
-internal PoW is about 21.9855 bits and its modeled total PoW work about
-22.7830 bits. Halving the sample schedule is what moves the maximum-resource
-WHIR hint payload from 173,784 to 108,184 bytes and removes roughly one third
-of the verifier's Merkle and constraint work; the prover pays for the lower
-rate with a four-times larger initial codeword, which is acceptable because
-these proofs are only ever produced server-side.
+`2^-100.674765149`. The selected target-105/PoW-28/inverse-rate-6/fold-4
+profile uses the dimension-21 sample schedule `[27,18,13,11,9]`; its maximum
+internal PoW is about 27.92 bits and its modeled total PoW work about 28.55
+bits. The PoW-22 profile it replaced (2026-11-26) used `[29,19,14,12,10]`
+(maximum internal PoW 21.9855 bits, total 22.7830): its largest parent proof
+(134,372 bytes with the 103-input close statement) did not fit the 131,072-byte
+transaction cap that geth and reth txpools apply to non-blob transactions, so
+Sepolia refused the validity attest/finalize calls. PoW 28 keeps target 105
+and moves the maximum-resource WHIR hint payload from 108,184 to 100,952 bytes
+(hint cap 112,408 -> 104,888); every grammar-theoretic validity proof now also
+fits one 4,095x31-byte proof-DA blob. The retired target-133/inverse-rate-4
+profile needed `[58,33,23,18,14]`. The prover pays for the lower rate with a
+four-times larger initial codeword and for PoW 28 with about 2^28.6 grinding
+hashes, which is acceptable because these proofs are only ever produced
+server-side.
 
 Under the conventional generic-work-factor convention, the local minimum is
 now the WHIR union itself, about 101.5 bits, below the 128-bit generic
